@@ -7,9 +7,23 @@
 #include <iostream>
 #include <atomic>
 
-#include <mutex>
-#include <condition_variable>
+#include "audiobuffer.h"
 
+struct SampleSpecs {
+	unsigned int channels;			/// Channels
+	unsigned int bytesPerFrame;		/// For 24_3LE this would be 3, even if actually 4 Bytes are needed for storage of one Sample
+	unsigned int buffersize;		/// Size of buffer. This is relevant for latency
+	unsigned int bytesPerSample;		///
+	unsigned int bytesPerSampleStored;
+};
+std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs);
+
+struct Statistics {
+	unsigned long bytesReadFromBuffer;
+	unsigned long bytesWrittenToBuffer;
+	unsigned int xrunCount;
+};
+std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs);
 
 class NlAudioAlsaException : std::exception
 {
@@ -26,7 +40,7 @@ class NlAudioAlsa : public NlAudioInterface
 public:
 	typedef NlAudioInterface basetype;
 
-	NlAudioAlsa(const devicename_t& device, bool isInput);
+	NlAudioAlsa(const devicename_t& device, std::shared_ptr<AudioBuffer> buffer, bool isInput);
 	virtual ~NlAudioAlsa();
 
 	virtual void open() = 0; // Might throw, therefore not in constructor
@@ -46,7 +60,12 @@ public:
 	virtual std::list<sampleformat_t> getAvailableSampleformats() const;
 	virtual void setSampleFormat(sampleformat_t format);
 
+	virtual void setChannelCount(channelcount_t n);
+	virtual channelcount_t getChannelCount();
+
 	static std::list<devicename_t> getAvailableDevices();
+
+	Statistics getStats();
 
 protected:
 	void openCommon();
@@ -60,15 +79,10 @@ protected:
 	void process(float *in, float *out, unsigned int count);
 	void process(char *in, char *out, unsigned int count);
 
-	void createBuffer(unsigned int size);
-	void destroyBuffer(); //TODO: Causes errors see impl.
-	void getBuffer(char *buffer, unsigned int size);
-	void setBuffer(char *buffer, unsigned int size);
-	void getBufferStat(unsigned int *reades, unsigned int writes);
 
-	static int xrunRecovery(snd_pcm_t *handle, int err);
+	static int xrunRecovery(NlAudioAlsa *ptr, int err);
 
-//TODO: Only Public for debug purposes!!!!
+	//TODO: Only Public for debug purposes!!!!
 public:
 	snd_pcm_t *m_handle;
 
@@ -76,20 +90,15 @@ protected:
 	std::thread *m_audioThread;
 	snd_pcm_hw_params_t *m_hwParams;
 	std::atomic<bool> m_requestTerminate;
+	std::atomic<unsigned int> m_xrunRecoveryCounter;
+	std::shared_ptr<AudioBuffer> m_audioBuffer;
 
-	char *m_buffer;
-	std::mutex m_bufferMutex;
-	std::condition_variable m_bufferConditionVariable;
-
-	void throwOnAlsaError(int e) const;
+	void throwOnAlsaError(int e, const std::string& function) const;
 private:
 	devicename_t m_deviceName;
 
 	bool m_deviceOpen;
 	bool m_isInput;
-
-	int m_bufferReadStat;
-	int m_bufferWriteStat;
 
 };
 

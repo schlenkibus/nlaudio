@@ -13,7 +13,8 @@ SOURCES += main.cpp \
     nlaudioalsa.cpp \
     nlaudioalsainput.cpp \
     nlaudioalsaoutput.cpp \
-    audiobuffer.cpp
+    audiobuffer.cpp \
+    sampleformatconverter.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -25,5 +26,6 @@ HEADERS += \
     nlaudiointerface.h \
     nlaudioalsainput.h \
     nlaudioalsaoutput.h \
-    audiobuffer.h
+    audiobuffer.h \
+    sampleformatconverter.h
 
