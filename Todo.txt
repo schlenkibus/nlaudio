@@ -1,0 +1,15 @@
+Audio:
+
+1. Alsa Output Teil sauber abschliessen:
+    - Kleinigkeiten fertig machen
+    - Beispielprogramm, wie es zu nutzen ist.
+    - Idiotensicher
+
+1. Input mit definiertem Signal fuettern und messen ob da ueberhaupt das richtige ankommt. Rechteck/Sinus
+3. Implementation mit Jack Input und Output
+
+
+Midi:
+
+Erstmal nicht sample akkurat, (DirektMidi) und danach ev. Mit Jack oder so mal schauen.
+

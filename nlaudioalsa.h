@@ -7,14 +7,16 @@
 #include <iostream>
 #include <atomic>
 
-#include "audiobuffer.h"
+#include "circularaudiobuffer.h"
 
 struct SampleSpecs {
 	unsigned int channels;			/// Channels
-	unsigned int bytesPerFrame;		/// For 24_3LE this would be 3, even if actually 4 Bytes are needed for storage of one Sample
-	unsigned int buffersize;		/// Size of buffer. This is relevant for latency
-	unsigned int bytesPerSample;		///
-	unsigned int bytesPerSampleStored;
+	unsigned int bytesPerFrame;		/// = channels * bytesPerSample
+	unsigned int buffersizeInFrames;		/// Size of buffer. This is relevant for latency
+	unsigned int buffersizeInFramesPerPeriode;
+	unsigned int buffersizeInBytes; ///
+	unsigned int buffersizeInBytesPerPeriode;
+	unsigned int bytesPerSample;	/// with 24_BE3 this would be 3, with S16 this would be 2
 };
 std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs);
 
@@ -40,7 +42,7 @@ class NlAudioAlsa : public NlAudioInterface
 public:
 	typedef NlAudioInterface basetype;
 
-	NlAudioAlsa(const devicename_t& device, std::shared_ptr<AudioBuffer> buffer, bool isInput);
+	NlAudioAlsa(const devicename_t& device, std::shared_ptr<CircularAudioBuffer<char>> buffer, bool isInput);
 	virtual ~NlAudioAlsa();
 
 	virtual void open() = 0; // Might throw, therefore not in constructor
@@ -53,6 +55,9 @@ public:
 	//TODO: Changing buffer size, while playback is running might have strange sideeffects!
 	virtual void setBuffersize(unsigned int buffersize);
 	virtual unsigned int getBuffersize();
+
+	virtual void setBufferCount(unsigned int buffercount);
+	virtual unsigned int getBufferCount();
 
 	virtual samplerate_t getSamplerate() const;
 	virtual void setSamplerate(samplerate_t rate);
@@ -91,7 +96,7 @@ protected:
 	snd_pcm_hw_params_t *m_hwParams;
 	std::atomic<bool> m_requestTerminate;
 	std::atomic<unsigned int> m_xrunRecoveryCounter;
-	std::shared_ptr<AudioBuffer> m_audioBuffer;
+	std::shared_ptr<CircularAudioBuffer<char>> m_audioBuffer;
 
 	void throwOnAlsaError(int e, const std::string& function) const;
 private:

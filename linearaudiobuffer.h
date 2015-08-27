@@ -1,14 +1,13 @@
-#ifndef AUDIOBUFFER_H
-#define AUDIOBUFFER_H
+#pragma once
 
 #include <mutex>
 #include <condition_variable>
 
-class AudioBuffer
+class LinearAudioBuffer
 {
 public:
-	AudioBuffer(unsigned int size);
-	~AudioBuffer();
+	LinearAudioBuffer(unsigned int size);
+	~LinearAudioBuffer();
 
 	unsigned int get(void *buffer, unsigned int size);
 	void set(void *buffer, unsigned int size);
@@ -25,5 +24,3 @@ private:
 	unsigned long m_bytesWritten;
 
 };
-
-#endif // AUDIOBUFFER_H

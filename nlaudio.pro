@@ -13,8 +13,8 @@ SOURCES += main.cpp \
     nlaudioalsa.cpp \
     nlaudioalsainput.cpp \
     nlaudioalsaoutput.cpp \
-    audiobuffer.cpp \
-    sampleformatconverter.cpp
+    sampleformatconverter.cpp \
+    linearaudiobuffer.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -26,6 +26,10 @@ HEADERS += \
     nlaudiointerface.h \
     nlaudioalsainput.h \
     nlaudioalsaoutput.h \
-    audiobuffer.h \
-    sampleformatconverter.h
+    sampleformatconverter.h \
+    linearaudiobuffer.h \
+    circularaudiobuffer.h
+
+OTHER_FILES += \
+    Todo.txt
 

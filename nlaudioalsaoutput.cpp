@@ -1,6 +1,6 @@
 #include "nlaudioalsaoutput.h"
 
-NlAudioAlsaOutput::NlAudioAlsaOutput(const devicename_t &name, std::shared_ptr<AudioBuffer> buffer) :
+NlAudioAlsaOutput::NlAudioAlsaOutput(const devicename_t &name, std::shared_ptr<CircularAudioBuffer<char> > buffer) :
 	basetype(name, buffer, false)
 {
 }
@@ -16,21 +16,21 @@ void NlAudioAlsaOutput::start()
 	resetTerminateRequest();
 	throwOnAlsaError(snd_pcm_hw_params(m_handle, m_hwParams), __func__);
 
-	SampleSpecs specs;
-	specs.buffersize = getBuffersize();
-	specs.bytesPerFrame = snd_pcm_frames_to_bytes(m_handle, 1);
-	specs.bytesPerSample = snd_pcm_hw_params_get_sbits(m_hwParams) / 8;
-
 	snd_pcm_format_t sampleFormat;
 	snd_pcm_hw_params_get_format(m_hwParams, &sampleFormat);
 
-	specs.bytesPerSampleStored = 4;//= snd_pcm_format_physical_width(sampleFormat);
-
 	unsigned int channels = 0;
 	throwOnAlsaError(snd_pcm_hw_params_get_channels(m_hwParams, &channels), __func__);
-	specs.channels = channels;
 
-	std::cout << "NlAudioAlsaOutput: " << std::endl << specs;
+	SampleSpecs specs;
+	specs.channels = channels;
+	specs.buffersizeInFrames = getBuffersize();
+	specs.buffersizeInFramesPerPeriode = getBuffersize() / getBufferCount();
+	specs.bytesPerSample = snd_pcm_hw_params_get_sbits(m_hwParams) / 8;
+	specs.bytesPerFrame = specs.bytesPerSample * specs.channels;
+	specs.buffersizeInBytes = specs.bytesPerSample * specs.channels * specs.buffersizeInFrames;
+	specs.buffersizeInBytesPerPeriode = specs.buffersizeInBytes / getBufferCount();
+	std::cout << "NlAudioAlsaOutput Specs: " << std::endl << specs;
 
 	m_audioThread = new std::thread(NlAudioAlsaOutput::worker, specs, this);
 }
@@ -48,30 +48,28 @@ void NlAudioAlsaOutput::stop()
 //static
 void NlAudioAlsaOutput::worker(SampleSpecs specs, NlAudioAlsaOutput *ptr)
 {
-	// Alsa: 1 Sample = 1-4 Bytes, depending on Sampleformat
-	//		 1 Frame  = nChannels * Sample
-	//		 1 Buffer = with size 5120 has 512*Frame size
-
-	// I have: S24_3LE, which is 3 Bytes per Samples
-	// I have 2 Channels, which leads to 2 Samples per Frame
-	// I have 512 BufferSize, which ends up:
-	// 3 Bytes / Sample * 2 Samples(Channels) / Frame * 512 = 3072
-
-	// Buffersize in terms of bytes must be multiplied by bytes per sample.
-	// Buffersize in terms of bytes must be multiplied by bytes per sample.
-	const int buffersizeInBytes = specs.buffersize * specs.channels * specs.bytesPerSampleStored;
-	char *buffer = new char[buffersizeInBytes];
+	char *buffer = new char[specs.buffersizeInBytesPerPeriode];
+	memset(buffer, 0, specs.buffersizeInBytesPerPeriode);
 
 	std::cout << __func__ << " Output in" << std::endl;
 
+	int counter = 0;
+
 	while(!ptr->getTerminateRequest()) {
 
-		// Might block, if write in progress
-		ptr->basetype::m_audioBuffer->get(buffer, buffersizeInBytes);
+		// Might block, if nothing to read
+		ptr->basetype::m_audioBuffer->get(buffer, specs.buffersizeInBytesPerPeriode);
+		int ret = snd_pcm_writei(ptr->m_handle, buffer, specs.buffersizeInFramesPerPeriode);
 
-		int ret = snd_pcm_writei(ptr->m_handle, buffer, specs.buffersize);
+//		counter++;
+//		if (counter % 2 == 0)
+//			memset(buffer, 0x7F, specs.buffersizeInBytesPerPeriode);
+//		else
+//			memset(buffer, 0xFF, specs.buffersizeInBytesPerPeriode);
+
 		if (ret < 0)
 			ptr->basetype::xrunRecovery(ptr, ret);
+
 	}
 
 	snd_pcm_abort(ptr->m_handle);
@@ -80,4 +78,20 @@ void NlAudioAlsaOutput::worker(SampleSpecs specs, NlAudioAlsaOutput *ptr)
 	std::cout << __func__ << " Output out" << std::endl;
 }
 
+#if 0
+//Static
+void AlsaDevice::generateSin(char *buf, unsigned int samples_per_channel, double freq, unsigned int rate, unsigned int channels)
+{
+	double ramp_increment = freq / static_cast<double>(rate);
+	static double ramp = 0.f;
 
+	for (unsigned int i=0; i<samples_per_channel*channels; i=i+channels) {
+		ramp += ramp_increment;
+		if (ramp >= 1.f)
+			ramp -= 1.f;
+
+		for (int channel=0; channel<channels; channel++)
+			buf[i+channel] = sin(2.f * M_PI * ramp) * 10000;
+	}
+}
+#endif

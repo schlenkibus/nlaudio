@@ -23,6 +23,9 @@ public:
 	virtual void setBuffersize(unsigned int buffersize) = 0;
 	virtual unsigned int getBuffersize() = 0;
 
+	virtual void setBufferCount(unsigned int buffercount) = 0;
+	virtual unsigned int getBufferCount() = 0; // Periodes in alsa
+
 	virtual samplerate_t getSamplerate() const = 0;
 	virtual void setSamplerate(samplerate_t rate) = 0;
 

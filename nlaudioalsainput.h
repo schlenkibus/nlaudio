@@ -7,7 +7,7 @@ class NlAudioAlsaInput : public NlAudioAlsa
 public:
 	typedef NlAudioAlsa basetype;
 
-	NlAudioAlsaInput(const devicename_t &name, std::shared_ptr<AudioBuffer> buffer);
+	NlAudioAlsaInput(const devicename_t &name, std::shared_ptr<CircularAudioBuffer<char>> buffer);
 
 	virtual void open();
 	virtual void start();

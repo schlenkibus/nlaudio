@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-NlAudioAlsa::NlAudioAlsa(const devicename_t &device, std::shared_ptr<AudioBuffer> buffer, bool isInput) :
+NlAudioAlsa::NlAudioAlsa(const devicename_t &device, std::shared_ptr<CircularAudioBuffer<char> > buffer, bool isInput) :
 	m_handle(nullptr),
 	m_hwParams(nullptr),
 	m_deviceName(device),
@@ -49,7 +49,6 @@ void NlAudioAlsa::openCommon()
 
 	throwOnAlsaError(snd_pcm_hw_params_set_channels(m_handle, m_hwParams, 2), __func__);
 
-
 	m_deviceOpen = true;
 }
 
@@ -65,19 +64,30 @@ void NlAudioAlsa::close()
 /// Buffersize
 void NlAudioAlsa::setBuffersize(unsigned int buffersize)
 {
-	// Hm not sure about that
-	// PeriodeSize, is the latency, and thats what I expect to set by this value. Therefore double buffersize and use value for periodeSize
-	throwOnAlsaError(snd_pcm_hw_params_set_buffer_size(m_handle, m_hwParams, static_cast<snd_pcm_uframes_t>(buffersize*2)), __func__);
-	throwOnAlsaError(snd_pcm_hw_params_set_period_size(m_handle, m_hwParams, static_cast<snd_pcm_uframes_t>(buffersize), 0), __func__);
+	throwOnAlsaError(snd_pcm_hw_params_set_buffer_size(m_handle, m_hwParams, static_cast<snd_pcm_uframes_t>(buffersize)), __func__);
 }
 
 unsigned int NlAudioAlsa::getBuffersize()
 {
 	snd_pcm_uframes_t buffersize;
-
 	throwOnAlsaError(snd_pcm_hw_params_get_buffer_size(m_hwParams, &buffersize), __func__);
 
 	return static_cast<unsigned int>(buffersize);
+}
+
+/// Periode Size
+void NlAudioAlsa::setBufferCount(unsigned int buffercount)
+{
+	throwOnAlsaError(snd_pcm_hw_params_set_periods(m_handle, m_hwParams, buffercount, 0), __func__);
+}
+
+unsigned int NlAudioAlsa::getBufferCount()
+{
+	int dir = 0;
+	unsigned int buffercount = 0;
+	throwOnAlsaError(snd_pcm_hw_params_get_periods(m_hwParams, &buffercount, &dir), __func__);
+
+	return buffercount;
 }
 
 
@@ -160,11 +170,13 @@ std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs)
 
 std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs)
 {
-	lhs << "Buffersize:                 " << rhs.buffersize << std::endl <<
-		   "Bytes Per Frame:            " << rhs.bytesPerFrame << std::endl <<
-		   "Bytes Per Sample:           " << rhs.bytesPerSample << std::endl <<
-		   "Bytes Per Sample Stored:    " << rhs.bytesPerSampleStored << std::endl <<
-		   "Channels:                   " << rhs.channels << std::endl;
+	lhs << "Buffersize in Frames:              " << rhs.buffersizeInFrames << std::endl <<
+		   "Buffersize in Frames Per Periode:  " << rhs.buffersizeInFramesPerPeriode << std::endl <<
+		   "Buffersize in Bytes:               " << rhs.buffersizeInBytes << std::endl <<
+		   "Buffersize in Bytes Per Periode:   " << rhs.buffersizeInBytesPerPeriode << std::endl <<
+		   "Bytes Per Frame:                   " << rhs.bytesPerFrame << std::endl <<
+		   "Bytes Per Sample:                  " << rhs.bytesPerSample << std::endl <<
+		   "Channels:                          " << rhs.channels << std::endl;
 
 	return lhs;
 }

@@ -1,8 +1,8 @@
-#include "audiobuffer.h"
+#include "linearaudiobuffer.h"
 
 #include <string.h> //memset
 
-AudioBuffer::AudioBuffer(unsigned int size) :
+LinearAudioBuffer::LinearAudioBuffer(unsigned int size) :
 	m_buffer(new float[size]),
 	m_size(size),
 	m_bytesRead(0),
@@ -11,13 +11,13 @@ AudioBuffer::AudioBuffer(unsigned int size) :
 	memset(m_buffer, 0, m_size);
 }
 
-AudioBuffer::~AudioBuffer()
+LinearAudioBuffer::~LinearAudioBuffer()
 {
 	delete[] m_buffer;
 }
 
 // Block callee, if nothing to read
-unsigned int AudioBuffer::get(void *buffer, unsigned int size)
+unsigned int LinearAudioBuffer::get(void *buffer, unsigned int size)
 {
 	std::unique_lock<std::mutex> mlock(m_mutex);
 	while ((m_bytesWritten - m_bytesRead) < size)
@@ -31,7 +31,7 @@ unsigned int AudioBuffer::get(void *buffer, unsigned int size)
 
 // Block callee, if read in progress.
 // Wake up sleeping readers, if any
-void AudioBuffer::set(void *buffer, unsigned int size)
+void LinearAudioBuffer::set(void *buffer, unsigned int size)
 {
 	std::unique_lock<std::mutex> mlock(m_mutex);
 	m_bytesWritten += size;
@@ -40,7 +40,7 @@ void AudioBuffer::set(void *buffer, unsigned int size)
 	m_condition.notify_one();
 }
 
-void AudioBuffer::getStat(unsigned long *readBytes, unsigned long *writtenBytes)
+void LinearAudioBuffer::getStat(unsigned long *readBytes, unsigned long *writtenBytes)
 {
 	std::unique_lock<std::mutex> mlock(m_mutex);
 	*readBytes = m_bytesRead;
