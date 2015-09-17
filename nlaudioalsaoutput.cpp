@@ -1,6 +1,6 @@
 #include "nlaudioalsaoutput.h"
 
-NlAudioAlsaOutput::NlAudioAlsaOutput(const devicename_t &name, std::shared_ptr<CircularAudioBuffer<char> > buffer) :
+NlAudioAlsaOutput::NlAudioAlsaOutput(const devicename_t &name, std::shared_ptr<BlockingCircularBuffer<char> > buffer) :
 	basetype(name, buffer, false)
 {
 }
@@ -12,15 +12,15 @@ void NlAudioAlsaOutput::open()
 
 void NlAudioAlsaOutput::start()
 {
-	throwOnDeviceClosed();
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 	resetTerminateRequest();
-	throwOnAlsaError(snd_pcm_hw_params(m_handle, m_hwParams), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params(m_handle, m_hwParams));
 
 	snd_pcm_format_t sampleFormat;
 	snd_pcm_hw_params_get_format(m_hwParams, &sampleFormat);
 
 	unsigned int channels = 0;
-	throwOnAlsaError(snd_pcm_hw_params_get_channels(m_hwParams, &channels), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_get_channels(m_hwParams, &channels));
 
 	SampleSpecs specs;
 	specs.channels = channels;
@@ -37,7 +37,7 @@ void NlAudioAlsaOutput::start()
 
 void NlAudioAlsaOutput::stop()
 {
-	throwOnDeviceClosed();
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 	setTerminateRequest();
 
 	m_audioThread->join();
@@ -53,22 +53,17 @@ void NlAudioAlsaOutput::worker(SampleSpecs specs, NlAudioAlsaOutput *ptr)
 
 	std::cout << __func__ << " Output in" << std::endl;
 
-	int counter = 0;
-
 	while(!ptr->getTerminateRequest()) {
 
 		// Might block, if nothing to read
 		ptr->basetype::m_audioBuffer->get(buffer, specs.buffersizeInBytesPerPeriode);
 		int ret = snd_pcm_writei(ptr->m_handle, buffer, specs.buffersizeInFramesPerPeriode);
 
-//		counter++;
-//		if (counter % 2 == 0)
-//			memset(buffer, 0x7F, specs.buffersizeInBytesPerPeriode);
-//		else
-//			memset(buffer, 0xFF, specs.buffersizeInBytesPerPeriode);
-
 		if (ret < 0)
 			ptr->basetype::xrunRecovery(ptr, ret);
+		//else if (ret != specs.buffersizeInFramesPerPeriode)
+		//	std::cout << "### FIXME ###" << std::endl;
+
 
 	}
 

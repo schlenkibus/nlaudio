@@ -1,15 +1,15 @@
 #include "nlaudioalsa.h"
-#include "nlaudiointerface.h"
+#include "nlaudio.h"
 
 #include <iostream>
 
-NlAudioAlsa::NlAudioAlsa(const devicename_t &device, std::shared_ptr<CircularAudioBuffer<char> > buffer, bool isInput) :
+NlAudioAlsa::NlAudioAlsa(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<char> > buffer, bool isInput) :
 	m_handle(nullptr),
 	m_hwParams(nullptr),
+	m_audioBuffer(buffer),
 	m_deviceName(device),
 	m_deviceOpen(false),
-	m_isInput(isInput),
-	m_audioBuffer(buffer)
+	m_isInput(isInput)
 {
 	std::cout << "New " << __func__ << " as " << (isInput ? "input" : "output") << std::endl;
 }
@@ -20,41 +20,39 @@ NlAudioAlsa::~NlAudioAlsa()
 }
 
 /// Error Handling
-void NlAudioAlsa::throwOnAlsaError(int e, const std::string &function) const
+void NlAudioAlsa::throwOnAlsaError(const std::string& file, const std::string& func, int line, int e) const
 {
 	if (e < 0) {
-		throw NlAudioAlsaException(e, function + ": " + snd_strerror(e));
+		throw NlAudioAlsaException(func, file, line, e, snd_strerror(e));
 	}
 }
 
-void NlAudioAlsa::throwOnDeviceClosed() const
+void NlAudioAlsa::throwOnDeviceClosed(const std::string& file, const std::string& func, int line) const
 {
 	if (!m_deviceOpen)
-		throw(NlAudioAlsaException(0, "Device is not opened, yet."));
+		throw(NlAudioAlsaException(func, file, line, -1, "Device is not opened, yet."));
 }
 
-void NlAudioAlsa::throwOnDeviceRunning() const
+void NlAudioAlsa::throwOnDeviceRunning(const std::string &file, const std::string &func, int line) const
 {
 	if (!m_audioThread)
-		throw(NlAudioAlsaException(0, "Device is not opened, yet."));
+		throw(NlAudioAlsaException(func, file, line, -1, "Device is not opened, yet."));
 }
 
 /// Open / Close
 void NlAudioAlsa::openCommon()
 {
-	throwOnAlsaError(snd_pcm_open(&m_handle, m_deviceName.c_str(), m_isInput ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK, SND_PCM_ASYNC), __func__);
-	throwOnAlsaError(snd_pcm_hw_params_malloc(&m_hwParams), __func__);
-	throwOnAlsaError(snd_pcm_hw_params_any(m_handle, m_hwParams), __func__);
-	throwOnAlsaError(snd_pcm_hw_params_set_access(m_handle, m_hwParams, SND_PCM_ACCESS_RW_INTERLEAVED), __func__);
-
-	throwOnAlsaError(snd_pcm_hw_params_set_channels(m_handle, m_hwParams, 2), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_open(&m_handle, m_deviceName.c_str(), m_isInput ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK, SND_PCM_ASYNC));
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_malloc(&m_hwParams));
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_any(m_handle, m_hwParams));
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_access(m_handle, m_hwParams, SND_PCM_ACCESS_RW_INTERLEAVED));
 
 	m_deviceOpen = true;
 }
 
 void NlAudioAlsa::close()
 {
-	throwOnAlsaError(snd_pcm_close(m_handle), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_close(m_handle));
 	snd_pcm_hw_params_free(m_hwParams);
 	m_hwParams = nullptr;
 
@@ -64,13 +62,13 @@ void NlAudioAlsa::close()
 /// Buffersize
 void NlAudioAlsa::setBuffersize(unsigned int buffersize)
 {
-	throwOnAlsaError(snd_pcm_hw_params_set_buffer_size(m_handle, m_hwParams, static_cast<snd_pcm_uframes_t>(buffersize)), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_buffer_size(m_handle, m_hwParams, static_cast<snd_pcm_uframes_t>(buffersize)));
 }
 
 unsigned int NlAudioAlsa::getBuffersize()
 {
 	snd_pcm_uframes_t buffersize;
-	throwOnAlsaError(snd_pcm_hw_params_get_buffer_size(m_hwParams, &buffersize), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_get_buffer_size(m_hwParams, &buffersize));
 
 	return static_cast<unsigned int>(buffersize);
 }
@@ -78,14 +76,14 @@ unsigned int NlAudioAlsa::getBuffersize()
 /// Periode Size
 void NlAudioAlsa::setBufferCount(unsigned int buffercount)
 {
-	throwOnAlsaError(snd_pcm_hw_params_set_periods(m_handle, m_hwParams, buffercount, 0), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_periods(m_handle, m_hwParams, buffercount, 0));
 }
 
 unsigned int NlAudioAlsa::getBufferCount()
 {
 	int dir = 0;
 	unsigned int buffercount = 0;
-	throwOnAlsaError(snd_pcm_hw_params_get_periods(m_hwParams, &buffercount, &dir), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_get_periods(m_hwParams, &buffercount, &dir));
 
 	return buffercount;
 }
@@ -98,23 +96,23 @@ samplerate_t NlAudioAlsa::getSamplerate() const
 	int dir = 0;
 	samplerate_t rate = 0;
 
-	throwOnAlsaError(snd_pcm_hw_params_get_rate(m_hwParams, &rate, &dir), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_get_rate(m_hwParams, &rate, &dir));
 
 	return rate;
 }
 
 void NlAudioAlsa::setSamplerate(samplerate_t rate)
 {
-	throwOnDeviceClosed();
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 
 	int dir = 0;
-	throwOnAlsaError(snd_pcm_hw_params_set_rate_near(m_handle, m_hwParams, &rate, &dir), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_rate_near(m_handle, m_hwParams, &rate, &dir));
 }
 
 /// Sample Format
 std::list<sampleformat_t> NlAudioAlsa::getAvailableSampleformats() const
 {
-	throwOnDeviceClosed();
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 
 	snd_pcm_format_mask_t *formatMask = nullptr;
 	snd_pcm_format_mask_malloc(&formatMask);
@@ -133,27 +131,27 @@ std::list<sampleformat_t> NlAudioAlsa::getAvailableSampleformats() const
 
 void NlAudioAlsa::setSampleFormat(sampleformat_t format)
 {
-	throwOnDeviceClosed();
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 
 	snd_pcm_format_t alsaFormat = snd_pcm_format_value(format.c_str());
 
 	printf("alsaFormat=%i\n", alsaFormat);
 	printf("alsaFormat=%s\n", snd_pcm_format_name(alsaFormat));
 
-	throwOnAlsaError(snd_pcm_hw_params_set_format(m_handle, m_hwParams, alsaFormat), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_format(m_handle, m_hwParams, alsaFormat));
 }
 
 
 ///Channels
 void NlAudioAlsa::setChannelCount(channelcount_t n)
 {
-	throwOnAlsaError(snd_pcm_hw_params_set_channels(m_handle, m_hwParams, n), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_channels(m_handle, m_hwParams, n));
 }
 
 channelcount_t NlAudioAlsa::getChannelCount()
 {
 	channelcount_t channels = 0;
-	throwOnAlsaError(snd_pcm_hw_params_get_channels(m_hwParams, &channels), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_get_channels(m_hwParams, &channels));
 	return channels;
 }
 
@@ -189,34 +187,6 @@ Statistics NlAudioAlsa::getStats()
 
 	return ret;
 }
-
-
-
-///Callback
-void NlAudioAlsa::process(float *in, float *out, unsigned int count)
-{
-	static int counter = 0;
-	if (++counter % 1000000 == 0)
-		std::cout << __func__ << " counter=" << counter << std::endl;
-
-	//memcpy(out, in, count);
-}
-
-//Der input muss einen Callback rufen und dann muss ich sagen, welcher callback, falls es eine kette ist, den schreibenden weckt.
-//Der schlaeft dann wiedderum  kurz wegen dem writei im idealfall, ansonsten dauert die verarbeitung zu lange.
-
-
-///Callback
-void NlAudioAlsa::process(char *in, char *out, unsigned int count)
-{
-	static int counter = 0;
-	if (++counter % 1000000 == 0)
-		std::cout << (in ? "In  " : "Out ") << counter << std::endl;
-
-	//memcpy(out, in, count);
-}
-
-
 
 ///Static
 std::list<devicename_t> NlAudioAlsa::getAvailableDevices()

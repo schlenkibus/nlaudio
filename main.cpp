@@ -2,12 +2,17 @@
 
 #include "nlaudioalsainput.h"
 #include "nlaudioalsaoutput.h"
-#include "sampleformatconverter.h"
+
+#include "nlmidi.h"
+#include "nlrawmididevice.h"
 
 #include <stdio.h>
 #include <sched.h>
 
-#include "circularaudiobuffer.h"
+#include <cmath>
+
+#include "blockingcircularbuffer.h"
+#include "nlaudiofactory.h"
 
 using namespace std;
 
@@ -22,129 +27,129 @@ void printInfos(const NlAudioAlsa& device)
 
 }
 
+
 int main()
 {
 
-#if 0
-	CircularAudioBuffer<long> cBuffer(4096);
-	auto writerFunc = [](CircularAudioBuffer<long> *cBuffer){
-		const long buffersize = 256;
-
-		long b[buffersize];
-
-		for (int i=0; i<buffersize; i++)
-			b[i] = i;
-
-		while (1) {
-			cBuffer->set(b, buffersize);
-			for(int i=0; i<buffersize; i++)
-				b[i] += buffersize;
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		}
-	};
-
-
-	auto readerFunc = [](CircularAudioBuffer<long> *cBuffer){
-		const long buffersize = 512;
-
-		long b[buffersize];
-
-		while (1) {
-			cBuffer->get(b, buffersize);
-			for(int i=0; i<buffersize; i++)
-				std::cout << "read: " << b[i] << std::endl;
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		}
-	};
-
-	std::thread t1(writerFunc, &cBuffer);
-	std::thread t2(readerFunc, &cBuffer);
-
-
-
-	while(1);
-
-	return 0;
-
-#endif
-
-
-	auto deviceList = NlAudioAlsa::getAvailableDevices();
-	for (auto it = deviceList.begin(); it != deviceList.end(); ++it)
-		std::cout << *it << std::endl;
-
-	std::cout << "Seting up Realtime Scheduling..." << std::endl;
-
-	struct sched_param param;
-	param.sched_priority = 49;
-	int ret;
-	if((ret = sched_setscheduler(0, SCHED_FIFO, &param)) < 0) {
-		std::cout << "sched_setscheduler failed (" << ret << ")" << std::endl;
-	} else {
-		std::cout << "RT Initialized!" << std::endl;
-	}
 
 	try {
 
-		std::shared_ptr<CircularAudioBuffer<char>> buffer(new CircularAudioBuffer<char>(6*4096));
+		auto buffer = Nl::getBuffer(512);
+		auto input = Nl::getInputDevice("hw:1,0", buffer);
+		auto output = Nl::getOutputDevice("hw:1,0", buffer);
 
-		const int buffersize = 4096;
-		std::string sampleFormat = "S24_3BE";
-		//std::string sampleFormat = "S16_LE";
+		output->start();
+		input->start();
 
-		NlAudioAlsaInput alsainput("hw:1,0,1", buffer);
-		alsainput.open();
-		printInfos(alsainput);
-
-		NlAudioAlsaOutput alsaoutput("hw:1,0,1", buffer);
-		alsaoutput.open();
-		printInfos(alsaoutput);
-
-		alsainput.setSampleFormat(sampleFormat);
-		alsainput.setBuffersize(buffersize);
-		alsainput.setSamplerate(48000);
-		alsainput.setChannelCount(2);
-		alsainput.setBufferCount(2);
-
-		alsaoutput.setSampleFormat(sampleFormat);
-		alsaoutput.setBuffersize(buffersize);
-		alsaoutput.setSamplerate(48000);
-		alsaoutput.setChannelCount(2);
-		alsaoutput.setBufferCount(2);
-
-		std::cout << "### INPUT ###" << std::endl;
-		std::cout << "Buffersize=" << alsainput.getBuffersize() << std::endl;
-		std::cout << "### OUTPUT ###" << std::endl;
-		std::cout << "Buffersize=" << alsaoutput.getBuffersize() << std::endl;
-
-		std::cout << "snd_pcm_state(alsainput.m_handle): " << snd_pcm_state(alsainput.m_handle) << std::endl;
-		std::cout << "snd_pcm_state(alsaoutput.m_handle): " << snd_pcm_state(alsaoutput.m_handle) << std::endl;
-
-		alsainput.start();
-		alsaoutput.start();
-
+		// Wait for user to exit by pressing 'q'
 		char exitKey = 0;
-
 		while(exitKey != 'q') {
+			std::cout << "Alsa Output Statistics:" << std::endl;
+			std::cout << output->getStats();
 
-			std::cout << "### Input ###" << std::endl;
-			std::cout << alsainput.getStats();
-			std::cout << "### Output ###" << std::endl;
-			std::cout << alsaoutput.getStats();
+			std::cout << "Alsa Input Statistics:" << std::endl;
+			std::cout << input->getStats();
 
 			exitKey = getchar();
 		}
 
-		std::cout << "NEVER GET HERE!!!" << std::endl;
 
-		alsainput.stop();
-		alsaoutput.stop();
+	} catch (NlAudioAlsaException &e) {
+		std::cout << "### Exception: " << std::endl << "  " << e.what();
+	}
 
-	} catch (const NlAudioAlsaException& exception) {
+
+#if 0
+#define DEBUG_MIDI 1
+
+	try {
+		// MIDI
+		std::string firstDevice = NlRawMidiDevice::getFirstDevice();
+
+		if (firstDevice.size()) {
+			std::cout << "Opening first midi device: " << firstDevice << std::endl;
+		} else {
+			std::cout << "Please connect a midi device first." << std::endl;
+			exit(-1);
+		}
+
+		std::shared_ptr<BlockingCircularBuffer<unsigned char>> midiBuffer(new BlockingCircularBuffer<unsigned char>(30));
+		NlRawMidiDevice *midi = new NlRawMidiDevice(firstDevice, midiBuffer);
+		midi->open();
+
+		auto readMidi = [](std::shared_ptr<BlockingCircularBuffer<unsigned char>> buffer) {
+
+				const int buffersize = 3;
+				unsigned char b[buffersize];
+
+				while(1) {
+						buffer->get(b, buffersize);
+						for (int i=0; i<buffersize; i++)
+								printf("%02X ", (unsigned char)b[i]);
+
+						printf("\n");
+				}
+		};
+		std::thread midiThread(readMidi, midiBuffer);
+		midi->start();
+
+		char *nextBuffer = nullptr;
+
+		// Audio
+		std::shared_ptr<BlockingCircularBuffer<char>> audioBuffer(new BlockingCircularBuffer<char>(4096));
+		NlAudioAlsaOutput alsaoutput("hw:0,0", audioBuffer);
+		alsaoutput.open();
+		alsaoutput.setSampleFormat("S16_LE");
+		alsaoutput.setBufferCount(2);
+		alsaoutput.setBuffersize(128);
+		alsaoutput.setChannelCount(2);
+		alsaoutput.start();
+
+		auto writeAudio = [](std::shared_ptr<BlockingCircularBuffer<char>> audioBuffer) {
+
+			const int samplerate = 44100;
+			const int buffersize = 128;
+			char silenceBuffer[buffersize];
+			char sineBuffer[buffersize];
+			char midiData[3];
+
+			memset(silenceBuffer, 0, buffersize);
+
+			while(1) {
+				//if (midiBuffer->availableToRead() >= 3) {
+					//midiBuffer->get(midiData, 3);
+					//if (midiData[0] == 0x90) { //NoteOn
+						generateSin(sineBuffer, buffersize, 440, samplerate, 2);
+					//	nextBuffer = sineBuffer;
+					//} else if (midiData[1] == 0x80) { //NoteOff
+					//	nextBuffer = silenceBuffer;
+					//}
+				//} else {
+				//	nextBuffer = silenceBuffer;
+				//}
+
+				// Blocks until there is storage.
+				audioBuffer->set(sineBuffer, buffersize);
+			}
+		};
+
+		std::thread audioThread(writeAudio, audioBuffer);
+
+
+
+		// Wait for user to exit by pressing 'q'
+		char exitKey = 0;
+		while(exitKey != 'q') {
+			std::cout << "Alsa Output Statistics:" << std::endl;
+			//std::cout << alsaoutput.getStats();
+			exitKey = getchar();
+		}
+
+	} catch (const std::exception& exception) {
 		std::cout << "GrepMe1 " << exception.what() << std::endl;
 	}
+#endif
 
 	return 0;
 }
+

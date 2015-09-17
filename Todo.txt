@@ -1,5 +1,12 @@
 Audio:
 
+Aktuell:
+
+-- Der ringbuffer funktioniert nicht!!!!
+
+
+
+
 1. Alsa Output Teil sauber abschliessen:
     - Kleinigkeiten fertig machen
     - Beispielprogramm, wie es zu nutzen ist.
@@ -13,3 +20,69 @@ Midi:
 
 Erstmal nicht sample akkurat, (DirektMidi) und danach ev. Mit Jack oder so mal schauen.
 
+
+
+//
+
+#if 0
+        CircularAudioBuffer<long> cBuffer(4096);
+        auto writerFunc = [](CircularAudioBuffer<long> *cBuffer){
+                const long buffersize = 256;
+
+                long b[buffersize];
+
+                for (int i=0; i<buffersize; i++)
+                        b[i] = i;
+
+                while (1) {
+                        cBuffer->set(b, buffersize);
+                        for(int i=0; i<buffersize; i++)
+                                b[i] += buffersize;
+
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+        };
+
+
+        auto readerFunc = [](CircularAudioBuffer<long> *cBuffer){
+                const long buffersize = 512;
+
+                long b[buffersize];
+
+                while (1) {
+                        cBuffer->get(b, buffersize);
+                        for(int i=0; i<buffersize; i++)
+                                std::cout << "read: " << b[i] << std::endl;
+
+                        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                }
+        };
+
+        std::thread t1(writerFunc, &cBuffer);
+        std::thread t2(readerFunc, &cBuffer);
+
+
+
+        while(1);
+
+        return 0;
+
+#endif
+
+
+#if DEBUG_MIDI
+                auto readMidi = [](std::shared_ptr<BlockingCircularBuffer<char>> buffer) {
+
+                        const int buffersize = 3;
+                        char b[buffersize];
+
+                        while(1) {
+                                buffer->get(b, buffersize);
+                                for (int i=0; i<buffersize; i++)
+                                        printf("%02X ", b[i]);
+
+                                printf("\n");
+                        }
+                };
+                std::thread midiThread(readMidi, midiBuffer);
+#endif //DEBUG_MIDI

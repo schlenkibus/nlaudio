@@ -8,27 +8,29 @@ LIBS += -lasound
 LIBS += -lpthread
 
 SOURCES += main.cpp \
-    nlaudio.cpp \
     nlaudioconfig.cpp \
     nlaudioalsa.cpp \
     nlaudioalsainput.cpp \
     nlaudioalsaoutput.cpp \
-    sampleformatconverter.cpp \
-    linearaudiobuffer.cpp
+    nlrawmididevice.cpp \
+    nlaudiofactory.cpp \
+    tools.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
 
 HEADERS += \
-    nlaudio.h \
     nlaudioconfig.h \
     nlaudioalsa.h \
-    nlaudiointerface.h \
     nlaudioalsainput.h \
     nlaudioalsaoutput.h \
-    sampleformatconverter.h \
-    linearaudiobuffer.h \
-    circularaudiobuffer.h
+    nlaudio.h \
+    nlmidi.h \
+    nlrawmididevice.h \
+    blockingcircularbuffer.h \
+    blockinglinearbuffer.h \
+    nlaudiofactory.h \
+    tools.h
 
 OTHER_FILES += \
     Todo.txt

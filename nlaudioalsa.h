@@ -1,13 +1,14 @@
 #pragma once
 
-#include "nlaudiointerface.h"
+#include "nlaudio.h"
 
 #include <alsa/asoundlib.h>
 #include <thread>
 #include <iostream>
 #include <atomic>
+#include <sstream>
 
-#include "circularaudiobuffer.h"
+#include "blockingcircularbuffer.h"
 
 struct SampleSpecs {
 	unsigned int channels;			/// Channels
@@ -30,19 +31,32 @@ std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs);
 class NlAudioAlsaException : std::exception
 {
 public:
-	NlAudioAlsaException(int errorNumber, std::string what) : m_errno(errorNumber), m_msg(what) {}
-	virtual const char* what() const throw() { return m_msg.c_str(); }
+	NlAudioAlsaException(std::string func, std::string file, int line, int errorNumber, std::string what) :
+		m_func(func),
+		m_file(file),
+		m_line(line),
+		m_errno(errorNumber),
+		m_msg(what) {}
+	virtual const char* what() const throw()
+	{
+		std::stringstream ss;
+		ss << m_file << ":" << m_func << ":" << m_line << ": " << m_msg;
+		return ss.str().c_str();
+	}
 private:
+	std::string m_func;
+	std::string m_file;
+	int m_line;
 	int m_errno;
 	std::string m_msg;
 };
 
-class NlAudioAlsa : public NlAudioInterface
+class NlAudioAlsa : public NlAudio
 {
 public:
-	typedef NlAudioInterface basetype;
+	typedef NlAudio basetype;
 
-	NlAudioAlsa(const devicename_t& device, std::shared_ptr<CircularAudioBuffer<char>> buffer, bool isInput);
+	NlAudioAlsa(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<char>> buffer, bool isInput);
 	virtual ~NlAudioAlsa();
 
 	virtual void open() = 0; // Might throw, therefore not in constructor
@@ -74,16 +88,12 @@ public:
 
 protected:
 	void openCommon();
-	void throwOnDeviceClosed() const;
-	void throwOnDeviceRunning() const;
+	void throwOnDeviceClosed(const std::string &file, const std::string &func, int line) const;
+	void throwOnDeviceRunning(const std::string& file, const std::string& func, int line) const;
 
 	void setTerminateRequest() { m_requestTerminate = true; }
 	void resetTerminateRequest() { m_requestTerminate = false; }
 	bool getTerminateRequest() const { return m_requestTerminate; }
-
-	void process(float *in, float *out, unsigned int count);
-	void process(char *in, char *out, unsigned int count);
-
 
 	static int xrunRecovery(NlAudioAlsa *ptr, int err);
 
@@ -96,9 +106,9 @@ protected:
 	snd_pcm_hw_params_t *m_hwParams;
 	std::atomic<bool> m_requestTerminate;
 	std::atomic<unsigned int> m_xrunRecoveryCounter;
-	std::shared_ptr<CircularAudioBuffer<char>> m_audioBuffer;
+	std::shared_ptr<BlockingCircularBuffer<char>> m_audioBuffer;
 
-	void throwOnAlsaError(int e, const std::string& function) const;
+	void throwOnAlsaError(const std::string &file, const std::string &func, int line, int e) const;
 private:
 	devicename_t m_deviceName;
 
@@ -106,4 +116,3 @@ private:
 	bool m_isInput;
 
 };
-

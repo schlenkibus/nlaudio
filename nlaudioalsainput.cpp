@@ -1,6 +1,6 @@
 #include "nlaudioalsainput.h"
 
-NlAudioAlsaInput::NlAudioAlsaInput(const devicename_t &name, std::shared_ptr<CircularAudioBuffer<char> > buffer) :
+NlAudioAlsaInput::NlAudioAlsaInput(const devicename_t &name, std::shared_ptr<BlockingCircularBuffer<char> > buffer) :
 	basetype(name, buffer, true)
 {
 }
@@ -12,15 +12,15 @@ void NlAudioAlsaInput::open()
 
 void NlAudioAlsaInput::start()
 {
-	throwOnDeviceClosed();
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 	resetTerminateRequest();
-	throwOnAlsaError(snd_pcm_hw_params(m_handle, m_hwParams), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params(m_handle, m_hwParams));
 
 	snd_pcm_format_t sampleFormat;
 	snd_pcm_hw_params_get_format(m_hwParams, &sampleFormat);
 
 	unsigned int channels = 0;
-	throwOnAlsaError(snd_pcm_hw_params_get_channels(m_hwParams, &channels), __func__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_get_channels(m_hwParams, &channels));
 
 
 	SampleSpecs specs;
@@ -38,7 +38,7 @@ void NlAudioAlsaInput::start()
 
 void NlAudioAlsaInput::stop()
 {
-	throwOnDeviceClosed();
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 	setTerminateRequest();
 
 	m_audioThread->join();
@@ -61,6 +61,8 @@ void NlAudioAlsaInput::worker(SampleSpecs specs, NlAudioAlsaInput *ptr)
 
 		if (ret < 0)
 			ptr->basetype::xrunRecovery(ptr, ret);
+		//else if (ret != specs.buffersizeInFramesPerPeriode)
+		//std::cout << "### FIXME ###" << std::endl;
 
 		// Might block, if no space in buffer
 		ptr->basetype::m_audioBuffer->set(buffer, specs.buffersizeInBytesPerPeriode);

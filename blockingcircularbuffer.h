@@ -2,24 +2,25 @@
 
 #include <mutex>
 #include <condition_variable>
-
+#include <atomic>
+#include <cstring>
 
 template <typename T>
-class CircularAudioBuffer
+class BlockingCircularBuffer
 {
 public:
-	CircularAudioBuffer(unsigned int size) :
+	BlockingCircularBuffer(unsigned int size) :
 		m_buffer(new T[size]),
 		m_size(size),
 		m_bytesRead(0),
 		m_bytesWritten(0),
 		m_readIndex(0),
-		m_writeIndex(1)
+		m_writeIndex(0)
 	{
 		memset(m_buffer, 0, m_size);
 	}
 
-	~CircularAudioBuffer()
+	~BlockingCircularBuffer()
 	{
 		delete[] m_buffer;
 	}
@@ -33,8 +34,11 @@ public:
 
 		m_bytesRead += size;
 
-		for (int i=0; i<size; i++)
-			buffer[i] = m_buffer[++m_readIndex % m_size];
+		for (unsigned int i=0; i<size; i++) {
+			m_readIndex++;
+			m_readIndex = m_readIndex % m_size;
+			buffer[i] = m_buffer[m_readIndex];
+		}
 
 		m_condition.notify_one();
 	}
@@ -48,42 +52,44 @@ public:
 
 		m_bytesWritten += size;
 
-		for (unsigned int i=0; i<size; i++)
-			m_buffer[++m_writeIndex % m_size] = buffer[i];
+		for (unsigned int i=0; i<size; i++) {
+			m_writeIndex++;
+			m_writeIndex = m_writeIndex % m_size;
+			m_buffer[m_writeIndex] = buffer[i];
+		}
 
 		m_condition.notify_one();
 	}
 
 	void getStat(unsigned long *readBytes, unsigned long *writtenBytes)
 	{
-		std::unique_lock<std::mutex> mlock(m_mutex);
 		*readBytes = m_bytesRead;
 		*writtenBytes = m_bytesWritten;
 	}
 
+	inline unsigned int availableToRead()
+	{
+		return m_size - availableToWrite();
+	}
+
+	inline unsigned int availableToWrite()
+	{
+		int distance = abs(m_readIndex - m_writeIndex);
+		return m_writeIndex < m_readIndex ? distance : m_size - distance;
+	}
+
 private:
 	T *m_buffer;
-	int m_size;
+	std::atomic<int> m_size;
 
 	std::mutex m_mutex;
 	std::condition_variable m_condition;
 
-	unsigned long m_bytesRead;
-	unsigned long m_bytesWritten;
+	std::atomic<unsigned long> m_bytesRead;
+	std::atomic<unsigned long> m_bytesWritten;
 
-	unsigned int m_readIndex;
-	unsigned int m_writeIndex;
+	std::atomic<unsigned int> m_readIndex;
+	std::atomic<unsigned int> m_writeIndex;
 
-	unsigned int availableToRead()
-	{
-		int ret = m_size - m_readIndex + m_writeIndex;
-		return ret;
-	}
-
-	unsigned int availableToWrite()
-	{
-		int ret = m_size - m_writeIndex + m_readIndex;
-		return ret;
-	}
 
 };

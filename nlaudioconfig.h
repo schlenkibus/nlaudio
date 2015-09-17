@@ -9,10 +9,7 @@ class NlAudioException : std::exception
 public:
 	NlAudioException(std::string what) : msg(what) {}
 private:
-	virtual const char* what() const throw()
-	{
-	  return msg.c_str();
-	}
+	virtual const char* what() const throw() { return msg.c_str(); }
 	std::string msg;
 };
 
