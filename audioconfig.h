@@ -4,10 +4,12 @@
 #include <exception>
 #include <string>
 
-class NlAudioException : std::exception
+namespace Nl {
+
+class AudioException : std::exception
 {
 public:
-	NlAudioException(std::string what) : msg(what) {}
+	AudioException(std::string what) : msg(what) {}
 private:
 	virtual const char* what() const throw() { return msg.c_str(); }
 	std::string msg;
@@ -27,3 +29,5 @@ private:
 	uint8_t m_channels;
 
 };
+
+} // namespace Nl

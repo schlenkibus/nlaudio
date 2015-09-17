@@ -5,6 +5,8 @@
 #include <atomic>
 #include <cstring>
 
+namespace Nl {
+
 template <typename T>
 class BlockingCircularBuffer
 {
@@ -93,3 +95,5 @@ private:
 
 
 };
+
+} // namespace Nl

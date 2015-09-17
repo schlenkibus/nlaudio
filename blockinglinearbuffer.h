@@ -3,6 +3,8 @@
 #include <mutex>
 #include <condition_variable>
 
+namespace Nl {
+
 template <typename T>
 class BlockingLinearBuffer
 {
@@ -63,3 +65,5 @@ private:
 	unsigned long m_bytesWritten;
 
 };
+
+} // namespace Nl

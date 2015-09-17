@@ -5,13 +5,14 @@
 #include <queue>
 #include <string>
 
+namespace Nl {
 
 typedef unsigned int samplerate_t;
 typedef std::string sampleformat_t;
 typedef std::string devicename_t;
 typedef unsigned int channelcount_t;
 
-class NlAudio
+class Audio
 {
 public:
 	virtual void open() = 0;
@@ -39,6 +40,7 @@ public:
 protected:
 
 
+}; // Namespace Nl
 
 };
 

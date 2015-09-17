@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nlaudio.h"
+#include "audio.h"
 
 #include <alsa/asoundlib.h>
 #include <thread>
@@ -9,6 +9,8 @@
 #include <sstream>
 
 #include "blockingcircularbuffer.h"
+
+namespace Nl {
 
 struct SampleSpecs {
 	unsigned int channels;			/// Channels
@@ -28,10 +30,10 @@ struct Statistics {
 };
 std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs);
 
-class NlAudioAlsaException : std::exception
+class AudioAlsaException : std::exception
 {
 public:
-	NlAudioAlsaException(std::string func, std::string file, int line, int errorNumber, std::string what) :
+	AudioAlsaException(std::string func, std::string file, int line, int errorNumber, std::string what) :
 		m_func(func),
 		m_file(file),
 		m_line(line),
@@ -51,13 +53,13 @@ private:
 	std::string m_msg;
 };
 
-class NlAudioAlsa : public NlAudio
+class AudioAlsa : public Audio
 {
 public:
-	typedef NlAudio basetype;
+	typedef Audio basetype;
 
-	NlAudioAlsa(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<char>> buffer, bool isInput);
-	virtual ~NlAudioAlsa();
+	AudioAlsa(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<char>> buffer, bool isInput);
+	virtual ~AudioAlsa();
 
 	virtual void open() = 0; // Might throw, therefore not in constructor
 	virtual void close();
@@ -95,7 +97,7 @@ protected:
 	void resetTerminateRequest() { m_requestTerminate = false; }
 	bool getTerminateRequest() const { return m_requestTerminate; }
 
-	static int xrunRecovery(NlAudioAlsa *ptr, int err);
+	static int xrunRecovery(AudioAlsa *ptr, int err);
 
 	//TODO: Only Public for debug purposes!!!!
 public:
@@ -116,3 +118,5 @@ private:
 	bool m_isInput;
 
 };
+
+} // namespace Nl

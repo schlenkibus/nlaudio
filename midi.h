@@ -1,9 +1,10 @@
 #pragma once
 
+namespace Nl {
+
 typedef std::string devicename_t;
 
-
-class NlMidi
+class Midi
 {
 public:
 	virtual void open() = 0;
@@ -14,3 +15,5 @@ public:
 
 
 };
+
+} // namespace Nl

@@ -1,7 +1,9 @@
-#include "nlrawmididevice.h"
+#include "rawmididevice.h"
 #include <thread>
 #include <iostream>
 #include <sstream>
+
+namespace Nl {
 
 NlRawMidiDevice::NlRawMidiDevice(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<unsigned char> > buffer) :
 	m_handle(nullptr),
@@ -77,7 +79,7 @@ void NlRawMidiDevice::setAlsaMidiBufferSize(unsigned int size)
 void NlRawMidiDevice::throwOnAlsaError(int e, const std::string &function) const
 {
 	if (e < 0) {
-		throw NlRawMidiDeviceException(e, function + ": " + snd_strerror(e));
+		throw RawMidiDeviceException(e, function + ": " + snd_strerror(e));
 	}
 }
 
@@ -163,7 +165,7 @@ std::list<NlMidiCard> NlRawMidiDevice::getAvailableDevices()
 
 				err = snd_ctl_rawmidi_info(ctl, info);
 
-				NlMidiDevice device;
+				MidiDevice device;
 				device.name = snd_rawmidi_info_get_name(info);
 				device.subName = snd_rawmidi_info_get_subdevice_name(info);
 				if (sub < subsIn && sub < subsOut)
@@ -202,7 +204,7 @@ devicename_t NlRawMidiDevice::getFirstDevice()
 	devicename_t ret;
 	if (devices.size()) {
 		NlMidiCard firstCard = devices.front();
-		NlMidiDevice firstDevice = firstCard.devices.front();
+		MidiDevice firstDevice = firstCard.devices.front();
 
 
 		std::stringstream ss;
@@ -225,7 +227,7 @@ std::ostream& operator<<(std::ostream& lhs, const NlMidiDeviceDirection& rhs)
 	return lhs;
 }
 
-std::ostream& operator<<(std::ostream& lhs, const NlMidiDevice& rhs)
+std::ostream& operator<<(std::ostream& lhs, const MidiDevice& rhs)
 {
 	lhs <<  ":" << rhs.device << ":" << rhs.subdevice << "\t\t" << rhs.name /* << "\t" << rhs.subName */ << "\t" << rhs.direction;
 	return lhs;
@@ -240,3 +242,5 @@ std::ostream& operator<<(std::ostream& lhs, const NlMidiCard& rhs)
 	}
 	return lhs;
 }
+
+}  // namespace Nl

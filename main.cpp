@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "nlaudioalsainput.h"
-#include "nlaudioalsaoutput.h"
+#include "audioalsainput.h"
+#include "audioalsaoutput.h"
 
-#include "nlmidi.h"
-#include "nlrawmididevice.h"
+#include "midi.h"
+#include "rawmididevice.h"
 
 #include <stdio.h>
 #include <sched.h>
@@ -12,11 +12,12 @@
 #include <cmath>
 
 #include "blockingcircularbuffer.h"
-#include "nlaudiofactory.h"
+#include "audiofactory.h"
 
 using namespace std;
+using namespace Nl;
 
-void printInfos(const NlAudioAlsa& device)
+void printInfos(const AudioAlsa& device)
 {
 	auto sampleFormats = device.getAvailableSampleformats();
 
@@ -54,7 +55,7 @@ int main()
 		}
 
 
-	} catch (NlAudioAlsaException &e) {
+	} catch (AudioAlsaException &e) {
 		std::cout << "### Exception: " << std::endl << "  " << e.what();
 	}
 

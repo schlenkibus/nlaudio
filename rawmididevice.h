@@ -6,13 +6,15 @@
 #include <list>
 #include <atomic>
 
-#include "nlmidi.h"
+#include "midi.h"
 #include "blockingcircularbuffer.h"
 
-class NlRawMidiDeviceException : std::exception
+namespace Nl {
+
+class RawMidiDeviceException : std::exception
 {
 public:
-	NlRawMidiDeviceException(int errorNumber, std::string what) : m_errno(errorNumber), m_msg(what) {}
+	RawMidiDeviceException(int errorNumber, std::string what) : m_errno(errorNumber), m_msg(what) {}
 	virtual const char* what() const throw() { return m_msg.c_str(); }
 private:
 	int m_errno;
@@ -26,23 +28,23 @@ enum NlMidiDeviceDirection {
 };
 std::ostream& operator<<(std::ostream& lhs, const NlMidiDeviceDirection& rhs);
 
-struct NlMidiDevice {
+struct MidiDevice {
 	int device;
 	int subdevice;
 	NlMidiDeviceDirection direction;
 	devicename_t name;
 	devicename_t subName;
 };
-std::ostream& operator<<(std::ostream& lhs, const NlMidiDevice& rhs);
+std::ostream& operator<<(std::ostream& lhs, const MidiDevice& rhs);
 
 struct NlMidiCard {
 	int card;
-	std::list<struct NlMidiDevice> devices;
+	std::list<struct MidiDevice> devices;
 };
 std::ostream& operator<<(std::ostream& lhs, const NlMidiCard& rhs);
 
 
-class NlRawMidiDevice : NlMidi
+class NlRawMidiDevice : Midi
 {
 public:
 	NlRawMidiDevice(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<unsigned char>> buffer);
@@ -75,3 +77,5 @@ private:
 	static void worker(NlRawMidiDevice *ptr);
 
 };
+
+} // namespace Nl
