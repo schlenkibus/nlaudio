@@ -40,7 +40,7 @@ public:
 protected:
 
 
-}; // Namespace Nl
-
 };
+
+} // Namespace Nl
 

@@ -2,7 +2,7 @@
 
 namespace Nl {
 
-AudioAlsaInput::AudioAlsaInput(const devicename_t &name, std::shared_ptr<BlockingCircularBuffer<char> > buffer) :
+AudioAlsaInput::AudioAlsaInput(const devicename_t &name, std::shared_ptr<BlockingCircularBuffer<char>> buffer) :
 	basetype(name, buffer, true)
 {
 }
@@ -24,7 +24,6 @@ void AudioAlsaInput::start()
 	unsigned int channels = 0;
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_get_channels(m_hwParams, &channels));
 
-
 	SampleSpecs specs;
 	specs.channels = channels;
 	specs.buffersizeInFrames = getBuffersize();
@@ -33,7 +32,9 @@ void AudioAlsaInput::start()
 	specs.bytesPerFrame = specs.bytesPerSample * specs.channels;
 	specs.buffersizeInBytes = specs.bytesPerSample * specs.channels * specs.buffersizeInFrames;
 	specs.buffersizeInBytesPerPeriode = specs.buffersizeInBytes / getBufferCount();
-	std::cout << "NlAudioAlsaInput Specs: " << std::endl << specs;
+	//std::cout << "NlAudioAlsaInput Specs: " << std::endl << specs;
+
+	basetype::m_audioBuffer->resize(specs.buffersizeInBytes);
 
 	m_audioThread = new std::thread(AudioAlsaInput::worker, specs, this);
 }
@@ -63,8 +64,8 @@ void AudioAlsaInput::worker(SampleSpecs specs, AudioAlsaInput *ptr)
 
 		if (ret < 0)
 			ptr->basetype::xrunRecovery(ptr, ret);
-		//else if (ret != specs.buffersizeInFramesPerPeriode)
-		//std::cout << "### FIXME ###" << std::endl;
+		else if (ret != specs.buffersizeInFramesPerPeriode)
+			std::cout << "### FIXME ###" << std::endl;
 
 		// Might block, if no space in buffer
 		ptr->basetype::m_audioBuffer->set(buffer, specs.buffersizeInBytesPerPeriode);
@@ -73,7 +74,7 @@ void AudioAlsaInput::worker(SampleSpecs specs, AudioAlsaInput *ptr)
 	snd_pcm_abort(ptr->m_handle);
 
 	delete[] buffer;
-	std::cout << __func__ << " Input out" << std::endl;
+	//std::cout << __func__ << " Input out" << std::endl;
 }
 
 } // namespace Nl

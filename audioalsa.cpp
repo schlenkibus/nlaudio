@@ -1,5 +1,6 @@
 #include "audioalsa.h"
 #include "audio.h"
+#include "tools.h"
 
 #include <iostream>
 
@@ -22,6 +23,7 @@ AudioAlsa::~AudioAlsa()
 }
 
 /// Error Handling
+#define THROW_ON_ALSA_ERROR(x) { throwOnAlsaError(__FILE__, __func__, __LINE__, x); }
 void AudioAlsa::throwOnAlsaError(const std::string& file, const std::string& func, int line, int e) const
 {
 	if (e < 0) {
@@ -44,10 +46,10 @@ void AudioAlsa::throwOnDeviceRunning(const std::string &file, const std::string 
 /// Open / Close
 void AudioAlsa::openCommon()
 {
-	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_open(&m_handle, m_deviceName.c_str(), m_isInput ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK, SND_PCM_ASYNC));
-	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_malloc(&m_hwParams));
-	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_any(m_handle, m_hwParams));
-	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_access(m_handle, m_hwParams, SND_PCM_ACCESS_RW_INTERLEAVED));
+	THROW_ON_ALSA_ERROR(snd_pcm_open(&m_handle, m_deviceName.c_str(), m_isInput ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK, SND_PCM_ASYNC));
+	THROW_ON_ALSA_ERROR(snd_pcm_hw_params_malloc(&m_hwParams));
+	THROW_ON_ALSA_ERROR(snd_pcm_hw_params_any(m_handle, m_hwParams));
+	THROW_ON_ALSA_ERROR(snd_pcm_hw_params_set_access(m_handle, m_hwParams, SND_PCM_ACCESS_RW_INTERLEAVED));
 
 	m_deviceOpen = true;
 }
@@ -64,7 +66,7 @@ void AudioAlsa::close()
 /// Buffersize
 void AudioAlsa::setBuffersize(unsigned int buffersize)
 {
-	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_buffer_size(m_handle, m_hwParams, static_cast<snd_pcm_uframes_t>(buffersize)));
+	THROW_ON_ALSA_ERROR(snd_pcm_hw_params_set_buffer_size(m_handle, m_hwParams, static_cast<snd_pcm_uframes_t>(buffersize)));
 }
 
 unsigned int AudioAlsa::getBuffersize()

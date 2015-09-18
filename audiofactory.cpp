@@ -8,18 +8,53 @@
 
 namespace Nl {
 
-/// Buffer
-AudioBuffer_t getBuffer(unsigned int size)
+const int DEFAULT_BUFFERSIZE = 128;
+std::map<std::string, Buffer_t> BuffersDictionary;
+
+/// Termination
+TerminateFlag_t getTerminateFlag()
 {
-	return std::shared_ptr<BlockingCircularBuffer<char>>(new BlockingCircularBuffer<char>(size));
+	return TerminateFlag_t(false);
 }
 
+void terminateWorkingThread(WorkingThreadHandle_t handle)
+{
+	handle.terminateRequest->store(true);
+	handle.thread->join();
+}
+
+/// Buffer
+Buffer_t getBuffer(const std::string& name)
+{
+	// This size is in Bytes, while the buffersize below is in frames!
+	//TODO: If i set buffersize to 0 or so, it does not work, even if resized afterwards. Don't know why, this needs
+	//		further investigation
+	return getBuffer(2*DEFAULT_BUFFERSIZE, name);
+}
+
+Buffer_t getBuffer(unsigned int size, const std::string& name)
+{
+	// This size is in Bytes, while the buffersize below is in frames!
+	Buffer_t newBuffer = Buffer_t(new BlockingCircularBuffer<char>(size, name));
+
+	BuffersDictionary.insert(std::make_pair(name, newBuffer));
+	return newBuffer;
+}
+
+Buffer_t getBufferForName(const std::string& name)
+{
+	auto it = BuffersDictionary.find(name);
+
+	if (it == BuffersDictionary.end())
+		//TODO: proper errorhandling
+		return nullptr;
+
+	return it->second;
+}
 
 /// Input Factories
-std::shared_ptr<AudioAlsaInput> getInputDevice(const std::string& name, AudioBuffer_t buffer)
+AudioAlsaInput_t getInputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
 {
-	const int buffersize = 128; // In frames
-
 	std::shared_ptr<AudioAlsaInput> input(new AudioAlsaInput(name, buffer));
 	input->open();
 	input->setBufferCount(2);
@@ -28,16 +63,19 @@ std::shared_ptr<AudioAlsaInput> getInputDevice(const std::string& name, AudioBuf
 	return input;
 }
 
-std::shared_ptr<AudioAlsaInput> getDefaultInputDevice(AudioBuffer_t buffer)
+AudioAlsaInput_t getInputDevice(const std::string& name, Buffer_t buffer)
+{
+	return getInputDevice(name, buffer, DEFAULT_BUFFERSIZE);
+}
+
+AudioAlsaInput_t getDefaultInputDevice(Buffer_t buffer)
 {
 	return getInputDevice("default", buffer);
 }
 
 /// Output Factories
-std::shared_ptr<AudioAlsaOutput> getOutputDevice(const std::string& name, AudioBuffer_t buffer)
+AudioAlsaOutput_t getOutputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
 {
-	const int buffersize = 128; // In frames
-
 	std::shared_ptr<AudioAlsaOutput> output(new AudioAlsaOutput(name, buffer));
 	output->open();
 	output->setBufferCount(2);
@@ -46,22 +84,47 @@ std::shared_ptr<AudioAlsaOutput> getOutputDevice(const std::string& name, AudioB
 	return output;
 }
 
-std::shared_ptr<AudioAlsaOutput> getDefaultOutputDevice(AudioBuffer_t buffer)
+AudioAlsaOutput_t getOutputDevice(const std::string& name, Buffer_t buffer)
+{
+	return getOutputDevice(name, buffer, DEFAULT_BUFFERSIZE);
+}
+
+AudioAlsaOutput_t getDefaultOutputDevice(Buffer_t buffer)
 {
 	return getOutputDevice("default", buffer);
 }
 
-#if 0
-/// Input/Output Factories
-std::shared_ptr<NlAudio> getDefaultInputOutputDevice(AudioBuffer_t buffer)
+/// Callbacks
+WorkingThread_t registerInputCallbackOnBuffer(Buffer_t inBuffer,
+														   audioCallbackIn callback,
+														   std::shared_ptr<std::atomic<bool>> terminateRequest)
 {
-	NOT_IMPLEMENTED;
+	return std::shared_ptr<std::thread>(new std::thread(readAudioFunction,
+														inBuffer,
+														callback,
+														terminateRequest));
 }
 
-std::shared_ptr<NlAudio> getInputOutputDevice(const std::string& name)
+WorkingThread_t registerOutputCallbackOnBuffer(Buffer_t outBuffer,
+															audioCallbackOut callback,
+															std::shared_ptr<std::atomic<bool>> terminateRequest)
 {
-	NOT_IMPLEMENTED;
+	return std::shared_ptr<std::thread>(new std::thread(writeAudioFunction,
+														outBuffer,
+														callback,
+														terminateRequest));
 }
-#endif
+
+WorkingThread_t registerInOutCallbackOnBuffer(Buffer_t inBuffer,
+														   Buffer_t outBuffer,
+														   audioCallbackInOut callback,
+														   std::shared_ptr<std::atomic<bool>> terminateRequest)
+{
+	return std::shared_ptr<std::thread>(new std::thread(readWriteAudioFunction,
+														inBuffer,
+														outBuffer,
+														callback,
+														terminateRequest));
+}
 
 } // namespace Nl

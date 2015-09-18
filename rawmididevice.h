@@ -15,7 +15,7 @@ class RawMidiDeviceException : std::exception
 {
 public:
 	RawMidiDeviceException(int errorNumber, std::string what) : m_errno(errorNumber), m_msg(what) {}
-	virtual const char* what() const throw() { return m_msg.c_str(); }
+	virtual const char* what() const noexcept { return m_msg.c_str(); }
 private:
 	int m_errno;
 	std::string m_msg;
@@ -44,10 +44,10 @@ struct NlMidiCard {
 std::ostream& operator<<(std::ostream& lhs, const NlMidiCard& rhs);
 
 
-class NlRawMidiDevice : Midi
+class NlRawMidiDevice : public Midi
 {
 public:
-	NlRawMidiDevice(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<unsigned char>> buffer);
+	NlRawMidiDevice(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<char>> buffer);
 	~NlRawMidiDevice();
 
 	static std::list<NlMidiCard> getAvailableDevices();
@@ -68,7 +68,7 @@ private:
 	devicename_t m_deviceName;
 	int m_buffersize;
 	std::thread *m_thread;
-	std::shared_ptr<BlockingCircularBuffer<unsigned char>> m_buffer;
+	std::shared_ptr<BlockingCircularBuffer<char>> m_buffer;
 
 	void throwOnAlsaError(int e, const std::string& function) const;
 	void setAlsaMidiBufferSize(unsigned int size);

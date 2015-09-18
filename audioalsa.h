@@ -30,7 +30,7 @@ struct Statistics {
 };
 std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs);
 
-class AudioAlsaException : std::exception
+class AudioAlsaException : public std::exception
 {
 public:
 	AudioAlsaException(std::string func, std::string file, int line, int errorNumber, std::string what) :
@@ -39,7 +39,7 @@ public:
 		m_line(line),
 		m_errno(errorNumber),
 		m_msg(what) {}
-	virtual const char* what() const throw()
+	virtual const char* what() const noexcept
 	{
 		std::stringstream ss;
 		ss << m_file << ":" << m_func << ":" << m_line << ": " << m_msg;

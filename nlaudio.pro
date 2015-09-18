@@ -14,7 +14,8 @@ SOURCES += main.cpp \
     audioalsaoutput.cpp \
     audioconfig.cpp \
     audiofactory.cpp \
-    rawmididevice.cpp
+    rawmididevice.cpp \
+    examples.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -30,7 +31,8 @@ HEADERS += \
     audioconfig.h \
     audiofactory.h \
     midi.h \
-    rawmididevice.h
+    rawmididevice.h \
+    examples.h
 
 OTHER_FILES += \
     Todo.txt

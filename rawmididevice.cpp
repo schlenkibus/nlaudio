@@ -5,7 +5,7 @@
 
 namespace Nl {
 
-NlRawMidiDevice::NlRawMidiDevice(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<unsigned char> > buffer) :
+NlRawMidiDevice::NlRawMidiDevice(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<char> > buffer) :
 	m_handle(nullptr),
 	m_params(nullptr),
 	m_deviceName(device),
@@ -44,7 +44,7 @@ void NlRawMidiDevice::worker(NlRawMidiDevice *ptr)
 {
 	const int buffersize = ptr->m_buffersize;
 
-	unsigned char buffer[buffersize];
+	char buffer[buffersize];
 
 	snd_rawmidi_drain(ptr->m_handle);
 
@@ -52,11 +52,6 @@ void NlRawMidiDevice::worker(NlRawMidiDevice *ptr)
 		if (snd_rawmidi_read(ptr->m_handle, buffer, buffersize) < 0) {
 			std::cout << "TODO:" << __func__ << ":" << __LINE__ << " -- " << "Fix errorhandling in reader thread!" << std::endl;
 		} else {
-			buffer[0] = 0;
-			buffer[1] = 1;
-			buffer[2] = 2;
-
-
 			ptr->m_buffer->set(buffer, buffersize);
 		}
 	}
