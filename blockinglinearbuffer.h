@@ -60,10 +60,8 @@ private:
 
 	std::mutex m_mutex;
 	std::condition_variable m_condition;
-
 	unsigned long m_bytesRead;
 	unsigned long m_bytesWritten;
-
 };
 
 } // namespace Nl

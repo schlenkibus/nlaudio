@@ -6,7 +6,7 @@
 
 namespace Nl {
 
-AudioAlsa::AudioAlsa(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<char> > buffer, bool isInput) :
+AudioAlsa::AudioAlsa(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<u_int8_t>> buffer, bool isInput) :
 	m_handle(nullptr),
 	m_hwParams(nullptr),
 	m_audioBuffer(buffer),
@@ -133,14 +133,25 @@ std::list<sampleformat_t> AudioAlsa::getAvailableSampleformats() const
 	return ret;
 }
 
+sampleformat_t AudioAlsa::getSampleFormat() const
+{
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
+
+	snd_pcm_format_t val;
+
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_get_format(m_hwParams, &val));
+
+	return snd_pcm_format_name(val);
+}
+
 void AudioAlsa::setSampleFormat(sampleformat_t format)
 {
 	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 
 	snd_pcm_format_t alsaFormat = snd_pcm_format_value(format.c_str());
 
-	printf("alsaFormat=%i\n", alsaFormat);
-	printf("alsaFormat=%s\n", snd_pcm_format_name(alsaFormat));
+	//printf("alsaFormat=%i\n", alsaFormat);
+	//printf("alsaFormat=%s\n", snd_pcm_format_name(alsaFormat));
 
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_format(m_handle, m_hwParams, alsaFormat));
 }
@@ -166,19 +177,6 @@ std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs)
 	lhs << "  Bytes Read From Buffer:   " << rhs.bytesReadFromBuffer << std::endl
 		<< "  Bytes Written To Buffer:  " << rhs.bytesWrittenToBuffer << std::endl
 		<< "  XRun Count:               " << rhs.xrunCount << std::endl;
-
-	return lhs;
-}
-
-std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs)
-{
-	lhs << "Buffersize in Frames:              " << rhs.buffersizeInFrames << std::endl <<
-		   "Buffersize in Frames Per Periode:  " << rhs.buffersizeInFramesPerPeriode << std::endl <<
-		   "Buffersize in Bytes:               " << rhs.buffersizeInBytes << std::endl <<
-		   "Buffersize in Bytes Per Periode:   " << rhs.buffersizeInBytesPerPeriode << std::endl <<
-		   "Bytes Per Frame:                   " << rhs.bytesPerFrame << std::endl <<
-		   "Bytes Per Sample:                  " << rhs.bytesPerSample << std::endl <<
-		   "Channels:                          " << rhs.channels << std::endl;
 
 	return lhs;
 }

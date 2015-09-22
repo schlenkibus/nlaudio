@@ -12,9 +12,9 @@ const int DEFAULT_BUFFERSIZE = 128;
 std::map<std::string, Buffer_t> BuffersDictionary;
 
 /// Termination
-TerminateFlag_t getTerminateFlag()
+TerminateFlag_t createTerminateFlag()
 {
-	return TerminateFlag_t(false);
+	return TerminateFlag_t(new std::atomic<bool>(false));
 }
 
 void terminateWorkingThread(WorkingThreadHandle_t handle)
@@ -23,19 +23,9 @@ void terminateWorkingThread(WorkingThreadHandle_t handle)
 	handle.thread->join();
 }
 
-/// Buffer
-Buffer_t getBuffer(const std::string& name)
+Buffer_t createBuffer(const std::string& name)
 {
-	// This size is in Bytes, while the buffersize below is in frames!
-	//TODO: If i set buffersize to 0 or so, it does not work, even if resized afterwards. Don't know why, this needs
-	//		further investigation
-	return getBuffer(2*DEFAULT_BUFFERSIZE, name);
-}
-
-Buffer_t getBuffer(unsigned int size, const std::string& name)
-{
-	// This size is in Bytes, while the buffersize below is in frames!
-	Buffer_t newBuffer = Buffer_t(new BlockingCircularBuffer<char>(size, name));
+	Buffer_t newBuffer = Buffer_t(new BlockingCircularBuffer<u_int8_t>(name));
 
 	BuffersDictionary.insert(std::make_pair(name, newBuffer));
 	return newBuffer;
@@ -53,7 +43,7 @@ Buffer_t getBufferForName(const std::string& name)
 }
 
 /// Input Factories
-AudioAlsaInput_t getInputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
+AudioAlsaInput_t createInputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
 {
 	std::shared_ptr<AudioAlsaInput> input(new AudioAlsaInput(name, buffer));
 	input->open();
@@ -63,18 +53,18 @@ AudioAlsaInput_t getInputDevice(const std::string& name, Buffer_t buffer, unsign
 	return input;
 }
 
-AudioAlsaInput_t getInputDevice(const std::string& name, Buffer_t buffer)
+AudioAlsaInput_t createInputDevice(const std::string& name, Buffer_t buffer)
 {
-	return getInputDevice(name, buffer, DEFAULT_BUFFERSIZE);
+	return createInputDevice(name, buffer, DEFAULT_BUFFERSIZE);
 }
 
-AudioAlsaInput_t getDefaultInputDevice(Buffer_t buffer)
+AudioAlsaInput_t createDefaultInputDevice(Buffer_t buffer)
 {
-	return getInputDevice("default", buffer);
+	return createInputDevice("default", buffer);
 }
 
 /// Output Factories
-AudioAlsaOutput_t getOutputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
+AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
 {
 	std::shared_ptr<AudioAlsaOutput> output(new AudioAlsaOutput(name, buffer));
 	output->open();
@@ -84,14 +74,14 @@ AudioAlsaOutput_t getOutputDevice(const std::string& name, Buffer_t buffer, unsi
 	return output;
 }
 
-AudioAlsaOutput_t getOutputDevice(const std::string& name, Buffer_t buffer)
+AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer)
 {
-	return getOutputDevice(name, buffer, DEFAULT_BUFFERSIZE);
+	return createOutputDevice(name, buffer, DEFAULT_BUFFERSIZE);
 }
 
-AudioAlsaOutput_t getDefaultOutputDevice(Buffer_t buffer)
+AudioAlsaOutput_t createDefaultOutputDevice(Buffer_t buffer)
 {
-	return getOutputDevice("default", buffer);
+	return createOutputDevice("default", buffer);
 }
 
 /// Callbacks

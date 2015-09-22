@@ -12,17 +12,6 @@
 
 namespace Nl {
 
-struct SampleSpecs {
-	unsigned int channels;			/// Channels
-	unsigned int bytesPerFrame;		/// = channels * bytesPerSample
-	unsigned int buffersizeInFrames;		/// Size of buffer. This is relevant for latency
-	unsigned int buffersizeInFramesPerPeriode;
-	unsigned int buffersizeInBytes; ///
-	unsigned int buffersizeInBytesPerPeriode;
-	unsigned int bytesPerSample;	/// with 24_BE3 this would be 3, with S16 this would be 2
-};
-std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs);
-
 struct Statistics {
 	unsigned long bytesReadFromBuffer;
 	unsigned long bytesWrittenToBuffer;
@@ -58,7 +47,7 @@ class AudioAlsa : public Audio
 public:
 	typedef Audio basetype;
 
-	AudioAlsa(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<char>> buffer, bool isInput);
+	AudioAlsa(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<u_int8_t>> buffer, bool isInput);
 	virtual ~AudioAlsa();
 
 	virtual void open() = 0; // Might throw, therefore not in constructor
@@ -79,6 +68,7 @@ public:
 	virtual void setSamplerate(samplerate_t rate);
 
 	virtual std::list<sampleformat_t> getAvailableSampleformats() const;
+	virtual sampleformat_t getSampleFormat() const;
 	virtual void setSampleFormat(sampleformat_t format);
 
 	virtual void setChannelCount(channelcount_t n);
@@ -99,16 +89,13 @@ protected:
 
 	static int xrunRecovery(AudioAlsa *ptr, int err);
 
-	//TODO: Only Public for debug purposes!!!!
-public:
-	snd_pcm_t *m_handle;
-
 protected:
+	snd_pcm_t *m_handle;
 	std::thread *m_audioThread;
 	snd_pcm_hw_params_t *m_hwParams;
 	std::atomic<bool> m_requestTerminate;
 	std::atomic<unsigned int> m_xrunRecoveryCounter;
-	std::shared_ptr<BlockingCircularBuffer<char>> m_audioBuffer;
+	std::shared_ptr<BlockingCircularBuffer<u_int8_t>> m_audioBuffer;
 
 	void throwOnAlsaError(const std::string &file, const std::string &func, int line, int e) const;
 private:

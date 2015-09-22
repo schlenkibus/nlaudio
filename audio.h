@@ -28,6 +28,7 @@ public:
 	virtual void setSamplerate(samplerate_t rate) = 0;
 
 	virtual std::list<sampleformat_t> getAvailableSampleformats() const = 0;
+	virtual sampleformat_t getSampleFormat() const = 0;
 	virtual void setSampleFormat(sampleformat_t format) = 0;
 
 	virtual void setChannelCount(channelcount_t n) = 0;

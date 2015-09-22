@@ -19,16 +19,10 @@
 using namespace std;
 using namespace Nl;
 
-// Just copy samples from in- to output
-void callback(void *in, void *out, size_t size)
-{
-	memcpy(out, in, size);
-}
-
-
 int main()
 {
 
+#if 0
 	// Changing priority only works as root
 	int which = PRIO_PROCESS;
 	id_t pid;
@@ -36,15 +30,23 @@ int main()
 
 	pid = getpid();
 	int ret = setpriority(which, pid, priority);
+#endif
 
 	try {
 
-		auto handle = Nl::Examples::inputToOutput(512, 44100);
-
+		//Nl::Examples::ExamplesHandle_t handle = Nl::Examples::inputToOutput("hw:1,0", "hw:1,0", 512, 44100);
+		Nl::Examples::ExamplesHandle_t handle = Nl::Examples::midiSine("hw:1,0", 1024, 48000);
 
 		// Wait for user to exit by pressing 'q'
 		// Print buffer statistics on other keys
-		while(getchar() != 'q');
+		while(getchar() != 'q') {
+			if (handle.audioInput) std::cout << "Input:" << std::endl
+											 << handle.audioInput->getStats() << std::endl;
+			if (handle.audioOutput) std::cout << "Output:" << std::endl
+											  << handle.audioOutput->getStats() << std::endl;
+		}
+
+		std::cout << "Reached End.." << std::endl;
 
 		// Tell worker thread to cleanup and quit
 		Nl::terminateWorkingThread(handle.workingThreadHandle);
@@ -59,6 +61,7 @@ int main()
 		std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
 	}
 
+	//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	std::cout << std::endl;
 
 	return 0;

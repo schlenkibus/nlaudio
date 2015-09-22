@@ -5,6 +5,7 @@
 #include <atomic>
 #include <cstring>
 #include <iostream>
+#include "tools.h"
 
 namespace Nl {
 
@@ -12,47 +13,61 @@ template <typename T>
 class BlockingCircularBuffer
 {
 public:
-	BlockingCircularBuffer(unsigned int size, const std::string& name) :
-		m_buffer(new T[size]),
-		m_size(size),
+	BlockingCircularBuffer(const std::string& name) :
+		m_buffer(nullptr),
+		m_size(0),
 		m_name(name),
 		m_bytesRead(0),
 		m_bytesWritten(0),
 		m_readIndex(0),
 		m_writeIndex(0)
-	{
-		memset(m_buffer, 0, m_size);
-	}
+	{}
 
 	~BlockingCircularBuffer()
 	{
-		delete[] m_buffer;
+		if (m_buffer)
+			delete[] m_buffer;
 	}
 
-	void resize(unsigned int size)
+	void init(const SampleSpecs_t &sampleSpecs)
 	{
-		//std::unique_lock<std::mutex> mlock(m_mutex);
-		delete [] m_buffer;
+		std::unique_lock<std::mutex> mlock(m_mutex);
 
-		m_buffer = new T[size];
-		memset(m_buffer, 0, size);
+		if (m_buffer)
+			delete [] m_buffer;
 
-		m_size = size;
+		m_size = sampleSpecs.buffersizeInBytes;
+
+		m_buffer = new T[m_size];
+		memset(m_buffer, 0, m_size);
+
 		m_bytesRead = 0;
 		m_bytesWritten = 0;
 		m_readIndex = 0;
 		m_writeIndex = 0;
+		m_sampleSpecs = sampleSpecs;
 
-		//std::cout << "Buffer: " << m_name << " resized to: " << m_size << std::endl;
+		std::cout << "Buffer: " << m_name << " resized to: " << m_size << std::endl;
+
+		m_condition.notify_one();
 	}
 
 	// Block callee, if nothing to read
 	void get(T *buffer, unsigned int size)
 	{
+		if (!m_buffer) {
+			std::cout << "Buffer (" << m_name << ") not initialized!" << std::endl;
+		//	exit(-1);
+		}
+
+		std::cout << "WANT READ 1" << std::endl;
+
 		std::unique_lock<std::mutex> mlock(m_mutex);
+		//while (availableToRead() < size || !m_buffer) {
 		while (availableToRead() < size) {
-			//std::cout << "[" << m_name << "] waiting, availableToRead=" << availableToRead() << "/" << size << std::endl;
 			m_condition.wait(mlock);
+		std::cout << "WANT READ 2" << std::endl;
+			//std::cout << "[" << m_name << "] waiting, availableToRead=" << availableToRead() << "/" << size << std::endl;
 		}
 
 		m_bytesRead += size;
@@ -69,9 +84,18 @@ public:
 	// Block callee, if no space in buffer
 	void set(T *buffer, unsigned int size)
 	{
+		if (!m_buffer) {
+			std::cout << "Buffer (" << m_name << ") not initialized!" << std::endl;
+			//exit(-1);
+		}
+
+		std::cout << "[" << m_name << "] waiting, readIndex=" << m_readIndex << " writeIndex=" << m_writeIndex << " availableToWrite=" << availableToWrite() << "/" << size << std::endl;
+
 		std::unique_lock<std::mutex> mlock(m_mutex);
-		while (availableToWrite() < size)
+		//while (availableToWrite() < size || !m_buffer) {
+		while (availableToWrite() < size) {
 			m_condition.wait(mlock);
+		}
 
 		m_bytesWritten += size;
 
@@ -111,6 +135,11 @@ public:
 		return m_name;
 	}
 
+	inline SampleSpecs_t sampleSpecs()
+	{
+		return m_sampleSpecs;
+	}
+
 private:
 	T *m_buffer;
 	std::atomic<int> m_size;
@@ -125,7 +154,7 @@ private:
 	std::atomic<unsigned int> m_readIndex;
 	std::atomic<unsigned int> m_writeIndex;
 
-
+	SampleSpecs_t m_sampleSpecs;
 };
 
 } // namespace Nl
