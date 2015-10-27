@@ -21,6 +21,8 @@ ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::strin
 	ExamplesHandle_t ret;
 
 	ret.inBuffer = Nl::createBuffer("InputBuffer");
+	//typedef decltype(getTypeForBitlenght(ret.inBuffer->sampleSpecs())) SampleType;
+
 	ret.audioInput = Nl::createInputDevice(deviceInName, ret.inBuffer, buffersize);
 	ret.audioInput->setSamplerate(samplerate);
 
@@ -47,11 +49,10 @@ ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::strin
 void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpecs)
 {
 
-	memset(out, 0, size);
-	return;
+	double ramp = 0.0;
 
 	int32_t samples[sampleSpecs.buffersizeInSamples];
-	sinewave<int32_t>(samples, sampleSpecs, 440);
+	sinewave<int32_t>(samples, 4000);
 
 	u_int8_t *orig = out;
 
@@ -62,65 +63,29 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpe
 		}
 	}
 
-	for(int i=0; i<sampleSpecs.buffersizeInSamples; i++) {
-		printf("%08X %02X %02X %02X\n", samples[i], orig[i*3+2], orig[i*3+1], orig[i*3+0]);
-	}
-
-
-
-
-#if 0
-	for (int byte=0; byte<size; byte++) {
-		int currentByteSample = byte / (sampleSpecs.bytesPerSample * sampleSpecs.channels);
-		int currentChannel = (byte % (sampleSpecs.bytesPerSample * sampleSpecs.channels)) / 3;
-		int currentSample = byte / sampleSpecs.bytesPerFrame;
-
-		samples[currentChannel][currentSample] |=
-		//std::cout << (currentChannel ? "L" : "R") << currentSample << "\t" << std::endl;
-
-	}
-
-	unsigned int currentSample;
-
-	if (sampleSpecs.isLittleEndian) {
-		for (int i=0; i<sampleSpecs.bytesPerSample; i++)
-			*(static_cast<unsigned char*>(&currentSample) + i) = (res >> i * 8) & 0xff;
-	} else {
-		for (int i=0; i<sampleSpecs.bytesPerSample; i++)
-			*(samples[chn] + phys_bps - 1 - i) = (res >> i * 8) & 0xff;
-
-	}
-
-
-
-	for (int i=0; i<size; i++) {
-
-
-	}
-
-
-	for (int byte = 0; byte < sampleSpecs.bytesPerSample; byte++) {
-
-	}
-
-
-
-	for (unsigned int i=0; i<size; i++)
-		(static_cast<char*>(out))[i] = 0;
-
-#endif
+	//for(int i=0; i<sampleSpecs.buffersizeInSamples; i++) {
+	//	printf("%08X %02X %02X %02X\n", samples[i], orig[i*3+2], orig[i*3+1], orig[i*3+0]);
+	//}
 }
 
-ExamplesHandle_t midiSine(const std::string &deviceOutName, unsigned int buffersize, unsigned int samplerate)
+ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
+						  const std::string& midiInDeviceName,
+						  unsigned int buffersize,
+						  unsigned int samplerate)
 {
 	ExamplesHandle_t ret;
 
+	// Not needed, since we only playback here
 	ret.inBuffer = nullptr;
 	ret.audioInput = nullptr;
 
 	ret.outBuffer = Nl::createBuffer("OutputBuffer");
-	ret.audioOutput = Nl::createOutputDevice(deviceOutName, ret.outBuffer, buffersize);
+	ret.audioOutput = Nl::createOutputDevice(audioOutDeviceName, ret.outBuffer, buffersize);
 	ret.audioOutput->setSamplerate(samplerate);
+
+//	ret.midiBuffer = Nl::createBuffer("MidiBuffer");
+//	ret.rawMidi = Nl::createRawMidiDevice(midiInDeviceName, ret.midiBuffer);
+
 
 	ret.workingThreadHandle.terminateRequest = Nl::createTerminateFlag();
 
@@ -135,7 +100,6 @@ ExamplesHandle_t midiSine(const std::string &deviceOutName, unsigned int buffers
 
 	return ret;
 }
-
 
 } // namespace Nl
 } // namespace Examples

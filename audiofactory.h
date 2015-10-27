@@ -5,6 +5,9 @@
 
 #include "audioalsainput.h"
 #include "audioalsaoutput.h"
+
+#include "rawmididevice.h"
+
 #include "blockingcircularbuffer.h"
 #include "memory"
 
@@ -17,6 +20,8 @@ typedef std::shared_ptr<std::thread> WorkingThread_t;
 typedef std::shared_ptr<AudioAlsaInput> AudioAlsaInput_t;
 typedef std::shared_ptr<AudioAlsaOutput> AudioAlsaOutput_t;
 
+typedef std::shared_ptr<RawMidiDevice> RawMidiDevice_t;
+
 typedef void (*audioCallbackIn)(u_int8_t*, size_t size, const SampleSpecs_t &sampleSpecs);
 typedef void (*audioCallbackOut)(u_int8_t*, size_t size, const SampleSpecs_t &sampleSpecs);
 typedef void (*audioCallbackInOut)(u_int8_t*, uint8_t*, size_t size, const SampleSpecs_t &sampleSpecs);
@@ -27,6 +32,8 @@ struct WorkingThreadHandle_t {
 };
 
 // Factory Functions
+RawMidiDevice createRawMidiDevice(const std::string& name, Buffer_t buffer);
+
 
 TerminateFlag_t createTerminateFlag();
 
@@ -84,9 +91,8 @@ auto writeAudioFunction = [](Buffer_t audioBuffer,
 	memset(buffer, 0, sampleSpecs.buffersizeInBytesPerPeriode);
 
 	while(!terminateRequest->load()) {
-		//callback(buffer, buffersize, sampleSpecs);
+		callback(buffer, buffersize, sampleSpecs);
 		audioBuffer->set(buffer, buffersize);
-		std::cout << "Just Wrote to Buffer" << std::endl;
 	}
 
 	delete[] buffer;

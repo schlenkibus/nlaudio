@@ -67,7 +67,6 @@ void AudioAlsaOutput::worker(SampleSpecs_t specs, AudioAlsaOutput *ptr)
 	while(!ptr->getTerminateRequest()) {
 		// Might block, if nothing to read
 		ptr->basetype::m_audioBuffer->get(buffer, specs.buffersizeInBytesPerPeriode);
-		std::cout << "Just read from buffer" << std::endl;
 		int ret = snd_pcm_writei(ptr->m_handle, buffer, specs.buffersizeInFramesPerPeriode);
 		if (ret < 0)
 			ptr->basetype::xrunRecovery(ptr, ret);

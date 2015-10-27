@@ -5,7 +5,7 @@
 
 namespace Nl {
 
-NlRawMidiDevice::NlRawMidiDevice(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<char> > buffer) :
+RawMidiDevice::RawMidiDevice(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer) :
 	m_handle(nullptr),
 	m_params(nullptr),
 	m_deviceName(device),
@@ -15,24 +15,25 @@ NlRawMidiDevice::NlRawMidiDevice(const devicename_t &device, std::shared_ptr<Blo
 {
 }
 
-void NlRawMidiDevice::open()
+void RawMidiDevice::open()
 {
 	throwOnAlsaError(snd_rawmidi_open(&m_handle, NULL, m_deviceName.c_str(), 0), __func__);
+	// A Midi message has 3 bytes, so we get every Message imediately
 	setAlsaMidiBufferSize(3);
 }
 
-void NlRawMidiDevice::close()
+void RawMidiDevice::close()
 {
 	snd_rawmidi_close(m_handle);
 }
 
-void NlRawMidiDevice::start()
+void RawMidiDevice::start()
 {
 	m_requestTerminate = false;
-	m_thread = new std::thread(NlRawMidiDevice::worker, this);
+	m_thread = new std::thread(RawMidiDevice::worker, this);
 }
 
-void NlRawMidiDevice::stop()
+void RawMidiDevice::stop()
 {
 	m_requestTerminate = true;
 	m_thread->join();
@@ -40,11 +41,11 @@ void NlRawMidiDevice::stop()
 }
 
 //Static
-void NlRawMidiDevice::worker(NlRawMidiDevice *ptr)
+void RawMidiDevice::worker(RawMidiDevice *ptr)
 {
 	const int buffersize = ptr->m_buffersize;
 
-	char buffer[buffersize];
+	uint8_t buffer[buffersize];
 
 	snd_rawmidi_drain(ptr->m_handle);
 
@@ -57,21 +58,21 @@ void NlRawMidiDevice::worker(NlRawMidiDevice *ptr)
 	}
 }
 
-NlRawMidiDevice::~NlRawMidiDevice()
+RawMidiDevice::~RawMidiDevice()
 {
 
 
 }
 
 //TODO: This might ne usefull for the user. For now, it will be private, however
-void NlRawMidiDevice::setAlsaMidiBufferSize(unsigned int size)
+void RawMidiDevice::setAlsaMidiBufferSize(unsigned int size)
 {
 	//throwOnAlsaError(snd_rawmidi_params_set_buffer_size(m_handle, m_params, size), __func__);
 	m_buffersize = size;
 }
 
 /// Error Handling
-void NlRawMidiDevice::throwOnAlsaError(int e, const std::string &function) const
+void RawMidiDevice::throwOnAlsaError(int e, const std::string &function) const
 {
 	if (e < 0) {
 		throw RawMidiDeviceException(e, function + ": " + snd_strerror(e));
@@ -79,9 +80,9 @@ void NlRawMidiDevice::throwOnAlsaError(int e, const std::string &function) const
 }
 
 ///Static
-std::list<NlMidiCard> NlRawMidiDevice::getAvailableDevices()
+std::list<MidiCard> RawMidiDevice::getAvailableDevices()
 {
-	std::list<NlMidiCard> ret;
+	std::list<MidiCard> ret;
 	int currentCard = -1;
 	int currentDevice = -1;
 
@@ -109,7 +110,7 @@ std::list<NlMidiCard> NlRawMidiDevice::getAvailableDevices()
 			return ret;
 		}
 
-		NlMidiCard card;
+		MidiCard card;
 		card.card = currentCard;
 
 
@@ -192,13 +193,13 @@ std::list<NlMidiCard> NlRawMidiDevice::getAvailableDevices()
 }
 
 ///Static
-devicename_t NlRawMidiDevice::getFirstDevice()
+devicename_t RawMidiDevice::getFirstDevice()
 {
 	auto devices = getAvailableDevices();
 
 	devicename_t ret;
 	if (devices.size()) {
-		NlMidiCard firstCard = devices.front();
+		MidiCard firstCard = devices.front();
 		MidiDevice firstDevice = firstCard.devices.front();
 
 
@@ -210,7 +211,7 @@ devicename_t NlRawMidiDevice::getFirstDevice()
 }
 
 /// Debugging Helpers
-std::ostream& operator<<(std::ostream& lhs, const NlMidiDeviceDirection& rhs)
+std::ostream& operator<<(std::ostream& lhs, const MidiDeviceDirection& rhs)
 {
 	if (rhs == IN)
 		lhs << "IN ";
@@ -228,7 +229,7 @@ std::ostream& operator<<(std::ostream& lhs, const MidiDevice& rhs)
 	return lhs;
 }
 
-std::ostream& operator<<(std::ostream& lhs, const NlMidiCard& rhs)
+std::ostream& operator<<(std::ostream& lhs, const MidiCard& rhs)
 {
 	auto iter = rhs.devices.begin();
 	while (iter != rhs.devices.end()) {

@@ -21,36 +21,36 @@ private:
 	std::string m_msg;
 };
 
-enum NlMidiDeviceDirection {
+enum MidiDeviceDirection {
 	IN,
 	OUT,
 	IO
 };
-std::ostream& operator<<(std::ostream& lhs, const NlMidiDeviceDirection& rhs);
+std::ostream& operator<<(std::ostream& lhs, const MidiDeviceDirection& rhs);
 
 struct MidiDevice {
 	int device;
 	int subdevice;
-	NlMidiDeviceDirection direction;
+	MidiDeviceDirection direction;
 	devicename_t name;
 	devicename_t subName;
 };
 std::ostream& operator<<(std::ostream& lhs, const MidiDevice& rhs);
 
-struct NlMidiCard {
+struct MidiCard {
 	int card;
 	std::list<struct MidiDevice> devices;
 };
-std::ostream& operator<<(std::ostream& lhs, const NlMidiCard& rhs);
+std::ostream& operator<<(std::ostream& lhs, const MidiCard& rhs);
 
 
-class NlRawMidiDevice : public Midi
+class RawMidiDevice : public Midi
 {
 public:
-	NlRawMidiDevice(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<char>> buffer);
-	~NlRawMidiDevice();
+	RawMidiDevice(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer);
+	~RawMidiDevice();
 
-	static std::list<NlMidiCard> getAvailableDevices();
+	static std::list<MidiCard> getAvailableDevices();
 	static devicename_t getFirstDevice();
 
 	virtual void open();
@@ -68,13 +68,13 @@ private:
 	devicename_t m_deviceName;
 	int m_buffersize;
 	std::thread *m_thread;
-	std::shared_ptr<BlockingCircularBuffer<char>> m_buffer;
+	std::shared_ptr<BlockingCircularBuffer<uint8_t>> m_buffer;
 
 	void throwOnAlsaError(int e, const std::string& function) const;
 	void setAlsaMidiBufferSize(unsigned int size);
 
 
-	static void worker(NlRawMidiDevice *ptr);
+	static void worker(RawMidiDevice *ptr);
 
 };
 

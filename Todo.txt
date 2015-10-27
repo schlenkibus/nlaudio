@@ -9,6 +9,10 @@ sudo chrt --rr 99 ./nlaudio
 3. Implementation mit Jack Input und Output
 
 
+
+
+
+
 Midi:
 
 Erstmal nicht sample akkurat, (DirektMidi) und danach ev. Mit Jack oder so mal schauen.

@@ -57,17 +57,11 @@ public:
 	{
 		if (!m_buffer) {
 			std::cout << "Buffer (" << m_name << ") not initialized!" << std::endl;
-		//	exit(-1);
 		}
 
-		std::cout << "WANT READ 1" << std::endl;
-
 		std::unique_lock<std::mutex> mlock(m_mutex);
-		//while (availableToRead() < size || !m_buffer) {
-		while (availableToRead() < size) {
+		while (availableToRead() < size || !m_buffer) {
 			m_condition.wait(mlock);
-		std::cout << "WANT READ 2" << std::endl;
-			//std::cout << "[" << m_name << "] waiting, availableToRead=" << availableToRead() << "/" << size << std::endl;
 		}
 
 		m_bytesRead += size;
@@ -89,11 +83,8 @@ public:
 			//exit(-1);
 		}
 
-		std::cout << "[" << m_name << "] waiting, readIndex=" << m_readIndex << " writeIndex=" << m_writeIndex << " availableToWrite=" << availableToWrite() << "/" << size << std::endl;
-
 		std::unique_lock<std::mutex> mlock(m_mutex);
-		//while (availableToWrite() < size || !m_buffer) {
-		while (availableToWrite() < size) {
+		while (availableToWrite() < size || !m_buffer) {
 			m_condition.wait(mlock);
 		}
 
@@ -121,7 +112,8 @@ public:
 
 	inline unsigned int availableToWrite() const
 	{
-		int distance = abs(m_readIndex - m_writeIndex);
+		//TODO: This is not really bullet proove, check again!!!
+		int distance = abs(m_readIndex - m_writeIndex - 1);
 		return m_writeIndex < m_readIndex ? distance : m_size - distance;
 	}
 

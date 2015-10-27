@@ -3,6 +3,8 @@
 #include <iostream>
 #include <cmath>
 #include <limits>
+#include <fstream>
+#include <cstdio>
 
 #define NOT_IMPLEMENTED { std::cout << "ALERT: " << __func__ << " not implemented, yet. Aborting!"; exit(-1); }
 
@@ -24,25 +26,88 @@ struct SampleSpecs_t {
 	bool isFloat;
 	bool isLittleEndian;
 	bool isSigned;
+	// bool isInterleaved
 };
 std::ostream& operator<<(std::ostream& lhs, const SampleSpecs_t& rhs);
 
-/// Signal generators
+//TODO: This only works with interleaved samples
+template<typename T>
+void store(const T *buffer, unsigned int buffersize, const std::string& path)
+{
+	std::ofstream out;
+	out.open(path);
+
+	for (unsigned int i=0; i<buffersize; i++)
+		out << i << "," << buffer[i] << std::endl;
+
+	out.flush();
+	out.close();
+}
+
+/// Type HickHack
+template<typename T>
+T typeCast()
+{
+	return T(0);
+}
 
 template<typename T>
-void sinewave(T *buffer, const SampleSpecs_t &specs, double frequency)
+inline T getTypeForBitlenght(const SampleSpecs_t& specs) {
+
+	if (specs.isFloat)
+		return typeCast<float>();
+
+	// Signed
+	if (specs.isSigned) {
+		if (specs.bytesPerSample == 1)
+			return typeCast<int8_t>();
+		else if (specs.bytesPerFrame == 2)
+			return typeCast<int16_t>();
+		else if (specs.bytesPerSample == 3 || specs.bytesPerSample == 4)
+			return typeCast<int32_t>();
+		// Unsigned
+	} else {
+		if (specs.bytesPerSample == 1)
+			return typeCast<uint8_t>();
+		else if (specs.bytesPerFrame == 2)
+			return typeCast<uint16_t>();
+		else if (specs.bytesPerFrame == 3 || specs.bytesPerFrame == 4)
+			return typeCast<uint32_t>();
+	}
+
+}
+
+/// Signal generators
+template<typename T>
+inline void sinewave(T *buffer, unsigned int buffersize)
 {
-	double ramp_increment = frequency / static_cast<double>(specs.samplerate);
-	static double ramp = 0.f;
+	T scale = std::numeric_limits<T>::is_signed ?
+				std::numeric_limits<T>::max() :
+				std::numeric_limits<T>::max() / 2;
 
-	for (unsigned int i=0; i<specs.buffersizeInFramesPerPeriode; i=i+specs.channels) {
-		ramp += ramp_increment;
-		if (ramp >= 1.f)
-			ramp -= 1.f;
+	T offset = !std::numeric_limits<T>::is_signed ?
+				std::numeric_limits<T>::max() / 2 :
+				0;
 
-		for (unsigned int channel=0; channel<specs.channels; channel++) {
-			buffer[i+channel] = sin(2.f * M_PI * ramp) * 100000; //std::numeric_limits<T>::max();
-		}
+	for (unsigned int i=0; i<buffersize; i++) {
+		buffer[i] = sin(2.f * M_PI * static_cast<double>(i) / static_cast<double>(buffersize)) * scale + offset;
+	}
+}
+
+//Specialize Template for floating point types
+template<>
+inline void sinewave<double>(double *buffer, unsigned int buffersize)
+{
+	for (unsigned int i=0; i<buffersize; i++) {
+		buffer[i] = sin(2.f * M_PI * static_cast<double>(i) / static_cast<double>(buffersize));
+	}
+}
+
+template<>
+inline void sinewave<float>(float *buffer, unsigned int buffersize)
+{
+	for (unsigned int i=0; i<buffersize; i++) {
+		buffer[i] = sinf(2.f * M_PI * static_cast<float>(i) / static_cast<float>(buffersize));
 	}
 }
 

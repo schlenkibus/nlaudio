@@ -31,6 +31,15 @@ Buffer_t createBuffer(const std::string& name)
 	return newBuffer;
 }
 
+Buffer_t createBuffer(unsigned int size, const std::string& name)
+{
+//	Buffer_t newBufer = createBuffer(name);
+//	newBuffer->
+
+
+}
+
+
 Buffer_t getBufferForName(const std::string& name)
 {
 	auto it = BuffersDictionary.find(name);
@@ -45,7 +54,7 @@ Buffer_t getBufferForName(const std::string& name)
 /// Input Factories
 AudioAlsaInput_t createInputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
 {
-	std::shared_ptr<AudioAlsaInput> input(new AudioAlsaInput(name, buffer));
+	AudioAlsaInput_t input(new AudioAlsaInput(name, buffer));
 	input->open();
 	input->setBufferCount(2);
 	input->setBuffersize(buffersize);
@@ -66,7 +75,7 @@ AudioAlsaInput_t createDefaultInputDevice(Buffer_t buffer)
 /// Output Factories
 AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
 {
-	std::shared_ptr<AudioAlsaOutput> output(new AudioAlsaOutput(name, buffer));
+	AudioAlsaOutput_t output(new AudioAlsaOutput(name, buffer));
 	output->open();
 	output->setBufferCount(2);
 	output->setBuffersize(buffersize);
