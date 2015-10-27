@@ -13,7 +13,7 @@
 
 namespace Nl {
 
-typedef std::shared_ptr<BlockingCircularBuffer<u_int8_t>> Buffer_t;
+typedef std::shared_ptr<BlockingCircularBuffer<uint8_t>> Buffer_t;
 typedef std::shared_ptr<std::atomic<bool>> TerminateFlag_t;
 typedef std::shared_ptr<std::thread> WorkingThread_t;
 
@@ -27,18 +27,17 @@ typedef void (*audioCallbackOut)(u_int8_t*, size_t size, const SampleSpecs_t &sa
 typedef void (*audioCallbackInOut)(u_int8_t*, uint8_t*, size_t size, const SampleSpecs_t &sampleSpecs);
 
 struct WorkingThreadHandle_t {
-	WorkingThread_t thread;
-	TerminateFlag_t terminateRequest;
+    WorkingThread_t thread;
+    TerminateFlag_t terminateRequest;
 };
 
 // Factory Functions
-RawMidiDevice createRawMidiDevice(const std::string& name, Buffer_t buffer);
+RawMidiDevice_t createRawMidiDevice(const std::string& name, Buffer_t buffer);
 
 
 TerminateFlag_t createTerminateFlag();
 
 Buffer_t createBuffer(const std::string& name);
-Buffer_t createBuffer(unsigned int size, const std::string& name);
 Buffer_t getBufferForName(const std::string& name);
 
 void terminateWorkingThread(WorkingThreadHandle_t handle);
@@ -51,78 +50,75 @@ AudioAlsaOutput_t createDefaultOutputDevice(Buffer_t buffer);
 AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer);
 AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize);
 
-WorkingThread_t registerInputCallbackOnBuffer(Buffer_t inBuffer,
-														   audioCallbackIn callback,
-														   std::shared_ptr<std::atomic<bool>> terminateRequest);
-WorkingThread_t registerOutputCallbackOnBuffer(Buffer_t outBuffer,
-															audioCallbackOut callback,
-															std::shared_ptr<std::atomic<bool>> terminateRequest);
-WorkingThread_t registerInOutCallbackOnBuffer(Buffer_t inBuffer,
-														   Buffer_t outBuffer,
-														   audioCallbackInOut callback,
-														   std::shared_ptr<std::atomic<bool>> terminateRequest);
+WorkingThreadHandle_t registerInputCallbackOnBuffer(Buffer_t inBuffer,
+                                              audioCallbackIn callback);
+WorkingThreadHandle_t registerOutputCallbackOnBuffer(Buffer_t outBuffer,
+                                               audioCallbackOut callback);
+WorkingThreadHandle_t registerInOutCallbackOnBuffer(Buffer_t inBuffer,
+                                              Buffer_t outBuffer,
+                                              audioCallbackInOut callback);
 
 auto readAudioFunction = [](Buffer_t audioBuffer,
-							audioCallbackIn callback,
-							std::shared_ptr<std::atomic<bool>> terminateRequest) {
+audioCallbackIn callback,
+std::shared_ptr<std::atomic<bool>> terminateRequest) {
 
-	SampleSpecs_t sampleSpecs = audioBuffer->sampleSpecs();
+    SampleSpecs_t sampleSpecs = audioBuffer->sampleSpecs();
 
-	const int buffersize = sampleSpecs.buffersizeInBytesPerPeriode;
-	u_int8_t *buffer = new u_int8_t[buffersize];
+    const int buffersize = sampleSpecs.buffersizeInBytesPerPeriode;
+    u_int8_t *buffer = new u_int8_t[buffersize];
 
-	while(!terminateRequest->load()) {
-		audioBuffer->get(buffer, buffersize);
-		callback(buffer, buffersize, sampleSpecs);
-	}
+    while(!terminateRequest->load()) {
+        audioBuffer->get(buffer, buffersize);
+        callback(buffer, buffersize, sampleSpecs);
+    }
 
-	delete[] buffer;
+    delete[] buffer;
 };
 
 auto writeAudioFunction = [](Buffer_t audioBuffer,
-							 audioCallbackIn callback,
-							 std::shared_ptr<std::atomic<bool>> terminateRequest) {
+audioCallbackIn callback,
+std::shared_ptr<std::atomic<bool>> terminateRequest) {
 
-	SampleSpecs_t sampleSpecs = audioBuffer->sampleSpecs();
+    SampleSpecs_t sampleSpecs = audioBuffer->sampleSpecs();
 
-	const int buffersize = sampleSpecs.buffersizeInBytesPerPeriode;
-	u_int8_t *buffer = new u_int8_t[buffersize];
+    const int buffersize = sampleSpecs.buffersizeInBytesPerPeriode;
+    u_int8_t *buffer = new u_int8_t[buffersize];
 
-	memset(buffer, 0, sampleSpecs.buffersizeInBytesPerPeriode);
+    memset(buffer, 0, sampleSpecs.buffersizeInBytesPerPeriode);
 
-	while(!terminateRequest->load()) {
-		callback(buffer, buffersize, sampleSpecs);
-		audioBuffer->set(buffer, buffersize);
-	}
+    while(!terminateRequest->load()) {
+        callback(buffer, buffersize, sampleSpecs);
+        audioBuffer->set(buffer, buffersize);
+    }
 
-	delete[] buffer;
+    delete[] buffer;
 };
 
 auto readWriteAudioFunction = [](Buffer_t audioInBuffer,
-								 Buffer_t audioOutBuffer,
-								 audioCallbackInOut callback,
-								 std::shared_ptr<std::atomic<bool>> terminateRequest) {
+Buffer_t audioOutBuffer,
+audioCallbackInOut callback,
+std::shared_ptr<std::atomic<bool>> terminateRequest) {
 
-	SampleSpecs_t sampleSpecsIn = audioInBuffer->sampleSpecs();
-	SampleSpecs_t sampleSpecsOut = audioOutBuffer->sampleSpecs();
+    SampleSpecs_t sampleSpecsIn = audioInBuffer->sampleSpecs();
+    SampleSpecs_t sampleSpecsOut = audioOutBuffer->sampleSpecs();
 
-	const int inBuffersize = sampleSpecsIn.buffersizeInBytesPerPeriode;
-	const int outBuffersize = sampleSpecsOut.buffersizeInBytesPerPeriode;
+    const int inBuffersize = sampleSpecsIn.buffersizeInBytesPerPeriode;
+    const int outBuffersize = sampleSpecsOut.buffersizeInBytesPerPeriode;
 
-	if (inBuffersize != outBuffersize)
-		std::cout << "#### Error, in and out buffer are not the same size!! " << __FILE__ << ":" << __func__ << ":" << __LINE__ << std::endl;
+    if (inBuffersize != outBuffersize)
+        std::cout << "#### Error, in and out buffer are not the same size!! " << __FILE__ << ":" << __func__ << ":" << __LINE__ << std::endl;
 
-	u_int8_t *inBuffer = new u_int8_t[inBuffersize];
-	u_int8_t *outBuffer = new u_int8_t[outBuffersize];
+    u_int8_t *inBuffer = new u_int8_t[inBuffersize];
+    u_int8_t *outBuffer = new u_int8_t[outBuffersize];
 
-	while(!terminateRequest->load()) {
-		audioInBuffer->get(inBuffer, inBuffersize);
-		callback(inBuffer, outBuffer, inBuffersize, sampleSpecsIn);
-		audioOutBuffer->set(outBuffer, inBuffersize);
-	}
+    while(!terminateRequest->load()) {
+        audioInBuffer->get(inBuffer, inBuffersize);
+        callback(inBuffer, outBuffer, inBuffersize, sampleSpecsIn);
+        audioOutBuffer->set(outBuffer, inBuffersize);
+    }
 
-	delete[] inBuffer;
-	delete[] outBuffer;
+    delete[] inBuffer;
+    delete[] outBuffer;
 };
 
 } // namespace Nl

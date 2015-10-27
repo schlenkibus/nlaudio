@@ -13,140 +13,146 @@ template <typename T>
 class BlockingCircularBuffer
 {
 public:
-	BlockingCircularBuffer(const std::string& name) :
-		m_buffer(nullptr),
-		m_size(0),
-		m_name(name),
-		m_bytesRead(0),
-		m_bytesWritten(0),
-		m_readIndex(0),
-		m_writeIndex(0)
-	{}
+    BlockingCircularBuffer(const std::string& name) :
+        m_buffer(nullptr),
+        m_size(0),
+        m_name(name),
+        m_bytesRead(0),
+        m_bytesWritten(0),
+        m_readIndex(0),
+        m_writeIndex(0)
+    {}
 
-	~BlockingCircularBuffer()
-	{
-		if (m_buffer)
-			delete[] m_buffer;
-	}
+    ~BlockingCircularBuffer()
+    {
+        if (m_buffer)
+            delete[] m_buffer;
+    }
 
-	void init(const SampleSpecs_t &sampleSpecs)
-	{
-		std::unique_lock<std::mutex> mlock(m_mutex);
+    void init(int size)
+    {
+        std::unique_lock<std::mutex> mlock(m_mutex);
 
-		if (m_buffer)
-			delete [] m_buffer;
+        if (m_buffer)
+            delete [] m_buffer;
 
-		m_size = sampleSpecs.buffersizeInBytes;
+        m_size = size;
 
-		m_buffer = new T[m_size];
-		memset(m_buffer, 0, m_size);
+        m_buffer = new T[m_size];
+        memset(m_buffer, 0, m_size);
 
-		m_bytesRead = 0;
-		m_bytesWritten = 0;
-		m_readIndex = 0;
-		m_writeIndex = 0;
-		m_sampleSpecs = sampleSpecs;
+        m_bytesRead = 0;
+        m_bytesWritten = 0;
+        m_readIndex = 0;
+        m_writeIndex = 0;
 
-		std::cout << "Buffer: " << m_name << " resized to: " << m_size << std::endl;
+        std::cout << "Buffer: " << m_name << " resized to: " << m_size << std::endl;
 
-		m_condition.notify_one();
-	}
+        m_condition.notify_one();
+    }
 
-	// Block callee, if nothing to read
-	void get(T *buffer, unsigned int size)
-	{
-		if (!m_buffer) {
-			std::cout << "Buffer (" << m_name << ") not initialized!" << std::endl;
-		}
+    // Not sure if this is proper. This class should not know something about SampleSpecs.
+    void init(const SampleSpecs_t &sampleSpecs)
+    {
+        init(sampleSpecs.buffersizeInBytes);
+        m_sampleSpecs = sampleSpecs;
+    }
 
-		std::unique_lock<std::mutex> mlock(m_mutex);
-		while (availableToRead() < size || !m_buffer) {
-			m_condition.wait(mlock);
-		}
+    // Block callee, if nothing to read
+    void get(T *buffer, unsigned int size)
+    {
+        if (!m_buffer) {
+            std::cout << "Buffer (" << m_name << ") not initialized!" << std::endl;
+        }
 
-		m_bytesRead += size;
+        std::unique_lock<std::mutex> mlock(m_mutex);
+        while (availableToRead() < size || !m_buffer) {
+            m_condition.wait(mlock);
+        }
 
-		for (unsigned int i=0; i<size; i++) {
-			m_readIndex++;
-			m_readIndex = m_readIndex % m_size;
-			buffer[i] = m_buffer[m_readIndex];
-		}
+        m_bytesRead += size;
 
-		m_condition.notify_one();
-	}
+        for (unsigned int i=0; i<size; i++) {
+            m_readIndex++;
+            m_readIndex = m_readIndex % m_size;
+            buffer[i] = m_buffer[m_readIndex];
+        }
 
-	// Block callee, if no space in buffer
-	void set(T *buffer, unsigned int size)
-	{
-		if (!m_buffer) {
-			std::cout << "Buffer (" << m_name << ") not initialized!" << std::endl;
-			//exit(-1);
-		}
+        m_condition.notify_one();
+    }
 
-		std::unique_lock<std::mutex> mlock(m_mutex);
-		while (availableToWrite() < size || !m_buffer) {
-			m_condition.wait(mlock);
-		}
+    // Block callee, if no space in buffer
+    void set(T *buffer, unsigned int size)
+    {
+        if (!m_buffer) {
+            std::cout << "Buffer (" << m_name << ") not initialized!" << std::endl;
+            //exit(-1);
+        }
 
-		m_bytesWritten += size;
+        std::unique_lock<std::mutex> mlock(m_mutex);
+        while (availableToWrite() < size || !m_buffer) {
+            m_condition.wait(mlock);
+        }
 
-		for (unsigned int i=0; i<size; i++) {
-			m_writeIndex++;
-			m_writeIndex = m_writeIndex % m_size;
-			m_buffer[m_writeIndex] = buffer[i];
-		}
+        m_bytesWritten += size;
 
-		m_condition.notify_one();
-	}
+        for (unsigned int i=0; i<size; i++) {
+            m_writeIndex++;
+            m_writeIndex = m_writeIndex % m_size;
+            m_buffer[m_writeIndex] = buffer[i];
+        }
 
-	void getStat(unsigned long *readBytes, unsigned long *writtenBytes) const
-	{
-		*readBytes = m_bytesRead;
-		*writtenBytes = m_bytesWritten;
-	}
+        m_condition.notify_one();
+    }
 
-	inline unsigned int availableToRead() const
-	{
-		return m_size - availableToWrite();
-	}
+    void getStat(unsigned long *readBytes, unsigned long *writtenBytes) const
+    {
+        *readBytes = m_bytesRead;
+        *writtenBytes = m_bytesWritten;
+    }
 
-	inline unsigned int availableToWrite() const
-	{
-		//TODO: This is not really bullet proove, check again!!!
-		int distance = abs(m_readIndex - m_writeIndex - 1);
-		return m_writeIndex < m_readIndex ? distance : m_size - distance;
-	}
+    inline unsigned int availableToRead() const
+    {
+        return m_size - availableToWrite();
+    }
 
-	inline int size() const
-	{
-		return m_size;
-	}
+    inline unsigned int availableToWrite() const
+    {
+        //TODO: This is not really bullet proove, check again!!!
+        int distance = abs(m_readIndex - m_writeIndex - 1);
+        return m_writeIndex < m_readIndex ? distance : m_size - distance;
+    }
 
-	inline std::string name() const
-	{
-		return m_name;
-	}
+    inline int size() const
+    {
+        return m_size;
+    }
 
-	inline SampleSpecs_t sampleSpecs()
-	{
-		return m_sampleSpecs;
-	}
+    inline std::string name() const
+    {
+        return m_name;
+    }
+
+    inline SampleSpecs_t sampleSpecs()
+    {
+        return m_sampleSpecs;
+    }
 
 private:
-	T *m_buffer;
-	std::atomic<int> m_size;
-	std::string m_name;
+    T *m_buffer;
+    std::atomic<int> m_size;
+    std::string m_name;
 
-	std::mutex m_mutex;
-	std::condition_variable m_condition;
+    std::mutex m_mutex;
+    std::condition_variable m_condition;
 
-	std::atomic<unsigned long> m_bytesRead;
-	std::atomic<unsigned long> m_bytesWritten;
+    std::atomic<unsigned long> m_bytesRead;
+    std::atomic<unsigned long> m_bytesWritten;
 
-	std::atomic<unsigned int> m_readIndex;
-	std::atomic<unsigned int> m_writeIndex;
+    std::atomic<unsigned int> m_readIndex;
+    std::atomic<unsigned int> m_writeIndex;
 
-	SampleSpecs_t m_sampleSpecs;
+    SampleSpecs_t m_sampleSpecs;
 };
 
 } // namespace Nl

@@ -12,6 +12,7 @@ typedef std::string sampleformat_t;
 typedef std::string devicename_t;
 typedef unsigned int channelcount_t;
 
+
 class Audio
 {
 public:

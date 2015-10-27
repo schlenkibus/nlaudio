@@ -74,7 +74,7 @@ public:
 	virtual void setChannelCount(channelcount_t n);
 	virtual channelcount_t getChannelCount();
 
-	static std::list<devicename_t> getAvailableDevices();
+    static std::list<devicename_t> getAvailableDevices();
 
 	Statistics getStats();
 

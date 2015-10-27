@@ -20,6 +20,8 @@ void RawMidiDevice::open()
 	throwOnAlsaError(snd_rawmidi_open(&m_handle, NULL, m_deviceName.c_str(), 0), __func__);
 	// A Midi message has 3 bytes, so we get every Message imediately
 	setAlsaMidiBufferSize(3);
+    // Maybe we miss some, so make circular buffer a little bigger (10 Messages -> 30 Bytes)
+    m_buffer->init(30);
 }
 
 void RawMidiDevice::close()

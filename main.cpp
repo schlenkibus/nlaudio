@@ -17,83 +17,107 @@
 #include "audiofactory.h"
 #include "examples.h"
 
+#include "tools.h"
+
 using namespace std;
-using namespace Nl;
+
+void callback(uint8_t *out, size_t size, const Nl::SampleSpecs_t &sampleSpecs)
+{
+    unsigned char midiByteBuffer[3];
+    static uint8_t velocity = 0;
+    static double frequency = 0;
+    bool reset = false;
+
+    size_t debugCounter = 0;
+
+    auto midiBuffer = Nl::getBufferForName("MidiBuffer");
+    if (midiBuffer)
+        while (midiBuffer->availableToRead() >= 3) {
+            midiBuffer->get(midiByteBuffer, 3);
+            if (midiByteBuffer[0] == 0x90) {
+                velocity = midiByteBuffer[2];
+                double newFrequency = pow(2.f, static_cast<double>((midiByteBuffer[1]-69)/12.f)) * 440.f;
+                if (newFrequency != frequency) {
+                    frequency = newFrequency;
+                    reset = true;
+                }
+            } else {
+                velocity = 0;
+            }
+            printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
+            printf("V=%i f=%f\n", velocity, frequency);
+        }
+
+    if (velocity) {
+        int32_t samples[sampleSpecs.buffersizeInSamples];
+        Nl::sinewave<int32_t>(samples, sampleSpecs.buffersizeInSamples, frequency, 48000, reset);
+
+        for (unsigned int sample=0; sample<sampleSpecs.buffersizeInSamples; sample++) {
+            for (unsigned int channel=0; channel<sampleSpecs.channels; channel++) {
+                for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
+                    if (sampleSpecs.isLittleEndian) {
+                        *out = static_cast<uint8_t>((samples[sample] >> ((byte+1)*8)) & 0xFF);
+                    } else {
+                        *out = static_cast<uint8_t>((samples[sample] >> ((sampleSpecs.bytesPerSample-byte)*8)) & 0xFF);
+                    }
+                    out++;
+                    debugCounter++;
+                }
+            }
+        }
+    } else {
+        memset(out, 0, size);
+    }
+
+
+//    printf("size=%d debugCounter=%d\n", size, debugCounter);
+
+}
 
 int main()
 {
+    try {
+        // Lets just open the default device:
+        auto audioOutputBuffer = Nl::createBuffer("AudioOutput");
 
-#if 0
-	// Changing priority only works as root
-	int which = PRIO_PROCESS;
-	id_t pid;
-	int priority = -20;
+        //auto audioOutput = Nl::createDefaultOutputDevice(audioOutputBuffer);
+        //auto audioOutput = Nl::createOutputDevice("hw:2,0", audioOutputBuffer, 512); // Audiobox USB
+        //auto audioOutput = Nl::createOutputDevice("hw:2,0,1", audioOutputBuffer, 512); // Traktor Audio 4 DJ
+        auto audioOutput = Nl::createOutputDevice("hw:2,0", audioOutputBuffer, 1024); // Traktor Audio 2
 
-	pid = getpid();
-	int ret = setpriority(which, pid, priority);
-#endif
+        // Configure Audio (if needed, or use default)
+        //audioOutput->setSampleFormat(...);
+        audioOutput->setSamplerate(48000);
 
-	try {
+        // We want midi as well
+        auto midiBuffer = Nl::createBuffer("MidiBuffer");
+        auto midiInput = Nl::createRawMidiDevice("hw:1,0", midiBuffer);
 
-		//Nl::Examples::ExamplesHandle_t handle = Nl::Examples::inputToOutput("hw:1,0", "hw:1,0", 512, 4	4100);
-		Nl::Examples::ExamplesHandle_t handle = Nl::Examples::midiSine("hw:1,0", "hw:1,0", 1024, 48000);
+        // Start Audio and Midi Thread
+        audioOutput->start();
+        midiInput->start();
 
+        // Register a Callback
+        auto threadHandle = Nl::registerOutputCallbackOnBuffer(audioOutputBuffer, callback);
 
-#if 0
-		int32_t samples0[1024];
-		Nl::sinewave<int32_t>(samples0, 1024);
-		Nl::store<int32_t>(samples0, 1024, "int32_t");
+        // Wait for user to exit by pressing 'q'
+        // Print buffer statistics on other keys
+        while(getchar() != 'q') {
+            if (audioOutput) std::cout << "Output Statistics:" << std::endl
+                                       << audioOutput->getStats() << std::endl;
+        }
 
-		uint32_t samples1[1024];
-		Nl::sinewave<uint32_t>(samples1, 1024);
-		Nl::store<uint32_t>(samples1, 1024, "uint32_t");
+        // Tell worker thread to cleanup and quit
+        Nl::terminateWorkingThread(threadHandle);
 
-		uint8_t samples2[1024];
-		Nl::sinewave<uint8_t>(samples2, 1024);
-		Nl::store<uint8_t>(samples2, 1024, "uint8_t");
+    } catch (Nl::AudioAlsaException& e) {
+        std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
+    } catch (std::exception& e) {
+        std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
+    } catch(...) {
+        std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
+    }
 
-		int8_t samples3[1024];
-		Nl::sinewave<int8_t>(samples3, 1024);
-		Nl::store<int8_t>(samples3, 1024, "int8_t");
-
-		double samples4[1024];
-		Nl::sinewave<double>(samples4, 1024);
-		Nl::store<double>(samples4, 1024, "double");
-
-		float samples5[1024];
-		Nl::sinewave<float>(samples5, 1024);
-		Nl::store<float>(samples5, 1024, "float");
-
-		return 0;
-#endif
-
-		// Wait for user to exit by pressing 'q'
-		// Print buffer statistics on other keys
-		while(getchar() != 'q') {
-			if (handle.audioInput) std::cout << "Input:" << std::endl
-											 << handle.audioInput->getStats() << std::endl;
-			if (handle.audioOutput) std::cout << "Output:" << std::endl
-											  << handle.audioOutput->getStats() << std::endl;
-		}
-
-		std::cout << "Reached End.." << std::endl;
-
-		// Tell worker thread to cleanup and quit
-		Nl::terminateWorkingThread(handle.workingThreadHandle);
-
-		std::cout << "Cleaned up and done..." << std::endl;
-
-	} catch (AudioAlsaException& e) {
-		std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
-	} catch (std::exception& e) {
-		std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
-	} catch(...) {
-		std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
-	}
-
-	//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	std::cout << std::endl;
-
-	return 0;
+    return 0;
 }
 

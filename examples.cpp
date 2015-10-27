@@ -30,8 +30,6 @@ ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::strin
 	ret.audioOutput = Nl::createOutputDevice(deviceOutName, ret.outBuffer, buffersize);
 	ret.audioOutput->setSamplerate(samplerate);
 
-	ret.workingThreadHandle.terminateRequest = Nl::createTerminateFlag();
-
 	// DANGER!!!!
 	// TODO: Check sync mechanism here. If registerInOutCallbackOnBuffer called before
 	//		 input/output->start(), we seem to have a deadlock!
@@ -40,7 +38,7 @@ ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::strin
 	ret.audioInput->start();
 	ret.audioOutput->start();
 
-	ret.workingThreadHandle.thread = Nl::registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback, ret.workingThreadHandle.terminateRequest);
+    ret.workingThreadHandle = Nl::registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback);
 
 	return ret;
 }
@@ -86,9 +84,6 @@ ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
 //	ret.midiBuffer = Nl::createBuffer("MidiBuffer");
 //	ret.rawMidi = Nl::createRawMidiDevice(midiInDeviceName, ret.midiBuffer);
 
-
-	ret.workingThreadHandle.terminateRequest = Nl::createTerminateFlag();
-
 	// DANGER!!!!
 	// TODO: Check sync mechanism here. If registerInOutCallbackOnBuffer called before
 	//		 input/output->start(), we seem to have a deadlock!
@@ -96,7 +91,7 @@ ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
 	//		 audio chain. Eg. Reading/Writing threads on BlockingCircularBuffer !!!
 	ret.audioOutput->start();
 
-	ret.workingThreadHandle.thread = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback, ret.workingThreadHandle.terminateRequest);
+    ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback);
 
 	return ret;
 }
