@@ -29,14 +29,21 @@ void AudioAlsaOutput::start()
 	specs.isSigned = snd_pcm_format_signed(sampleFormat) == 1;
 	specs.isLittleEndian = snd_pcm_format_little_endian(sampleFormat) == 1;
 	specs.isFloat = snd_pcm_format_float(sampleFormat);
+
 	specs.channels = channels;
-	specs.buffersizeInSamples = getBuffersize() / getChannelCount();
-	specs.buffersizeInSamplesPerPeriode = specs.buffersizeInSamples / getBufferCount();
+
+	// 1 Frame in Bytes: Channels * BytesPerSample
 	specs.buffersizeInFrames = getBuffersize();
-	specs.buffersizeInFramesPerPeriode = getBuffersize() / getBufferCount();
+	specs.buffersizeInFramesPerPeriode = specs.buffersizeInFrames / getBufferCount();
+
+	// 1 Sample in Bytes: BytesPerSample
+	specs.buffersizeInSamples = specs.buffersizeInFrames * getChannelCount();
+	specs.buffersizeInSamplesPerPeriode = specs.buffersizeInSamples / getBufferCount();
+
 	specs.bytesPerSample = snd_pcm_hw_params_get_sbits(m_hwParams) / 8;
 	specs.bytesPerSamplePhysical = snd_pcm_format_physical_width(sampleFormat) / 8;
 	specs.bytesPerFrame = specs.bytesPerSample * specs.channels;
+
 	specs.buffersizeInBytes = specs.bytesPerSample * specs.channels * specs.buffersizeInFrames;
 	specs.buffersizeInBytesPerPeriode = specs.buffersizeInBytes / getBufferCount();
 

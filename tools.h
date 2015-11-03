@@ -37,7 +37,7 @@ void store(const T *buffer, unsigned int buffersize, const std::string& path)
     int i = 0;
 
     std::ofstream out;
-    out.open(path, std::ofstream::out | std::ofstream::app);
+	out.open(path, std::ofstream::out /*| std::ofstream::app*/);
 
     for (i=0; i<buffersize; i++)
         out << buffer[i] << std::endl;
@@ -81,56 +81,56 @@ inline T getTypeForBitlenght(const SampleSpecs_t& specs) {
 
 /// Signal generators
 template<typename T>
-inline void sinewave(T *buffer, unsigned int buffersize, float frequency, unsigned int samplerate, bool reset)
+inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
 {
-    static T scale = std::numeric_limits<T>::is_signed ?
-                std::numeric_limits<T>::max() :
-                std::numeric_limits<T>::max() / 2;
+	static T scale = std::numeric_limits<T>::is_signed ?
+				((1 << (sampleSpecs.bytesPerSample * 8)) / 2) :
+				(1 << (sampleSpecs.bytesPerSample * 8));
 
-    static T offset = !std::numeric_limits<T>::is_signed ?
-                std::numeric_limits<T>::max() / 2 :
-                0;
+	static T offset = !std::numeric_limits<T>::is_signed ?
+				(1 << (sampleSpecs.bytesPerSample * 8) / 2) :
+				0;
 
     static float phase = 0.f;
-    static float inc = frequency / static_cast<float>(samplerate);
+	static float inc = frequency / static_cast<float>(sampleSpecs.samplerate);
 
     if (reset) {
         phase = 0.f;
-        inc = frequency / static_cast<float>(samplerate);
+		inc = frequency / static_cast<float>(sampleSpecs.samplerate);
     }
 
-    for (int i=0; i<buffersize; i++) {
+	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
         phase += inc;
 
         if (phase > 0.5)
             phase -= 1.0;
 
+#if 0
         float x = 2 * phase;
         fabs(x);
         x = 0.5 - x;
 
         float x_square = x * x;
         x = x * (x_square * (x_square * 2.26548 - 5.13274) + M_PI);
-        //buffer[i] = x * scale + offset;
-
-        buffer[i] = sin(2.f * M_PI * phase) * scale + offset;
-
-    }
+		buffer[i] = x * scale + offset;
+#endif
+		buffer[i] = sin(2.f * M_PI * phase) * scale + offset;
+	}
 }
 
 //Specialize Template for floating point types
 template<>
-inline void sinewave<double>(double *buffer, unsigned int buffersize, float frequency, unsigned int samplerate, bool reset)
+inline void sinewave<double>(double *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
 {
     static double phase = 0.f;
-    static double inc = frequency / static_cast<double>(samplerate);
+	static double inc = frequency / static_cast<double>(sampleSpecs.samplerate);
 
     if (reset) {
         phase = 0.f;
-        inc = frequency / static_cast<double>(samplerate);
+		inc = frequency / static_cast<double>(sampleSpecs.samplerate);
     }
 
-    for (unsigned int i=0; i<buffersize; i++) {
+	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
         phase += inc;
         phase = (phase > 0.5 ? phase - 1.0 : phase);
 
@@ -141,17 +141,17 @@ inline void sinewave<double>(double *buffer, unsigned int buffersize, float freq
 }
 
 template<>
-inline void sinewave<float>(float *buffer, unsigned int buffersize, float frequency, unsigned int samplerate, bool reset)
+inline void sinewave<float>(float *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
 {
     static float phase = 0.f;
-    static float inc = frequency / static_cast<float>(samplerate);
+	static float inc = frequency / static_cast<float>(sampleSpecs.samplerate);
 
     if (reset) {
         phase = 0.f;
-        inc = frequency / static_cast<float>(samplerate);
+		inc = frequency / static_cast<float>(sampleSpecs.samplerate);
     }
 
-    for (unsigned int i=0; i<buffersize; i++) {
+	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
         phase += inc;
         phase = (phase > 0.5 ? phase - 1.0 : phase);
 
@@ -164,9 +164,9 @@ inline void sinewave<float>(float *buffer, unsigned int buffersize, float freque
 template<typename T>
 inline void sinewave(T *buffer, unsigned int buffersize)
 {
-    T scale = std::numeric_limits<T>::is_signed ?
-                std::numeric_limits<T>::max() :
-                std::numeric_limits<T>::max() / 2;
+	T scale = std::numeric_limits<T>::is_signed ?
+				std::numeric_limits<T>::max() :
+				std::numeric_limits<T>::max() / 2;
 
     T offset = !std::numeric_limits<T>::is_signed ?
                 std::numeric_limits<T>::max() / 2 :
@@ -193,5 +193,6 @@ inline void sinewave<float>(float *buffer, unsigned int buffersize)
         buffer[i] = sinf(2.f * M_PI * static_cast<float>(i) / static_cast<float>(buffersize));
     }
 }
+
 
 } // namespace Nl

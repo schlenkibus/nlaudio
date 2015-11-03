@@ -11,8 +11,6 @@ struct ExamplesHandle_t {
 	AudioAlsaOutput_t audioOutput;
 	Buffer_t inBuffer;
 	Buffer_t outBuffer;
-	//RawMidiDevice rawMidi;
-	//Buffer_t midiBuffer;
 };
 
 ExamplesHandle_t inputToOutput(const std::string& deviceInName,

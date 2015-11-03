@@ -38,7 +38,7 @@ ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::strin
 	ret.audioInput->start();
 	ret.audioOutput->start();
 
-    ret.workingThreadHandle = Nl::registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback);
+	ret.workingThreadHandle = Nl::registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback);
 
 	return ret;
 }
@@ -46,24 +46,45 @@ ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::strin
 
 void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpecs)
 {
+	unsigned char midiByteBuffer[3];
+	static uint8_t velocity = 0;
+	static double frequency = 0;
+	bool reset = false;
 
-	double ramp = 0.0;
-
-	int32_t samples[sampleSpecs.buffersizeInSamples];
-	sinewave<int32_t>(samples, 4000);
-
-	u_int8_t *orig = out;
-
-	for (int sample=0; sample<sampleSpecs.buffersizeInSamples; sample++) {
-		for (int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
-			*out = static_cast<u_int8_t>((samples[sample] >> (byte*8)) & 0xFF);
-			out++;
+	// We can get a buffer by its name, to access its data:
+	auto midiBuffer = Nl::getBufferForName("MidiBuffer");
+	if (midiBuffer) {
+		while (midiBuffer->availableToRead() >= 3) {
+			midiBuffer->get(midiByteBuffer, 3);
+			if (midiByteBuffer[0] == 0x90) {
+				velocity = midiByteBuffer[2];
+				double newFrequency = pow(2.f, static_cast<double>((midiByteBuffer[1]-69)/12.f)) * 440.f;
+				if (newFrequency != frequency) {
+					frequency = newFrequency;
+					reset = true;
+				}
+			} else {
+				velocity = 0;
+			}
 		}
 	}
 
-	//for(int i=0; i<sampleSpecs.buffersizeInSamples; i++) {
-	//	printf("%08X %02X %02X %02X\n", samples[i], orig[i*3+2], orig[i*3+1], orig[i*3+0]);
-	//}
+	if (velocity) {
+		int32_t samples[sampleSpecs.buffersizeInFramesPerPeriode];
+		Nl::sinewave<int32_t>(samples, frequency, reset, sampleSpecs);
+		for (unsigned int byte=0; byte<sampleSpecs.buffersizeInBytesPerPeriode; byte++) {
+			unsigned int currentSample = (byte / (sampleSpecs.channels * sampleSpecs.bytesPerSample));
+			unsigned int byteIndex = (byte % sampleSpecs.bytesPerSample);
+
+			if (sampleSpecs.isLittleEndian) {
+				*out++ = static_cast<uint8_t>(uint32_t(samples[currentSample] >> ((byteIndex)*8)) & 0xFF);
+			} else {
+				*out++ = static_cast<uint8_t>(uint32_t(samples[currentSample] >> ((sampleSpecs.bytesPerSample-byteIndex-1)*8)) & 0xFF);
+			}
+		}
+	} else {
+		memset(out, 0, size);
+	}
 }
 
 ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
@@ -77,21 +98,25 @@ ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
 	ret.inBuffer = nullptr;
 	ret.audioInput = nullptr;
 
-	ret.outBuffer = Nl::createBuffer("OutputBuffer");
+	// Lets create a buffer, which we have to pass to the output soundcard
+	ret.outBuffer = Nl::createBuffer("AudioOutput");
+	// Open soundcard, using above buffer
 	ret.audioOutput = Nl::createOutputDevice(audioOutDeviceName, ret.outBuffer, buffersize);
+
+	// Configure Audio (if needed, or use default)
+	//audioOutput->setSampleFormat(...);
 	ret.audioOutput->setSamplerate(samplerate);
 
-//	ret.midiBuffer = Nl::createBuffer("MidiBuffer");
-//	ret.rawMidi = Nl::createRawMidiDevice(midiInDeviceName, ret.midiBuffer);
+	// We want midi as well
+	auto midiBuffer = Nl::createBuffer("MidiBuffer");
+	auto midiInput = Nl::createRawMidiDevice(midiInDeviceName, midiBuffer);
 
-	// DANGER!!!!
-	// TODO: Check sync mechanism here. If registerInOutCallbackOnBuffer called before
-	//		 input/output->start(), we seem to have a deadlock!
-	// TODO: Consider implementing something like autostart for the threads in the
-	//		 audio chain. Eg. Reading/Writing threads on BlockingCircularBuffer !!!
+	// Start Audio and Midi Thread
 	ret.audioOutput->start();
+	midiInput->start();
 
-    ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback);
+	// Register a Callback
+	ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback);
 
 	return ret;
 }
