@@ -23,5 +23,9 @@ ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
 						  unsigned int buffersize,
 						  unsigned int samplerate);
 
+ExamplesHandle_t silence(const std::string& audioOutDeviceName,
+                        unsigned int buffersize,
+                        unsigned int samplerate);
+
 }
 }
