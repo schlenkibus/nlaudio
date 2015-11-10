@@ -20,14 +20,14 @@ int main()
 {
 	try {
 
-		std::string audioOutDevice = "hw:1,0,0";
+		std::string audioOutDevice = "hw:1,0,1";
 		std::string audioInDevice = "hw:1,0,0";
 		std::string midiInDevice = "hw:2,0";
-		const int buffersize = 512;
+		const int buffersize = 5120;
 		const int samplerate = 48000;
 
-		//auto handle = Nl::Examples::midiSine(audioOutDevice, midiInDevice, buffersize, samplerate);
-		auto handle = Nl::Examples::inputToOutput(audioInDevice, audioOutDevice, buffersize, samplerate);
+		auto handle = Nl::Examples::midiSine(audioOutDevice, midiInDevice, buffersize, samplerate);
+		//auto handle = Nl::Examples::inputToOutput(audioInDevice, audioOutDevice, buffersize, samplerate);
 
 		// Wait for user to exit by pressing 'q'
 		// Print buffer statistics on other keys
@@ -36,7 +36,6 @@ int main()
 											  << handle.audioOutput->getStats() << std::endl;
 			if (handle.audioInput) std::cout << "Input Statistics:" << std::endl
 											  << handle.audioInput->getStats() << std::endl;
-
 		}
 
 		// Tell worker thread to cleanup and quit

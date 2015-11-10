@@ -46,7 +46,7 @@ public:
         m_readIndex = 0;
         m_writeIndex = 0;
 
-        std::cout << "Buffer: " << m_name << " resized to: " << m_size << std::endl;
+		//std::cout << "Buffer: " << m_name << " resized to: " << m_size << std::endl;
 
         m_condition.notify_one();
     }

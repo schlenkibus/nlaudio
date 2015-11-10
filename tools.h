@@ -30,7 +30,6 @@ struct SampleSpecs_t {
 };
 std::ostream& operator<<(std::ostream& lhs, const SampleSpecs_t& rhs);
 
-//TODO: This only works with interleaved samples
 template<typename T>
 void store(const T *buffer, unsigned int buffersize, const std::string& path)
 {
@@ -97,7 +96,7 @@ inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs_t
     if (reset) {
         phase = 0.f;
 		inc = frequency / static_cast<float>(sampleSpecs.samplerate);
-    }
+	}
 
 	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
         phase += inc;
@@ -105,16 +104,21 @@ inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs_t
         if (phase > 0.5)
             phase -= 1.0;
 
-#if 0
+#if 1
         float x = 2 * phase;
-        fabs(x);
-        x = 0.5 - x;
+
+		if (x < 0) {
+			x = -x;
+		}
+
+		x = 0.5 - x;
 
         float x_square = x * x;
-        x = x * (x_square * (x_square * 2.26548 - 5.13274) + M_PI);
-		buffer[i] = x * scale + offset;
-#endif
+		x = x * (x_square * (x_square * 2.26548 - 5.13274) + 3.14159);
+		buffer[i] = static_cast<T>(x * scale + offset);
+#else
 		buffer[i] = sin(2.f * M_PI * phase) * scale + offset;
+#endif
 	}
 }
 

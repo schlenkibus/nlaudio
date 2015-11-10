@@ -86,6 +86,7 @@ protected:
 	void setTerminateRequest() { m_requestTerminate = true; }
 	void resetTerminateRequest() { m_requestTerminate = false; }
 	bool getTerminateRequest() const { return m_requestTerminate; }
+	SampleSpecs_t getSpecs();
 
 	static int xrunRecovery(AudioAlsa *ptr, int err);
 

@@ -149,10 +149,6 @@ void AudioAlsa::setSampleFormat(sampleformat_t format)
 	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 
 	snd_pcm_format_t alsaFormat = snd_pcm_format_value(format.c_str());
-
-	//printf("alsaFormat=%i\n", alsaFormat);
-	//printf("alsaFormat=%s\n", snd_pcm_format_name(alsaFormat));
-
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_format(m_handle, m_hwParams, alsaFormat));
 }
 
@@ -170,7 +166,37 @@ channelcount_t AudioAlsa::getChannelCount()
 	return channels;
 }
 
+///SampleSpecs
+SampleSpecs_t AudioAlsa::getSpecs()
+{
+	snd_pcm_format_t sampleFormat;
+	snd_pcm_hw_params_get_format(m_hwParams, &sampleFormat);
 
+	SampleSpecs_t specs;
+	specs.samplerate = getSamplerate();
+	specs.isSigned = snd_pcm_format_signed(sampleFormat) == 1;
+	specs.isLittleEndian = snd_pcm_format_little_endian(sampleFormat) == 1;
+	specs.isFloat = snd_pcm_format_float(sampleFormat);
+
+	specs.channels = getChannelCount();
+
+	// 1 Frame in Bytes: Channels * BytesPerSample
+	specs.buffersizeInFrames = getBuffersize();
+	specs.buffersizeInFramesPerPeriode = specs.buffersizeInFrames / getBufferCount();
+
+	// 1 Sample in Bytes: BytesPerSample
+	specs.buffersizeInSamples = specs.buffersizeInFrames * getChannelCount();
+	specs.buffersizeInSamplesPerPeriode = specs.buffersizeInSamples / getBufferCount();
+
+	specs.bytesPerSample = snd_pcm_hw_params_get_sbits(m_hwParams) / 8;
+	specs.bytesPerSamplePhysical = snd_pcm_format_physical_width(sampleFormat) / 8;
+	specs.bytesPerFrame = specs.bytesPerSample * specs.channels;
+
+	specs.buffersizeInBytes = specs.bytesPerSample * specs.channels * specs.buffersizeInFrames;
+	specs.buffersizeInBytesPerPeriode = specs.buffersizeInBytes / getBufferCount();
+
+	return specs;
+}
 
 std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs)
 {
@@ -226,7 +252,7 @@ int AudioAlsa::xrunRecovery(AudioAlsa *ptr, int err)
 		if (err < 0) {
 			err = snd_pcm_prepare(ptr->m_handle);
 			if (err < 0)
-				printf("Can't recovery from suspend, prepare failed: %s\n", snd_strerror(err));
+				printf("Can't recover from suspend, prepare failed: %s\n", snd_strerror(err));
 		}
 		return 0;
 	}

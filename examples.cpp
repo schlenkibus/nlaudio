@@ -62,6 +62,7 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpe
 				if (newFrequency != frequency) {
 					frequency = newFrequency;
 					reset = true;
+					printf("Reseting...\n");
 				}
 			} else {
 				velocity = 0;
@@ -72,6 +73,7 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpe
 	if (velocity) {
 		int32_t samples[sampleSpecs.buffersizeInFramesPerPeriode];
 		Nl::sinewave<int32_t>(samples, frequency, reset, sampleSpecs);
+		Nl::store<int32_t>(samples, sampleSpecs.buffersizeInFramesPerPeriode, "lalala.txt");
 		for (unsigned int byte=0; byte<sampleSpecs.buffersizeInBytesPerPeriode; byte++) {
 			unsigned int currentSample = (byte / (sampleSpecs.channels * sampleSpecs.bytesPerSample));
 			unsigned int byteIndex = (byte % sampleSpecs.bytesPerSample);
