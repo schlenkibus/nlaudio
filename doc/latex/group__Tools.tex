@@ -1,0 +1,255 @@
+\hypertarget{group__Tools}{}\section{Tools}
+\label{group__Tools}\index{Tools@{Tools}}
+
+
+Basic Toolbox for Audio.  
+
+
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structNl_1_1SampleSpecs__t}{Nl\+::\+Sample\+Specs\+\_\+t}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+std\+::ostream \& \hyperlink{group__Tools_gabee48f343c56a50d1a2175bc2ba92e82}{Nl\+::operator$<$$<$} (std\+::ostream \&lhs, const Sample\+Specs\+\_\+t \&rhs)
+\begin{DoxyCompactList}\small\item\em Print buffer information using operator$<$$<$. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\void \hyperlink{group__Tools_gadb18f37b41d4edd77ff13d13f0311e77}{Nl\+::store} (const T $\ast$buffer, unsigned int buffersize, const std\+::string \&path)
+\begin{DoxyCompactList}\small\item\em Store a buffer with samples to a csv file. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\void \hyperlink{group__Tools_gab946257fcff414a645ead1b096cddb78}{Nl\+::sinewave} (T $\ast$buffer, float frequency, bool reset, const Sample\+Specs\+\_\+t \&sample\+Specs)
+\begin{DoxyCompactList}\small\item\em Generate a sine fragment with a given frequency. \end{DoxyCompactList}\item 
+{\footnotesize template$<$$>$ }\\void \hyperlink{group__Tools_ga0d9998a7bed5d14bbd7435642a4301a6}{Nl\+::sinewave$<$ double $>$} (double $\ast$buffer, float frequency, bool reset, const Sample\+Specs\+\_\+t \&sample\+Specs)
+\begin{DoxyCompactList}\small\item\em Generate a sine fragment with a given frequency. Specialized template for double. \end{DoxyCompactList}\item 
+{\footnotesize template$<$$>$ }\\void \hyperlink{group__Tools_ga484b1c4e2bb92cc85595d2425af0db32}{Nl\+::sinewave$<$ float $>$} (float $\ast$buffer, float frequency, bool reset, const Sample\+Specs\+\_\+t \&sample\+Specs)
+\begin{DoxyCompactList}\small\item\em Generate a sine fragment with a given frequency. Specialized template for float. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\void \hyperlink{group__Tools_gaaa8044cd5d7fb8a546c89a8a734a9b84}{Nl\+::sinewave} (T $\ast$buffer, unsigned int buffersize)
+\begin{DoxyCompactList}\small\item\em Generate a complete sine from 0 to 2\+Pi with a given frequency. \end{DoxyCompactList}\item 
+{\footnotesize template$<$$>$ }\\void \hyperlink{group__Tools_gae9f833f46f694578df96c59cdc77b05c}{Nl\+::sinewave$<$ double $>$} (double $\ast$buffer, unsigned int buffersize)
+\begin{DoxyCompactList}\small\item\em Generate a complete sine from 0 to 2\+Pi with a given frequency. Specialized template for double. \end{DoxyCompactList}\item 
+{\footnotesize template$<$$>$ }\\void \hyperlink{group__Tools_gaccbed8278ac6853901b118e5e64b2fa1}{Nl\+::sinewave$<$ float $>$} (float $\ast$buffer, unsigned int buffersize)
+\begin{DoxyCompactList}\small\item\em Generate a complete sine from 0 to 2\+Pi with a given frequency. Specialized template for float. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Basic Toolbox for Audio. 
+
+This file contains basic tools, one might consider useful, such as signal generators and data plotters 
+
+\subsection{Function Documentation}
+\hypertarget{group__Tools_gabee48f343c56a50d1a2175bc2ba92e82}{}\index{Tools@{Tools}!operator$<$$<$@{operator$<$$<$}}
+\index{operator$<$$<$@{operator$<$$<$}!Tools@{Tools}}
+\subsubsection[{operator$<$$<$}]{\setlength{\rightskip}{0pt plus 5cm}std\+::ostream \& Nl\+::operator$<$$<$ (
+\begin{DoxyParamCaption}
+\item[{std\+::ostream \&}]{lhs, }
+\item[{const {\bf Sample\+Specs\+\_\+t} \&}]{rhs}
+\end{DoxyParamCaption}
+)}\label{group__Tools_gabee48f343c56a50d1a2175bc2ba92e82}
+
+
+Print buffer information using operator$<$$<$. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em lhs} & Left hand Side \\
+\hline
+{\em rhs} & Right hand Side\\
+\hline
+\end{DoxyParams}
+Helper overload of operator$<$$<$ for \hyperlink{structNl_1_1SampleSpecs__t}{Sample\+Specs\+\_\+t} so it can be used as\+:
+
+
+\begin{DoxyCode}
+std::cout << \textcolor{stringliteral}{"SampleSpecs: "} << std::endl << mySampleSpecs << std::endl;
+\end{DoxyCode}
+ \hypertarget{group__Tools_gab946257fcff414a645ead1b096cddb78}{}\index{Tools@{Tools}!sinewave@{sinewave}}
+\index{sinewave@{sinewave}!Tools@{Tools}}
+\subsubsection[{sinewave}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ void Nl\+::sinewave (
+\begin{DoxyParamCaption}
+\item[{T $\ast$}]{buffer, }
+\item[{float}]{frequency, }
+\item[{bool}]{reset, }
+\item[{const {\bf Sample\+Specs\+\_\+t} \&}]{sample\+Specs}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{group__Tools_gab946257fcff414a645ead1b096cddb78}
+
+
+Generate a sine fragment with a given frequency. 
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em T} & Defines the type of the generated samples. For uint8\+\_\+t\+: sin(0) = 127 and sin(pi/2) = 255 and for int8\+\_\+t\+: sin(0) = 0 and sin(pi/2) = 127 \\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em buffer} & Buffer to store samples to \\
+\hline
+{\em frequency} & Desired frequency \\
+\hline
+{\em reset} & This must be set true, if sample\+Specs or frequency have changed since last call. \\
+\hline
+{\em sample\+Specs} & Containing all necessary sampleinformtaion.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyCode}
+Nl::sinewave<int32\_t>(buffer, frequency, \textcolor{keyword}{false}, sampleSpecs);
+\end{DoxyCode}
+ \hypertarget{group__Tools_gaaa8044cd5d7fb8a546c89a8a734a9b84}{}\index{Tools@{Tools}!sinewave@{sinewave}}
+\index{sinewave@{sinewave}!Tools@{Tools}}
+\subsubsection[{sinewave}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ void Nl\+::sinewave (
+\begin{DoxyParamCaption}
+\item[{T $\ast$}]{buffer, }
+\item[{unsigned int}]{buffersize}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{group__Tools_gaaa8044cd5d7fb8a546c89a8a734a9b84}
+
+
+Generate a complete sine from 0 to 2\+Pi with a given frequency. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em buffer} & Buffer to store samples to \\
+\hline
+{\em buffersize} & Size of buffer and therefore x resolution 
+\begin{DoxyCode}
+Nl::sinewave<int16\_t>(buffer, 360);
+\end{DoxyCode}
+ \\
+\hline
+\end{DoxyParams}
+\hypertarget{group__Tools_ga0d9998a7bed5d14bbd7435642a4301a6}{}\index{Tools@{Tools}!sinewave$<$ double $>$@{sinewave$<$ double $>$}}
+\index{sinewave$<$ double $>$@{sinewave$<$ double $>$}!Tools@{Tools}}
+\subsubsection[{sinewave$<$ double $>$}]{\setlength{\rightskip}{0pt plus 5cm}template$<$$>$ void Nl\+::sinewave$<$ double $>$ (
+\begin{DoxyParamCaption}
+\item[{double $\ast$}]{buffer, }
+\item[{float}]{frequency, }
+\item[{bool}]{reset, }
+\item[{const {\bf Sample\+Specs\+\_\+t} \&}]{sample\+Specs}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{group__Tools_ga0d9998a7bed5d14bbd7435642a4301a6}
+
+
+Generate a sine fragment with a given frequency. Specialized template for double. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em buffer} & Buffer to store samples to \\
+\hline
+{\em frequency} & Desired frequency \\
+\hline
+{\em reset} & This must be set true, if sample\+Specs or frequency have changed since last call. \\
+\hline
+{\em sample\+Specs} & Containing all necessary sampleinformtaion.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyCode}
+\hyperlink{group__Tools_ga0d9998a7bed5d14bbd7435642a4301a6}{Nl::sinewave<double>}(buffer, frequency, \textcolor{keyword}{false}, sampleSpecs);
+\end{DoxyCode}
+ \hypertarget{group__Tools_gae9f833f46f694578df96c59cdc77b05c}{}\index{Tools@{Tools}!sinewave$<$ double $>$@{sinewave$<$ double $>$}}
+\index{sinewave$<$ double $>$@{sinewave$<$ double $>$}!Tools@{Tools}}
+\subsubsection[{sinewave$<$ double $>$}]{\setlength{\rightskip}{0pt plus 5cm}template$<$$>$ void Nl\+::sinewave$<$ double $>$ (
+\begin{DoxyParamCaption}
+\item[{double $\ast$}]{buffer, }
+\item[{unsigned int}]{buffersize}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{group__Tools_gae9f833f46f694578df96c59cdc77b05c}
+
+
+Generate a complete sine from 0 to 2\+Pi with a given frequency. Specialized template for double. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em buffer} & Buffer to store samples to \\
+\hline
+{\em buffersize} & Size of buffer and therefore x resolution 
+\begin{DoxyCode}
+\hyperlink{group__Tools_ga0d9998a7bed5d14bbd7435642a4301a6}{Nl::sinewave<double>}(buffer, 360);
+\end{DoxyCode}
+ \\
+\hline
+\end{DoxyParams}
+\hypertarget{group__Tools_ga484b1c4e2bb92cc85595d2425af0db32}{}\index{Tools@{Tools}!sinewave$<$ float $>$@{sinewave$<$ float $>$}}
+\index{sinewave$<$ float $>$@{sinewave$<$ float $>$}!Tools@{Tools}}
+\subsubsection[{sinewave$<$ float $>$}]{\setlength{\rightskip}{0pt plus 5cm}template$<$$>$ void Nl\+::sinewave$<$ float $>$ (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{buffer, }
+\item[{float}]{frequency, }
+\item[{bool}]{reset, }
+\item[{const {\bf Sample\+Specs\+\_\+t} \&}]{sample\+Specs}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{group__Tools_ga484b1c4e2bb92cc85595d2425af0db32}
+
+
+Generate a sine fragment with a given frequency. Specialized template for float. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em buffer} & Buffer to store samples to \\
+\hline
+{\em frequency} & Desired frequency \\
+\hline
+{\em reset} & This must be set true, if sample\+Specs or frequency have changed since last call. \\
+\hline
+{\em sample\+Specs} & Containing all necessary sampleinformtaion.\\
+\hline
+\end{DoxyParams}
+
+\begin{DoxyCode}
+\hyperlink{group__Tools_ga484b1c4e2bb92cc85595d2425af0db32}{Nl::sinewave<float>}(buffer, frequency, \textcolor{keyword}{false}, sampleSpecs);
+\end{DoxyCode}
+ \hypertarget{group__Tools_gaccbed8278ac6853901b118e5e64b2fa1}{}\index{Tools@{Tools}!sinewave$<$ float $>$@{sinewave$<$ float $>$}}
+\index{sinewave$<$ float $>$@{sinewave$<$ float $>$}!Tools@{Tools}}
+\subsubsection[{sinewave$<$ float $>$}]{\setlength{\rightskip}{0pt plus 5cm}template$<$$>$ void Nl\+::sinewave$<$ float $>$ (
+\begin{DoxyParamCaption}
+\item[{float $\ast$}]{buffer, }
+\item[{unsigned int}]{buffersize}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{group__Tools_gaccbed8278ac6853901b118e5e64b2fa1}
+
+
+Generate a complete sine from 0 to 2\+Pi with a given frequency. Specialized template for float. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em buffer} & Buffer to store samples to \\
+\hline
+{\em buffersize} & Size of buffer and therefore x resolution 
+\begin{DoxyCode}
+\hyperlink{group__Tools_ga484b1c4e2bb92cc85595d2425af0db32}{Nl::sinewave<float>}(buffer, 360);
+\end{DoxyCode}
+ \\
+\hline
+\end{DoxyParams}
+\hypertarget{group__Tools_gadb18f37b41d4edd77ff13d13f0311e77}{}\index{Tools@{Tools}!store@{store}}
+\index{store@{store}!Tools@{Tools}}
+\subsubsection[{store}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ void Nl\+::store (
+\begin{DoxyParamCaption}
+\item[{const T $\ast$}]{buffer, }
+\item[{unsigned int}]{buffersize, }
+\item[{const std\+::string \&}]{path}
+\end{DoxyParamCaption}
+)}\label{group__Tools_gadb18f37b41d4edd77ff13d13f0311e77}
+
+
+Store a buffer with samples to a csv file. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em buffer} & Buffer with samples. \\
+\hline
+{\em buffersize} & Buffersize in bytes. \\
+\hline
+{\em path} & Path to store the data to\\
+\hline
+\end{DoxyParams}
+Store the content of a buffer to a coma separated files
+
+
+\begin{DoxyCode}
+\hyperlink{group__Tools_ga0d9998a7bed5d14bbd7435642a4301a6}{Nl::sinewave<double>}(buffer, frequency, \textcolor{keyword}{false}, sampleSpecs);
+Nl::store<double>(buffer, sampleSpecs.buffersizeInBytes, \textcolor{stringliteral}{"./sampleData.txt"});
+\end{DoxyCode}
+ 

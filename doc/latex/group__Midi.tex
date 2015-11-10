@@ -1,0 +1,257 @@
+\hypertarget{group__Midi}{}\section{Midi}
+\label{group__Midi}\index{Midi@{Midi}}
+
+
+Midi subsystem for Nl\+Audio Framework.  
+
+
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classNl_1_1RawMidiDeviceException}{Nl\+::\+Raw\+Midi\+Device\+Exception}
+\begin{DoxyCompactList}\small\item\em Definition of dataflow direction. \end{DoxyCompactList}\item 
+class \hyperlink{classNl_1_1RawMidiDevice}{Nl\+::\+Raw\+Midi\+Device}
+\begin{DoxyCompactList}\small\item\em \hyperlink{classNl_1_1Midi}{Midi} implementation for alsa raw midi. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+std\+::ostream \& \hyperlink{group__Midi_gaefa21e4261d1168eec79e36db5859c67}{Nl\+::operator$<$$<$} (std\+::ostream \&lhs, const Midi\+Device\+Direction \&rhs)
+\begin{DoxyCompactList}\small\item\em Print Midi\+Device\+Direction using operator$<$$<$. \end{DoxyCompactList}\item 
+std\+::ostream \& \hyperlink{group__Midi_ga39552abb8475b7a722d4710b056d9e2e}{Nl\+::operator$<$$<$} (std\+::ostream \&lhs, const Midi\+Device \&rhs)
+\begin{DoxyCompactList}\small\item\em Print \hyperlink{structNl_1_1MidiDevice}{Midi\+Device} using operator$<$$<$. \end{DoxyCompactList}\item 
+std\+::ostream \& \hyperlink{group__Midi_ga8876ffd695a43dee285ebda5dc6c2a25}{Nl\+::operator$<$$<$} (std\+::ostream \&lhs, const Midi\+Card \&rhs)
+\begin{DoxyCompactList}\small\item\em Print \hyperlink{structNl_1_1MidiCard}{Midi\+Card} using operator$<$$<$. \end{DoxyCompactList}\item 
+\hyperlink{group__Midi_ga5ad811af40ee0c2b2c97f63bd9d6163b}{Nl\+::\+Raw\+Midi\+Device\+::\+Raw\+Midi\+Device} (const devicename\+\_\+t \&device, std\+::shared\+\_\+ptr$<$ Blocking\+Circular\+Buffer$<$ uint8\+\_\+t $>$$>$ buffer)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+virtual void \hyperlink{group__Midi_gace91f1137effd037eca8b3b959508f91}{Nl\+::\+Raw\+Midi\+Device\+::open} ()
+\begin{DoxyCompactList}\small\item\em Open the interface. \end{DoxyCompactList}\item 
+virtual void \hyperlink{group__Midi_gaa66489de15df30f282637b8a1bcd263d}{Nl\+::\+Raw\+Midi\+Device\+::close} ()
+\begin{DoxyCompactList}\small\item\em Close the interface. \end{DoxyCompactList}\item 
+virtual void \hyperlink{group__Midi_ga9ca4e486b5df388d9000ea8ef48d31a8}{Nl\+::\+Raw\+Midi\+Device\+::start} ()
+\begin{DoxyCompactList}\small\item\em Start the interface. \end{DoxyCompactList}\item 
+virtual void \hyperlink{group__Midi_gae95fcc2ce4b3681d34f341b2d5c9276e}{Nl\+::\+Raw\+Midi\+Device\+::stop} ()
+\begin{DoxyCompactList}\small\item\em Stop the interface. \end{DoxyCompactList}\item 
+\hyperlink{group__Midi_ga8ede83b60ff88f34a597952ea1bd32fb}{Nl\+::\+Raw\+Midi\+Device\+::$\sim$\+Raw\+Midi\+Device} ()
+\begin{DoxyCompactList}\small\item\em Deconstructor. \end{DoxyCompactList}\item 
+static std\+::list$<$ Midi\+Card $>$ \hyperlink{group__Midi_gaf6f05ac177aed9d05e06f34a776b5317}{Nl\+::\+Raw\+Midi\+Device\+::get\+Available\+Devices} ()
+\begin{DoxyCompactList}\small\item\em Static function that lists alsa midi devices. \end{DoxyCompactList}\item 
+static devicename\+\_\+t \hyperlink{group__Midi_ga0b9d06ce7bef2391934e3770c4343b63}{Nl\+::\+Raw\+Midi\+Device\+::get\+First\+Device} ()
+\begin{DoxyCompactList}\small\item\em Static function that returns first available alsa midi device. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Midi subsystem for Nl\+Audio Framework. 
+
+
+
+\subsection{Function Documentation}
+\hypertarget{group__Midi_gaa66489de15df30f282637b8a1bcd263d}{}\index{Midi@{Midi}!close@{close}}
+\index{close@{close}!Midi@{Midi}}
+\subsubsection[{close}]{\setlength{\rightskip}{0pt plus 5cm}void Nl\+::\+Raw\+Midi\+Device\+::close (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{group__Midi_gaa66489de15df30f282637b8a1bcd263d}
+
+
+Close the interface. 
+
+Closes the interface. Should be called, before deleting the object. 
+
+Implements \hyperlink{classNl_1_1Midi}{Nl\+::\+Midi}.
+
+\hypertarget{group__Midi_gaf6f05ac177aed9d05e06f34a776b5317}{}\index{Midi@{Midi}!get\+Available\+Devices@{get\+Available\+Devices}}
+\index{get\+Available\+Devices@{get\+Available\+Devices}!Midi@{Midi}}
+\subsubsection[{get\+Available\+Devices}]{\setlength{\rightskip}{0pt plus 5cm}std\+::list$<$ Midi\+Card $>$ Nl\+::\+Raw\+Midi\+Device\+::get\+Available\+Devices (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\label{group__Midi_gaf6f05ac177aed9d05e06f34a776b5317}
+
+
+Static function that lists alsa midi devices. 
+
+\begin{DoxyReturn}{Returns}
+List of available \hyperlink{structNl_1_1MidiCard}{Midi\+Card} elements
+\end{DoxyReturn}
+Lists all available midi devices \hypertarget{group__Midi_ga0b9d06ce7bef2391934e3770c4343b63}{}\index{Midi@{Midi}!get\+First\+Device@{get\+First\+Device}}
+\index{get\+First\+Device@{get\+First\+Device}!Midi@{Midi}}
+\subsubsection[{get\+First\+Device}]{\setlength{\rightskip}{0pt plus 5cm}devicename\+\_\+t Nl\+::\+Raw\+Midi\+Device\+::get\+First\+Device (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}\label{group__Midi_ga0b9d06ce7bef2391934e3770c4343b63}
+
+
+Static function that returns first available alsa midi device. 
+
+\begin{DoxyReturn}{Returns}
+First available \hyperlink{structNl_1_1MidiCard}{Midi\+Card} element
+\end{DoxyReturn}
+Return first available alsa midi device \hypertarget{group__Midi_gace91f1137effd037eca8b3b959508f91}{}\index{Midi@{Midi}!open@{open}}
+\index{open@{open}!Midi@{Midi}}
+\subsubsection[{open}]{\setlength{\rightskip}{0pt plus 5cm}void Nl\+::\+Raw\+Midi\+Device\+::open (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{group__Midi_gace91f1137effd037eca8b3b959508f91}
+
+
+Open the interface. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em device} & Alsa device id such as \char`\"{}hw\+:0,1\char`\"{} \\
+\hline
+{\em buffer} & Buffer to store midi data to\\
+\hline
+\end{DoxyParams}
+Open the interface. Note, that the interface has to be opened, before any other operation is performed. 
+
+Implements \hyperlink{classNl_1_1Midi}{Nl\+::\+Midi}.
+
+\hypertarget{group__Midi_gaefa21e4261d1168eec79e36db5859c67}{}\index{Midi@{Midi}!operator$<$$<$@{operator$<$$<$}}
+\index{operator$<$$<$@{operator$<$$<$}!Midi@{Midi}}
+\subsubsection[{operator$<$$<$}]{\setlength{\rightskip}{0pt plus 5cm}std\+::ostream \& Nl\+::operator$<$$<$ (
+\begin{DoxyParamCaption}
+\item[{std\+::ostream \&}]{lhs, }
+\item[{const Midi\+Device\+Direction \&}]{rhs}
+\end{DoxyParamCaption}
+)}\label{group__Midi_gaefa21e4261d1168eec79e36db5859c67}
+
+
+Print Midi\+Device\+Direction using operator$<$$<$. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em lhs} & Left hand Side \\
+\hline
+{\em rhs} & Right hand Side \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+std\+::ostream with string data
+\end{DoxyReturn}
+Helper overload of operator$<$$<$ for Midi\+Device\+Direction so it can be used as\+:
+
+
+\begin{DoxyCode}
+std::cout << \textcolor{stringliteral}{"Direction: "} << std::endl << myMidiDeviceDirection << std::endl;
+\end{DoxyCode}
+ \hypertarget{group__Midi_ga39552abb8475b7a722d4710b056d9e2e}{}\index{Midi@{Midi}!operator$<$$<$@{operator$<$$<$}}
+\index{operator$<$$<$@{operator$<$$<$}!Midi@{Midi}}
+\subsubsection[{operator$<$$<$}]{\setlength{\rightskip}{0pt plus 5cm}std\+::ostream \& Nl\+::operator$<$$<$ (
+\begin{DoxyParamCaption}
+\item[{std\+::ostream \&}]{lhs, }
+\item[{const {\bf Midi\+Device} \&}]{rhs}
+\end{DoxyParamCaption}
+)}\label{group__Midi_ga39552abb8475b7a722d4710b056d9e2e}
+
+
+Print \hyperlink{structNl_1_1MidiDevice}{Midi\+Device} using operator$<$$<$. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em lhs} & Left hand Side \\
+\hline
+{\em rhs} & Right hand Side \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+std\+::ostream with string data
+\end{DoxyReturn}
+Helper overload of operator$<$$<$ for \hyperlink{structNl_1_1MidiDevice}{Midi\+Device} so it can be used as\+:
+
+
+\begin{DoxyCode}
+std::cout << \textcolor{stringliteral}{"MidiDevice: "} << std::endl << midiDevice << std::endl;
+\end{DoxyCode}
+ \hypertarget{group__Midi_ga8876ffd695a43dee285ebda5dc6c2a25}{}\index{Midi@{Midi}!operator$<$$<$@{operator$<$$<$}}
+\index{operator$<$$<$@{operator$<$$<$}!Midi@{Midi}}
+\subsubsection[{operator$<$$<$}]{\setlength{\rightskip}{0pt plus 5cm}std\+::ostream \& Nl\+::operator$<$$<$ (
+\begin{DoxyParamCaption}
+\item[{std\+::ostream \&}]{lhs, }
+\item[{const {\bf Midi\+Card} \&}]{rhs}
+\end{DoxyParamCaption}
+)}\label{group__Midi_ga8876ffd695a43dee285ebda5dc6c2a25}
+
+
+Print \hyperlink{structNl_1_1MidiCard}{Midi\+Card} using operator$<$$<$. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em lhs} & Left hand Side \\
+\hline
+{\em rhs} & Right hand Side \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+std\+::ostream with string data
+\end{DoxyReturn}
+Helper overload of operator$<$$<$ for \hyperlink{structNl_1_1MidiCard}{Midi\+Card} so it can be used as\+:
+
+
+\begin{DoxyCode}
+std::cout << \textcolor{stringliteral}{"MidiCard: "} << std::endl << midiCard << std::endl;
+\end{DoxyCode}
+ \hypertarget{group__Midi_ga5ad811af40ee0c2b2c97f63bd9d6163b}{}\index{Midi@{Midi}!Raw\+Midi\+Device@{Raw\+Midi\+Device}}
+\index{Raw\+Midi\+Device@{Raw\+Midi\+Device}!Midi@{Midi}}
+\subsubsection[{Raw\+Midi\+Device}]{\setlength{\rightskip}{0pt plus 5cm}Nl\+::\+Raw\+Midi\+Device\+::\+Raw\+Midi\+Device (
+\begin{DoxyParamCaption}
+\item[{const devicename\+\_\+t \&}]{device, }
+\item[{std\+::shared\+\_\+ptr$<$ {\bf Blocking\+Circular\+Buffer}$<$ uint8\+\_\+t $>$$>$}]{buffer}
+\end{DoxyParamCaption}
+)}\label{group__Midi_ga5ad811af40ee0c2b2c97f63bd9d6163b}
+
+
+Constructor. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em device} & Alsa device id such as \char`\"{}hw\+:0,1\char`\"{} \\
+\hline
+{\em buffer} & Buffer to store midi data to\\
+\hline
+\end{DoxyParams}
+Constructor for \hyperlink{classNl_1_1RawMidiDevice}{Raw\+Midi\+Device} \hypertarget{group__Midi_ga9ca4e486b5df388d9000ea8ef48d31a8}{}\index{Midi@{Midi}!start@{start}}
+\index{start@{start}!Midi@{Midi}}
+\subsubsection[{start}]{\setlength{\rightskip}{0pt plus 5cm}void Nl\+::\+Raw\+Midi\+Device\+::start (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{group__Midi_ga9ca4e486b5df388d9000ea8ef48d31a8}
+
+
+Start the interface. 
+
+This starts the worker thread on the interface 
+
+Implements \hyperlink{classNl_1_1Midi}{Nl\+::\+Midi}.
+
+\hypertarget{group__Midi_gae95fcc2ce4b3681d34f341b2d5c9276e}{}\index{Midi@{Midi}!stop@{stop}}
+\index{stop@{stop}!Midi@{Midi}}
+\subsubsection[{stop}]{\setlength{\rightskip}{0pt plus 5cm}void Nl\+::\+Raw\+Midi\+Device\+::stop (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}\label{group__Midi_gae95fcc2ce4b3681d34f341b2d5c9276e}
+
+
+Stop the interface. 
+
+This stops the worker thread on the interface 
+
+Implements \hyperlink{classNl_1_1Midi}{Nl\+::\+Midi}.
+
+\hypertarget{group__Midi_ga8ede83b60ff88f34a597952ea1bd32fb}{}\index{Midi@{Midi}!````~Raw\+Midi\+Device@{$\sim$\+Raw\+Midi\+Device}}
+\index{````~Raw\+Midi\+Device@{$\sim$\+Raw\+Midi\+Device}!Midi@{Midi}}
+\subsubsection[{$\sim$\+Raw\+Midi\+Device}]{\setlength{\rightskip}{0pt plus 5cm}Nl\+::\+Raw\+Midi\+Device\+::$\sim$\+Raw\+Midi\+Device (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}\label{group__Midi_ga8ede83b60ff88f34a597952ea1bd32fb}
+
+
+Deconstructor. 
+
+Nothing special here, so far. 
