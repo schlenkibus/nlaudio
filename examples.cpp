@@ -5,7 +5,7 @@
 namespace Nl {
 namespace Examples {
 
-// Just copy samples from in- to output
+// In to out example
 void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpecs)
 {
 	memcpy(out, in, size);
@@ -43,7 +43,7 @@ ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::strin
 	return ret;
 }
 
-
+// Midi Sine example
 void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpecs)
 {
 	unsigned char midiByteBuffer[3];
@@ -104,7 +104,7 @@ ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
 	ret.audioOutput = Nl::createOutputDevice(audioOutDeviceName, ret.outBuffer, buffersize);
 
 	// Configure Audio (if needed, or use default)
-	//audioOutput->setSampleFormat(...);
+    //ret.audioOutput->setSampleFormat(...);
 	ret.audioOutput->setSamplerate(samplerate);
 
 	// We want midi as well
@@ -120,6 +120,39 @@ ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
 
 	return ret;
 }
+
+// Silence Example
+void silenceCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpecs)
+{
+    memset(out, 0, size);
+}
+
+ExamplesHandle_t silence(const std::string& audioOutDeviceName,
+                        unsigned int buffersize,
+                        unsigned int samplerate)
+{
+    ExamplesHandle_t ret;
+
+    // Not nedded, since we only playback here w/o midi
+    ret.inBuffer = nullptr;
+    ret.audioInput = nullptr;
+
+    // Create an output buffer and an output device
+    ret.outBuffer = Nl::createBuffer("AudioOutput");
+    ret.audioOutput = Nl::createOutputDevice(audioOutDeviceName, ret.outBuffer, buffersize);
+
+    // Configure audio device
+    ret.audioOutput->setSamplerate(samplerate);
+
+    // Start audio Thread
+    ret.audioOutput->start();
+
+    // Register a Callback
+    ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, silenceCallback);
+
+    return ret;
+}
+
 
 } // namespace Nl
 } // namespace Examples
