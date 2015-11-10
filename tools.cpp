@@ -3,6 +3,19 @@
 
 namespace Nl {
 
+/** \ingroup Tools
+ *
+ * \brief Print buffer information using operator<<
+ * \param lhs Left hand Side
+ * \param rhs Right hand Side
+ *
+ * Helper overload of operator<< for SampleSpecs_t
+ * so it can be used as:
+ *
+ * \code{.cpp}
+ *	std::cout << "SampleSpecs: " << std::endl << mySampleSpecs << std::endl;
+ * \endcode
+*/
 std::ostream& operator<<(std::ostream& lhs, const SampleSpecs_t& rhs)
 {
 	lhs << "Samplerate:                        " << rhs.samplerate << std::endl <<
@@ -19,7 +32,6 @@ std::ostream& operator<<(std::ostream& lhs, const SampleSpecs_t& rhs)
 		   "isLittleEndian:                    " << rhs.isLittleEndian << std::endl <<
 		   "isFloat                            " << rhs.isFloat << std::endl <<
 		   "isSigned:                          " << rhs.isSigned << std::endl;
-
 	return lhs;
 }
 

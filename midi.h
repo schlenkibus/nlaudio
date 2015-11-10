@@ -1,5 +1,10 @@
 #pragma once
 
+/** \defgroup Midi
+ *
+ * \brief Midi subsystem for NlAudio Framework
+ *
+*/
 namespace Nl {
 
 typedef std::string devicename_t;
@@ -12,8 +17,5 @@ public:
 
 	virtual void start() = 0;
 	virtual void stop() = 0;
-
-
 };
-
 } // namespace Nl

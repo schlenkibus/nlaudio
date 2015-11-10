@@ -1,39 +1,78 @@
 #pragma once
 
+/** \defgroup Tools
+ *
+ * \brief Basic Toolbox for Audio
+ *
+ * This file contains basic tools, one might consider useful,
+ * such as signal generators and data plotters
+ *
+*/
+
 #include <iostream>
 #include <cmath>
 #include <limits>
 #include <fstream>
 #include <cstdio>
 
-#define NOT_IMPLEMENTED { std::cout << "ALERT: " << __func__ << " not implemented, yet. Aborting!"; exit(-1); }
-
-
 namespace Nl {
 
+
+/** \ingroup Tools
+ * \struct SampleSpecs_t - Stores Sampleinformation for an audio interface
+ *
+*/
 struct SampleSpecs_t {
-    unsigned int samplerate;		/// Samplerate
-    unsigned int channels;			/// Channels
-    unsigned int bytesPerFrame;		/// = channels * bytesPerSample
-    unsigned int buffersizeInFrames;		/// Size of buffer. This is relevant for latency
-    unsigned int buffersizeInFramesPerPeriode;
-    unsigned int buffersizeInBytes; ///
-    unsigned int buffersizeInBytesPerPeriode;
-    unsigned int buffersizeInSamples;
-    unsigned int buffersizeInSamplesPerPeriode;
-    unsigned int bytesPerSample;	/// with 24_BE3 this would be 3, with S16 this would be 2
-    unsigned int bytesPerSamplePhysical; /// Sometimes 24_BE3 or so can be stored in 4Bytes
-    bool isFloat;
-    bool isLittleEndian;
-    bool isSigned;
+	unsigned int samplerate;				///< Samplerate in Hz
+	unsigned int channels;					///< Channels
+	unsigned int bytesPerSample;			///< How many bytes does one sample have. 24_BE3 = 3, S16 = 2, ...
+	unsigned int bytesPerSamplePhysical;	///< Sometimes 24_BE3 can be stored in 4Bytes, then this would be 4. Usually same as bytesPerSample
+	unsigned int bytesPerFrame;				///< How many bytes does one frame have. Same as channels * bytesPerSample
+	unsigned int buffersizeInFrames;		///< Buffersize in Frames
+	unsigned int buffersizeInFramesPerPeriode;	///< Buffersize in Frames per Periode. Same as buffersizeInFrames / periodes
+	unsigned int buffersizeInBytes;				///< Buffersize in Bytes
+	unsigned int buffersizeInBytesPerPeriode;	///< Buffersize in Bytes per Periode. Same as buffersizeInBytes / periodes
+	unsigned int buffersizeInSamples;			///< Buffersize in Samples. Same as buffersizeInBytes / bytesPerSample
+	unsigned int buffersizeInSamplesPerPeriode; ///< Buffersize in Samples per Periode. Same as buffersizeInSamples / periodes
+	bool isFloat;								///< Are we working with floating point samples?
+	bool isLittleEndian;						///< Are we working in little endian?
+	bool isSigned;								///< Are we using a sample format with signed values?
     // bool isInterleaved
 };
+
+/** \ingroup Tools
+ *
+ * \brief Print buffer information using operator<<
+ * \param lhs Left hand Side
+ * \param rhs Right hand Side
+ *
+ * Helper overload of operator<< for SampleSpecs_t
+ * so it can be used as:
+ *
+ * \code{.cpp}
+ *	std::cout << "SampleSpecs: " << std::endl << mySampleSpecs << std::endl;
+ * \endcode
+*/
 std::ostream& operator<<(std::ostream& lhs, const SampleSpecs_t& rhs);
 
+/** \ingroup Tools
+ *
+ * \brief Store a buffer with samples to a csv file.
+ * \param buffer Buffer with samples.
+ * \param buffersize Buffersize in bytes.
+ * \param path Path to store the data to
+ *
+ * Store the content of a buffer to a coma separated files
+ *
+ * \code{.cpp}
+ * Nl::sinewave<double>(buffer, frequency, false, sampleSpecs);
+ * Nl::store<double>(buffer, sampleSpecs.buffersizeInBytes, "./sampleData.txt");
+ * \endcode
+*/
 template<typename T>
 void store(const T *buffer, unsigned int buffersize, const std::string& path)
 {
-    int i = 0;
+	unsigned int i = 0;
 
     std::ofstream out;
 	out.open(path, std::ofstream::out /*| std::ofstream::app*/);
@@ -45,40 +84,19 @@ void store(const T *buffer, unsigned int buffersize, const std::string& path)
     out.close();
 }
 
-/// Type HickHack
-template<typename T>
-T typeCast()
-{
-    return T(0);
-}
-
-template<typename T>
-inline T getTypeForBitlenght(const SampleSpecs_t& specs) {
-
-    if (specs.isFloat)
-        return typeCast<float>();
-
-    // Signed
-    if (specs.isSigned) {
-        if (specs.bytesPerSample == 1)
-            return typeCast<int8_t>();
-        else if (specs.bytesPerFrame == 2)
-            return typeCast<int16_t>();
-        else if (specs.bytesPerSample == 3 || specs.bytesPerSample == 4)
-            return typeCast<int32_t>();
-        // Unsigned
-    } else {
-        if (specs.bytesPerSample == 1)
-            return typeCast<uint8_t>();
-        else if (specs.bytesPerFrame == 2)
-            return typeCast<uint16_t>();
-        else if (specs.bytesPerFrame == 3 || specs.bytesPerFrame == 4)
-            return typeCast<uint32_t>();
-    }
-
-}
-
-/// Signal generators
+/** \ingroup Tools
+ *
+ * \brief Generate a sine fragment with a given frequency.
+ * \tparam T Defines the type of the generated samples. For uint8_t: sin(0) = 127 and sin(pi/2) = 255 and for int8_t: sin(0) = 0 and sin(pi/2) = 127
+ * \param buffer Buffer to store samples to
+ * \param frequency Desired frequency
+ * \param reset This must be set true, if sampleSpecs or frequency have changed since last call.
+ * \param sampleSpecs Containing all necessary sampleinformtaion.
+ *
+ * \code{.cpp}
+ * Nl::sinewave<int32_t>(buffer, frequency, false, sampleSpecs);
+ * \endcode
+*/
 template<typename T>
 inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
 {
@@ -122,7 +140,18 @@ inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs_t
 	}
 }
 
-//Specialize Template for floating point types
+/** \ingroup Tools
+ *
+ * \brief Generate a sine fragment with a given frequency. Specialized template for double
+ * \param buffer Buffer to store samples to
+ * \param frequency Desired frequency
+ * \param reset This must be set true, if sampleSpecs or frequency have changed since last call.
+ * \param sampleSpecs Containing all necessary sampleinformtaion.
+ *
+ * \code{.cpp}
+ * Nl::sinewave<double>(buffer, frequency, false, sampleSpecs);
+ * \endcode
+*/
 template<>
 inline void sinewave<double>(double *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
 {
@@ -144,6 +173,18 @@ inline void sinewave<double>(double *buffer, float frequency, bool reset, const 
     }
 }
 
+/** \ingroup Tools
+ *
+ * \brief Generate a sine fragment with a given frequency. Specialized template for float
+ * \param buffer Buffer to store samples to
+ * \param frequency Desired frequency
+ * \param reset This must be set true, if sampleSpecs or frequency have changed since last call.
+ * \param sampleSpecs Containing all necessary sampleinformtaion.
+ *
+ * \code{.cpp}
+ * Nl::sinewave<float>(buffer, frequency, false, sampleSpecs);
+ * \endcode
+*/
 template<>
 inline void sinewave<float>(float *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
 {
@@ -165,6 +206,15 @@ inline void sinewave<float>(float *buffer, float frequency, bool reset, const Sa
     }
 }
 
+/** \ingroup Tools
+ *
+ * \brief Generate a complete sine from 0 to 2Pi with a given frequency.
+ * \param buffer Buffer to store samples to
+ * \param buffersize Size of buffer and therefore x resolution
+ * \code{.cpp}
+ * Nl::sinewave<int16_t>(buffer, 360);
+ * \endcode
+*/
 template<typename T>
 inline void sinewave(T *buffer, unsigned int buffersize)
 {
@@ -181,7 +231,15 @@ inline void sinewave(T *buffer, unsigned int buffersize)
     }
 }
 
-//Specialize Template for floating point types
+/** \ingroup Tools
+ *
+ * \brief Generate a complete sine from 0 to 2Pi with a given frequency. Specialized template for double
+ * \param buffer Buffer to store samples to
+ * \param buffersize Size of buffer and therefore x resolution
+ * \code{.cpp}
+ * Nl::sinewave<double>(buffer, 360);
+ * \endcode
+*/
 template<>
 inline void sinewave<double>(double *buffer, unsigned int buffersize)
 {
@@ -190,6 +248,15 @@ inline void sinewave<double>(double *buffer, unsigned int buffersize)
     }
 }
 
+/** \ingroup Tools
+ *
+ * \brief Generate a complete sine from 0 to 2Pi with a given frequency. Specialized template for float
+ * \param buffer Buffer to store samples to
+ * \param buffersize Size of buffer and therefore x resolution
+ * \code{.cpp}
+ * Nl::sinewave<float>(buffer, 360);
+ * \endcode
+*/
 template<>
 inline void sinewave<float>(float *buffer, unsigned int buffersize)
 {

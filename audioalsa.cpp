@@ -217,23 +217,105 @@ Statistics AudioAlsa::getStats()
 }
 
 ///Static
-std::list<devicename_t> AudioAlsa::getAvailableDevices()
+std::list<AlsaDeviceIdentifier> AudioAlsa::getAvailableDevices()
 {
 	int card = -1;
+	snd_ctl_card_info_t *info;
 
-	std::list<devicename_t> ret;
+	std::list<AlsaDeviceIdentifier> ret;
 
 	while (snd_card_next(&card) >= 0 && card >= 0) {
 
 		char *name;
-
 		if (snd_card_get_name(card, &name) == 0) {
-			ret.insert(ret.end(), std::string(name));
+			std::cout << name << std::endl;
+
 		}
+
+			//ret.insert(ret.end(), std::string(name));
 	}
 
 	return ret;
 }
+
+/*
+std::list<devicename_t> AudioAlsa::getAvailableDevices()
+{
+	snd_ctl_t *handle;
+	int card, err, dev, idx;
+	snd_ctl_card_info_t *info;
+	snd_pcm_info_t *pcminfo;
+	snd_ctl_card_info_alloca(&info);
+	snd_pcm_info_alloca(&pcminfo);
+
+	card = -1;
+	if (snd_card_next(&card) < 0 || card < 0) {
+		error(_("no soundcards found..."));
+		return;
+	}
+	printf(_("**** List of %s Hardware Devices ****\n"),
+		   snd_pcm_stream_name(stream));
+
+
+	while (card >= 0) {
+
+		char name[32];
+		sprintf(name, "hw:%d", card);
+		if ((err = snd_ctl_open(&handle, name, 0)) < 0) {
+			error("control open (%i): %s", card, snd_strerror(err));
+			goto next_card;
+		}
+		if ((err = snd_ctl_card_info(handle, info)) < 0) {
+			error("control hardware info (%i): %s", card, snd_strerror(err));
+			snd_ctl_close(handle);
+			goto next_card;
+		}
+		dev = -1;
+		while (1) {
+			unsigned int count;
+			if (snd_ctl_pcm_next_device(handle, &dev)<0)
+				error("snd_ctl_pcm_next_device");
+			if (dev < 0)
+				break;
+			snd_pcm_info_set_device(pcminfo, dev);
+			snd_pcm_info_set_subdevice(pcminfo, 0);
+			snd_pcm_info_set_stream(pcminfo, stream);
+			if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
+				if (err != -ENOENT)
+					error("control digital audio info (%i): %s", card, snd_strerror(err));
+				continue;
+			}
+			printf(_("card %i: %s [%s], device %i: %s [%s]\n"),
+				   card, snd_ctl_card_info_get_id(info), snd_ctl_card_info_get_name(info),
+				   dev,
+				   snd_pcm_info_get_id(pcminfo),
+				   snd_pcm_info_get_name(pcminfo));
+			count = snd_pcm_info_get_subdevices_count(pcminfo);
+			printf( _("  Subdevices: %i/%i\n"),
+					snd_pcm_info_get_subdevices_avail(pcminfo), count);
+
+			for (idx = 0; idx < (int)count; idx++) {
+				snd_pcm_info_set_subdevice(pcminfo, idx);
+				if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
+					error("control digital audio playback info (%i): %s", card, snd_strerror(err));
+				} else {
+					printf(_("  Subdevice #%i: %s\n"),
+						   idx, snd_pcm_info_get_subdevice_name(pcminfo));
+				}
+			}
+		}
+		snd_ctl_close(handle);
+next_card:
+		if (snd_card_next(&card) < 0) {
+
+			break;
+		}
+	}
+}
+
+*/
+
+
 
 ///Static
 int AudioAlsa::xrunRecovery(AudioAlsa *ptr, int err)

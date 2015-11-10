@@ -1,5 +1,11 @@
 #pragma once
 
+/** \defgroup Audio
+ *
+ * \brief Audio subsystem for NlAudio Framework
+ *
+*/
+
 #include <cstdint>
 #include <list>
 #include <queue>

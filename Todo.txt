@@ -1,0 +1,6 @@
+Think about factory names:
+
+- CreateHandleForAudioDevice.
+- Fix getBufferByName in callback for MidiBuffer!
+
+

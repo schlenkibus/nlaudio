@@ -5,6 +5,15 @@
 
 namespace Nl {
 
+/** \ingroup Midi
+ *
+ * \brief Constructor
+ * \param device Alsa device id such as "hw:0,1"
+ * \param buffer Buffer to store midi data to
+ *
+ * Constructor for RawMidiDevice
+ *
+*/
 RawMidiDevice::RawMidiDevice(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer) :
 	m_handle(nullptr),
 	m_params(nullptr),
@@ -15,6 +24,16 @@ RawMidiDevice::RawMidiDevice(const devicename_t &device, std::shared_ptr<Blockin
 {
 }
 
+/** \ingroup Midi
+ *
+ * \brief Open the interface
+ * \param device Alsa device id such as "hw:0,1"
+ * \param buffer Buffer to store midi data to
+ *
+ * Open the interface. Note, that the interface has to be opened,
+ * before any other operation is performed.
+ *
+*/
 void RawMidiDevice::open()
 {
 	throwOnAlsaError(snd_rawmidi_open(&m_handle, NULL, m_deviceName.c_str(), 0), __func__);
@@ -24,17 +43,39 @@ void RawMidiDevice::open()
     m_buffer->init(30);
 }
 
+/** \ingroup Midi
+ *
+ * \brief Close the interface
+ *
+ * Closes the interface. Should be called,
+ * before deleting the object.
+ *
+*/
 void RawMidiDevice::close()
 {
 	snd_rawmidi_close(m_handle);
 }
 
+/** \ingroup Midi
+ *
+ * \brief Start the interface
+ *
+ * This starts the worker thread on the interface
+ *
+*/
 void RawMidiDevice::start()
 {
 	m_requestTerminate = false;
 	m_thread = new std::thread(RawMidiDevice::worker, this);
 }
 
+/** \ingroup Midi
+ *
+ * \brief Stop the interface
+ *
+ * This stops the worker thread on the interface
+ *
+*/
 void RawMidiDevice::stop()
 {
 	m_requestTerminate = true;
@@ -42,7 +83,14 @@ void RawMidiDevice::stop()
 	delete m_thread;
 }
 
-//Static
+/** \ingroup Midi
+ *
+ * \brief Static worker thread iomplementation
+ *
+ * This function is static and run within its own thread/context since the interface might block,
+ * if there is nothing to read.
+ *
+*/
 void RawMidiDevice::worker(RawMidiDevice *ptr)
 {
 	const int buffersize = ptr->m_buffersize;
@@ -60,20 +108,46 @@ void RawMidiDevice::worker(RawMidiDevice *ptr)
 	}
 }
 
+/** \ingroup Midi
+ *
+ * \brief Deconstructor
+ *
+ * Nothing special here, so far.
+ *
+*/
 RawMidiDevice::~RawMidiDevice()
 {
-
-
 }
 
+/** \ingroup Midi
+ *
+ * \brief Set Alsa's midi buffer size
+ * \param size Buffersize in bytes
+ *
+ * If you set size to 3, you will get every midi message immediately,
+ * since a midi message has 3 bytes. Setting it to lower values will
+ * add overhead, but no real advantage. Setting it to a bigger value
+ * delays the delivery of the values until this value is reached.
+ *
+*/
 //TODO: This might ne usefull for the user. For now, it will be private, however
 void RawMidiDevice::setAlsaMidiBufferSize(unsigned int size)
 {
-	//throwOnAlsaError(snd_rawmidi_params_set_buffer_size(m_handle, m_params, size), __func__);
+	throwOnAlsaError(snd_rawmidi_params_set_buffer_size(m_handle, m_params, size), __func__);
 	m_buffersize = size;
 }
 
-/// Error Handling
+/** \ingroup Midi
+ *
+ * \brief Checks return values of alsa calls
+ * \throws RawMidiDeviceException
+ * \param e Alsa error number
+ * \param function name of the calling function
+ *
+ * Helper function, that checks return values of alsa calls and throws an exception if it
+ * was an error code.
+ *
+*/
 void RawMidiDevice::throwOnAlsaError(int e, const std::string &function) const
 {
 	if (e < 0) {
@@ -81,7 +155,14 @@ void RawMidiDevice::throwOnAlsaError(int e, const std::string &function) const
 	}
 }
 
-///Static
+/** \ingroup Midi
+ *
+ * \brief Static function that lists alsa midi devices
+ * \return List of available MidiCard elements
+ *
+ * Lists all available midi devices
+ *
+*/
 std::list<MidiCard> RawMidiDevice::getAvailableDevices()
 {
 	std::list<MidiCard> ret;
@@ -194,7 +275,14 @@ std::list<MidiCard> RawMidiDevice::getAvailableDevices()
 	return ret;
 }
 
-///Static
+/** \ingroup Midi
+ *
+ * \brief Static function that returns first available alsa midi device
+ * \return First available MidiCard element
+ *
+ * Return first available alsa midi device
+ *
+*/
 devicename_t RawMidiDevice::getFirstDevice()
 {
 	auto devices = getAvailableDevices();
@@ -212,7 +300,20 @@ devicename_t RawMidiDevice::getFirstDevice()
 	return "";
 }
 
-/// Debugging Helpers
+/** \ingroup Midi
+ *
+ * \brief Print MidiDeviceDirection using operator<<
+ * \param lhs Left hand Side
+ * \param rhs Right hand Side
+ * \return std::ostream with string data
+ *
+ * Helper overload of operator<< for MidiDeviceDirection
+ * so it can be used as:
+ *
+ * \code{.cpp}
+ *	std::cout << "Direction: " << std::endl << myMidiDeviceDirection << std::endl;
+ * \endcode
+*/
 std::ostream& operator<<(std::ostream& lhs, const MidiDeviceDirection& rhs)
 {
 	if (rhs == IN)
@@ -225,12 +326,40 @@ std::ostream& operator<<(std::ostream& lhs, const MidiDeviceDirection& rhs)
 	return lhs;
 }
 
+/** \ingroup Midi
+ *
+ * \brief Print MidiDevice using operator<<
+ * \param lhs Left hand Side
+ * \param rhs Right hand Side
+ * \return std::ostream with string data
+ *
+ * Helper overload of operator<< for MidiDevice
+ * so it can be used as:
+ *
+ * \code{.cpp}
+ *	std::cout << "MidiDevice: " << std::endl << midiDevice << std::endl;
+ * \endcode
+*/
 std::ostream& operator<<(std::ostream& lhs, const MidiDevice& rhs)
 {
 	lhs <<  ":" << rhs.device << ":" << rhs.subdevice << "\t\t" << rhs.name /* << "\t" << rhs.subName */ << "\t" << rhs.direction;
 	return lhs;
 }
 
+/** \ingroup Midi
+ *
+ * \brief Print MidiCard using operator<<
+ * \param lhs Left hand Side
+ * \param rhs Right hand Side
+ * \return std::ostream with string data
+ *
+ * Helper overload of operator<< for MidiCard
+ * so it can be used as:
+ *
+ * \code{.cpp}
+ *	std::cout << "MidiCard: " << std::endl << midiCard << std::endl;
+ * \endcode
+*/
 std::ostream& operator<<(std::ostream& lhs, const MidiCard& rhs)
 {
 	auto iter = rhs.devices.begin();

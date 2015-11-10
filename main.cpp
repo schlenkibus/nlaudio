@@ -20,6 +20,15 @@ int main()
 {
 	try {
 
+
+//		auto availableDevices = Nl::AudioAlsa::getAvailableDevices();
+//		for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it) {
+//			std::cout << *it << std::endl;
+//		}
+
+
+		exit(0);
+
 		std::string audioOutDevice = "hw:1,0,1";
 		std::string audioInDevice = "hw:1,0,0";
 		std::string midiInDevice = "hw:2,0";
@@ -27,7 +36,9 @@ int main()
 		const int samplerate = 48000;
 
 		//auto handle = Nl::Examples::inputToOutput(audioInDevice, audioOutDevice, buffersize, samplerate);
-		auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
+		//auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
+		auto handle = Nl::Examples::midiSine(audioOutDevice, midiInDevice, buffersize, samplerate);
+
 
 		// Wait for user to exit by pressing 'q'
 		// Print buffer statistics on other keys

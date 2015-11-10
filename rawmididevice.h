@@ -11,6 +11,13 @@
 
 namespace Nl {
 
+/** \ingroup Midi
+ *
+ * \class RawMidiDeviceException
+ * \brief Exception object for raw midi
+ * \param errorNumber Error number given by alsa
+ * \param what Error description
+*/
 class RawMidiDeviceException : std::exception
 {
 public:
@@ -21,29 +28,38 @@ private:
 	std::string m_msg;
 };
 
+///< Definition of dataflow direction
 enum MidiDeviceDirection {
-	IN,
-	OUT,
-	IO
+	IN,		///< Midi input only
+	OUT,	///< Midi output only
+	IO		///< Midi Input and Output
 };
 std::ostream& operator<<(std::ostream& lhs, const MidiDeviceDirection& rhs);
 
+/// Definition of MidiDevice
 struct MidiDevice {
-	int device;
-	int subdevice;
-	MidiDeviceDirection direction;
-	devicename_t name;
-	devicename_t subName;
+	int device;						///< Alsa device number
+	int subdevice;					///< Alsa subdevice number
+	MidiDeviceDirection direction;	///< Alsa dataflow direction
+	devicename_t name;				///< Alsa device name
+	devicename_t subName;			///< Alsa subdevice number
 };
 std::ostream& operator<<(std::ostream& lhs, const MidiDevice& rhs);
 
+/// Definition of MidiCard
 struct MidiCard {
-	int card;
-	std::list<struct MidiDevice> devices;
+	int card;						///< Alsa card number
+	std::list<struct MidiDevice> devices; ///< List of MidiDevices
 };
 std::ostream& operator<<(std::ostream& lhs, const MidiCard& rhs);
 
-
+/** \ingroup Midi
+ *
+ * \class RawMidiDevice
+ * \brief Midi implementation for alsa raw midi
+ * \param device Alsa device id such as "hw:0,1"
+ * \param buffer Buffer to store midi data to
+*/
 class RawMidiDevice : public Midi
 {
 public:

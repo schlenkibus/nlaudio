@@ -19,6 +19,28 @@ struct Statistics {
 };
 std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs);
 
+class AlsaDeviceIdentifier {
+public:
+	AlsaDeviceIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, std::string name) :
+		m_card(card),
+		m_device(device),
+		m_subdevice(subdevice),
+		m_name(name)
+	{
+		std::stringstream ss;
+		ss << "hw:" << card << "," << device << "," << subdevice;
+		m_cardString = ss.str();
+	}
+private:
+	unsigned int m_card;
+	unsigned int m_device;
+	unsigned int m_subdevice;
+	std::string m_cardString;
+	std::string m_name;
+};
+
+
+
 class AudioAlsaException : public std::exception
 {
 public:
@@ -74,7 +96,7 @@ public:
 	virtual void setChannelCount(channelcount_t n);
 	virtual channelcount_t getChannelCount();
 
-    static std::list<devicename_t> getAvailableDevices();
+	static std::list<AlsaDeviceIdentifier> getAvailableDevices();
 
 	Statistics getStats();
 
