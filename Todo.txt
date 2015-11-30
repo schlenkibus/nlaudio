@@ -4,3 +4,4 @@ Think about factory names:
 - Fix getBufferByName in callback for MidiBuffer!
 
 
+Behringer sagt: SampleSize 1Byte

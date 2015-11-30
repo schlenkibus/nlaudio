@@ -1,3 +1,23 @@
+/*! \mainpage NlAudio - A lightwight C++ wrapper for alsa and jack
+ *
+ * \section intro_sec This documentation is split into the following subsections:
+ * \ref Audio\n
+ * \ref Midi\n
+ * \ref Tools\n
+ * \ref Factory\n
+ * \n
+ * More has to be done, but first a want to make a proper library from that
+ *
+ * \section install_sec Installation
+ *
+ * sudo make install blub und so
+ *
+ * \subsection step1 Step 1: Opening the box
+ *
+ * This could be a subsection...
+ *
+ */
+
 #include <iostream>
 #include <ostream>
 

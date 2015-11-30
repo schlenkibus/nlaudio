@@ -72,7 +72,7 @@ public:
     }
 
     // Not sure if this is proper. This class should not know something about SampleSpecs.
-    void init(const SampleSpecs_t &sampleSpecs)
+	void init(const SampleSpecs &sampleSpecs)
     {
         init(sampleSpecs.buffersizeInBytes);
         m_sampleSpecs = sampleSpecs;
@@ -162,6 +162,7 @@ public:
 	/** \ingroup Audio
 	 *
 	 * \brief Returns number of available elements to read.
+	 * \return A number of available elements to read.
 	 *
 	 * Returns how many elements can be read from the buffer,
 	 * before the callee is blocked.
@@ -174,6 +175,7 @@ public:
 	/** \ingroup Audio
 	 *
 	 * \brief Returns number of available elements to write.
+	 * \return A number of available elements to write.
 	 *
 	 * Returns how many elements can be written to the buffer,
 	 * before the callee is blocked.
@@ -188,6 +190,7 @@ public:
 	/** \ingroup Audio
 	 *
 	 * \brief Returns the size of the buffer in elements.
+	 * \return The size of the buffer in elements.
 	 *
 	 * Returns the total size in elements of the buffer.
 	*/
@@ -199,6 +202,7 @@ public:
 	/** \ingroup Audio
 	 *
 	 * \brief Returns the name of the buffer.
+	 * \return The name of the Buffer.
 	 *
 	 * Returns the name of the buffer.
 	*/
@@ -210,10 +214,11 @@ public:
 	/** \ingroup Audio
 	 *
 	 * \brief Returns the SampleSpecs_t of the buffer.
+	 * \return SampleSpecs_t which has been used to initialize this buffer.
 	 *
 	 * Returns the SampleSpecs_t which has been used to initialize this buffer.
 	*/
-    inline SampleSpecs_t sampleSpecs()
+	inline SampleSpecs sampleSpecs()
     {
         return m_sampleSpecs;
     }
@@ -232,7 +237,7 @@ private:
     std::atomic<unsigned int> m_readIndex;
     std::atomic<unsigned int> m_writeIndex;
 
-    SampleSpecs_t m_sampleSpecs;
+	SampleSpecs m_sampleSpecs;
 };
 
 } // namespace Nl

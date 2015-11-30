@@ -8,30 +8,65 @@
 
 namespace Nl {
 
-const int DEFAULT_BUFFERSIZE = 128;
-std::map<std::string, Buffer_t> BuffersDictionary;
+const int DEFAULT_BUFFERSIZE = 128; /*!< Default buffer size. */
 
-/// Termination
-TerminateFlag_t createTerminateFlag()
+std::map<std::string, SharedBufferHandle> BuffersDictionary; /*!< Dictionary, used to querry buffers by its names */
+
+/** \ingroup Factory
+ *
+ * \brief Creates a terminate flag of type \ref TerminateFlag_t
+ *
+ * Creates a thread save terminate flag of type \ref TerminateFlag_t, which can
+ * be used to tell a working thread to terminate.
+ *
+*/
+SharedTerminateFlag createTerminateFlag()
 {
-    return TerminateFlag_t(new std::atomic<bool>(false));
+	return SharedTerminateFlag(new std::atomic<bool>(false));
 }
 
-void terminateWorkingThread(WorkingThreadHandle_t handle)
+/** \ingroup Factory
+ *
+ * \brief Terminate a working thread
+ * \param handle A Handle of type \ref WorkingThreadHandle to a working thread.
+ *
+ * Tells a working thread to terminate and waits until it is joined, using a \ref WorkingThreadHandle.
+ *
+*/
+void terminateWorkingThread(WorkingThreadHandle handle)
 {
     handle.terminateRequest->store(true);
     handle.thread->join();
 }
 
-Buffer_t createBuffer(const std::string& name)
+/** \ingroup Factory
+ *
+ * \brief Create a buffer
+ * \param name A buffer name.
+ * \return A handle of type \ref SharedBuffer
+ *
+ * Create a buffer of type \ref SharedBuffer that can be found by its name using Nl::getBufferForName().
+ *
+*/
+SharedBufferHandle createBuffer(const std::string& name)
 {
-    Buffer_t newBuffer = Buffer_t(new BlockingCircularBuffer<u_int8_t>(name));
+	SharedBufferHandle newBuffer = SharedBufferHandle(new BlockingCircularBuffer<u_int8_t>(name));
 
     BuffersDictionary.insert(std::make_pair(name, newBuffer));
     return newBuffer;
 }
 
-Buffer_t getBufferForName(const std::string& name)
+//TODO: Make this operation O(1)! Using a hash.
+/** \ingroup Factory
+ *
+ * \brief Get a buffer by its name
+ * \param name A buffer name.
+ * \return A handle of type \ref SharedBuffer
+ *
+ * Get a buffer of type \ref SharedBuffer that has been created using Nl::createBuffer() by its name.
+ *
+*/
+SharedBufferHandle getBufferForName(const std::string& name)
 {
     auto it = BuffersDictionary.find(name);
 
@@ -42,19 +77,40 @@ Buffer_t getBufferForName(const std::string& name)
     return it->second;
 }
 
-/// Midi Factories
-RawMidiDevice_t createRawMidiDevice(const std::string &name, Buffer_t buffer)
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to a RawMidiDevice device with a given \a name
+ * \param name A device identifier, such as "hw:1,0,0"
+ * \param buffer The buffer
+ * \return A handle of type \ref RawMidiDevice_t
+ *
+ * Factory function which creates a handle of type \ref RawMidiDevice_t to the given RawMidiDevice.\n
+ * The device is automatically opened.\n
+ *
+*/
+SharedRawMidiDeviceHandle createRawMidiDevice(const std::string &name, SharedBufferHandle buffer)
 {
-    RawMidiDevice_t midi(new RawMidiDevice(name, buffer));
+	SharedRawMidiDeviceHandle midi(new RawMidiDevice(name, buffer));
     midi->open();
     return midi;
 }
 
-
-/// Input Factories
-AudioAlsaInput_t createInputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to the output device with a given \a name
+ * \param name A device identifier, such as "hw:1,0,0"
+ * \param buffer The buffer
+ * \param buffersize Buffersize in frames.
+ * \return A handle of type \ref AudioAlsaOutput_t
+ *
+ * Factory function which creates a handle of type \ref AudioAlsaOutput_t to the given output device.\n
+ * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
+ * The device is automatically opened.\n
+ *
+*/
+SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBufferHandle buffer, unsigned int buffersize)
 {
-    AudioAlsaInput_t input(new AudioAlsaInput(name, buffer));
+	SharedAudioAlsaInputHandle input(new AudioAlsaInput(name, buffer));
     input->open();
     input->setBufferCount(2);
     input->setBuffersize(buffersize);
@@ -62,20 +118,57 @@ AudioAlsaInput_t createInputDevice(const std::string& name, Buffer_t buffer, uns
     return input;
 }
 
-AudioAlsaInput_t createInputDevice(const std::string& name, Buffer_t buffer)
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to the input device with a given \a name
+ * \param name A device identifier, such as "hw:1,0,0"
+ * \param buffer The buffer
+ * \param buffersize Buffersize in frames.
+ * \return A handle of type \ref AudioAlsaInput_t
+ *
+ * Factory function which creates a handle of type \ref AudioAlsaInput_t to the given input device.\n
+ * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
+ * The device is automatically opened.\n
+ *
+*/
+SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBufferHandle buffer)
 {
-    return createInputDevice(name, buffer, DEFAULT_BUFFERSIZE);
+	return createInputDevice(name, buffer, DEFAULT_BUFFERSIZE);
 }
 
-AudioAlsaInput_t createDefaultInputDevice(Buffer_t buffer)
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to the default input device
+ * \param buffer The buffer
+ * \return A handle of type \ref AudioAlsaOutput_t
+ *
+ * Factory function which creates a handle of type \ref AudioAlsaInput_t to the default input device.\n
+ * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
+ * Buffersize is set to \ref Nl::DEFAULT_BUFFERSIZE.\n
+ * The device is automatically opened.\n
+ *
+*/
+SharedAudioAlsaInputHandle createDefaultInputDevice(SharedBufferHandle buffer)
 {
     return createInputDevice("default", buffer);
 }
 
-/// Output Factories
-AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize)
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to the output device with a given \a name
+ * \param name A device identifier, such as "hw:1,0,0"
+ * \param buffer The buffer
+ * \param buffersize Buffersize in frames.
+ * \return A handle of type \ref AudioAlsaOutput_t
+ *
+ * Factory function which creates a handle of type \ref AudioAlsaOutput_t to the given output device.\n
+ * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
+ * The device is automatically opened.\n
+ *
+*/
+SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBufferHandle buffer, unsigned int buffersize)
 {
-    AudioAlsaOutput_t output(new AudioAlsaOutput(name, buffer));
+	SharedAudioAlsaOutputHandle output(new AudioAlsaOutput(name, buffer));
     output->open();
     output->setBufferCount(2);
     output->setBuffersize(buffersize);
@@ -83,21 +176,57 @@ AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer, u
     return output;
 }
 
-AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer)
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to the output device with a given \a name
+ * \param name A device identifier, such as "hw:1,0,0"
+ * \param buffer The buffer
+ * \return A handle of type \ref AudioAlsaOutput_t
+ *
+ * Factory function which creates a handle of type \ref AudioAlsaOutput_t to the given output device.\n
+ * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
+ * Buffersize is set to \ref Nl::DEFAULT_BUFFERSIZE \n
+ * The device is automatically opened.\n
+ *
+*/
+SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBufferHandle buffer)
 {
     return createOutputDevice(name, buffer, DEFAULT_BUFFERSIZE);
 }
 
-AudioAlsaOutput_t createDefaultOutputDevice(Buffer_t buffer)
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to the default output device
+ * \param buffer The buffer
+ * \return A handle of type \ref AudioAlsaOutput_t
+ *
+ * Factory function which creates a handle of type \ref AudioAlsaOutput_t to the default output device.\n
+ * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
+ * Buffersize is set to \ref Nl::DEFAULT_BUFFERSIZE \n
+ * The device is automatically opened.\n
+ *
+*/
+SharedAudioAlsaOutputHandle createDefaultOutputDevice(SharedBufferHandle buffer)
 {
     return createOutputDevice("default", buffer);
 }
 
-/// Callbacks
-WorkingThreadHandle_t registerInputCallbackOnBuffer(Buffer_t inBuffer,
-                                                    audioCallbackIn callback)
+/** \ingroup Factory
+ *
+ * \brief Registers a callback on a \ref SharedBuffer for Output operations
+ * \param inBuffer The input buffer
+ * \param callback A callback function of type \ref audioCallbackIn
+ * \return A handle of type \ref WorkingThreadHandle, which can be used to start/stop the working thread.
+ *
+ * Factory function which creates a reading thread to perform the blocking read
+ * operations on the buffer. The \a callback is automatically called, when the buffer (\a inBuffer)
+ * is ready to be processed.
+ *
+*/
+WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
+													AudioCallbackIn callback)
 {
-    Nl::WorkingThreadHandle_t handle;
+	Nl::WorkingThreadHandle handle;
     handle.terminateRequest = Nl::createTerminateFlag();
     handle.thread = std::shared_ptr<std::thread>(new std::thread(readAudioFunction,
                                                                  inBuffer,
@@ -106,10 +235,22 @@ WorkingThreadHandle_t registerInputCallbackOnBuffer(Buffer_t inBuffer,
     return handle;
 }
 
-WorkingThreadHandle_t registerOutputCallbackOnBuffer(Buffer_t outBuffer,
-                                                     audioCallbackOut callback)
+/** \ingroup Factory
+ *
+ * \brief Registers a callback on a \ref SharedBuffer for Output operations
+ * \param outBuffer The output buffer
+ * \param callback A callback function of type \ref audioCallbackOut
+ * \return A handle of type \ref WorkingThreadHandle, which can be used to start/stop the working thread.
+ *
+ * Factory function which creates a writing thread to perform the blocking write
+ * operations on the buffer. The \a callback is automatically called, when the buffer (\a outBuffer)
+ * is ready to be processed.
+ *
+*/
+WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
+													 AudioCallbackOut callback)
 {
-    Nl::WorkingThreadHandle_t handle;
+	Nl::WorkingThreadHandle handle;
     handle.terminateRequest = Nl::createTerminateFlag();
     handle.thread = std::shared_ptr<std::thread>(new std::thread(writeAudioFunction,
                                                                  outBuffer,
@@ -118,11 +259,24 @@ WorkingThreadHandle_t registerOutputCallbackOnBuffer(Buffer_t outBuffer,
     return handle;
 }
 
-WorkingThreadHandle_t registerInOutCallbackOnBuffer(Buffer_t inBuffer,
-                                                    Buffer_t outBuffer,
-                                                    audioCallbackInOut callback)
+/** \ingroup Factory
+ *
+ * \brief Registers a callback on a \ref SharedBuffer for Input/Output operations
+ * \param inBuffer The input buffer
+ * \param outBuffer The output buffer
+ * \param callback A callback function of type \ref audioCallbackInOut
+ * \return A handle of type \ref WorkingThreadHandle, which can be used to start/stop the working thread.
+ *
+ * Factory function which creates a reading and a writing thread to perform the blocking read/write
+ * operations on the buffer. The \a callback is automatically called, when the buffers (\a inBuffer, \a outBuffer)
+ * are ready to be processed.
+ *
+*/
+WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
+													SharedBufferHandle outBuffer,
+													AudioCallbackInOut callback)
 {
-    Nl::WorkingThreadHandle_t handle;
+	Nl::WorkingThreadHandle handle;
     handle.terminateRequest = Nl::createTerminateFlag();
     handle.thread = std::shared_ptr<std::thread>(new std::thread(readWriteAudioFunction,
                                                                  inBuffer,

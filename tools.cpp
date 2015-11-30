@@ -16,7 +16,7 @@ namespace Nl {
  *	std::cout << "SampleSpecs: " << std::endl << mySampleSpecs << std::endl;
  * \endcode
 */
-std::ostream& operator<<(std::ostream& lhs, const SampleSpecs_t& rhs)
+std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs)
 {
 	lhs << "Samplerate:                        " << rhs.samplerate << std::endl <<
 		   "Buffersize in Samples:             " << rhs.buffersizeInSamples << std::endl <<

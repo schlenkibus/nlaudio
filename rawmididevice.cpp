@@ -60,7 +60,8 @@ void RawMidiDevice::close()
  *
  * \brief Start the interface
  *
- * This starts the worker thread on the interface
+ * This starts the worker thread on the interface and has to be called,
+ * in order to use the interface.
  *
 */
 void RawMidiDevice::start()
@@ -73,7 +74,8 @@ void RawMidiDevice::start()
  *
  * \brief Stop the interface
  *
- * This stops the worker thread on the interface
+ * This stops the worker thread on the interface and should be called,
+ * before closing the application.
  *
 */
 void RawMidiDevice::stop()
@@ -88,7 +90,7 @@ void RawMidiDevice::stop()
  * \brief Static worker thread iomplementation
  *
  * This function is static and run within its own thread/context since the interface might block,
- * if there is nothing to read.
+ * if there is no data to read.
  *
 */
 void RawMidiDevice::worker(RawMidiDevice *ptr)

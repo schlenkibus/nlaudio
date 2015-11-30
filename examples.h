@@ -5,25 +5,25 @@
 namespace Nl {
 namespace Examples {
 
-struct ExamplesHandle_t {
-	WorkingThreadHandle_t workingThreadHandle;
-	AudioAlsaInput_t audioInput;
-	AudioAlsaOutput_t audioOutput;
-	Buffer_t inBuffer;
-	Buffer_t outBuffer;
+struct ExamplesHandle {
+	WorkingThreadHandle workingThreadHandle;
+	SharedAudioAlsaInputHandle audioInput;
+	SharedAudioAlsaOutputHandle audioOutput;
+	SharedBufferHandle inBuffer;
+	SharedBufferHandle outBuffer;
 };
 
-ExamplesHandle_t inputToOutput(const std::string& deviceInName,
+ExamplesHandle inputToOutput(const std::string& deviceInName,
 							   const std::string& deviceOutName,
 							   unsigned int buffersize,
 							   unsigned int samplerate);
 
-ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
+ExamplesHandle midiSine(const std::string& audioOutDeviceName,
 						  const std::string& midiInDeviceName,
 						  unsigned int buffersize,
 						  unsigned int samplerate);
 
-ExamplesHandle_t silence(const std::string& audioOutDeviceName,
+ExamplesHandle silence(const std::string& audioOutDeviceName,
                         unsigned int buffersize,
                         unsigned int samplerate);
 

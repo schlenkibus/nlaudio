@@ -18,7 +18,7 @@ void AudioAlsaInput::start()
 	resetTerminateRequest();
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params(m_handle, m_hwParams));
 
-	SampleSpecs_t specs = basetype::getSpecs();
+	SampleSpecs specs = basetype::getSpecs();
 	basetype::m_audioBuffer->init(specs);
 	std::cout << "NlAudioAlsaInput Specs: " << std::endl << specs;
 
@@ -36,7 +36,7 @@ void AudioAlsaInput::stop()
 }
 
 //static
-void AudioAlsaInput::worker(SampleSpecs_t specs, AudioAlsaInput *ptr)
+void AudioAlsaInput::worker(SampleSpecs specs, AudioAlsaInput *ptr)
 {
 
 	u_int8_t *buffer = new u_int8_t[specs.buffersizeInBytesPerPeriode];

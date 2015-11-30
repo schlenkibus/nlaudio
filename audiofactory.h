@@ -1,5 +1,13 @@
 #pragma once
 
+/** \defgroup Factory
+ *
+ * \brief A collection of factory functions.
+ *
+ * This file contains factory functions, to simplify the use of the framework.
+ *
+*/
+
 #include <atomic>
 #include <map>
 
@@ -13,56 +21,73 @@
 
 namespace Nl {
 
-typedef std::shared_ptr<BlockingCircularBuffer<uint8_t>> Buffer_t;
-typedef std::shared_ptr<std::atomic<bool>> TerminateFlag_t;
-typedef std::shared_ptr<std::thread> WorkingThread_t;
+/*! A shared handle to a \ref BlockingCircularBuffer<uint8_t> */
+typedef std::shared_ptr<BlockingCircularBuffer<uint8_t>> SharedBufferHandle;
 
-typedef std::shared_ptr<AudioAlsaInput> AudioAlsaInput_t;
-typedef std::shared_ptr<AudioAlsaOutput> AudioAlsaOutput_t;
+/*! A shared handle to a \ref std::atomic<bool> */
+typedef std::shared_ptr<std::atomic<bool>> SharedTerminateFlag;
 
-typedef std::shared_ptr<RawMidiDevice> RawMidiDevice_t;
+/*! A shared handle to a \ref std::thread */
+typedef std::shared_ptr<std::thread> SharedThreadHandle;
 
-typedef void (*audioCallbackIn)(u_int8_t*, size_t size, const SampleSpecs_t &sampleSpecs);
-typedef void (*audioCallbackOut)(u_int8_t*, size_t size, const SampleSpecs_t &sampleSpecs);
-typedef void (*audioCallbackInOut)(u_int8_t*, uint8_t*, size_t size, const SampleSpecs_t &sampleSpecs);
+/*! A shared handle to a \ref AudioAlsaInput */
+typedef std::shared_ptr<AudioAlsaInput> SharedAudioAlsaInputHandle;
 
-struct WorkingThreadHandle_t {
-    WorkingThread_t thread;
-    TerminateFlag_t terminateRequest;
+/*! A shared handle to a \ref AudioAlsaOutput */
+typedef std::shared_ptr<AudioAlsaOutput> SharedAudioAlsaOutputHandle;
+
+/*! A shared handle to a \ref RawMidiDevice */
+typedef std::shared_ptr<RawMidiDevice> SharedRawMidiDeviceHandle;
+
+typedef void (*AudioCallbackIn)(u_int8_t*, size_t size, const SampleSpecs &sampleSpecs);
+typedef void (*AudioCallbackOut)(u_int8_t*, size_t size, const SampleSpecs &sampleSpecs);
+typedef void (*AudioCallbackInOut)(u_int8_t*, uint8_t*, size_t size, const SampleSpecs &sampleSpecs);
+
+/**
+ * \brief The WorkingThreadHandle struct
+ *
+ * A handle to a working thread, as used by the callback creators:
+ * - Nl::registerInOutCallbackOnBuffer()
+ * - Nl::registerOutputCallbackOnBuffer()
+ * - Nl::registerInputCallbackOnBuffer()
+ */
+struct WorkingThreadHandle {
+	SharedThreadHandle thread;	/**< A thread handle */
+	SharedTerminateFlag terminateRequest; /**< A terminate request handle */
 };
 
 // Factory Functions
-RawMidiDevice_t createRawMidiDevice(const std::string& name, Buffer_t buffer);
+SharedRawMidiDeviceHandle createRawMidiDevice(const std::string& name, SharedBufferHandle buffer);
 
+SharedTerminateFlag createTerminateFlag();
 
-TerminateFlag_t createTerminateFlag();
+SharedBufferHandle createBuffer(const std::string& name);
+SharedBufferHandle getBufferForName(const std::string& name);
 
-Buffer_t createBuffer(const std::string& name);
-Buffer_t getBufferForName(const std::string& name);
+void terminateWorkingThread(WorkingThreadHandle handle);
 
-void terminateWorkingThread(WorkingThreadHandle_t handle);
+SharedAudioAlsaInputHandle createDefaultInputDevice(SharedBufferHandle buffer);
+SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBufferHandle buffer);
+SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBufferHandle buffer, unsigned int buffersize);
 
-AudioAlsaInput_t createDefaultInputDevice(Buffer_t buffer);
-AudioAlsaInput_t createInputDevice(const std::string& name, Buffer_t buffer);
-AudioAlsaInput_t createInputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize);
+SharedAudioAlsaOutputHandle createDefaultOutputDevice(SharedBufferHandle buffer);
+SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBufferHandle buffer);
+SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBufferHandle buffer, unsigned int buffersize);
 
-AudioAlsaOutput_t createDefaultOutputDevice(Buffer_t buffer);
-AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer);
-AudioAlsaOutput_t createOutputDevice(const std::string& name, Buffer_t buffer, unsigned int buffersize);
+WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
+											  AudioCallbackIn callback);
+WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
+											   AudioCallbackOut callback);
+WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
+											  SharedBufferHandle outBuffer,
+											  AudioCallbackInOut callback);
 
-WorkingThreadHandle_t registerInputCallbackOnBuffer(Buffer_t inBuffer,
-                                              audioCallbackIn callback);
-WorkingThreadHandle_t registerOutputCallbackOnBuffer(Buffer_t outBuffer,
-                                               audioCallbackOut callback);
-WorkingThreadHandle_t registerInOutCallbackOnBuffer(Buffer_t inBuffer,
-                                              Buffer_t outBuffer,
-                                              audioCallbackInOut callback);
-
-auto readAudioFunction = [](Buffer_t audioBuffer,
-audioCallbackIn callback,
+// Thread function, that handles blocking io calls on the buffers
+auto readAudioFunction = [](SharedBufferHandle audioBuffer,
+AudioCallbackIn callback,
 std::shared_ptr<std::atomic<bool>> terminateRequest) {
 
-    SampleSpecs_t sampleSpecs = audioBuffer->sampleSpecs();
+	SampleSpecs sampleSpecs = audioBuffer->sampleSpecs();
 
     const int buffersize = sampleSpecs.buffersizeInBytesPerPeriode;
     u_int8_t *buffer = new u_int8_t[buffersize];
@@ -75,11 +100,12 @@ std::shared_ptr<std::atomic<bool>> terminateRequest) {
     delete[] buffer;
 };
 
-auto writeAudioFunction = [](Buffer_t audioBuffer,
-audioCallbackIn callback,
+// Thread function, that handles blocking io calls on the buffers
+auto writeAudioFunction = [](SharedBufferHandle audioBuffer,
+AudioCallbackIn callback,
 std::shared_ptr<std::atomic<bool>> terminateRequest) {
 
-    SampleSpecs_t sampleSpecs = audioBuffer->sampleSpecs();
+	SampleSpecs sampleSpecs = audioBuffer->sampleSpecs();
 
     const int buffersize = sampleSpecs.buffersizeInBytesPerPeriode;
     u_int8_t *buffer = new u_int8_t[buffersize];
@@ -94,13 +120,14 @@ std::shared_ptr<std::atomic<bool>> terminateRequest) {
     delete[] buffer;
 };
 
-auto readWriteAudioFunction = [](Buffer_t audioInBuffer,
-Buffer_t audioOutBuffer,
-audioCallbackInOut callback,
+// Thread function, that handles blocking io calls on the buffers
+auto readWriteAudioFunction = [](SharedBufferHandle audioInBuffer,
+SharedBufferHandle audioOutBuffer,
+AudioCallbackInOut callback,
 std::shared_ptr<std::atomic<bool>> terminateRequest) {
 
-    SampleSpecs_t sampleSpecsIn = audioInBuffer->sampleSpecs();
-    SampleSpecs_t sampleSpecsOut = audioOutBuffer->sampleSpecs();
+	SampleSpecs sampleSpecsIn = audioInBuffer->sampleSpecs();
+	SampleSpecs sampleSpecsOut = audioOutBuffer->sampleSpecs();
 
     const int inBuffersize = sampleSpecsIn.buffersizeInBytesPerPeriode;
     const int outBuffersize = sampleSpecsOut.buffersizeInBytesPerPeriode;

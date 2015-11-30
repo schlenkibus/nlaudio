@@ -6,7 +6,17 @@
 
 namespace Nl {
 
-AudioAlsa::AudioAlsa(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<u_int8_t>> buffer, bool isInput) :
+/** \ingroup Audio
+ *
+ * \brief Constructor
+ * \param device Alsa device id such as "hw:0,1"
+ * \param buffer
+ * \param isInput If true, the device is opened as input, otherwise as output.
+ *
+ * Constructor for AudioAlsa
+ *
+*/
+AudioAlsa::AudioAlsa(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer, bool isInput) :
 	m_handle(nullptr),
 	m_hwParams(nullptr),
 	m_audioBuffer(buffer),
@@ -17,13 +27,48 @@ AudioAlsa::AudioAlsa(const devicename_t &device, std::shared_ptr<BlockingCircula
 	std::cout << "New " << __func__ << " as " << (isInput ? "input" : "output") << std::endl;
 }
 
+/** \ingroup Audio
+ *
+ * \brief Destructor
+ *
+ * Destructor for AudioAlsa
+ *
+*/
 AudioAlsa::~AudioAlsa()
 {
 	close();
 }
 
-/// Error Handling
+/** \ingroup Audio
+ *
+ * \brief Throws a \ref AudioAlsaException on error
+ * \param x Call to alsa library function
+ *
+ * This macro adds the file name, the function name and the line number to the \ref throwOnAlsaError() call.
+ *
+ * \code
+ * THROW_ON_ALSA_ERROR(snd_pcm_hw_params_set_access(m_handle, m_hwParams, SND_PCM_ACCESS_RW_INTERLEAVED));
+ * \endcode
+ *
+ *
+ */
 #define THROW_ON_ALSA_ERROR(x) { throwOnAlsaError(__FILE__, __func__, __LINE__, x); }
+
+/** \ingroup Audio
+ *
+ * \brief Generates and throws a \ref AudioAlsaException, if \a e < 0
+ * \param file File name where the error happened
+ * \param func Function name where the error happened
+ * \param line Line number of where the error happened
+ * \param e Error number
+ * \throw AudioAlsaException is thrown if \a e < 0
+ *
+ * This function checks the return value of an alsa library call and throws an \ref AudioAlsaException, if
+ * the return value, which has to be passed to the function in \a e, is < 0
+ *
+ * See helper macro \ref THROW_ON_ALSA_ERROR about usage.
+ *
+ */
 void AudioAlsa::throwOnAlsaError(const std::string& file, const std::string& func, int line, int e) const
 {
 	if (e < 0) {
@@ -31,19 +76,50 @@ void AudioAlsa::throwOnAlsaError(const std::string& file, const std::string& fun
 	}
 }
 
+/** \ingroup Audio
+ *
+ * \brief Generates and throws a \ref AudioAlsaException, if the device has not been opened.
+ * \param file File name where the error happened
+ * \param func Function name where the error happened
+ * \param line Line number of where the error happened
+ * \throw AudioAlsaException is thrown if the device has not beend opened
+ *
+ * This function checks if the device has been opened and throws a \ref AudioAlsaException if not.
+ *
+ */
 void AudioAlsa::throwOnDeviceClosed(const std::string& file, const std::string& func, int line) const
 {
 	if (!m_deviceOpen)
 		throw(AudioAlsaException(func, file, line, -1, "Device is not opened, yet."));
 }
 
+/** \ingroup Audio
+ *
+ * \brief Generates and throws a \ref AudioAlsaException, if the device has not been started.
+ * \param file File name where the error happened
+ * \param func Function name where the error happened
+ * \param line Line number of where the error happened
+ * \throw AudioAlsaException is thrown if the device has not beend opened
+ *
+ * This function checks if the device has been started and throws a \ref AudioAlsaException if not.
+ *
+ */
 void AudioAlsa::throwOnDeviceRunning(const std::string &file, const std::string &func, int line) const
 {
 	if (!m_audioThread)
 		throw(AudioAlsaException(func, file, line, -1, "Device is not opened, yet."));
 }
 
-/// Open / Close
+/** \ingroup Audio
+ *
+ * \brief Common open function, used by AudioAlsaInput::open() and AudioAlsaOutput::open()
+ * \throw AudioAlsaException is thrown on error.
+ *
+ * This function is called by the input/output derivates in their open() function. See:
+ *  - AudioAlsaInput::open()
+ *  - AudioAlsaOutput::open()
+ *
+ */
 void AudioAlsa::openCommon()
 {
 	THROW_ON_ALSA_ERROR(snd_pcm_open(&m_handle, m_deviceName.c_str(), m_isInput ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK, SND_PCM_ASYNC));
@@ -54,6 +130,14 @@ void AudioAlsa::openCommon()
 	m_deviceOpen = true;
 }
 
+/** \ingroup Audio
+ *
+ * \brief Closes the device
+ * \throw AudioAlsaException is thrown on error.
+ *
+ * This function closed the audio device. On error a \ref throwOnAlsaError() is thrown
+ *
+ */
 void AudioAlsa::close()
 {
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_close(m_handle));
@@ -63,7 +147,6 @@ void AudioAlsa::close()
 	m_deviceOpen = false;
 }
 
-/// Buffersize
 void AudioAlsa::setBuffersize(unsigned int buffersize)
 {
 	THROW_ON_ALSA_ERROR(snd_pcm_hw_params_set_buffer_size(m_handle, m_hwParams, static_cast<snd_pcm_uframes_t>(buffersize)));
@@ -77,7 +160,6 @@ unsigned int AudioAlsa::getBuffersize()
 	return static_cast<unsigned int>(buffersize);
 }
 
-/// Periode Size
 void AudioAlsa::setBufferCount(unsigned int buffercount)
 {
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_periods(m_handle, m_hwParams, buffercount, 0));
@@ -92,9 +174,6 @@ unsigned int AudioAlsa::getBufferCount()
 	return buffercount;
 }
 
-
-
-/// Sample Rate
 samplerate_t AudioAlsa::getSamplerate() const
 {
 	int dir = 0;
@@ -113,7 +192,6 @@ void AudioAlsa::setSamplerate(samplerate_t rate)
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_rate_near(m_handle, m_hwParams, &rate, &dir));
 }
 
-/// Sample Format
 std::list<sampleformat_t> AudioAlsa::getAvailableSampleformats() const
 {
 	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
@@ -152,8 +230,6 @@ void AudioAlsa::setSampleFormat(sampleformat_t format)
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_format(m_handle, m_hwParams, alsaFormat));
 }
 
-
-///Channels
 void AudioAlsa::setChannelCount(channelcount_t n)
 {
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params_set_channels(m_handle, m_hwParams, n));
@@ -166,13 +242,22 @@ channelcount_t AudioAlsa::getChannelCount()
 	return channels;
 }
 
-///SampleSpecs
-SampleSpecs_t AudioAlsa::getSpecs()
+/** \ingroup Audio
+ *
+ * \brief Common open function, used by AudioAlsaInput::open() and AudioAlsaOutput::open()
+ * \throw AudioAlsaException is thrown on error.
+ *
+ * This function is called by the input/output derivates in their open() function. See:
+ *  - AudioAlsaInput::open()
+ *  - AudioAlsaOutput::open()
+ *
+ */
+SampleSpecs AudioAlsa::getSpecs()
 {
 	snd_pcm_format_t sampleFormat;
 	snd_pcm_hw_params_get_format(m_hwParams, &sampleFormat);
 
-	SampleSpecs_t specs;
+	SampleSpecs specs;
 	specs.samplerate = getSamplerate();
 	specs.isSigned = snd_pcm_format_signed(sampleFormat) == 1;
 	specs.isLittleEndian = snd_pcm_format_little_endian(sampleFormat) == 1;
@@ -198,25 +283,57 @@ SampleSpecs_t AudioAlsa::getSpecs()
 	return specs;
 }
 
-std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs)
+/** \ingroup Audio
+ *
+ * \brief Print BufferStatistics using operator<<
+ * \param lhs Left hand Side
+ * \param rhs Right hand Side
+ * \return std::ostream with string data
+ *
+ * Helper overload of operator<< for BufferStatistics
+ * so it can be used as:
+ *
+ * \code{.cpp}
+ *	std::cout << "Statistics: " << std::endl << handle->getStats() << std::endl;
+ * \endcode
+*/
+std::ostream& operator<<(std::ostream& lhs, const BufferStatistics& rhs)
 {
 	lhs << "  Bytes Read From Buffer:   " << rhs.bytesReadFromBuffer << std::endl
 		<< "  Bytes Written To Buffer:  " << rhs.bytesWrittenToBuffer << std::endl
-		<< "  XRun Count:               " << rhs.xrunCount << std::endl;
+		<< "  Over-/Underrun Count:     " << rhs.xrunCount << std::endl;
 
 	return lhs;
 }
 
-Statistics AudioAlsa::getStats()
+/** \ingroup Audio
+ *
+ * \brief Returns current buffer statistics on interface
+ *
+ * This function returns a \ref BufferStatistics object. This can be used to print
+ * infromation on buffer access and Ober-/Underruns:
+ * \code{.cpp}
+ *  std::cout << "Statistics: " << std::endl << handle->getStats() << std::endl;
+ * \endcode
+ */
+BufferStatistics AudioAlsa::getStats()
 {
-	Statistics ret;
+	BufferStatistics ret;
 	m_audioBuffer->getStat(&ret.bytesReadFromBuffer, &ret.bytesWrittenToBuffer);
 	ret.xrunCount = m_xrunRecoveryCounter;
 
 	return ret;
 }
 
-///Static
+/** \ingroup Audio
+ *
+ * \brief Static function, that returns available devices
+ * \return All available devices on the plattform, represented by a list of \ref AlsaDeviceIdentifier
+ *
+ * Returns a list of available devices on the plattform, represented by \ref AlsaDeviceIdentifier objects,
+ * stored in a std::list
+ *
+ */
 std::list<AlsaDeviceIdentifier> AudioAlsa::getAvailableDevices()
 {
 	int card = -1;
@@ -315,9 +432,16 @@ next_card:
 
 */
 
-
-
-///Static
+/** \ingroup Audio
+ *
+ * \brief Static function, that recovers the interface from buffer over-/underruns
+ * \param ptr A pointer to an AudioAlsa instance
+ * \param err The error number, which indicates what has to be fixed.
+ * \return An error number
+ *
+ * Static function, that recovers from errors such as over-/underflows and returns an error code.
+ *
+ */
 int AudioAlsa::xrunRecovery(AudioAlsa *ptr, int err)
 {
 	//Atomic

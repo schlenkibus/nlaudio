@@ -6,19 +6,19 @@ namespace Nl {
 namespace Examples {
 
 // In to out example
-void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpecs)
+void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
 {
 	memcpy(out, in, size);
 }
 
-ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::string &deviceOutName, unsigned int buffersize, unsigned int samplerate)
+ExamplesHandle inputToOutput(const std::string &deviceInName, const std::string &deviceOutName, unsigned int buffersize, unsigned int samplerate)
 {
 	// In this example, we just copy data from input to output
 	// Samplerate and buffersize can be set. A handle to stop the
 	// working threads is returned
 	// To terminate this example, call:
 	// Nl::terminateWorkingThread(hamdle)
-	ExamplesHandle_t ret;
+	ExamplesHandle ret;
 
 	ret.inBuffer = Nl::createBuffer("InputBuffer");
 	//typedef decltype(getTypeForBitlenght(ret.inBuffer->sampleSpecs())) SampleType;
@@ -44,7 +44,7 @@ ExamplesHandle_t inputToOutput(const std::string &deviceInName, const std::strin
 }
 
 // Midi Sine example
-void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpecs)
+void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
 {
 	unsigned char midiByteBuffer[3];
 	static uint8_t velocity = 0;
@@ -90,12 +90,12 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpe
 }
 
 // Midi Sine example
-ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
+ExamplesHandle midiSine(const std::string& audioOutDeviceName,
 						  const std::string& midiInDeviceName,
 						  unsigned int buffersize,
 						  unsigned int samplerate)
 {
-	ExamplesHandle_t ret;
+	ExamplesHandle ret;
 
 	// Not needed, since we only playback here
 	ret.inBuffer = nullptr;
@@ -125,16 +125,16 @@ ExamplesHandle_t midiSine(const std::string& audioOutDeviceName,
 }
 
 // Silence Example
-void silenceCallback(u_int8_t *out, size_t size, const SampleSpecs_t &sampleSpecs)
+void silenceCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
 {
     memset(out, 0, size);
 }
 
-ExamplesHandle_t silence(const std::string& audioOutDeviceName,
+ExamplesHandle silence(const std::string& audioOutDeviceName,
                         unsigned int buffersize,
                         unsigned int samplerate)
 {
-    ExamplesHandle_t ret;
+	ExamplesHandle ret;
 
     // Not nedded, since we only playback here w/o midi
     ret.inBuffer = nullptr;

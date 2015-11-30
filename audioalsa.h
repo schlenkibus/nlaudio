@@ -12,15 +12,37 @@
 
 namespace Nl {
 
-struct Statistics {
-	unsigned long bytesReadFromBuffer;
-	unsigned long bytesWrittenToBuffer;
-	unsigned int xrunCount;
+/** \ingroup Audio
+ * \struct BufferStatistics - Stores information o buffer access and und-/overflow counts.
+ *
+ * This struct can be printed using operator<< to std::out
+ *
+*/
+struct BufferStatistics {
+	unsigned long bytesReadFromBuffer; ///< Number of bytes that have been read from the buffer
+	unsigned long bytesWrittenToBuffer; ///< Number of bytes that have been written to the buffer
+	unsigned int xrunCount; ///< Number of over-/underflows
 };
-std::ostream& operator<<(std::ostream& lhs, const Statistics& rhs);
+std::ostream& operator<<(std::ostream& lhs, const BufferStatistics& rhs);
 
+/** \ingroup Audio
+ *
+ * \brief Class that can store identificationdata for a device on the platform
+ *
+*/
 class AlsaDeviceIdentifier {
 public:
+	/** \ingroup Audio
+	 *
+	 * \brief Constructor
+	 * \param card Card identification number
+	 * \param device Device identification number
+	 * \param subdevice Subdevice identification number
+	 * \param name Card name
+	 *
+	 * Initializes a \ref AlsaDeviceIdentifier object for one device on the plattform
+	 *
+	*/
 	AlsaDeviceIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, std::string name) :
 		m_card(card),
 		m_device(device),
@@ -39,17 +61,41 @@ private:
 	std::string m_name;
 };
 
-
-
+/** \ingroup Audio
+ *
+ * \brief Exception object, used to throw alsa exceptions
+ *
+ * Exception object, which is used to throw alsa exception by:
+ *  - AudioAlsa
+ *  - AudioAlsaInput
+ *  - AudioAlsaOutput
+ *
+*/
 class AudioAlsaException : public std::exception
 {
 public:
+	/** \ingroup Audio
+	 *
+	 * \brief Constructor
+	 * \param func Function name
+	 * \param file File name
+	 * \param line Line number
+	 * \param errorNumber Alsa error number
+	 * \param what Descriptive string
+	 *
+	*/
 	AudioAlsaException(std::string func, std::string file, int line, int errorNumber, std::string what) :
 		m_func(func),
 		m_file(file),
 		m_line(line),
 		m_errno(errorNumber),
 		m_msg(what) {}
+
+	/** \ingroup Audio
+	 *
+	 * \brief Returns the desciptive string of the exceptions
+	 * \return A deciptive string of the exceptions
+	*/
 	virtual const char* what() const noexcept
 	{
 		std::stringstream ss;
@@ -98,7 +144,7 @@ public:
 
 	static std::list<AlsaDeviceIdentifier> getAvailableDevices();
 
-	Statistics getStats();
+	BufferStatistics getStats();
 
 protected:
 	void openCommon();
@@ -108,7 +154,7 @@ protected:
 	void setTerminateRequest() { m_requestTerminate = true; }
 	void resetTerminateRequest() { m_requestTerminate = false; }
 	bool getTerminateRequest() const { return m_requestTerminate; }
-	SampleSpecs_t getSpecs();
+	SampleSpecs getSpecs();
 
 	static int xrunRecovery(AudioAlsa *ptr, int err);
 

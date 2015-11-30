@@ -17,12 +17,11 @@
 
 namespace Nl {
 
-
 /** \ingroup Tools
- * \struct SampleSpecs_t - Stores Sampleinformation for an audio interface
+ * \struct SampleSpecs - Stores Sampleinformation for an audio interface
  *
 */
-struct SampleSpecs_t {
+struct SampleSpecs {
 	unsigned int samplerate;				///< Samplerate in Hz
 	unsigned int channels;					///< Channels
 	unsigned int bytesPerSample;			///< How many bytes does one sample have. 24_BE3 = 3, S16 = 2, ...
@@ -40,20 +39,8 @@ struct SampleSpecs_t {
     // bool isInterleaved
 };
 
-/** \ingroup Tools
- *
- * \brief Print buffer information using operator<<
- * \param lhs Left hand Side
- * \param rhs Right hand Side
- *
- * Helper overload of operator<< for SampleSpecs_t
- * so it can be used as:
- *
- * \code{.cpp}
- *	std::cout << "SampleSpecs: " << std::endl << mySampleSpecs << std::endl;
- * \endcode
-*/
-std::ostream& operator<<(std::ostream& lhs, const SampleSpecs_t& rhs);
+
+std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs);
 
 /** \ingroup Tools
  *
@@ -98,7 +85,7 @@ void store(const T *buffer, unsigned int buffersize, const std::string& path)
  * \endcode
 */
 template<typename T>
-inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
+inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs& sampleSpecs)
 {
 	static T scale = std::numeric_limits<T>::is_signed ?
 				((1 << (sampleSpecs.bytesPerSample * 8)) / 2) :
@@ -153,7 +140,7 @@ inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs_t
  * \endcode
 */
 template<>
-inline void sinewave<double>(double *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
+inline void sinewave<double>(double *buffer, float frequency, bool reset, const SampleSpecs& sampleSpecs)
 {
     static double phase = 0.f;
 	static double inc = frequency / static_cast<double>(sampleSpecs.samplerate);
@@ -186,7 +173,7 @@ inline void sinewave<double>(double *buffer, float frequency, bool reset, const 
  * \endcode
 */
 template<>
-inline void sinewave<float>(float *buffer, float frequency, bool reset, const SampleSpecs_t& sampleSpecs)
+inline void sinewave<float>(float *buffer, float frequency, bool reset, const SampleSpecs& sampleSpecs)
 {
     static float phase = 0.f;
 	static float inc = frequency / static_cast<float>(sampleSpecs.samplerate);

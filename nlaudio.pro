@@ -12,7 +12,6 @@ SOURCES += main.cpp \
     audioalsa.cpp \
     audioalsainput.cpp \
     audioalsaoutput.cpp \
-    audioconfig.cpp \
     audiofactory.cpp \
     rawmididevice.cpp \
     examples.cpp
@@ -28,7 +27,6 @@ HEADERS += \
     audioalsa.h \
     audioalsainput.h \
     audioalsaoutput.h \
-    audioconfig.h \
     audiofactory.h \
     midi.h \
     rawmididevice.h \

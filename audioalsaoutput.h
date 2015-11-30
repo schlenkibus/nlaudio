@@ -15,7 +15,7 @@ public:
 	virtual void start();
 	virtual void stop();
 
-	static void worker(SampleSpecs_t specs, AudioAlsaOutput *ptr);
+	static void worker(SampleSpecs specs, AudioAlsaOutput *ptr);
 };
 
 } // Namespace Nl
