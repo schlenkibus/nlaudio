@@ -146,7 +146,7 @@ class AudioAlsa : public Audio
 public:
 	typedef Audio basetype;
 
-	AudioAlsa(const AlsaCardIdentifier& card, std::shared_ptr<BlockingCircularBuffer<u_int8_t>> buffer, bool isInput);
+	AudioAlsa(const AlsaCardIdentifier& card, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer, bool isInput);
 	virtual ~AudioAlsa();
 
 	virtual void open() = 0; // Might throw, therefore not in constructor

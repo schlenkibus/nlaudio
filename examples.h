@@ -1,6 +1,7 @@
 #pragma once
 
 #include "audiofactory.h"
+#include "stopwatch.h"
 
 namespace Nl {
 namespace Examples {

@@ -40,7 +40,7 @@
 
 using namespace std;
 
-
+//TODO: Glbal Variables are bad (even in a namespace)
 Nl::StopWatch sw("AudioCallback");
 
 int main()
@@ -61,7 +61,7 @@ int main()
 		Nl::AlsaCardIdentifier midiIn(1,0,0, "Midi In");
 
 
-		const int buffersize = 256;
+		const int buffersize = 128;
 		const int samplerate = 48000;
 
 		//auto handle = Nl::Examples::inputToOutput(audioInDevice, audioOutDevice, buffersize, samplerate);

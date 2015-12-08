@@ -15,7 +15,8 @@ SOURCES += main.cpp \
     audiofactory.cpp \
     rawmididevice.cpp \
     examples.cpp \
-    stopwatch.cpp
+    stopwatch.cpp \
+    hw_params.c
 
 include(deployment.pri)
 qtcAddDeployment()

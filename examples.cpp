@@ -123,6 +123,7 @@ ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
 	//ret.audioOutput->setSampleFormat(...);
 	ret.audioOutput->setSamplerate(samplerate);
 	ret.audioOutput->setChannelCount(2);
+	ret.audioOutput->setSampleFormat("S16_LE");
 
 	// We want midi as well
 	ret.inMidiBuffer = Nl::createBuffer("MidiBuffer");

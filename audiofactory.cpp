@@ -113,7 +113,8 @@ SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier& card, Sha
 	SharedAudioAlsaInputHandle input(new AudioAlsaInput(card, buffer));
     input->open();
     input->setBufferCount(2);
-    input->setBuffersize(buffersize);
+	// We want buffersize to be the latency defining parameter. Therefore we have to multiply with buffercount
+	input->setBuffersize(buffersize*input->getBufferCount());
 
     return input;
 }
@@ -172,7 +173,8 @@ SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, S
 	SharedAudioAlsaOutputHandle output(new AudioAlsaOutput(card, buffer));
     output->open();
     output->setBufferCount(2);
-    output->setBuffersize(buffersize);
+	// We want buffersize to be the latency defining parameter. Therefore we have to multiply with buffercount
+	output->setBuffersize(buffersize*output->getBufferCount());
 
     return output;
 }
@@ -207,7 +209,7 @@ SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, S
  * The device is automatically opened.\n
  *
 */
-//TODO: Fixme. "default does not work anymore, thats a classtype now"
+//TODO: Fixme. "default does not work anymore, dev id is a classtype now"
 //SharedAudioAlsaOutputHandle createDefaultOutputDevice(SharedBufferHandle buffer)
 //{
 //   return createOutputDevice("default", buffer);
