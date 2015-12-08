@@ -1,7 +1,12 @@
 Think about factory names:
 
 - CreateHandleForAudioDevice.
-- Fix getBufferByName in callback for MidiBuffer!
+- Fix getBufferByName in callback for MidiBuffer! must be O(1)
 
 
 Behringer sagt: SampleSize 1Byte
+
+
+Implement: http://www.spinics.net/linux/fedora/alsa-user/msg07230.html
+
+Implement time measure for callbacks. Or probably in buffer

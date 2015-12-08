@@ -9,6 +9,8 @@
 #include "midi.h"
 #include "blockingcircularbuffer.h"
 
+#include "audioalsa.h" //AlsaCardIdentifier -> TODO: put this in extra file
+
 namespace Nl {
 
 /** \ingroup Midi
@@ -63,7 +65,7 @@ std::ostream& operator<<(std::ostream& lhs, const MidiCard& rhs);
 class RawMidiDevice : public Midi
 {
 public:
-	RawMidiDevice(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer);
+	RawMidiDevice(const AlsaCardIdentifier &card, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer);
 	~RawMidiDevice();
 
 	static std::list<MidiCard> getAvailableDevices();
@@ -75,20 +77,21 @@ public:
 	virtual void start();
 	virtual void stop();
 
+	void setAlsaMidiBufferSize(unsigned int size);
+	unsigned int getAlsaMidiBufferSize();
+
 protected:
 	std::atomic<bool> m_requestTerminate;
 
 private:
 	snd_rawmidi_t *m_handle;
 	snd_rawmidi_params_t *m_params;
-	devicename_t m_deviceName;
+	AlsaCardIdentifier m_card;
 	int m_buffersize;
 	std::thread *m_thread;
 	std::shared_ptr<BlockingCircularBuffer<uint8_t>> m_buffer;
 
 	void throwOnAlsaError(int e, const std::string& function) const;
-	void setAlsaMidiBufferSize(unsigned int size);
-
 
 	static void worker(RawMidiDevice *ptr);
 

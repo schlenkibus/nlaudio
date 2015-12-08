@@ -88,9 +88,9 @@ SharedBufferHandle getBufferForName(const std::string& name)
  * The device is automatically opened.\n
  *
 */
-SharedRawMidiDeviceHandle createRawMidiDevice(const std::string &name, SharedBufferHandle buffer)
+SharedRawMidiDeviceHandle createRawMidiDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
 {
-	SharedRawMidiDeviceHandle midi(new RawMidiDevice(name, buffer));
+	SharedRawMidiDeviceHandle midi(new RawMidiDevice(card, buffer));
     midi->open();
     return midi;
 }
@@ -108,9 +108,9 @@ SharedRawMidiDeviceHandle createRawMidiDevice(const std::string &name, SharedBuf
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBufferHandle buffer, unsigned int buffersize)
+SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
 {
-	SharedAudioAlsaInputHandle input(new AudioAlsaInput(name, buffer));
+	SharedAudioAlsaInputHandle input(new AudioAlsaInput(card, buffer));
     input->open();
     input->setBufferCount(2);
     input->setBuffersize(buffersize);
@@ -131,9 +131,9 @@ SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBuff
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBufferHandle buffer)
+SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
 {
-	return createInputDevice(name, buffer, DEFAULT_BUFFERSIZE);
+	return createInputDevice(card, buffer, DEFAULT_BUFFERSIZE);
 }
 
 /** \ingroup Factory
@@ -148,10 +148,11 @@ SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBuff
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaInputHandle createDefaultInputDevice(SharedBufferHandle buffer)
-{
-    return createInputDevice("default", buffer);
-}
+//TODO: Fix me, card is now a class, so passing "default" does not work
+//SharedAudioAlsaInputHandle createDefaultInputDevice(SharedBufferHandle buffer)
+//{
+//	return createInputDevice(card, buffer);
+//}
 
 /** \ingroup Factory
  *
@@ -166,9 +167,9 @@ SharedAudioAlsaInputHandle createDefaultInputDevice(SharedBufferHandle buffer)
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBufferHandle buffer, unsigned int buffersize)
+SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize)
 {
-	SharedAudioAlsaOutputHandle output(new AudioAlsaOutput(name, buffer));
+	SharedAudioAlsaOutputHandle output(new AudioAlsaOutput(card, buffer));
     output->open();
     output->setBufferCount(2);
     output->setBuffersize(buffersize);
@@ -189,9 +190,9 @@ SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBu
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBufferHandle buffer)
+SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
 {
-    return createOutputDevice(name, buffer, DEFAULT_BUFFERSIZE);
+	return createOutputDevice(card, buffer, DEFAULT_BUFFERSIZE);
 }
 
 /** \ingroup Factory
@@ -206,10 +207,11 @@ SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBu
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaOutputHandle createDefaultOutputDevice(SharedBufferHandle buffer)
-{
-    return createOutputDevice("default", buffer);
-}
+//TODO: Fixme. "default does not work anymore, thats a classtype now"
+//SharedAudioAlsaOutputHandle createDefaultOutputDevice(SharedBufferHandle buffer)
+//{
+//   return createOutputDevice("default", buffer);
+//}
 
 /** \ingroup Factory
  *

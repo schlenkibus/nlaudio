@@ -1,9 +1,13 @@
 #include "examples.h"
 #include "audiofactory.h"
 #include "blockingcircularbuffer.h"
+#include "stopwatch.h"
+
+extern Nl::StopWatch sw;
 
 namespace Nl {
 namespace Examples {
+
 
 // In to out example
 void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
@@ -11,7 +15,7 @@ void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs
 	memcpy(out, in, size);
 }
 
-ExamplesHandle inputToOutput(const std::string &deviceInName, const std::string &deviceOutName, unsigned int buffersize, unsigned int samplerate)
+ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate)
 {
 	// In this example, we just copy data from input to output
 	// Samplerate and buffersize can be set. A handle to stop the
@@ -23,11 +27,11 @@ ExamplesHandle inputToOutput(const std::string &deviceInName, const std::string 
 	ret.inBuffer = Nl::createBuffer("InputBuffer");
 	//typedef decltype(getTypeForBitlenght(ret.inBuffer->sampleSpecs())) SampleType;
 
-	ret.audioInput = Nl::createInputDevice(deviceInName, ret.inBuffer, buffersize);
+	ret.audioInput = Nl::createInputDevice(inCard, ret.inBuffer, buffersize);
 	ret.audioInput->setSamplerate(samplerate);
 
 	ret.outBuffer = Nl::createBuffer("OutputBuffer");
-	ret.audioOutput = Nl::createOutputDevice(deviceOutName, ret.outBuffer, buffersize);
+	ret.audioOutput = Nl::createOutputDevice(outCard, ret.outBuffer, buffersize);
 	ret.audioOutput->setSamplerate(samplerate);
 
 	// DANGER!!!!
@@ -46,6 +50,12 @@ ExamplesHandle inputToOutput(const std::string &deviceInName, const std::string 
 // Midi Sine example
 void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
 {
+	static int counter = 0;
+	StopFunctionTime sft(&sw, std::to_string(counter++));
+	//sw.start(std::to_string(counter++));
+
+	//std::cout << "i" << std::endl;
+
 	unsigned char midiByteBuffer[3];
 	static uint8_t velocity = 0;
 	static double frequency = 0;
@@ -62,7 +72,6 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs
 				if (newFrequency != frequency) {
 					frequency = newFrequency;
 					reset = true;
-					printf("Reseting...\n");
 				}
 			} else {
 				velocity = 0;
@@ -87,11 +96,14 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs
 	} else {
 		memset(out, 0, size);
 	}
+
+	//std::cout << "o" << std::endl;
+
 }
 
 // Midi Sine example
-ExamplesHandle midiSine(const std::string& audioOutDeviceName,
-						  const std::string& midiInDeviceName,
+ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
+						  const AlsaCardIdentifier &midiInCard,
 						  unsigned int buffersize,
 						  unsigned int samplerate)
 {
@@ -104,19 +116,22 @@ ExamplesHandle midiSine(const std::string& audioOutDeviceName,
 	// Lets create a buffer, which we have to pass to the output soundcard
 	ret.outBuffer = Nl::createBuffer("AudioOutput");
 	// Open soundcard, using above buffer
-	ret.audioOutput = Nl::createOutputDevice(audioOutDeviceName, ret.outBuffer, buffersize);
+	ret.audioOutput = Nl::createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
 
 	// Configure Audio (if needed, or use default)
     //ret.audioOutput->setSampleFormat(...);
 	ret.audioOutput->setSamplerate(samplerate);
+	ret.audioOutput->setChannelCount(2);
 
 	// We want midi as well
-	auto midiBuffer = Nl::createBuffer("MidiBuffer");
-	auto midiInput = Nl::createRawMidiDevice(midiInDeviceName, midiBuffer);
+	ret.inMidiBuffer = Nl::createBuffer("MidiBuffer");
+	auto midiInput = Nl::createRawMidiDevice(midiInCard, ret.inMidiBuffer);
 
 	// Start Audio and Midi Thread
 	ret.audioOutput->start();
 	midiInput->start();
+
+	std::cout << "MidiBufferSize: " << midiInput->getAlsaMidiBufferSize() << std::endl;
 
 	// Register a Callback
 	ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback);
@@ -130,9 +145,9 @@ void silenceCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
     memset(out, 0, size);
 }
 
-ExamplesHandle silence(const std::string& audioOutDeviceName,
-                        unsigned int buffersize,
-                        unsigned int samplerate)
+ExamplesHandle silence(const AlsaCardIdentifier &audioOutCard,
+						unsigned int buffersize,
+						unsigned int samplerate)
 {
 	ExamplesHandle ret;
 
@@ -142,7 +157,7 @@ ExamplesHandle silence(const std::string& audioOutDeviceName,
 
     // Create an output buffer and an output device
     ret.outBuffer = Nl::createBuffer("AudioOutput");
-    ret.audioOutput = Nl::createOutputDevice(audioOutDeviceName, ret.outBuffer, buffersize);
+	ret.audioOutput = Nl::createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
 
     // Configure audio device
     ret.audioOutput->setSamplerate(samplerate);

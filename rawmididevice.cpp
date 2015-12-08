@@ -14,10 +14,10 @@ namespace Nl {
  * Constructor for RawMidiDevice
  *
 */
-RawMidiDevice::RawMidiDevice(const devicename_t &device, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer) :
+RawMidiDevice::RawMidiDevice(const AlsaCardIdentifier &card, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer) :
 	m_handle(nullptr),
 	m_params(nullptr),
-	m_deviceName(device),
+	m_card(card),
 	m_buffersize(0),
 	m_thread(nullptr),
 	m_buffer(buffer)
@@ -36,7 +36,8 @@ RawMidiDevice::RawMidiDevice(const devicename_t &device, std::shared_ptr<Blockin
 */
 void RawMidiDevice::open()
 {
-	throwOnAlsaError(snd_rawmidi_open(&m_handle, NULL, m_deviceName.c_str(), 0), __func__);
+	throwOnAlsaError(snd_rawmidi_params_malloc(&m_params), __func__);
+	throwOnAlsaError(snd_rawmidi_open(&m_handle, NULL, m_card.getCardString().c_str(), 0), __func__);
 	// A Midi message has 3 bytes, so we get every Message imediately
 	setAlsaMidiBufferSize(3);
     // Maybe we miss some, so make circular buffer a little bigger (10 Messages -> 30 Bytes)
@@ -54,6 +55,7 @@ void RawMidiDevice::open()
 void RawMidiDevice::close()
 {
 	snd_rawmidi_close(m_handle);
+	snd_rawmidi_params_free(m_params);
 }
 
 /** \ingroup Midi
@@ -137,6 +139,22 @@ void RawMidiDevice::setAlsaMidiBufferSize(unsigned int size)
 {
 	throwOnAlsaError(snd_rawmidi_params_set_buffer_size(m_handle, m_params, size), __func__);
 	m_buffersize = size;
+}
+
+/** \ingroup Midi
+ *
+ * \brief Get Alsa's midi buffer size
+ * \return Current size of alsas internal midi buffer
+ *
+ * Returns the size of alsas current internal midi buffer. See also:\n
+ * \ref setAlsaMidiBufferSize()
+*/
+//TODO: This might ne usefull for the user. For now, it will be private, however
+unsigned int RawMidiDevice::getAlsaMidiBufferSize()
+{
+	size_t ret = snd_rawmidi_params_get_buffer_size(m_params);
+	m_buffersize = ret;
+	return ret;
 }
 
 /** \ingroup Midi

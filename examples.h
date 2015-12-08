@@ -11,19 +11,20 @@ struct ExamplesHandle {
 	SharedAudioAlsaOutputHandle audioOutput;
 	SharedBufferHandle inBuffer;
 	SharedBufferHandle outBuffer;
+	SharedBufferHandle inMidiBuffer;
 };
 
-ExamplesHandle inputToOutput(const std::string& deviceInName,
-							   const std::string& deviceOutName,
+ExamplesHandle inputToOutput(const AlsaCardIdentifier &audioInCard,
+							   const AlsaCardIdentifier &audioOutCard,
 							   unsigned int buffersize,
 							   unsigned int samplerate);
 
-ExamplesHandle midiSine(const std::string& audioOutDeviceName,
-						  const std::string& midiInDeviceName,
+ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
+						  const AlsaCardIdentifier &midiInCard,
 						  unsigned int buffersize,
 						  unsigned int samplerate);
 
-ExamplesHandle silence(const std::string& audioOutDeviceName,
+ExamplesHandle silence(const AlsaCardIdentifier &audioOutCard,
                         unsigned int buffersize,
                         unsigned int samplerate);
 

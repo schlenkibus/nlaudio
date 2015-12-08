@@ -30,36 +30,67 @@ std::ostream& operator<<(std::ostream& lhs, const BufferStatistics& rhs);
  * \brief Class that can store identificationdata for a device on the platform
  *
 */
-class AlsaDeviceIdentifier {
-public:
-	/** \ingroup Audio
-	 *
-	 * \brief Constructor
-	 * \param card Card identification number
-	 * \param device Device identification number
-	 * \param subdevice Subdevice identification number
-	 * \param name Card name
-	 *
-	 * Initializes a \ref AlsaDeviceIdentifier object for one device on the plattform
-	 *
-	*/
-	AlsaDeviceIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, std::string name) :
-		m_card(card),
-		m_device(device),
-		m_subdevice(subdevice),
-		m_name(name)
-	{
-		std::stringstream ss;
-		ss << "hw:" << card << "," << device << "," << subdevice;
-		m_cardString = ss.str();
-	}
-private:
-	unsigned int m_card;
-	unsigned int m_device;
-	unsigned int m_subdevice;
-	std::string m_cardString;
-	std::string m_name;
+struct AlsaSubdeviceInfo {
+	unsigned int subdeviceId;
+	std::string name;
 };
+std::ostream& operator<<(std::ostream& lhs, const AlsaSubdeviceInfo& rhs);
+
+struct AlsaDeviceInfo {
+	unsigned int deviceId;
+	std::string id;
+	std::string name;
+	std::list<AlsaSubdeviceInfo> subdevices;
+};
+std::ostream& operator<<(std::ostream& lhs, const AlsaDeviceInfo& rhs);
+
+struct AlsaCardInfo {
+	unsigned int cardId;
+	std::string id;
+	std::string components;
+	std::string driver;
+	std::string name;
+	std::string longname;
+	std::string mixername;
+	std::list<AlsaDeviceInfo> devices;
+};
+std::ostream& operator<<(std::ostream& lhs, const AlsaCardInfo& rhs);
+
+class AlsaCardIdentifier {
+public:
+	   /** \ingroup Audio
+		*
+		* \brief Constructor
+		* \param card Card identification number
+		* \param device Device identification number
+		* \param subdevice Subdevice identification number
+		* \param name Card name
+		*
+		* Initializes a \ref AlsaDeviceIdentifier object for one device on the plattform
+		*
+	   */
+	   AlsaCardIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, std::string name) :
+			   m_card(card),
+			   m_device(device),
+			   m_subdevice(subdevice),
+			   m_name(name)
+	   {
+			   std::stringstream ss;
+			   ss << "hw:" << card << "," << device << "," << subdevice;
+			   m_cardString = ss.str();
+	   }
+
+	   std::string getCardString() const { return m_cardString; }
+	   std::string getCardStringExtended() const { return m_name + " " + m_cardString; }
+private:
+	   unsigned int m_card;
+	   unsigned int m_device;
+	   unsigned int m_subdevice;
+	   std::string m_cardString;
+	   std::string m_name;
+};
+std::ostream& operator<<(std::ostream& lhs, const AlsaCardIdentifier& rhs);
+
 
 /** \ingroup Audio
  *
@@ -115,7 +146,7 @@ class AudioAlsa : public Audio
 public:
 	typedef Audio basetype;
 
-	AudioAlsa(const devicename_t& device, std::shared_ptr<BlockingCircularBuffer<u_int8_t>> buffer, bool isInput);
+	AudioAlsa(const AlsaCardIdentifier& card, std::shared_ptr<BlockingCircularBuffer<u_int8_t>> buffer, bool isInput);
 	virtual ~AudioAlsa();
 
 	virtual void open() = 0; // Might throw, therefore not in constructor
@@ -142,7 +173,8 @@ public:
 	virtual void setChannelCount(channelcount_t n);
 	virtual channelcount_t getChannelCount();
 
-	static std::list<AlsaDeviceIdentifier> getAvailableDevices();
+	static std::list<AlsaCardInfo> getDetailedCardInfos();
+	static std::list<AlsaCardIdentifier> getCardIdentifiers();
 
 	BufferStatistics getStats();
 
@@ -168,7 +200,7 @@ protected:
 
 	void throwOnAlsaError(const std::string &file, const std::string &func, int line, int e) const;
 private:
-	devicename_t m_deviceName;
+	AlsaCardIdentifier m_card;
 
 	bool m_deviceOpen;
 	bool m_isInput;

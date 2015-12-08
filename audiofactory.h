@@ -57,7 +57,7 @@ struct WorkingThreadHandle {
 };
 
 // Factory Functions
-SharedRawMidiDeviceHandle createRawMidiDevice(const std::string& name, SharedBufferHandle buffer);
+SharedRawMidiDeviceHandle createRawMidiDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer);
 
 SharedTerminateFlag createTerminateFlag();
 
@@ -67,12 +67,12 @@ SharedBufferHandle getBufferForName(const std::string& name);
 void terminateWorkingThread(WorkingThreadHandle handle);
 
 SharedAudioAlsaInputHandle createDefaultInputDevice(SharedBufferHandle buffer);
-SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBufferHandle buffer);
-SharedAudioAlsaInputHandle createInputDevice(const std::string& name, SharedBufferHandle buffer, unsigned int buffersize);
+SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer);
+SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
 
 SharedAudioAlsaOutputHandle createDefaultOutputDevice(SharedBufferHandle buffer);
-SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBufferHandle buffer);
-SharedAudioAlsaOutputHandle createOutputDevice(const std::string& name, SharedBufferHandle buffer, unsigned int buffersize);
+SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer);
+SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
 
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
 											  AudioCallbackIn callback);

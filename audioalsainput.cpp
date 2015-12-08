@@ -2,8 +2,8 @@
 
 namespace Nl {
 
-AudioAlsaInput::AudioAlsaInput(const devicename_t &name, std::shared_ptr<BlockingCircularBuffer<u_int8_t>> buffer) :
-	basetype(name, buffer, true)
+AudioAlsaInput::AudioAlsaInput(const AlsaCardIdentifier &card, std::shared_ptr<BlockingCircularBuffer<u_int8_t>> buffer) :
+	basetype(card, buffer, true)
 {
 }
 

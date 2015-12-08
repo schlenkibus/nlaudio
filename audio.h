@@ -19,7 +19,7 @@ typedef unsigned int samplerate_t;
 /** A typedef for sample formats */
 typedef std::string sampleformat_t;
 /** A typedef for device names */
-typedef std::string devicename_t;
+//typedef std::string devicename_t;
 /** A typedef for channel counts */
 typedef unsigned int channelcount_t;
 
