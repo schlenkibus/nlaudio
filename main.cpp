@@ -41,7 +41,7 @@
 using namespace std;
 
 
-Nl::StopWatch sw;
+Nl::StopWatch sw("AudioCallback");
 
 int main()
 {
@@ -70,20 +70,33 @@ int main()
 
 		// Wait for user to exit by pressing 'q'
 		// Print buffer statistics on other keys
-		while(getchar() != 'q') {
+		// TODO: We might have a deadlock here:
+		//		 sw.printSummary() holds a lock
+		//		 audioXX->getStats() holds a lock
+		//		 inMidiBuffer->getStats() holds a lock
+		//	     The calls should happen in this order. Otherwise we trigger
+		//		 a deadlock with the audio callback.
+
+		while(true) {
+			//while(getchar() != 'q') {
+			std::cout << sw << std::endl;
+
 			if (handle.audioOutput) std::cout << "Audio: Output Statistics:" << std::endl
 											  << handle.audioOutput->getStats() << std::endl;
 			if (handle.audioInput) std::cout << "Audio: Input Statistics:" << std::endl
-											  << handle.audioInput->getStats() << std::endl;
+											 << handle.audioInput->getStats() << std::endl;
 
-			unsigned long rxBytes, txBytes;
-			handle.inMidiBuffer->getStat(&rxBytes, &txBytes);
 
-			//if (handle.inMidiBuffer) std::cout << "Midi: Input Statistics:" << std::endl
-			//								  << "rxBytes=" << rxBytes << "  txBytes=" << txBytes << std::endl;
+			if (handle.inMidiBuffer) {
 
-			sw.printSummary();
-			//sw.clear();
+				unsigned long rxBytes, txBytes;
+				handle.inMidiBuffer->getStat(&rxBytes, &txBytes);
+				std::cout << "Midi: Input Statistics:" << std::endl
+						  << "rxBytes=" << rxBytes << "  txBytes=" << txBytes << std::endl;
+			}
+
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
 
 		// Tell worker thread to cleanup and quit

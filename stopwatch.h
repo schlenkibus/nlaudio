@@ -13,9 +13,13 @@ namespace Nl {
 
 class StopWatch;
 
+/** \ingroup Tools
+ * \struct Timestamp - Stores time stamps for execution time measurements.
+ *
+*/
 struct Timestamp {
-	std::chrono::time_point<std::chrono::high_resolution_clock> start;
-	std::chrono::time_point<std::chrono::high_resolution_clock> stop;
+	std::chrono::time_point<std::chrono::high_resolution_clock> start; ///< Start Time of the time stamp
+	std::chrono::time_point<std::chrono::high_resolution_clock> stop; ///< Stop Time of the time stamp
 	std::string name;
 };
 
@@ -39,11 +43,11 @@ struct Timestamp {
  * \endcode
  *
 */
-class StopFunctionTime
+class StopBlockTime
 {
 public:
-	StopFunctionTime(StopWatch *sw, std::string name);
-	~StopFunctionTime();
+	StopBlockTime(StopWatch *sw, std::string name);
+	~StopBlockTime();
 private:
 	StopWatch *m_currentStopWatch;
 };
@@ -69,18 +73,20 @@ private:
 class StopWatch
 {
 public:
-	StopWatch();
+	StopWatch(const std::string& name);
 	void start(const std::string& name);
 	void stop();
-	void print();
-	void printSummary();
-	void clear();
+	std::ostream& printDetailed(std::ostream &rhs);
+	std::ostream& printSummary(std::ostream& rhs);
 
 private:
 	std::mutex m_mutex;
 	std::queue<Timestamp> m_timestamps;
 	Timestamp m_currentTimeStamp;
 	bool m_waitingForStop;
+	std::string m_name;
 };
+
+std::ostream& operator<<(std::ostream& lhs, StopWatch& rhs);
 
 } // namespace Nl

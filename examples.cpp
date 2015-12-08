@@ -8,9 +8,8 @@ extern Nl::StopWatch sw;
 namespace Nl {
 namespace Examples {
 
-
 // In to out example
-void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
+void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
 {
 	memcpy(out, in, size);
 }
@@ -47,42 +46,46 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIde
 	return ret;
 }
 
-// Midi Sine example
+
+
 void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
 {
 	static int counter = 0;
-	StopFunctionTime sft(&sw, std::to_string(counter++));
-	//sw.start(std::to_string(counter++));
+	StopBlockTime sft(&sw, "val" + std::to_string(counter++));
 
-	//std::cout << "i" << std::endl;
-
-	unsigned char midiByteBuffer[3];
 	static uint8_t velocity = 0;
 	static double frequency = 0;
+	static int32_t notesOn = 0;
+
+	unsigned char midiByteBuffer[3];
 	bool reset = false;
 
 	// We can get a buffer by its name, to access its data:
 	auto midiBuffer = Nl::getBufferForName("MidiBuffer");
-	if (midiBuffer) {
-		while (midiBuffer->availableToRead() >= 3) {
+
+	if(midiBuffer) {
+		while(midiBuffer->availableToRead() >= 3) {
 			midiBuffer->get(midiByteBuffer, 3);
-			if (midiByteBuffer[0] == 0x90) {
+			if(midiByteBuffer[0] == 0x90)
+			{
 				velocity = midiByteBuffer[2];
-				double newFrequency = pow(2.f, static_cast<double>((midiByteBuffer[1]-69)/12.f)) * 440.f;
-				if (newFrequency != frequency) {
-					frequency = newFrequency;
-					reset = true;
+				if(velocity) {
+					notesOn++;
+					reset = true;   // nur vorläufig
+					frequency = pow(2.f, static_cast<double>((midiByteBuffer[1]-69)/12.f)) * 440.f;
+				} else {
+					notesOn--;
 				}
-			} else {
-				velocity = 0;
+			} else if(midiByteBuffer[0] == 0x80) {
+				notesOn--;
 			}
 		}
 	}
 
-	if (velocity) {
+	if(notesOn > 0) {
 		int32_t samples[sampleSpecs.buffersizeInFramesPerPeriode];
 		Nl::sinewave<int32_t>(samples, frequency, reset, sampleSpecs);
-		//Nl::store<int32_t>(samples, sampleSpecs.buffersizeInFramesPerPeriode, "lalala.txt");
+
 		for (unsigned int byte=0; byte<sampleSpecs.buffersizeInBytesPerPeriode; byte++) {
 			unsigned int currentSample = (byte / (sampleSpecs.channels * sampleSpecs.bytesPerSample));
 			unsigned int byteIndex = (byte % sampleSpecs.bytesPerSample);
@@ -93,19 +96,17 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs
 				*out++ = static_cast<uint8_t>(uint32_t(samples[currentSample] >> ((sampleSpecs.bytesPerSample-byteIndex-1)*8)) & 0xFF);
 			}
 		}
-	} else {
+	}
+	else {
 		memset(out, 0, size);
 	}
-
-	//std::cout << "o" << std::endl;
-
 }
 
 // Midi Sine example
 ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
-						  const AlsaCardIdentifier &midiInCard,
-						  unsigned int buffersize,
-						  unsigned int samplerate)
+						const AlsaCardIdentifier &midiInCard,
+						unsigned int buffersize,
+						unsigned int samplerate)
 {
 	ExamplesHandle ret;
 
@@ -119,7 +120,7 @@ ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
 	ret.audioOutput = Nl::createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
 
 	// Configure Audio (if needed, or use default)
-    //ret.audioOutput->setSampleFormat(...);
+	//ret.audioOutput->setSampleFormat(...);
 	ret.audioOutput->setSamplerate(samplerate);
 	ret.audioOutput->setChannelCount(2);
 
@@ -140,37 +141,36 @@ ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
 }
 
 // Silence Example
-void silenceCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
+void silenceCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
 {
-    memset(out, 0, size);
+	memset(out, 0, size);
 }
 
 ExamplesHandle silence(const AlsaCardIdentifier &audioOutCard,
-						unsigned int buffersize,
-						unsigned int samplerate)
+					   unsigned int buffersize,
+					   unsigned int samplerate)
 {
 	ExamplesHandle ret;
 
-    // Not nedded, since we only playback here w/o midi
-    ret.inBuffer = nullptr;
-    ret.audioInput = nullptr;
+	// Not nedded, since we only playback here w/o midi
+	ret.inBuffer = nullptr;
+	ret.audioInput = nullptr;
 
-    // Create an output buffer and an output device
-    ret.outBuffer = Nl::createBuffer("AudioOutput");
+	// Create an output buffer and an output device
+	ret.outBuffer = Nl::createBuffer("AudioOutput");
 	ret.audioOutput = Nl::createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
 
-    // Configure audio device
-    ret.audioOutput->setSamplerate(samplerate);
+	// Configure audio device
+	ret.audioOutput->setSamplerate(samplerate);
 
-    // Start audio Thread
-    ret.audioOutput->start();
+	// Start audio Thread
+	ret.audioOutput->start();
 
-    // Register a Callback
-    ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, silenceCallback);
+	// Register a Callback
+	ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, silenceCallback);
 
-    return ret;
+	return ret;
 }
-
 
 } // namespace Nl
 } // namespace Examples

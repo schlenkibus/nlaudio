@@ -1,4 +1,5 @@
 #include "stopwatch.h"
+#include <iomanip>
 
 namespace Nl {
 
@@ -11,9 +12,9 @@ namespace Nl {
  * Calls StopWatch::start() in a RAII fashion.
  *
 */
-StopFunctionTime::StopFunctionTime(StopWatch *sw, std::string name = "noname")
+StopBlockTime::StopBlockTime(StopWatch *sw, std::string name = "noname") :
+	m_currentStopWatch(sw)
 {
-	m_currentStopWatch = sw;
 	if (m_currentStopWatch)
 		m_currentStopWatch->start(name);
 }
@@ -25,7 +26,7 @@ StopFunctionTime::StopFunctionTime(StopWatch *sw, std::string name = "noname")
  * Calls StopWatch::stop() in a RAII fashion.
  *
 */
-StopFunctionTime::~StopFunctionTime()
+StopBlockTime::~StopBlockTime()
 {
 	if (m_currentStopWatch)
 		m_currentStopWatch->stop();
@@ -40,11 +41,12 @@ StopFunctionTime::~StopFunctionTime()
  * Creates a StopWatch object
  *
 */
-StopWatch::StopWatch() :
+StopWatch::StopWatch(const std::string &name) :
 	m_mutex(),
 	m_timestamps(),
 	m_currentTimeStamp(),
-	m_waitingForStop(false)
+	m_waitingForStop(false),
+	m_name(name)
 {
 }
 
@@ -54,6 +56,7 @@ StopWatch::StopWatch() :
  * \param name Name of timestamp
  *
  * Sets the start point for a duration to now.
+ * \ref StopBlockTime provides a RAII style interface for the same purpos.
  *
 */
 void StopWatch::start(const std::string &name)
@@ -76,6 +79,7 @@ void StopWatch::start(const std::string &name)
  * \brief Set stop timestamp to now.
  *
  * Sets the stop point for a duration to now.
+ * \ref StopBlockTime provides a RAII style interface for the same purpos.
  *
 */
 void StopWatch::stop()
@@ -95,29 +99,24 @@ void StopWatch::stop()
 	m_waitingForStop = false;
 }
 
-void StopWatch::clear()
+/** \ingroup Tools
+ *
+ * \brief Prints a detailed list with all timestamps
+ * \param rhs A stream of type \ref std::ostream where data is written to.
+ * \return A stream of type \ref std::ostream containing new data.
+ *
+ * This function prints a list with all start, stop and duration times.
+ *
+*/
+std::ostream& StopWatch::printDetailed(std::ostream &rhs)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
+	//TODO: Make this print the whole buffer with all details.
+	//      Not used right now.
 
-	//while (true) {
-		//m_mutex.lock();
-
-		//if (!m_waitingForStop) {
-			std::queue<Timestamp> empty;
-			std::swap(m_timestamps, empty);
-			//m_mutex.unlock();
-			//break;
-		//} else {
-		//	m_mutex.unlock();
-		//	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		//}
-	//}
-}
-
-void StopWatch::print()
-{
+	// Create an new empty copy and swap with the full one.
 	m_mutex.lock();
-	std::queue<Timestamp> workCopy = m_timestamps;
+	std::queue<Timestamp> workCopy;
+	std::swap(m_timestamps, workCopy);
 	m_mutex.unlock();
 
 	while (!workCopy.empty()) {
@@ -125,30 +124,43 @@ void StopWatch::print()
 		workCopy.pop();
 
 		int delta_us = std::chrono::duration_cast<std::chrono::microseconds>(cur.stop-cur.start).count();
+
 		std::cout << cur.name
 				  << "  "
 					 //<< std::chrono::system_clock::to_time_t(cur.start)
 					 //<< std::put_time(std::chrono::system_clock::to_time_t(cur.start), "%F %T")
 					 //<< "  "
 					 //<< std::put_time(std::chrono::system_clock::to_time_t(cur.stop), "%F %T")
-					 //<< "  "
+					 << "  "
 				  << delta_us <<  " us" << std::endl;
 	}
+
+	return rhs;
 }
 
-void StopWatch::printSummary()
+/** \ingroup Tools
+ *
+ * \brief Prints a summary of all timestamps
+ * \param rhs A stream of type \ref std::ostream where data is written to.
+ * \return A stream of type \ref std::ostream containing new data.
+ *
+ * This function prints a summary of start, stop and duration times and empties the queue.
+ *
+*/
+std::ostream& StopWatch::printSummary(std::ostream &rhs)
 {
+	// Create an new empty copy and swap with the full one.
 	m_mutex.lock();
-	std::queue<Timestamp> workCopy = m_timestamps;
+	std::queue<Timestamp> workCopy;
+	std::swap(m_timestamps, workCopy);
 	m_mutex.unlock();
 
 	unsigned long itemCount = workCopy.size();
 	unsigned long sum = 0;
-	unsigned int min = 0;
+	unsigned int min = std::numeric_limits<unsigned int>::max();
 	unsigned int max = 0;
-//TODO: min and max values can be expressed by their names as well!
-//	std::string minName = "";
-//	std::string maxName = "";
+	std::string minName = "";
+	std::string maxName = "";
 
 	while (!workCopy.empty()) {
 		Timestamp cur = workCopy.front();
@@ -156,19 +168,48 @@ void StopWatch::printSummary()
 
 		unsigned int delta_us = std::chrono::duration_cast<std::chrono::microseconds>(cur.stop-cur.start).count();
 		sum += delta_us;
-		min = (delta_us < min ? delta_us : min);
-		max = (delta_us > max ? delta_us : max);
+
+		if (delta_us < min) {
+			min = delta_us;
+			minName = cur.name;
+		}
+
+		if (delta_us > max) {
+			max = delta_us;
+			maxName = cur.name;
+		}
 	}
 
 	double mean = static_cast<double>(sum) / static_cast<double>(itemCount);
 
-	std::cout << "Timing: " << std::endl
-			  << " Values=" << itemCount
-			  << " sum= " << sum << " us"
-			  << " min= " << min << " us"
-			  << " max= " << max << " us"
-			  << " mean= " << mean << " us" << std::endl;
+	rhs << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+		<< "Timing: [" << m_name << "] " << std::endl
+		<< "values=" << itemCount << " "
+		<< "sum=" << sum << "us "
+		<< "min[" << minName << "]=" << min << "us "
+		<< "max[" << maxName << "]=" << max << "us "
+		<< "mean=" << mean << "us" << std::endl;
 
+	return rhs;
+}
+
+/** \ingroup Tools
+ *
+ * \brief Print StopWatch using operator<<
+ * \param lhs Left hand Side
+ * \param rhs Right hand Side
+ * \return std::ostream with string data
+ *
+ * Helper overload of operator<< for StopWatch
+ * so it can be used as:
+ *
+ * \code{.cpp}
+ *	std::cout << "ExecutionTimes: " << std::endl << stopWatchInstance << std::endl;
+ * \endcode
+*/
+std::ostream& operator<<(std::ostream& lhs, StopWatch& rhs)
+{
+	return rhs.printSummary(lhs);
 }
 
 }

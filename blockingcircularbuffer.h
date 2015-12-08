@@ -129,9 +129,10 @@ public:
         }
 
         std::unique_lock<std::mutex> mlock(m_mutex);
-        while (availableToWrite() < size || !m_buffer) {
+		while (availableToWrite() < size || !m_buffer) {
             m_condition.wait(mlock);
         }
+
 
         m_bytesWritten += size;
 

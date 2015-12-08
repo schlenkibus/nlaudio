@@ -9,4 +9,4 @@ Behringer sagt: SampleSize 1Byte
 
 Implement: http://www.spinics.net/linux/fedora/alsa-user/msg07230.html
 
-Implement time measure for callbacks. Or probably in buffer
+
