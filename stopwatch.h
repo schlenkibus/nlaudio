@@ -76,7 +76,7 @@ public:
 	StopWatch(const std::string& name);
 	void start(const std::string& name);
 	void stop();
-	std::ostream& printDetailed(std::ostream &rhs);
+	std::ostream& printDetailed(std::ostream& rhs);
 	std::ostream& printSummary(std::ostream& rhs);
 
 private:

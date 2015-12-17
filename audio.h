@@ -6,13 +6,13 @@
  *
 */
 
-#include <cstdint>
+//#include <cstdint>
 #include <list>
-#include <queue>
 #include <string>
 
-
 namespace Nl {
+
+//TODO: Make proper types of these. So the types themselves check if the values make sense.
 
 /** A typedef for sample rates */
 typedef unsigned int samplerate_t;
@@ -215,9 +215,6 @@ public:
 	 *
 	*/
 	virtual void stop() = 0;
-
-protected:
-
 
 };
 

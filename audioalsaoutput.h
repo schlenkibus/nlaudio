@@ -9,7 +9,7 @@ class AudioAlsaOutput : public AudioAlsa
 public:
 	typedef AudioAlsa basetype;
 
-	AudioAlsaOutput(const AlsaCardIdentifier& card, std::shared_ptr<BlockingCircularBuffer<u_int8_t> > buffer);
+	AudioAlsaOutput(const AlsaCardIdentifier& card, SharedBufferHandle buffer);
 
 	virtual void open();
 	virtual void start();
@@ -17,5 +17,8 @@ public:
 
 	static void worker(SampleSpecs specs, AudioAlsaOutput *ptr);
 };
+
+/*! A shared handle to a \ref AudioAlsaOutput */
+typedef std::shared_ptr<AudioAlsaOutput> SharedAudioAlsaOutputHandle;
 
 } // Namespace Nl

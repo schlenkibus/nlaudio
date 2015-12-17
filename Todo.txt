@@ -11,3 +11,5 @@ Implement: http://www.spinics.net/linux/fedora/alsa-user/msg07230.html
 
 Implement A singleton to querry things such as buffers or StopWatch instances
 http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf
+
+gcov gprof that shit here!

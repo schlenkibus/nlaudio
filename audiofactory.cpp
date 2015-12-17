@@ -1,14 +1,18 @@
 #include "audiofactory.h"
-#include "blockingcircularbuffer.h"
+
+#include "rawmididevice.h"
 #include "audioalsainput.h"
 #include "audioalsaoutput.h"
-#include "tools.h"
+#include "blockingcircularbuffer.h"
+#include "samplespecs.h"
+#include "rawmididevice.h"
+
 
 #include <iostream>
 
 namespace Nl {
 
-const int DEFAULT_BUFFERSIZE = 128; /*!< Default buffer size. */
+const int DEFAULT_BUFFERSIZE = 128; /*!< Default buffer size in Frames */
 
 std::map<std::string, SharedBufferHandle> BuffersDictionary; /*!< Dictionary, used to querry buffers by its names */
 
@@ -230,8 +234,8 @@ SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, S
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
 													AudioCallbackIn callback)
 {
-	Nl::WorkingThreadHandle handle;
-    handle.terminateRequest = Nl::createTerminateFlag();
+	WorkingThreadHandle handle;
+	handle.terminateRequest = createTerminateFlag();
     handle.thread = std::shared_ptr<std::thread>(new std::thread(readAudioFunction,
                                                                  inBuffer,
                                                                  callback,
@@ -254,8 +258,8 @@ WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
 WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
 													 AudioCallbackOut callback)
 {
-	Nl::WorkingThreadHandle handle;
-    handle.terminateRequest = Nl::createTerminateFlag();
+	WorkingThreadHandle handle;
+	handle.terminateRequest = createTerminateFlag();
     handle.thread = std::shared_ptr<std::thread>(new std::thread(writeAudioFunction,
                                                                  outBuffer,
                                                                  callback,
@@ -280,8 +284,8 @@ WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
 													SharedBufferHandle outBuffer,
 													AudioCallbackInOut callback)
 {
-	Nl::WorkingThreadHandle handle;
-    handle.terminateRequest = Nl::createTerminateFlag();
+	WorkingThreadHandle handle;
+	handle.terminateRequest = createTerminateFlag();
     handle.thread = std::shared_ptr<std::thread>(new std::thread(readWriteAudioFunction,
                                                                  inBuffer,
                                                                  outBuffer,

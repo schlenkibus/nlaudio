@@ -7,8 +7,6 @@
 */
 namespace Nl {
 
-typedef std::string devicename_t;
-
 class Midi
 {
 public:

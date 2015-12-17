@@ -38,6 +38,14 @@
 
 #include "stopwatch.h"
 
+#include "alsacardidentifier.h"
+
+#include "blockingcircularbuffer.h"
+
+#include "audioalsaexception.h"
+
+#include "alsacardidentifier.h"
+
 using namespace std;
 
 //TODO: Glbal Variables are bad (even in a namespace)
@@ -46,27 +54,24 @@ Nl::StopWatch sw("AudioCallback");
 int main()
 {
 	try {
-
-
-		auto availableDevices = Nl::AudioAlsa::getDetailedCardInfos();
-		for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it) {
+		auto availableDevices = Nl::getDetailedCardInfos();
+		for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it)
 			std::cout << *it << std::endl;
-		}
 
-		auto availableDevs = Nl::AudioAlsa::getCardIdentifiers();
+		auto availableDevs = Nl::AlsaCardIdentifier::getCardIdentifiers();
 		for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
 			std::cout << *it << std::endl;
 
-		Nl::AlsaCardIdentifier audioOut(2,0,0, "USB Device");
-		Nl::AlsaCardIdentifier midiIn(1,0,0, "Midi In");
+		Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
+		Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
+		Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
 
-
-		const int buffersize = 128;
+		const int buffersize = 512;
 		const int samplerate = 48000;
 
-		//auto handle = Nl::Examples::inputToOutput(audioInDevice, audioOutDevice, buffersize, samplerate);
+		auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
 		//auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
-		auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
+		//auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
 
 		// Wait for user to exit by pressing 'q'
 		// Print buffer statistics on other keys
@@ -77,8 +82,8 @@ int main()
 		//	     The calls should happen in this order. Otherwise we trigger
 		//		 a deadlock with the audio callback.
 
-		while(true) {
-			//while(getchar() != 'q') {
+		//while(true) {
+			while(getchar() != 'q') {
 			std::cout << sw << std::endl;
 
 			if (handle.audioOutput) std::cout << "Audio: Output Statistics:" << std::endl
@@ -95,14 +100,13 @@ int main()
 						  << "rxBytes=" << rxBytes << "  txBytes=" << txBytes << std::endl;
 			}
 
-
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
 
 		// Tell worker thread to cleanup and quit
 		Nl::terminateWorkingThread(handle.workingThreadHandle);
-
-
+		if (handle.audioOutput) handle.audioOutput->stop();
+		if (handle.audioInput) handle.audioInput->stop();
 
 	} catch (Nl::AudioAlsaException& e) {
 		std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;

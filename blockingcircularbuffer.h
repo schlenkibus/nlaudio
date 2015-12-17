@@ -3,9 +3,10 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
-#include <cstring>
 #include <iostream>
-#include "tools.h"
+#include <cmath>
+
+#include "samplespecs.h"
 
 namespace Nl {
 
@@ -65,8 +66,6 @@ public:
         m_bytesWritten = 0;
         m_readIndex = 0;
         m_writeIndex = 0;
-
-		//std::cout << "Buffer: " << m_name << " resized to: " << m_size << std::endl;
 
         m_condition.notify_one();
     }
@@ -240,5 +239,8 @@ private:
 
 	SampleSpecs m_sampleSpecs;
 };
+
+/*! A shared handle to a \ref BlockingCircularBuffer<uint8_t> */
+typedef std::shared_ptr<BlockingCircularBuffer<uint8_t>> SharedBufferHandle;
 
 } // namespace Nl

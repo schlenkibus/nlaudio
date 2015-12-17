@@ -1,4 +1,6 @@
 #include "rawmididevice.h"
+#include "rawmidideviceexception.h"
+
 #include <thread>
 #include <iostream>
 #include <sstream>
@@ -91,7 +93,7 @@ void RawMidiDevice::stop()
  *
  * \brief Static worker thread iomplementation
  *
- * This function is static and run within its own thread/context since the interface might block,
+ * This function is static and runs within its own thread/context since the interface might block,
  * if there is no data to read.
  *
 */
@@ -303,11 +305,11 @@ std::list<MidiCard> RawMidiDevice::getAvailableDevices()
  * Return first available alsa midi device
  *
 */
-devicename_t RawMidiDevice::getFirstDevice()
+std::string RawMidiDevice::getFirstDevice()
 {
 	auto devices = getAvailableDevices();
 
-	devicename_t ret;
+	std::string ret;
 	if (devices.size()) {
 		MidiCard firstCard = devices.front();
 		MidiDevice firstDevice = firstCard.devices.front();

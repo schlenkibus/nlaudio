@@ -2,7 +2,7 @@
 
 namespace Nl {
 
-AudioAlsaOutput::AudioAlsaOutput(const AlsaCardIdentifier &card, std::shared_ptr<BlockingCircularBuffer<u_int8_t> > buffer) :
+AudioAlsaOutput::AudioAlsaOutput(const AlsaCardIdentifier &card, SharedBufferHandle buffer) :
 	basetype(card, buffer, false)
 {
 }
@@ -54,6 +54,8 @@ void AudioAlsaOutput::worker(SampleSpecs specs, AudioAlsaOutput *ptr)
 
 	snd_pcm_abort(ptr->m_handle);
 	delete[] buffer;
+
+	std::cout << "void AudioAlsaOutput::worker(SampleSpecs specs, AudioAlsaInput *ptr)" << std::endl;
 }
 
 } // namespace Nl

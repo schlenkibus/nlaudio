@@ -1,7 +1,6 @@
 #pragma once
 
 #include "audiofactory.h"
-#include "stopwatch.h"
 
 namespace Nl {
 namespace Examples {
@@ -10,6 +9,8 @@ struct ExamplesHandle {
 	WorkingThreadHandle workingThreadHandle;
 	SharedAudioAlsaInputHandle audioInput;
 	SharedAudioAlsaOutputHandle audioOutput;
+	SharedRawMidiDeviceHandle midiInput;
+	SharedRawMidiDeviceHandle midiOutput;
 	SharedBufferHandle inBuffer;
 	SharedBufferHandle outBuffer;
 	SharedBufferHandle inMidiBuffer;

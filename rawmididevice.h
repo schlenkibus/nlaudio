@@ -2,33 +2,18 @@
 
 #include <alsa/asoundlib.h>
 #include <string>
-#include <thread>
 #include <list>
 #include <atomic>
+#include <memory>
+#include <thread>
 
 #include "midi.h"
+#include "alsacardidentifier.h"
 #include "blockingcircularbuffer.h"
-
-#include "audioalsa.h" //AlsaCardIdentifier -> TODO: put this in extra file
 
 namespace Nl {
 
-/** \ingroup Midi
- *
- * \class RawMidiDeviceException
- * \brief Exception object for raw midi
- * \param errorNumber Error number given by alsa
- * \param what Error description
-*/
-class RawMidiDeviceException : std::exception
-{
-public:
-	RawMidiDeviceException(int errorNumber, std::string what) : m_errno(errorNumber), m_msg(what) {}
-	virtual const char* what() const noexcept { return m_msg.c_str(); }
-private:
-	int m_errno;
-	std::string m_msg;
-};
+
 
 ///< Definition of dataflow direction
 enum MidiDeviceDirection {
@@ -43,8 +28,8 @@ struct MidiDevice {
 	int device;						///< Alsa device number
 	int subdevice;					///< Alsa subdevice number
 	MidiDeviceDirection direction;	///< Alsa dataflow direction
-	devicename_t name;				///< Alsa device name
-	devicename_t subName;			///< Alsa subdevice number
+	std::string name;				///< Alsa device name
+	std::string subName;			///< Alsa subdevice number
 };
 std::ostream& operator<<(std::ostream& lhs, const MidiDevice& rhs);
 
@@ -69,7 +54,7 @@ public:
 	~RawMidiDevice();
 
 	static std::list<MidiCard> getAvailableDevices();
-	static devicename_t getFirstDevice();
+	static std::string getFirstDevice();
 
 	virtual void open();
 	virtual void close();
@@ -96,5 +81,8 @@ private:
 	static void worker(RawMidiDevice *ptr);
 
 };
+
+/*! A shared handle to a \ref RawMidiDevice */
+typedef std::shared_ptr<RawMidiDevice> SharedRawMidiDeviceHandle;
 
 } // namespace Nl

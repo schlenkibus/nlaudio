@@ -16,7 +16,15 @@ SOURCES += main.cpp \
     rawmididevice.cpp \
     examples.cpp \
     stopwatch.cpp \
-    hw_params.c
+    hw_params.c \
+    alsacardidentifier.cpp \
+    audioalsaexception.cpp \
+    alsacardinfo.cpp \
+    alsadeviceinfo.cpp \
+    alsasubdeviceinfo.cpp \
+    bufferstatistics.cpp \
+    rawmidideviceexception.cpp \
+    samplespecs.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -33,7 +41,15 @@ HEADERS += \
     midi.h \
     rawmididevice.h \
     examples.h \
-    stopwatch.h
+    stopwatch.h \
+    alsacardidentifier.h \
+    audioalsaexception.h \
+    alsacardinfo.h \
+    alsadeviceinfo.h \
+    alsasubdeviceinfo.h \
+    bufferstatistics.h \
+    rawmidideviceexception.h \
+    samplespecs.h
 
 OTHER_FILES += \
     Todo.txt

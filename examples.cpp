@@ -1,7 +1,10 @@
 #include "examples.h"
-#include "audiofactory.h"
-#include "blockingcircularbuffer.h"
+
 #include "stopwatch.h"
+#include "audioalsainput.h"
+#include "audioalsaoutput.h"
+#include "rawmididevice.h"
+#include "tools.h"
 
 extern Nl::StopWatch sw;
 
@@ -11,6 +14,9 @@ namespace Examples {
 // In to out example
 void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
 {
+	static int counter = 0;
+	StopBlockTime sft(&sw, "val" + std::to_string(counter++));
+
 	memcpy(out, in, size);
 }
 
@@ -23,14 +29,13 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIde
 	// Nl::terminateWorkingThread(hamdle)
 	ExamplesHandle ret;
 
-	ret.inBuffer = Nl::createBuffer("InputBuffer");
-	//typedef decltype(getTypeForBitlenght(ret.inBuffer->sampleSpecs())) SampleType;
+	ret.inBuffer = createBuffer("InputBuffer");
 
-	ret.audioInput = Nl::createInputDevice(inCard, ret.inBuffer, buffersize);
+	ret.audioInput = createInputDevice(inCard, ret.inBuffer, buffersize);
 	ret.audioInput->setSamplerate(samplerate);
 
-	ret.outBuffer = Nl::createBuffer("OutputBuffer");
-	ret.audioOutput = Nl::createOutputDevice(outCard, ret.outBuffer, buffersize);
+	ret.outBuffer = createBuffer("OutputBuffer");
+	ret.audioOutput = createOutputDevice(outCard, ret.outBuffer, buffersize);
 	ret.audioOutput->setSamplerate(samplerate);
 
 	// DANGER!!!!
@@ -41,7 +46,7 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIde
 	ret.audioInput->start();
 	ret.audioOutput->start();
 
-	ret.workingThreadHandle = Nl::registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback);
+	ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback);
 
 	return ret;
 }
@@ -61,7 +66,7 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs
 	bool reset = false;
 
 	// We can get a buffer by its name, to access its data:
-	auto midiBuffer = Nl::getBufferForName("MidiBuffer");
+	auto midiBuffer = getBufferForName("MidiBuffer");
 
 	if(midiBuffer) {
 		while(midiBuffer->availableToRead() >= 3) {
@@ -84,7 +89,7 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs
 
 	if(notesOn > 0) {
 		int32_t samples[sampleSpecs.buffersizeInFramesPerPeriode];
-		Nl::sinewave<int32_t>(samples, frequency, reset, sampleSpecs);
+		sinewave<int32_t>(samples, frequency, reset, sampleSpecs);
 
 		for (unsigned int byte=0; byte<sampleSpecs.buffersizeInBytesPerPeriode; byte++) {
 			unsigned int currentSample = (byte / (sampleSpecs.channels * sampleSpecs.bytesPerSample));
@@ -115,19 +120,19 @@ ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
 	ret.audioInput = nullptr;
 
 	// Lets create a buffer, which we have to pass to the output soundcard
-	ret.outBuffer = Nl::createBuffer("AudioOutput");
+	ret.outBuffer = createBuffer("AudioOutput");
 	// Open soundcard, using above buffer
-	ret.audioOutput = Nl::createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
+	ret.audioOutput = createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
 
 	// Configure Audio (if needed, or use default)
 	//ret.audioOutput->setSampleFormat(...);
-	ret.audioOutput->setSamplerate(samplerate);
+	//ret.audioOutput->setSamplerate(samplerate);
 	ret.audioOutput->setChannelCount(2);
-	ret.audioOutput->setSampleFormat("S16_LE");
+	//ret.audioOutput->setSampleFormat("S16_LE");
 
 	// We want midi as well
-	ret.inMidiBuffer = Nl::createBuffer("MidiBuffer");
-	auto midiInput = Nl::createRawMidiDevice(midiInCard, ret.inMidiBuffer);
+	ret.inMidiBuffer = createBuffer("MidiBuffer");
+	auto midiInput = createRawMidiDevice(midiInCard, ret.inMidiBuffer);
 
 	// Start Audio and Midi Thread
 	ret.audioOutput->start();
@@ -136,7 +141,7 @@ ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
 	std::cout << "MidiBufferSize: " << midiInput->getAlsaMidiBufferSize() << std::endl;
 
 	// Register a Callback
-	ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback);
+	ret.workingThreadHandle = registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback);
 
 	return ret;
 }
@@ -158,8 +163,8 @@ ExamplesHandle silence(const AlsaCardIdentifier &audioOutCard,
 	ret.audioInput = nullptr;
 
 	// Create an output buffer and an output device
-	ret.outBuffer = Nl::createBuffer("AudioOutput");
-	ret.audioOutput = Nl::createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
+	ret.outBuffer = createBuffer("AudioOutput");
+	ret.audioOutput = createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
 
 	// Configure audio device
 	ret.audioOutput->setSamplerate(samplerate);
@@ -168,7 +173,7 @@ ExamplesHandle silence(const AlsaCardIdentifier &audioOutCard,
 	ret.audioOutput->start();
 
 	// Register a Callback
-	ret.workingThreadHandle = Nl::registerOutputCallbackOnBuffer(ret.outBuffer, silenceCallback);
+	ret.workingThreadHandle = registerOutputCallbackOnBuffer(ret.outBuffer, silenceCallback);
 
 	return ret;
 }
