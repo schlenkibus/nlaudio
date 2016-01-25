@@ -84,6 +84,7 @@ float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channel, const Sam
  *
  * \brief Writes a float sample to an audio bytestream of arbitrary format
  * \param out Bytestream of audiodata
+ * \param sample Float sample from -1.0 to 1.0
  * \param frameIndex Index of the frame we are working with
  * \param channel Channel number
  * \param sampleSpecs Sample specification of the current setup
@@ -111,11 +112,12 @@ void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t chan
 		for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++)
 			currentMask |= (0xFF << (byte*8));
 
+		currentMask &= ~(1 << (sampleSpecs.bytesPerSample*8-1));
+
 		int32_t currentSample = static_cast<int32_t>(sample * currentMask);
 
 		if (sampleSpecs.isLittleEndian) {
 			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
-				// TODO: if isLittleEndian...
 				out[getByteIndex(frameIndex, channel, byte, sampleSpecs)] =
 						(currentSample) >> (byte*8);
 			}
@@ -123,6 +125,44 @@ void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t chan
 			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
 				out[getByteIndex(frameIndex, channel, byte, sampleSpecs)] =
 						(currentSample) >> ((sampleSpecs.bytesPerSample-byte-1)*8);
+			}
+		}
+	} else { // UNSIGNED
+		//TODO: implement me
+	}
+}
+
+/** \ingroup Tools
+ *
+ * \brief Writes a int32 sample to an audio bytestream of arbitrary format
+ * \param out Bytestream of audiodata
+ * \param int32 sample
+ * \param frameIndex Index of the frame we are working with
+ * \param channel Channel number
+ * \param sampleSpecs Sample specification of the current setup
+ *
+ * Helper function, that writes a float sample to an audio bytestream of
+ * arbitrary format and channel number
+ *
+*/
+void setSample(u_int8_t* out, int32_t sample, u_int32_t frameIndex, u_int32_t channel, const SampleSpecs& sampleSpecs)
+{
+	// Protect against segfault
+	if (frameIndex > sampleSpecs.buffersizeInFramesPerPeriode)
+		return;
+	if (channel > sampleSpecs.channels)
+		return;
+
+	if (sampleSpecs.isSigned) {
+		if (sampleSpecs.isLittleEndian) {
+			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
+				out[getByteIndex(frameIndex, channel, byte, sampleSpecs)] =
+						(sample) >> (byte*8);
+			}
+		} else {
+			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
+				out[getByteIndex(frameIndex, channel, byte, sampleSpecs)] =
+						(sample) >> ((sampleSpecs.bytesPerSample-byte-1)*8);
 			}
 		}
 	} else { // UNSIGNED
@@ -159,7 +199,8 @@ std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs)
 		   "Channels:                          " << rhs.channels << std::endl <<
 		   "isLittleEndian:                    " << rhs.isLittleEndian << std::endl <<
 		   "isFloat                            " << rhs.isFloat << std::endl <<
-		   "isSigned:                          " << rhs.isSigned << std::endl;
+		   "isSigned:                          " << rhs.isSigned << std::endl <<
+		   "latency:                           " << rhs.latency << " ms" << std::endl;
 	return lhs;
 }
 
