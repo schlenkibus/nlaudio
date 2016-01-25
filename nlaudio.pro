@@ -49,7 +49,8 @@ HEADERS += \
     alsasubdeviceinfo.h \
     bufferstatistics.h \
     rawmidideviceexception.h \
-    samplespecs.h
+    samplespecs.h \
+    lockfreecircularbuffer.h
 
 OTHER_FILES += \
     Todo.txt

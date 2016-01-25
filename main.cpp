@@ -62,14 +62,15 @@ int main()
 		for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
 			std::cout << *it << std::endl;
 
-		Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
-		Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
-		Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
+		Nl::AlsaCardIdentifier audioOut(2,0,0, "USB Device");
+		Nl::AlsaCardIdentifier audioIn(2,0,0, "USB Device");
+		Nl::AlsaCardIdentifier midiIn(1,0,0, "Midi In");
 
-		const int buffersize = 512;
+		const int buffersize = 256;
 		const int samplerate = 48000;
 
-		auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
+		//auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
+		auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
 		//auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
 		//auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
 
@@ -91,16 +92,16 @@ int main()
 			if (handle.audioInput) std::cout << "Audio: Input Statistics:" << std::endl
 											 << handle.audioInput->getStats() << std::endl;
 
-
 			if (handle.inMidiBuffer) {
-
 				unsigned long rxBytes, txBytes;
 				handle.inMidiBuffer->getStat(&rxBytes, &txBytes);
 				std::cout << "Midi: Input Statistics:" << std::endl
 						  << "rxBytes=" << rxBytes << "  txBytes=" << txBytes << std::endl;
 			}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			std::cout << "BufferCount: " << handle.audioInput->getBufferCount() << std::endl;
+
+			//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
 
 		// Tell worker thread to cleanup and quit

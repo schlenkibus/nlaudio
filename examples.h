@@ -21,6 +21,12 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &audioInCard,
 							   unsigned int buffersize,
 							   unsigned int samplerate);
 
+ExamplesHandle inputToOutputWithMidi(   const AlsaCardIdentifier &audioInCard,
+                                        const AlsaCardIdentifier &audioOutCard,
+                                        const AlsaCardIdentifier &midiInCard,
+                                        unsigned int buffersize,
+                                        unsigned int samplerate);
+
 ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
 						  const AlsaCardIdentifier &midiInCard,
 						  unsigned int buffersize,
