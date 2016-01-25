@@ -13,3 +13,11 @@ Implement A singleton to querry things such as buffers or StopWatch instances
 http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf
 
 gcov gprof that shit here!
+
+
+Add a default callback, that always returnes float
+
+Set Realtime
+for pid in $(ps a | grep nlaudio | cut -d ' ' -f 2); do echo $pid; sudo chrt -f -p 1 $pid; chrt -p $pid; done
+
+- ThreadSave Exceptions

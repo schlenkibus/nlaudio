@@ -130,6 +130,11 @@ SharedTerminateFlag terminateRequest) {
 	u_int8_t *inBuffer = new u_int8_t[inBuffersize];
 	u_int8_t *outBuffer = new u_int8_t[outBuffersize];
 
+	memset(outBuffer, 0, outBuffersize);
+	memset(inBuffer, 0, inBuffersize);
+
+	audioOutBuffer->set(outBuffer, outBuffersize);
+
 	while(!terminateRequest->load()) {
 		audioInBuffer->get(inBuffer, inBuffersize);
 		callback(inBuffer, outBuffer, inBuffersize, sampleSpecsIn);
