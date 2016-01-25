@@ -100,6 +100,10 @@ void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t chan
 	if (channel > sampleSpecs.channels)
 		return;
 
+	// Clip/Normalize sample
+	if (sample > 1.0) sample = 1.0;
+	if (sample < -1.0) sample = -1.0;
+
 	if (sampleSpecs.isSigned) {
 
 		int32_t currentMask = 0;
