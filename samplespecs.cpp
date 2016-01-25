@@ -5,6 +5,18 @@
 
 namespace Nl {
 
+/** \ingroup Tools
+ *
+ * \brief Returns an index in a bytestream, depending on the input parameters
+ * \param frameIndex Index of Frame we are working with
+ * \param channel Channel number
+ * \param byte Byte of the sample we want to read
+ * \param sampleSpecs Sample specification of the current setup
+ *
+ * Helper function, that returns a index for a bytestream of arbitrary
+ * format and channel number
+ *
+*/
 unsigned int getByteIndex(unsigned int frameIndex, unsigned int channel, unsigned int byte, const SampleSpecs &sampleSpecs)
 {
 	return	// Index of current Frame
@@ -15,7 +27,20 @@ unsigned int getByteIndex(unsigned int frameIndex, unsigned int channel, unsigne
 			byte;
 }
 
-float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channelIndex, const SampleSpecs& sampleSpecs)
+// Think about inline here
+/** \ingroup Tools
+ *
+ * \brief Returns a float sample from an audio bytestream of arbitrary format
+ * \param in Bytestream of audiodata
+ * \param frameIndex Index of the frame we are working with
+ * \param channel Channel number
+ * \param sampleSpecs Sample specification of the current setup
+ *
+ * Helper function, that returns a float sample from an audio bytestream of
+ * arbitrary format and channel number
+ *
+*/
+float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channel, const SampleSpecs& sampleSpecs)
 {
 	// Protect against segfault
 	if (frameIndex > sampleSpecs.buffersizeInFramesPerPeriode)
@@ -43,6 +68,9 @@ float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channelIndex, cons
 		if (currentSample & (1 << (sampleSpecs.bytesPerSample*8-1)))
 			currentSample |= ~currentMask;
 
+		// Stephan remarked, that float values should be clipped/normalized to -1,0...1,0
+		// If this function is correct, the division below can not be < -1,0 || > 1,0, so
+		// I save this extra if statement for now.
 		return static_cast<float>(currentSample) / static_cast<float>(currentMask);
 
 	} else { // UNSIGNED
@@ -51,7 +79,20 @@ float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channelIndex, cons
 	}
 }
 
-void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t channelIndex, const SampleSpecs& sampleSpecs)
+// Think about inline here
+/** \ingroup Tools
+ *
+ * \brief Writes a float sample to an audio bytestream of arbitrary format
+ * \param out Bytestream of audiodata
+ * \param frameIndex Index of the frame we are working with
+ * \param channel Channel number
+ * \param sampleSpecs Sample specification of the current setup
+ *
+ * Helper function, that writes a float sample to an audio bytestream of
+ * arbitrary format and channel number
+ *
+*/
+void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t channel, const SampleSpecs& sampleSpecs)
 {
 	// Protect against segfault
 	if (frameIndex > sampleSpecs.buffersizeInFramesPerPeriode)
@@ -68,12 +109,14 @@ void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t chan
 
 		int32_t currentSample = static_cast<int32_t>(sample * currentMask);
 
-		for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
-			// TODO: if isLittleEndian...
-			if (sampleSpecs.isLittleEndian) {
+		if (sampleSpecs.isLittleEndian) {
+			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
+				// TODO: if isLittleEndian...
 				out[getByteIndex(frameIndex, channelIndex, byte, sampleSpecs)] =
 						(currentSample) >> (byte*8);
-			} else {
+			}
+		} else {
+			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
 				out[getByteIndex(frameIndex, channelIndex, byte, sampleSpecs)] =
 						(currentSample) >> ((sampleSpecs.bytesPerSample-byte-1)*8);
 			}

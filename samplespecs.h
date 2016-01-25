@@ -27,12 +27,11 @@ struct SampleSpecs {
 	bool isSigned;								///< Are we using a sample format with signed values?
 	// bool isInterleaved
 };
-
 std::ostream& operator<<(std::ostream& lhs, const SampleSpecs& rhs);
 
 unsigned int getByteIndex(unsigned int frameIndex, unsigned int channel, unsigned int byte, const SampleSpecs &sampleSpecs);
-float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channelIndex, const SampleSpecs& sampleSpecs);
-void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t channelIndex, const SampleSpecs& sampleSpecs);
+float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channel, const SampleSpecs& sampleSpecs);
+void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t channel, const SampleSpecs& sampleSpecs);
 
 
 
