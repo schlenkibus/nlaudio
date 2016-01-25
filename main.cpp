@@ -62,16 +62,19 @@ int main()
 		for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
 			std::cout << *it << std::endl;
 
+        Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
 		Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
-		Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
 		Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
 
 		const int buffersize = 512;
 		const int samplerate = 48000;
 
-		auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
+        //auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
 		//auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
-		//auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
+        //auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
+        //auto handle = Nl::Examples::midiSineWithMidi(audioOut, midiIn, buffersize, samplerate);
+        auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
+
 
 		// Wait for user to exit by pressing 'q'
 		// Print buffer statistics on other keys
@@ -83,7 +86,9 @@ int main()
 		//		 a deadlock with the audio callback.
 
 		//while(true) {
-			while(getchar() != 'q') {
+
+
+        while(getchar() != 'q') {
 			std::cout << sw << std::endl;
 
 			if (handle.audioOutput) std::cout << "Audio: Output Statistics:" << std::endl
