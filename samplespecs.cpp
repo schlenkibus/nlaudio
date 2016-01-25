@@ -45,7 +45,7 @@ float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channel, const Sam
 	// Protect against segfault
 	if (frameIndex > sampleSpecs.buffersizeInFramesPerPeriode)
 		return 0.f;
-	if (channelIndex > sampleSpecs.channels)
+	if (channel > sampleSpecs.channels)
 		return 0.f;
 
 	if (sampleSpecs.isSigned) {
@@ -55,12 +55,12 @@ float getSample(u_int8_t* in, u_int32_t frameIndex, u_int32_t channel, const Sam
 
 		if (sampleSpecs.isLittleEndian) {
 			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
-				currentSample |= in[getByteIndex(frameIndex, channelIndex, byte, sampleSpecs)] << (byte*8);
+				currentSample |= in[getByteIndex(frameIndex, channel, byte, sampleSpecs)] << (byte*8);
 				currentMask |= (0xFF << (byte*8));
 			}
 		} else {
 			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
-				currentSample |= in[getByteIndex(frameIndex, channelIndex, byte, sampleSpecs)] << ((sampleSpecs.bytesPerSample-byte-1)*8);
+				currentSample |= in[getByteIndex(frameIndex, channel, byte, sampleSpecs)] << ((sampleSpecs.bytesPerSample-byte-1)*8);
 				currentMask |= (0xFF << (byte*8));
 			}
 		}
@@ -97,7 +97,7 @@ void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t chan
 	// Protect against segfault
 	if (frameIndex > sampleSpecs.buffersizeInFramesPerPeriode)
 		return;
-	if (channelIndex > sampleSpecs.channels)
+	if (channel > sampleSpecs.channels)
 		return;
 
 	if (sampleSpecs.isSigned) {
@@ -112,12 +112,12 @@ void setSample(u_int8_t* out, float sample, u_int32_t frameIndex, u_int32_t chan
 		if (sampleSpecs.isLittleEndian) {
 			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
 				// TODO: if isLittleEndian...
-				out[getByteIndex(frameIndex, channelIndex, byte, sampleSpecs)] =
+				out[getByteIndex(frameIndex, channel, byte, sampleSpecs)] =
 						(currentSample) >> (byte*8);
 			}
 		} else {
 			for (unsigned int byte=0; byte<sampleSpecs.bytesPerSample; byte++) {
-				out[getByteIndex(frameIndex, channelIndex, byte, sampleSpecs)] =
+				out[getByteIndex(frameIndex, channel, byte, sampleSpecs)] =
 						(currentSample) >> ((sampleSpecs.bytesPerSample-byte-1)*8);
 			}
 		}
