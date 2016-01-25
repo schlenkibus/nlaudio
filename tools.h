@@ -19,7 +19,7 @@
 
 namespace Nl {
 
-
+int requestRealtime(void);
 
 /** \ingroup Tools
  *
@@ -44,7 +44,7 @@ void store(const T *buffer, unsigned int buffersize, const std::string& path)
 	out.open(path, std::ofstream::out /*| std::ofstream::app*/);
 
     for (i=0; i<buffersize; i++)
-        out << buffer[i] << std::endl;
+		out << i << "," << buffer[i] << std::endl;
 
     out.flush();
     out.close();
@@ -85,8 +85,7 @@ inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs& 
 	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
         phase += inc;
 
-        if (phase > 0.5)
-            phase -= 1.0;
+	   if (phase > 0.5) phase -= 1.0;
 
 #if 1
         float x = 2 * phase;
@@ -121,22 +120,26 @@ inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs& 
 template<>
 inline void sinewave<double>(double *buffer, float frequency, bool reset, const SampleSpecs& sampleSpecs)
 {
-    static double phase = 0.f;
+	static double phase = 0.f;
 	static double inc = frequency / static_cast<double>(sampleSpecs.samplerate);
 
-    if (reset) {
-        phase = 0.f;
+	if (reset) {
+		phase = 0.f;
 		inc = frequency / static_cast<double>(sampleSpecs.samplerate);
-    }
+	}
 
 	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
-        phase += inc;
-        phase = (phase > 0.5 ? phase - 1.0 : phase);
+		phase += inc;
 
-        double x = 2 * phase;
-        double x_square = x * x;
-        buffer[i] = x * (x_square * (x_square * 2.26548 - 5.13274) + M_PI);
-    }
+	   if (phase > 0.5) phase -= 1.0;
+
+		double x = 2 * phase;
+		if (x < 0) x = -x;
+		x = 0.5 - x;
+
+		double x_square = x * x;
+		buffer[i] = x * (x_square * (x_square * 2.26548 - 5.13274) + 3.14159);
+	}
 }
 
 /** \ingroup Tools
@@ -154,21 +157,25 @@ inline void sinewave<double>(double *buffer, float frequency, bool reset, const 
 template<>
 inline void sinewave<float>(float *buffer, float frequency, bool reset, const SampleSpecs& sampleSpecs)
 {
-    static float phase = 0.f;
+	static float phase = 0.f;
 	static float inc = frequency / static_cast<float>(sampleSpecs.samplerate);
 
-    if (reset) {
-        phase = 0.f;
+	if (reset) {
+		phase = 0.f;
 		inc = frequency / static_cast<float>(sampleSpecs.samplerate);
-    }
+	}
 
 	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
-        phase += inc;
-        phase = (phase > 0.5 ? phase - 1.0 : phase);
+		phase += inc;
 
-        float x = 2 * phase;
-        float x_square = x * x;
-        buffer[i] = x * (x_square * (x_square * 2.26548 - 5.13274) + M_PI);
+	   if (phase > 0.5) phase -= 1.0;
+
+		float x = 2 * phase;
+		if (x < 0) x = -x;
+		x = 0.5 - x;
+
+		float x_square = x * x;
+		buffer[i] = x * (x_square * (x_square * 2.26548 - 5.13274) + 3.14159);
     }
 }
 
