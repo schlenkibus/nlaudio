@@ -6,8 +6,7 @@
 #include "audioalsaoutput.h"
 #include "rawmididevice.h"
 #include "tools.h"
-#include <atomic>>
-
+#include <atomic>
 extern Nl::StopWatch sw;
 
 namespace Nl {
@@ -93,11 +92,11 @@ namespace EFFECTS{
         static float inputSwitchVal = 0.f;
         float outputSample = 0.f;                               //output Sample which comes from AudioIn or sine generator
 
-        static float cutoffFreq = 22000.f;                     //Cutoff Frequency for the LP - attach to knob, so the cutoff can be changed
-        static Filter filter(samplerate);                      //might not be the most elegant way ... think about this for the Future
-        static onepoleFilters passtype;
-        static int switchCounter = 0;
+        static float cutoffFreq = 22000.f;                      //Cutoff Frequency for the LP - attach to knob, so the cutoff can be changed
         static float shelfAmp = 0.f;
+        static OnePoleFilterPasstype passtype = OnePoleFilterPasstype::lowpass; //standard Filter is the lowpass
+        static OnePoleFilters onePoleFilter(cutoffFreq, samplerate, shelfAmp, passtype);        //might not be the most elegant way ... think about this for the Future
+        static int switchCounter = 0;
 
 
         auto midiBuffer = getBufferForName("MidiBuffer");
@@ -176,15 +175,19 @@ namespace EFFECTS{
                 if (midiByteBuffer[1] == 0x13)
                 {
                     cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
-                    printf("cutoff: %f\n", cutoffFreq);
+
+                    onePoleFilter.setCutFreq(cutoffFreq, passtype);
                 }
 
                 /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
                 if (midiByteBuffer[1] == 0x08)
                 {
-                    //float shelfAmpDB = ((static_cast<float>(midiByteBuffer[2]) - 64) * 24) / 64;
-                    //shelfAmp = pow(10, (shelfAmpDB / 20));
                     shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64) * 6) / 64;
+
+                    if((passtype == OnePoleFilterPasstype::lowshelf) || (passtype == OnePoleFilterPasstype::highshelf))
+                    {
+                        onePoleFilter.setShelfAmp(shelfAmp, passtype);
+                    }
                 }
 
                 /*Filter Passtype Switch*/
@@ -192,22 +195,31 @@ namespace EFFECTS{
                 {
                     if (switchCounter == 0)
                     {
-                        passtype = onepoleFilters::lowpass;
+                        passtype = OnePoleFilterPasstype::lowpass;
+                        onePoleFilter.setCutFreq(cutoffFreq, passtype);
                         printf("lowpass on\n");
                     }
+
                     if (switchCounter == 1)
                     {
-                        passtype = onepoleFilters::highpass;
+                        passtype = OnePoleFilterPasstype::highpass;
+                        onePoleFilter.setCutFreq(cutoffFreq, passtype);
                         printf("highpass on\n");
                     }
+
                     if (switchCounter == 2)
                     {
-                        passtype = onepoleFilters::lowshelf;
+                        passtype = OnePoleFilterPasstype::lowshelf;
+                        onePoleFilter.setCutFreq(cutoffFreq, passtype);
+                        onePoleFilter.setShelfAmp(shelfAmp, passtype);
                         printf("lowshelf on\n");
                     }
+
                     if (switchCounter == 3)
                     {
-                        passtype = onepoleFilters::highshelf;
+                        passtype = OnePoleFilterPasstype::highshelf;
+                        onePoleFilter.setCutFreq(cutoffFreq, passtype);
+                        onePoleFilter.setShelfAmp(shelfAmp, passtype);
                         printf("highshelf on\n");
                     }
 
@@ -377,7 +389,7 @@ namespace EFFECTS{
                 /*Mute Check*/
                 outputSample = muteThis(muteSwitch, outputSample, muteSmoothingFactor, &muteFactor);                    //Mute influnce
 
-                outputSample = filter.onePoleBilinearFilter(outputSample, cutoffFreq, shelfAmp, passtype, channelIndex);              //1-Pole Filter influence
+                outputSample = onePoleFilter.onePoleBilinearFilter(outputSample, channelIndex);              //1-Pole Filter influence
 
                 setSample(out, outputSample, frameIndex, channelIndex, sampleSpecs);
             }
