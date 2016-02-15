@@ -31,6 +31,8 @@
 
 #include "audiofactory.h"
 #include "examples.h"
+#include "minisynth.h"
+#include "effects.h"
 
 #include "tools.h"
 
@@ -53,6 +55,7 @@ Nl::StopWatch sw("AudioCallback");
 
 int main()
 {
+
 	try {
 		auto availableDevices = Nl::getDetailedCardInfos();
 		for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it)
@@ -64,7 +67,7 @@ int main()
 
         Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
 		Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
-		Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
+        Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
 
 		const int buffersize = 256;
 		const int samplerate = 48000;
@@ -73,8 +76,13 @@ int main()
 		//auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
         //auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
         //auto handle = Nl::Examples::midiSineWithMidi(audioOut, midiIn, buffersize, samplerate);
-        auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
+        //auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
 
+        //this is for the MiniSynth
+        //auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
+
+        //this is for the Effects
+        auto handle = Nl::EFFECTS::effectsMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
 
 		// Wait for user to exit by pressing 'q'
 		// Print buffer statistics on other keys

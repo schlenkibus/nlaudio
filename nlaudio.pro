@@ -24,7 +24,9 @@ SOURCES += main.cpp \
     alsasubdeviceinfo.cpp \
     bufferstatistics.cpp \
     rawmidideviceexception.cpp \
-    samplespecs.cpp
+    samplespecs.cpp \
+    minisynth.cpp \
+    effects.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -50,7 +52,10 @@ HEADERS += \
     bufferstatistics.h \
     rawmidideviceexception.h \
     samplespecs.h \
-    lockfreecircularbuffer.h
+    lockfreecircularbuffer.h \
+    minisynth.h \
+    effects.h \
+    filters.h
 
 OTHER_FILES += \
     Todo.txt

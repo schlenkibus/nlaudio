@@ -175,7 +175,7 @@ inline void sinewave<float>(float *buffer, float frequency, bool reset, const Sa
 		x = 0.5 - x;
 
 		float x_square = x * x;
-		buffer[i] = x * (x_square * (x_square * 2.26548 - 5.13274) + 3.14159);
+        buffer[i] = x * (x_square * (x_square * 2.26548 - 5.13274) + 3.14159);
     }
 }
 

@@ -191,27 +191,100 @@ void inToOutCallbackWithMidi(u_int8_t *in, u_int8_t *out, size_t size, const Sam
 	sw.start("val" + std::to_string(counter++));
 
 	// Midi Stuff
-	static float curVolumeFactor = 0.f;
+#if 0
+    // Fader to Volume with Input and Output - is working!
+    static float curVolumeFactor = 0.f;
 	auto midiBuffer = getBufferForName("MidiBuffer");
 
 	if (midiBuffer) {
 		unsigned char midiByteBuffer[3];
 		while (midiBuffer->availableToRead() >= 3) {
 			midiBuffer->get(midiByteBuffer, 3);
-			//printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
+            printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
 			if (midiByteBuffer[1] == 2) {
 				curVolumeFactor = static_cast<float>(midiByteBuffer[2]) / static_cast<float>(std::numeric_limits<unsigned char>::max() / 2);
 			}
 		}
 	}
 
-	for (unsigned int frameIndex=0; frameIndex<sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex) {
-		for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex) {
-			float currentSample = getSample(in, frameIndex, channelIndex, sampleSpecs);
-			currentSample *= curVolumeFactor;
-			setSample(out, currentSample, frameIndex, channelIndex, sampleSpecs);
-		}
-	}
+    for (unsigned int frameIndex=0; frameIndex<sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex) {
+        for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex) {
+            float currentSample = getSample(in, frameIndex, channelIndex, sampleSpecs);
+            currentSample *= curVolumeFactor;
+            setSample(out, currentSample, frameIndex, channelIndex, sampleSpecs);
+        }
+    }
+#endif
+
+
+#if 0
+    //Sawtooth Wave Generation for output - is working!
+    unsigned int fs = sampleSpecs.samplerate;
+    //Amplitude
+    static float currentSample = -1;
+
+    //für einen 500hz Sägezahn
+    unsigned int f = 500;
+    float resolution = 1./static_cast<float>(fs/f);
+
+        for (unsigned int frameIndex=0; frameIndex<sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex) {
+
+            //calculate samplewise
+            currentSample += resolution;
+            if(currentSample > 1)
+                currentSample = -1;
+
+            for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex) {
+                setSample(out, currentSample, frameIndex, channelIndex, sampleSpecs);
+            }
+
+         }
+#endif
+
+#if 1
+    // Sine Player for output
+    static uint8_t velocity = 0;
+    static float frequency = 0.;
+    static int32_t notesOn = 0;
+    bool reset = false;
+
+    auto midiBuffer = getBufferForName("MidiBuffer");
+    if(midiBuffer){
+        unsigned char midiByteBuffer[3];
+        while(midiBuffer ->availableToRead()>=3){
+            midiBuffer->get(midiByteBuffer, 3);
+            printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
+            if(midiByteBuffer[0] == 0x90){
+                velocity = midiByteBuffer[2];
+                if(velocity){
+                    notesOn++;
+                    reset = true;
+                    frequency = pow(2.f, static_cast<float>((midiByteBuffer[1]-69)/12.f))*440.f;
+                }
+                else{
+                    notesOn--;
+                }
+            }else if (midiByteBuffer[0] == 0x80){
+                notesOn--;
+            }
+        }
+    }
+    if(notesOn > 0){
+        float sineSamples[sampleSpecs.buffersizeInFramesPerPeriode];
+        sinewave<float>(sineSamples, frequency, reset, sampleSpecs);
+        // store<float>(sineSamples, sampleSpecs.buffersizeInFramesPerPeriode, "sineTestData.txt");
+        for (unsigned int frameIndex=0; frameIndex<sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex) {
+            for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex) {
+                setSample(out, sineSamples[frameIndex], frameIndex, channelIndex, sampleSpecs);
+            }
+        }
+
+
+    }else{
+        memset(out,0, size);
+    }
+
+#endif
 }
 
 ExamplesHandle inputToOutputWithMidi(   const AlsaCardIdentifier &audioInCard,
