@@ -3,9 +3,9 @@
 //#include <cmath>
 #include "math.h"
 
-/** @file       filters.h
+/** @file       onepolefilters.h
     @date       2016-04-02
-    @brief      Filter implementations, Guidlines: Reaktor
+    @brief      1 Pole Filter implementations, Guidlines: Reaktor
     @author     Anton Schmied [2016-02-11]
 **/
 
@@ -110,7 +110,7 @@ class OnePoleFilters{
     * \param current Sample
     * \param channel Index (assuming we are using 2 channels)
     */
-    float onePoleBilinearFilter(float currSample, unsigned int channelIndex)
+    float applyFilter(float currSample, unsigned int channelIndex)
     {     
         in = currSample;
 
@@ -161,8 +161,6 @@ private:
 
     float b0, b1, a1;               //Coefficients
 
-    //float outputBuffer[];
-
     /** \ingroup Filters
     *
     * \brief Calculate the coefficients depending on which filter was chosen
@@ -178,7 +176,7 @@ private:
     {
         a1 = (1.f - cutFreq) / (1.f + cutFreq);
         b0 = 1.f / (1.f + cutFreq);
-        b1 = -(1.f / (1.f + cutFreq));
+        b1 = (1.f / (1.f + cutFreq)) * -1.f;
     }
 
     void setup1PoleLowshelf()
@@ -196,11 +194,11 @@ private:
     }
 
     /*as applied in Reaktor*/
-    float reakTan(float freq){
+    float reakTan(float x){
 
-        freq = 0.133333 * pow(freq, 5.f) + 0.333333 * pow(freq, 3.f) + freq;
+        x = 0.133333 * pow(x, 5.f) + 0.333333 * pow(x, 3.f) + x;
 
-        return freq;
+        return x;
     }
 };
 

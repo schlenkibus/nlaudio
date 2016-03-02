@@ -55,7 +55,10 @@ HEADERS += \
     lockfreecircularbuffer.h \
     minisynth.h \
     effects.h \
-    filters.h
+    onepolefilters.h \
+    biquadfilters.h \
+    cabinet.h \
+    tiltfilters.h
 
 OTHER_FILES += \
     Todo.txt
