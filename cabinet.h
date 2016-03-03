@@ -20,7 +20,7 @@ public:
     ,asym(0.1f)
     ,lowpass1(sRate)
     ,lowpass2(sRate, hiCut * 1.333f)
-    ,highpass1(sRate, loCut, 0.f, 0.5, BiquadFilterPasstype::highpass)
+    ,highpass1(sRate, loCut, 0.f, 0.5, BiquadFiltertype::highpass)
     ,lowshelf1(sRate, 1200.f, tilt, 2.f, 0.5f, TiltFilterPasstype::lowshelf)
     ,lowshelf2(sRate, 1200.f, tilt * (-1.f), 2.f, 0.5f, TiltFilterPasstype::lowshelf)
     ,inCh1Delay(0.f)
@@ -68,11 +68,11 @@ public:
         float ctrl = currSample;
         currSample = sinP3(currSample);                             //sin p3
 
-        if(ctrl > 0.25f)                                            //3 Ranges
+        if(ctrl < -0.25f)                                            //3 Ranges
         {
             currSample = (currSample + 1.f) * fold + (-1.f);
         }
-        else if(ctrl < -0.25f)
+        else if(ctrl > 0.25f)
         {
             currSample = (currSample + (-1.f)) * fold + 1.f;
         }
@@ -124,13 +124,13 @@ public:
 
     void setHiCut(float _hiCut)             //set HICUT
     {
-        lowpass1.setCutFreq(_hiCut, 0.5f, BiquadFilterPasstype::lowpass);
-        lowpass2.setCutFreq(_hiCut * 1.333f, 0.5f, BiquadFilterPasstype::lowpass);
+        lowpass1.setCutFreq(_hiCut);
+        lowpass2.setCutFreq(_hiCut * 1.333f);
     }
 
     void setLoCut(float _loCut)             //set LOCUT
     {
-        highpass1.setCutFreq(_loCut, 0.5f, BiquadFilterPasstype::highpass);
+        highpass1.setCutFreq(_loCut);
     }
 
     void setTilt(float _tilt)               //set TILT
@@ -181,12 +181,18 @@ private:
     inline float sinP3(float x)                 //
     {
         x += -0.25f;
-        x -= round(x);                  //Wrap - !!!check this for rounding correctly!!!
+        float x_round = round(x);
+        x -= x_round;                     //Wrap - !!!check this for rounding correctly!!!
 
-        x = 0.5f - fabs(x + x);          //p3 sh
+        //x = 0.5f - fabs(x + x);          //p3 sh
+        x += x;
+        x = fabs(x);
+        x = 0.5f - x;
+
         float x_square = x * x;
+        x = x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);       //p3
 
-        return x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);       //p3
+        return x;
     }
 
     float hp1(float sampleIN, unsigned int channelIndex)    //filter implementation ... might move to an own file

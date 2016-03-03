@@ -1,19 +1,19 @@
 #pragma once
 #include "math.h"
-#include "tools.h"
-enum class BiquadFilterPasstype : int
+
+enum BiquadFiltertype
 {
-    lowpass = 0,
-    highpass = 1,
-    lowshelf = 2,
-    highshelf = 3
+    lowpass,
+    highpass,
+    lowshelf,
+    highshelf
 };
 
 class BiquadFilters
 {
 public:
     BiquadFilters(float _sRate, float _cutFreq = 22000.f, float _shelfAmp = 0.f,
-                  float _resonance = 0.5f, BiquadFilterPasstype _passtype = BiquadFilterPasstype::lowpass)           // Constructor for static a biquad Filter
+                  float _resonance = 0.5f, BiquadFiltertype _filtertype = BiquadFiltertype::lowpass)           // Constructor for static a biquad Filter
         : sRate(_sRate)
         , in(0.f)
         , out(0.f)
@@ -38,30 +38,46 @@ public:
         , a2(0.f)
 
     {
-        setCutFreq(_cutFreq, _resonance, _passtype);
-        setShelfAmp(_shelfAmp, _passtype);
+        setCutFreq(_cutFreq);
+        setShelfAmp(_shelfAmp);
+        setResonance(_resonance);
+        setFiltertype(_filtertype);
     }
 
     ~BiquadFilters(){}
 
-    void setCutFreq(float _cutFreq, float _resonance, BiquadFilterPasstype _passtype)
+    void setCutFreq(float _cutFreq)                  /*set cut frequency*/
     {
-        cutFreq = _cutFreq;
+        if (_cutFreq < (sRate / 24000.f))            //Check for Frequency clipping
+        {
+            _cutFreq = sRate / 24000.f;
+        }
+
+        else if (_cutFreq > (sRate / 2.18f))
+        {
+            _cutFreq = sRate / 2.18f;
+        }
+
+        omega = _cutFreq * (2.f * M_PI / sRate);     //Frequncy to Omega (Warp)
+
+        //omega_cos = cos(cutFreq);
+        omega_cos = reakCos(omega);
+
+        setAlpha();
+        setupBiquadFilter();
+    }
+
+    void setShelfAmp(float _shelfAmp)               /*set shelf amplification*/
+    {
+        shelfAmp = pow(10.f, (_shelfAmp / 40.f));   //dB to amplification factor
+        setupBiquadFilter();
+    }
+
+    void setResonance(float _resonance)             /*set resonance*/
+    {
         resonance = _resonance;
 
-        /*Check for Frequency clipping*/
-        if (cutFreq < (sRate / 24000.f))
-        {
-            cutFreq = sRate / 24000.f;
-        }
-
-        else if (cutFreq > (sRate / 2.18f))
-        {
-            cutFreq = sRate / 2.18f;
-        }
-
-        /*check for Resonance clipping*/
-        if (resonance > 0.999f)
+        if (resonance > 0.999f)                     //check for resonance clipping
         {
             resonance = 0.999f;
         }
@@ -71,61 +87,15 @@ public:
             resonance = -0.999f;
         }
 
-        cutFreq *= (2.f * M_PI / sRate);        // Omega
-
-        //cutFreq_cos = cos(cutFreq);
-        cutFreq_cos = reakCos(cutFreq);
-
-        //alpha = sin(cutFreq) * (1.f - resonance);
-        alpha = reakSin(cutFreq) * (1.f - resonance);
-
-        setupBquadFilter(_passtype);
-#if 0
-        switch(_passtype)                        //check which Filter is active and update coefficients
-        {
-            case BiquadFilterPasstype::lowpass:
-            setupBiquadLowpass();
-            break;
-
-            case BiquadFilterPasstype::highpass:
-            setupBiquadHighpass();
-            break;
-
-            case BiquadFilterPasstype::highshelf:
-            setupBiquadHighshelf();
-            break;
-
-            case BiquadFilterPasstype::lowshelf:
-            setupBiquadLowshelf();
-            break;
-        }
-#endif
+        setAlpha();
+        setupBiquadFilter();
     }
 
-    void setShelfAmp(float _shelfAmp, BiquadFilterPasstype _passtype)
+    void setFiltertype(BiquadFiltertype _filtertype)                // set filtertype
     {
-        shelfAmp = _shelfAmp;
-        shelfAmp = pow(10.f, (shelfAmp / 40.f));
-
-        setupBquadFilter(_passtype);
-#if 0
-        switch(_passtype)                        //check which Filter is active and update coefficients
-        {
-            case BiquadFilterPasstype::highshelf:
-            setupBiquadHighshelf();
-            break;
-
-            case BiquadFilterPasstype::lowshelf:
-            setupBiquadLowshelf();
-            break;
-
-            case BiquadFilterPasstype::highpass:
-            break;
-
-            case BiquadFilterPasstype::lowpass:
-            break;
-        }
-#endif
+        filtertype = _filtertype;
+        resetDelays();
+        setupBiquadFilter();
     }
 
 
@@ -179,8 +149,8 @@ public:
 
 private:
 
-    float cutFreq;
-    float cutFreq_cos;
+    float omega;
+    float omega_cos;
     float alpha;
     float shelfAmp;
     float resonance;
@@ -203,70 +173,91 @@ private:
 
     float b0, b1, b2, a0, a1, a2;               //Coefficient - array!?
 
+    BiquadFiltertype filtertype;                //Filtertype
 
-    void setupBquadFilter(BiquadFilterPasstype _passtype)
+    void setupBiquadFilter()
     {
-        switch(_passtype)
+        switch(filtertype)
         {
-            case BiquadFilterPasstype::lowpass:
-            setupBiquadLowpass();
+            case BiquadFiltertype::lowpass:
+            calcLowpassCoeff();
             break;
 
-            case BiquadFilterPasstype::highpass:
-            setupBiquadHighpass();
+            case BiquadFiltertype::highpass:
+            calcHighpassCoeff();
             break;
 
-            case BiquadFilterPasstype::highshelf:
-            setupBiquadHighshelf();
+            case BiquadFiltertype::highshelf:
+            calcHighshelfCoeff();
             break;
 
-            case BiquadFilterPasstype::lowshelf:
-            setupBiquadLowshelf();
+            case BiquadFiltertype::lowshelf:
+            calcLowshelfCoeff();
             break;
         }
     }
 
-    void setupBiquadLowpass()
+    void calcLowpassCoeff()
     {
         a0 = 1 + alpha;
-        a1 = (cutFreq_cos * -2.f);
+        a1 = omega_cos * -2.f;
         a2 = 1 - alpha;
-        b0 = (1 - cutFreq_cos) / 2.f;
-        b1 = 1 - cutFreq_cos;
+        b0 = (1 - omega_cos) / 2.f;
+        b1 = 1 - omega_cos;
         b2 = b0;
     }
 
-    void setupBiquadHighpass()
+    void calcHighpassCoeff()
     {
         a0 = 1 + alpha;
-        a1 = cutFreq_cos * -2.f;
+        a1 = omega_cos * -2.f;
         a2 = 1 - alpha;
-        b0 = (1 + cutFreq_cos) / 2.f;
-        b1 = (1 + cutFreq_cos) * -1.f;
+        b0 = (1 + omega_cos) / 2.f;
+        b1 = (1 + omega_cos) * -1.f;
         b2 = b0;
     }
 
-    void setupBiquadLowshelf()
+    void calcLowshelfCoeff()
     {
-        a0 = (shelfAmp + 1.f) + (cutFreq_cos * (shelfAmp - 1.f)) + (2.f * sqrt(shelfAmp) * alpha);
-        a1 = ((shelfAmp - 1.f) + (cutFreq_cos * (shelfAmp + 1.f))) * -2.f;
-        a2 = (shelfAmp + 1.f) + (cutFreq_cos * (shelfAmp - 1.f)) - (2.f * sqrt(shelfAmp) * alpha);
-        b0 = ((shelfAmp + 1.f) - (cutFreq_cos * (shelfAmp - 1.f)) + (2.f * sqrt(shelfAmp) * alpha)) * shelfAmp;
-        b1 = ((shelfAmp - 1.f) - (cutFreq_cos * (shelfAmp + 1.f))) * 2.f * shelfAmp;
-        b2 = ((shelfAmp + 1.f) - (cutFreq_cos * (shelfAmp - 1.f)) - (2.f * sqrt(shelfAmp) * alpha)) * shelfAmp;
+        a0 = (shelfAmp + 1.f) + (omega_cos * (shelfAmp - 1.f)) + (2.f * sqrt(shelfAmp) * alpha);
+        a1 = ((shelfAmp - 1.f) + (omega_cos * (shelfAmp + 1.f))) * -2.f;
+        a2 = (shelfAmp + 1.f) + (omega_cos * (shelfAmp - 1.f)) - (2.f * sqrt(shelfAmp) * alpha);
+        b0 = ((shelfAmp + 1.f) - (omega_cos * (shelfAmp - 1.f)) + (2.f * sqrt(shelfAmp) * alpha)) * shelfAmp;
+        b1 = ((shelfAmp - 1.f) - (omega_cos * (shelfAmp + 1.f))) * 2.f * shelfAmp;
+        b2 = ((shelfAmp + 1.f) - (omega_cos * (shelfAmp - 1.f)) - (2.f * sqrt(shelfAmp) * alpha)) * shelfAmp;
     }
 
-    void setupBiquadHighshelf()
+    void calcHighshelfCoeff()
     {
-        a0 = (shelfAmp + 1.f) - (cutFreq_cos * (shelfAmp - 1.f)) + (2.f * sqrt(shelfAmp) * alpha);
-        a1 = ((shelfAmp - 1.f) - (cutFreq_cos * (shelfAmp + 1.f))) * 2.f;
-        a2 = (shelfAmp + 1.f) - (cutFreq_cos * (shelfAmp - 1.f)) - (2.f * sqrt(shelfAmp) * alpha);
-        b0 = ((shelfAmp + 1.f) + (cutFreq_cos * (shelfAmp - 1.f)) + (2.f * sqrt(shelfAmp) * alpha)) * shelfAmp;
-        b1 = ((shelfAmp - 1.f) + (cutFreq_cos * (shelfAmp + 1.f))) * -2.f * shelfAmp;
-        b2 = ((shelfAmp + 1.f) + (cutFreq_cos * (shelfAmp - 1.f)) - (2.f * sqrt(shelfAmp) * alpha)) * shelfAmp;
+        a0 = (shelfAmp + 1.f) - (omega_cos * (shelfAmp - 1.f)) + (2.f * sqrt(shelfAmp) * alpha);
+        a1 = ((shelfAmp - 1.f) - (omega_cos * (shelfAmp + 1.f))) * 2.f;
+        a2 = (shelfAmp + 1.f) - (omega_cos * (shelfAmp - 1.f)) - (2.f * sqrt(shelfAmp) * alpha);
+        b0 = ((shelfAmp + 1.f) + (omega_cos * (shelfAmp - 1.f)) + (2.f * sqrt(shelfAmp) * alpha)) * shelfAmp;
+        b1 = ((shelfAmp - 1.f) + (omega_cos * (shelfAmp + 1.f))) * -2.f * shelfAmp;
+        b2 = ((shelfAmp + 1.f) + (omega_cos * (shelfAmp - 1.f)) - (2.f * sqrt(shelfAmp) * alpha)) * shelfAmp;
     }
 
-    /*as applied in Reaktor*/
+    void setAlpha()
+    {
+        //alpha = sin(omega) * (1.f - resonance);
+        alpha = reakSin(omega) * (1.f - resonance);
+    }
+
+    void resetDelays()              //sould think about an array and smoothing...
+    {
+        inCh1Delay1 = 0.f;          //Channel 1
+        inCh1Delay2 = 0.f;
+        outCh1Delay1 = 0.f;
+        outCh1Delay2 = 0.f;
+
+        inCh2Delay1 = 0.f;          //Channel 2
+        inCh2Delay2 = 0.f;
+        outCh2Delay1 = 0.f;
+        outCh2Delay2 = 0.f;
+    }
+
+
+    /*as applied in Reaktor --- befindet sich hier vorübergehend*/
     float reakSin(float x){
 
         float x_square = x * x;
@@ -277,7 +268,7 @@ private:
         return x;
     }
 
-    /*as applied in Reaktor*/
+    /*as applied in Reaktor --- befindet sich hier vorübergehend*/
     float reakCos(float x){
 
         float x_square = x * x;

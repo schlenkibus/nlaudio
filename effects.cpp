@@ -3,6 +3,10 @@
 #include "biquadfilters.h"
 #include "cabinet.h"
 
+//#define ONEPOLE 1                 choose what you want to test here
+#define BIQUAD 1
+//#define CABINET 1
+
 #include "stopwatch.h"
 #include "audioalsainput.h"
 #include "audioalsaoutput.h"
@@ -58,14 +62,8 @@ namespace EFFECTS{
         int samplerate = sampleSpecs.samplerate;                //Samplerate of Audio device
 
         static float curFrequency = 0.f;                        //Frequency for the Sine Generator
-        //static float lastFrequency = 0.f;                       //last Freqneuncy from frequency generator
-        //static float freqSmoothingFactor = 0.f;                  //Smoothing Factor for the frequency Fader
-        //static int freqFadeDirection = 0;                       //Fader Direction [1 move up, -1 move down, 0 not moved]
-
         bool reset = false;                                     //Phase Reset
 
-        // static float velocity = 0;
-        // static int notesOn = 0;
         float curMidiValue = 0.f;                               //Midi Value [0 .. 127]
 
         static float curVolumeFactor = 0.f;                     //current Volume Factor [0 .. ]
@@ -94,15 +92,16 @@ namespace EFFECTS{
         static float inputSwitchVal = 0.f;
         float outputSample = 0.f;                               //output Sample which comes from AudioIn or sine generator
 
-#if 0
-        static BiquadFilterPasstype passtype;
+#ifdef ONEPOLE
+
+#elif BIQUAD
         static BiquadFilters biquadFilter(samplerate);          //default Values: cutoff(22000.f), shelfAmp(0.f), resonance(0.5f), passtype(lowpass)
         static float cutoffFreq;
         static float shelfAmp;
         static float resonance;
         static int switchCounter = 0;
-#endif
 
+#elif CABINET
         static Cabinet cabinet(samplerate);
         static float hiCut;
         static float loCut;
@@ -112,7 +111,7 @@ namespace EFFECTS{
         static float tilt;
         static float fold;
         static float asym;
-
+#endif
         auto midiBuffer = getBufferForName("MidiBuffer");
 
         /*Retrieve Midi Information if midi values have changed*/
@@ -124,7 +123,7 @@ namespace EFFECTS{
             {
                 midiBuffer->get(midiByteBuffer, 3);
 
-                printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      //MIDI Value Output
+                //printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      //MIDI Value Output
 
                 /*Retrieve Volume Fader Value and calculate current Volume*/
                 if (midiByteBuffer[1] == 0x06)
@@ -183,7 +182,7 @@ namespace EFFECTS{
                     reset = true;
                 }
 
-#if 0
+#ifdef ONEPOLE
                 /*1-Pole Filters*/
                 /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
                 if (midiByteBuffer[1] == 0x13)
@@ -242,24 +241,20 @@ namespace EFFECTS{
                     if (switchCounter > 3)
                         switchCounter = 0;
                 }
-#endif
-
-#if 0
+#elif BIQUAD
                 /*Biquad Filters*/
                 /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
                 if (midiByteBuffer[1] == 0x13)
                 {
                     cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
-
-                    biquadFilter.setCutFreq(cutoffFreq, resonance, passtype);
+                    biquadFilter.setCutFreq(cutoffFreq);
                 }
 
-                /*Retrieve cutoff Frequency from Knob [14] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                /*Retrieve resonance Frequency from Knob [14] and calculate Frequency this schould be from 20Hz to 20kHz*/
                 if (midiByteBuffer[1] == 0x14)
                 {
                     resonance = (static_cast<float>(midiByteBuffer[2]) - 64.f) / 32.f;
-                    printf("resonance: %f\n", resonance);
-                    biquadFilter.setCutFreq(cutoffFreq, resonance, passtype);
+                    biquadFilter.setResonance(resonance);
                 }
 
                 /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
@@ -267,53 +262,44 @@ namespace EFFECTS{
                 {
                     shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64.f) * 50.f) / 64.f;
 
-                    if((passtype == BiquadFilterPasstype::lowshelf) || (passtype == BiquadFilterPasstype::highshelf))
+                    if((switchCounter == 2) || (switchCounter == 3))
                     {
-                        biquadFilter.setShelfAmp(shelfAmp, passtype);
+                        biquadFilter.setShelfAmp(shelfAmp);
                     }
                 }
 
                 /*Filter Passtype Switch*/
                 if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
                 {
+                    ++switchCounter;
+                    if (switchCounter > 3)
+                        switchCounter = 0;
+
                     if (switchCounter == 0)
                     {
-                        passtype = BiquadFilterPasstype::lowpass;
-                        biquadFilter.setCutFreq(cutoffFreq, resonance, passtype);
+                        biquadFilter.setFiltertype(BiquadFiltertype::lowpass);
                         printf("lowpass on\n");
                     }
 
                     if (switchCounter == 1)
                     {
-                        passtype = BiquadFilterPasstype::highpass;
-                        biquadFilter.setCutFreq(cutoffFreq, resonance, passtype);
+                        biquadFilter.setFiltertype(BiquadFiltertype::highpass);
                         printf("highpass on\n");
                     }
 
                     if (switchCounter == 2)
                     {
-                        passtype = BiquadFilterPasstype::lowshelf;
-                        biquadFilter.setCutFreq(cutoffFreq, resonance, passtype);
-                        biquadFilter.setShelfAmp(shelfAmp, passtype);
+                        biquadFilter.setFiltertype(BiquadFiltertype::lowshelf);
                         printf("lowshelf on\n");
                     }
 
                     if (switchCounter == 3)
                     {
-                        passtype = BiquadFilterPasstype::highshelf;
-                        biquadFilter.setCutFreq(cutoffFreq, resonance, passtype);
-                        biquadFilter.setShelfAmp(shelfAmp, passtype);
+                        biquadFilter.setFiltertype(BiquadFiltertype::highshelf);
                         printf("highshelf on\n");
                     }
-
-                    ++switchCounter;
-
-                    if (switchCounter > 3)
-                        switchCounter = 0;
                 }
-#endif
-
-#if 1
+#elif CABINET
                 /*Cabinet*/
                 /*Retrieve hiCut Frequency from Knob [13] and calculate Frequency this schould be from 260Hz to 26737Hz*/
                 if (midiByteBuffer[1] == 0x13)
@@ -534,12 +520,13 @@ namespace EFFECTS{
                 /*Mute Check*/
                 outputSample = muteThis(muteSwitch, outputSample, muteSmoothingFactor, &muteFactor);                    //Mute influnce
 
-#if 0
+#ifdef ONEPOLE
                 outputSample = onePoleFilter.applyFilter(outputSample, channelIndex);              //1-Pole Filter influence
+#elif BIQUAD
                 outputSample = biquadFilter.applyFilter(outputSample, channelIndex);               //Biquad Filter influence
-#endif
+#elif CABINET
                 outputSample = cabinet.applyCab(outputSample, channelIndex);                        //Cabinet influence
-
+#endif
                 setSample(out, outputSample, frameIndex, channelIndex, sampleSpecs);
             }
         }
