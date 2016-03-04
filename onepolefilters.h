@@ -9,99 +9,71 @@
     @author     Anton Schmied [2016-02-11]
 **/
 
-enum class OnePoleFilterPasstype : int{
-    lowpass = 0,
-    highpass = 1,
-    lowshelf = 2,
-    highshelf = 3
+enum OnePoleFiltertype{
+    onepole_lowpass,
+    onepole_highpass,
+    onepole_lowshelf,
+    onepole_highshelf
 };
 
 class OnePoleFilters{
     public:
 
-    OnePoleFilters(float _sRate, float _cutFreq, float _shelfAmp, OnePoleFilterPasstype _passtype)            //Constructor for static 1-pole bilinear LP
+    OnePoleFilters(float _sRate, float _cutFreq = 22000, float _shelfAmp = 0.f, OnePoleFiltertype _filtertype = OnePoleFiltertype::onepole_lowpass)            //Constructor for static 1-pole bilinear LP
         : sRate(_sRate)
-        , in(0.f)
-        , out(0.f)
         , inCh1Delay1(0.f)
         , outCh1Delay1(0.f)
         , inCh2Delay1(0.f)
         , outCh2Delay1(0.f)
-        , sb0(0.f)
-        , sb1(0.f)
-        , sa1(0.f)
     {
-        setCutFreq(_cutFreq, _passtype);
-        setShelfAmp(_shelfAmp, _passtype);
+        setCutFreq(_cutFreq);
+        setShelfAmp(_shelfAmp);
+        setFiltertype(_filtertype);
     }
 
     ~OnePoleFilters(){}         //Destructor
 
-    void setCutFreq(float _cutFreq, OnePoleFilterPasstype passtype)
+    void setCutFreq(float _cutFreq)
     {
-        cutFreq = _cutFreq;
+        if (filtertype == OnePoleFiltertype::onepole_lowshelf)
+        {
+            _cutFreq /= shelfAmp;
+        }
+        else if (filtertype == OnePoleFiltertype::onepole_highshelf)
+        {
+            _cutFreq *= shelfAmp;
+        }
 
         /*Check for clipping*/
-        if (cutFreq < (sRate / 24000.f))
+        if (_cutFreq < (sRate / 24000.f))
         {
-            cutFreq = sRate / 24000.f;
+            _cutFreq = sRate / 24000.f;
         }
 
-        else if (cutFreq > (sRate / 2.18f))
+        else if (_cutFreq > (sRate / 2.18f))
         {
-            cutFreq = sRate / 2.18f;
+            _cutFreq = sRate / 2.18f;
         }
 
-        /*Warp the incoming frequency*/
-        cutFreq *= (M_PI / sRate);
-        // freq = tan(cutFreq);                 //C++ Library Function
-        cutFreq = reakTan(cutFreq);             //Reaktor Solution
+        _cutFreq *= (M_PI / sRate);                //Warp the incoming frequency
+        omega_tan = reakTan(_cutFreq);             //alternative to tan(cutFreq);
 
-        switch(passtype)                        //check which Filter is active and update coefficients
-        {
-            case OnePoleFilterPasstype::lowpass:
-            setup1PoleLowpass();
-            break;
-
-            case OnePoleFilterPasstype::highpass:
-            setup1PoleHighpass();
-            break;
-
-            case OnePoleFilterPasstype::highshelf:
-            setup1PoleHighshelf();
-            break;
-
-            case OnePoleFilterPasstype::lowshelf:
-            setup1PoleLowshelf();
-            break;
-        }
+        calcCoeff();
     }
 
-    void setShelfAmp(float _shelfAmp, OnePoleFilterPasstype passtype)
+    void setShelfAmp(float _shelfAmp)
     {
-        shelfAmp = _shelfAmp;
-        shelfAmp = pow(10, (shelfAmp / 20));
+        shelfAmp = pow(1.059f, _shelfAmp);         //alternative to pow(10, (_shelfAmp / 40.f));
+        shelfAmp_square = shelfAmp * shelfAmp;
 
-        switch(passtype)                        //check which Filter is active and update coefficients
-        {
-            case OnePoleFilterPasstype::highshelf:
-            cutFreq *= shelfAmp;
-            shelfAmp *= shelfAmp;
-            setup1PoleHighshelf();
-            break;
+        calcCoeff();
+    }
 
-            case OnePoleFilterPasstype::lowshelf:
-            cutFreq /= shelfAmp;
-            shelfAmp *= shelfAmp;
-            setup1PoleLowshelf();
-            break;
-
-            case OnePoleFilterPasstype::highpass:
-            break;
-
-            case OnePoleFilterPasstype::lowpass:
-            break;
-        }
+    void setFiltertype(OnePoleFiltertype _filtertype)                // set filtertype
+    {
+        filtertype = _filtertype;
+        resetDelays();
+        calcCoeff();
     }
 
     /** \ingroup Filters
@@ -111,86 +83,85 @@ class OnePoleFilters{
     * \param channel Index (assuming we are using 2 channels)
     */
     float applyFilter(float currSample, unsigned int channelIndex)
-    {     
-        in = currSample;
+    {
+        float output = 0.f;
 
         if(channelIndex == 0)
         {
-            sb0 = b0 * in;
-            sb1 = b1 * inCh1Delay1;
-            sa1 = a1 * outCh1Delay1;
+            output += b0 * currSample;
+            output += b1 * inCh1Delay1;
+            output += a1 * outCh1Delay1;
 
-            out = sb0 + sb1 + sa1;
-
-            inCh1Delay1 = in;
-            outCh1Delay1 = out;
+            inCh1Delay1 = currSample;
+            outCh1Delay1 = output;
         }
 
         else if (channelIndex == 1)
         {
-            sb0 = b0 * in;
-            sb1 = b1 * inCh2Delay1;
-            sa1 = a1 * outCh2Delay1;
+            output += b0 * currSample;
+            output += b1 * inCh2Delay1;
+            output += a1 * outCh2Delay1;
 
-            out = sb0 + sb1 + sa1;
-
-            inCh2Delay1 = in;
-            outCh2Delay1 = out;
+            inCh2Delay1 = currSample;
+            outCh2Delay1 = output;
         }
 
-        return out;
+        return output;
     }
 
 private:
 
-    float cutFreq;
+    float omega_tan;
     float shelfAmp;
+    float shelfAmp_square;
     float sRate;
 
-    float in;
-    float out;
     float inCh1Delay1;
     float outCh1Delay1;
     float inCh2Delay1;
     float outCh2Delay1;
 
-    float sb0;
-    float sb1;
-    float sa1;
-
-
     float b0, b1, a1;               //Coefficients
 
-    /** \ingroup Filters
-    *
-    * \brief Calculate the coefficients depending on which filter was chosen
-    */
-    void setup1PoleLowpass()
+    OnePoleFiltertype filtertype;
+
+    void calcCoeff()
     {
-        a1 = (1.f - cutFreq) / (1.f + cutFreq);
-        b0 = cutFreq / (1.f + cutFreq);
-        b1 = cutFreq / (1.f + cutFreq);
+        switch(filtertype)                        //check which Filter is active and update coefficients
+        {
+            case OnePoleFiltertype::onepole_lowpass:
+            a1 = (1.f - omega_tan) / (1.f + omega_tan);
+            b0 = omega_tan / (1.f + omega_tan);
+            b1 = omega_tan / (1.f + omega_tan);
+            break;
+
+            case OnePoleFiltertype::onepole_highpass:
+            a1 = (1.f - omega_tan) / (1.f + omega_tan);
+            b0 = 1.f / (1.f + omega_tan);
+            b1 = (1.f / (1.f + omega_tan)) * -1.f;
+            break;
+
+            case OnePoleFiltertype::onepole_lowshelf:
+            a1 = (1.f - omega_tan) / (1.f + omega_tan);
+            b0 = ((omega_tan / (1.f + omega_tan)) * (shelfAmp_square + -1.f)) + 1.f;
+            b1 = ((omega_tan / (1.f + omega_tan)) * (shelfAmp_square + -1.f)) - a1;
+            break;
+
+            case OnePoleFiltertype::onepole_highshelf:
+            a1 = (1.f - omega_tan) / (1.f + omega_tan);
+            b0 = ((shelfAmp_square + -1.f) / (1.f + omega_tan)) + 1.f;
+            b1 = (((shelfAmp_square + -1.f) / (1.f + omega_tan)) + a1) * -1.f;
+            break;
+        }
     }
 
-    void setup1PoleHighpass()
+    void resetDelays()              //sould think about an array and smoothing...
     {
-        a1 = (1.f - cutFreq) / (1.f + cutFreq);
-        b0 = 1.f / (1.f + cutFreq);
-        b1 = (1.f / (1.f + cutFreq)) * -1.f;
-    }
+        inCh1Delay1 = 0.f;          //Channel 1
+        outCh1Delay1 = 0.f;
 
-    void setup1PoleLowshelf()
-    {
-        a1 = (1.f - cutFreq) / (1.f + cutFreq);
-        b0 = ((cutFreq / (1.f + cutFreq)) * (shelfAmp + -1.f)) + 1.f;
-        b1 = ((cutFreq / (1.f + cutFreq)) * (shelfAmp + -1.f)) - a1;
-    }
-
-    void setup1PoleHighshelf()
-    {
-        a1 = (1.f - cutFreq) / (1.f + cutFreq);
-        b0 = ((shelfAmp + -1.f) / (1.f + cutFreq)) + 1.f;
-        b1 = (((shelfAmp + -1.f) / (1.f + cutFreq)) + a1) * -1.f;
+        inCh2Delay1 = 0.f;          //Channel 2
+        outCh2Delay1 = 0.f;
     }
 
     /*as applied in Reaktor*/

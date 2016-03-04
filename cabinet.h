@@ -20,7 +20,7 @@ public:
     ,asym(0.1f)
     ,lowpass1(sRate)
     ,lowpass2(sRate, hiCut * 1.333f)
-    ,highpass1(sRate, loCut, 0.f, 0.5, BiquadFiltertype::highpass)
+    ,highpass1(sRate, loCut, 0.f, 0.5, BiquadFiltertype::biquad_highpass)
     ,lowshelf1(sRate, 1200.f, tilt, 2.f, 0.5f, TiltFilterPasstype::lowshelf)
     ,lowshelf2(sRate, 1200.f, tilt * (-1.f), 2.f, 0.5f, TiltFilterPasstype::lowshelf)
     ,inCh1Delay(0.f)

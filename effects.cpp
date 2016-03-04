@@ -3,7 +3,7 @@
 #include "biquadfilters.h"
 #include "cabinet.h"
 
-//#define ONEPOLE 1                 choose what you want to test here
+//#define ONEPOLE 1                 //choose what you want to test here
 #define BIQUAD 1
 //#define CABINET 1
 
@@ -93,14 +93,16 @@ namespace EFFECTS{
         float outputSample = 0.f;                               //output Sample which comes from AudioIn or sine generator
 
 #ifdef ONEPOLE
-
+        static OnePoleFilters onePoleFilter(samplerate);
+        static float cutoffFreq;
+        static float shelfAmp;
+        static int switchCounter = 0;
 #elif BIQUAD
         static BiquadFilters biquadFilter(samplerate);          //default Values: cutoff(22000.f), shelfAmp(0.f), resonance(0.5f), passtype(lowpass)
         static float cutoffFreq;
         static float shelfAmp;
         static float resonance;
         static int switchCounter = 0;
-
 #elif CABINET
         static Cabinet cabinet(samplerate);
         static float hiCut;
@@ -189,57 +191,49 @@ namespace EFFECTS{
                 {
                     cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
 
-                    onePoleFilter.setCutFreq(cutoffFreq, passtype);
+                    onePoleFilter.setCutFreq(cutoffFreq);
                 }
 
                 /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
                 if (midiByteBuffer[1] == 0x08)
                 {
-                    shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64) * 6) / 64;
+                    shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64) * 12.f) / 64.f;
 
-                    if((passtype == OnePoleFilterPasstype::lowshelf) || (passtype == OnePoleFilterPasstype::highshelf))
-                    {
-                        onePoleFilter.setShelfAmp(shelfAmp, passtype);
+                    if((switchCounter == 2) || (switchCounter == 3)){
+                        onePoleFilter.setShelfAmp(shelfAmp);
                     }
                 }
 
                 /*Filter Passtype Switch*/
                 if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
                 {
+                    ++switchCounter;
+                    if (switchCounter > 3)
+                        switchCounter = 0;
+
                     if (switchCounter == 0)
                     {
-                        passtype = OnePoleFilterPasstype::lowpass;
-                        onePoleFilter.setCutFreq(cutoffFreq, passtype);
+                        onePoleFilter.setFiltertype(OnePoleFiltertype::onepole_lowpass);
                         printf("lowpass on\n");
                     }
 
                     if (switchCounter == 1)
                     {
-                        passtype = OnePoleFilterPasstype::highpass;
-                        onePoleFilter.setCutFreq(cutoffFreq, passtype);
+                        onePoleFilter.setFiltertype(OnePoleFiltertype::onepole_highpass);
                         printf("highpass on\n");
                     }
 
                     if (switchCounter == 2)
                     {
-                        passtype = OnePoleFilterPasstype::lowshelf;
-                        onePoleFilter.setCutFreq(cutoffFreq, passtype);
-                        onePoleFilter.setShelfAmp(shelfAmp, passtype);
+                        onePoleFilter.setFiltertype(OnePoleFiltertype::onepole_lowshelf);
                         printf("lowshelf on\n");
                     }
 
                     if (switchCounter == 3)
                     {
-                        passtype = OnePoleFilterPasstype::highshelf;
-                        onePoleFilter.setCutFreq(cutoffFreq, passtype);
-                        onePoleFilter.setShelfAmp(shelfAmp, passtype);
+                        onePoleFilter.setFiltertype(OnePoleFiltertype::onepole_highshelf);
                         printf("highshelf on\n");
                     }
-
-                    ++switchCounter;
-
-                    if (switchCounter > 3)
-                        switchCounter = 0;
                 }
 #elif BIQUAD
                 /*Biquad Filters*/
@@ -247,6 +241,7 @@ namespace EFFECTS{
                 if (midiByteBuffer[1] == 0x13)
                 {
                     cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
+
                     biquadFilter.setCutFreq(cutoffFreq);
                 }
 
@@ -254,13 +249,14 @@ namespace EFFECTS{
                 if (midiByteBuffer[1] == 0x14)
                 {
                     resonance = (static_cast<float>(midiByteBuffer[2]) - 64.f) / 32.f;
+
                     biquadFilter.setResonance(resonance);
                 }
 
                 /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
                 if (midiByteBuffer[1] == 0x08)
                 {
-                    shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64.f) * 50.f) / 64.f;
+                    shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64.f) * 12.f) / 64.f;
 
                     if((switchCounter == 2) || (switchCounter == 3))
                     {
@@ -277,27 +273,28 @@ namespace EFFECTS{
 
                     if (switchCounter == 0)
                     {
-                        biquadFilter.setFiltertype(BiquadFiltertype::lowpass);
+                        biquadFilter.setFiltertype(BiquadFiltertype::biquad_lowpass);
                         printf("lowpass on\n");
                     }
 
                     if (switchCounter == 1)
                     {
-                        biquadFilter.setFiltertype(BiquadFiltertype::highpass);
+                        biquadFilter.setFiltertype(BiquadFiltertype::biquad_highpass);
                         printf("highpass on\n");
                     }
 
                     if (switchCounter == 2)
                     {
-                        biquadFilter.setFiltertype(BiquadFiltertype::lowshelf);
+                        biquadFilter.setFiltertype(BiquadFiltertype::biquad_lowshelf);
                         printf("lowshelf on\n");
                     }
 
                     if (switchCounter == 3)
                     {
-                        biquadFilter.setFiltertype(BiquadFiltertype::highshelf);
+                        biquadFilter.setFiltertype(BiquadFiltertype::biquad_highshelf);
                         printf("highshelf on\n");
                     }
+
                 }
 #elif CABINET
                 /*Cabinet*/
@@ -520,7 +517,7 @@ namespace EFFECTS{
                 /*Mute Check*/
                 outputSample = muteThis(muteSwitch, outputSample, muteSmoothingFactor, &muteFactor);                    //Mute influnce
 
-#ifdef ONEPOLE
+#if ONEPOLE
                 outputSample = onePoleFilter.applyFilter(outputSample, channelIndex);              //1-Pole Filter influence
 #elif BIQUAD
                 outputSample = biquadFilter.applyFilter(outputSample, channelIndex);               //Biquad Filter influence
