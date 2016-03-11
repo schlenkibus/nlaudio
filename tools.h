@@ -158,7 +158,7 @@ template<>
 inline void sinewave<float>(float *buffer, float frequency, bool reset, const SampleSpecs& sampleSpecs)
 {
 	static float phase = 0.f;
-	static float inc = frequency / static_cast<float>(sampleSpecs.samplerate);
+    float inc = frequency / static_cast<float>(sampleSpecs.samplerate);
 
 	if (reset) {
 		phase = 0.f;

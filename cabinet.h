@@ -3,39 +3,50 @@
 #include "math.h"
 #include "biquadfilters.h"
 #include "tiltfilters.h"
+#include "smoother.h"
 
 class Cabinet
 {
 public:
 
-    Cabinet(float _sRate, float _cabLvl = -14.f, float _drive = 20.f)
-    :sRate(_sRate)
-    ,input(0.f)
-    ,output(0.f)
-    ,hiCut(20000.f)
-    ,loCut(20.f)
-    ,tilt(-12.f)
+    Cabinet(int _sRate,
+            float _cabLvl = -14.f,
+            float _drive = 20.f,
+            float _hiCut = 4700.f,
+            float _loCut = 61.f,
+            float _tilt = -12.f)
+    :sRate(static_cast<float>(_sRate))
     ,mix(0.f)
     ,fold(0.25f)
     ,asym(0.1f)
-    ,lowpass1(sRate)
-    ,lowpass2(sRate, hiCut * 1.333f)
-    ,highpass1(sRate, loCut, 0.f, 0.5, BiquadFiltertype::biquad_highpass)
-    ,lowshelf1(sRate, 1200.f, tilt, 2.f, 0.5f, TiltFilterPasstype::lowshelf)
-    ,lowshelf2(sRate, 1200.f, tilt * (-1.f), 2.f, 0.5f, TiltFilterPasstype::lowshelf)
+    ,lowpass1(_sRate, _hiCut)
+    ,lowpass2(_sRate, _hiCut * 1.333f)
+    ,highpass1(_sRate, _loCut, 0.f, 0.5, BiquadFiltertype::highpass)
+    ,lowshelf1(_sRate, 1200.f, _tilt, 2.f, 0.5f, TiltFiltertype::lowshelf)
+    ,lowshelf2(_sRate, 1200.f, _tilt * (-1.f), 2.f, 0.5f, TiltFiltertype::lowshelf)
+    ,drySmoother(_sRate, 0.032f)
+    ,wetSmoother(_sRate, 0.032f)
+    ,driveSmoother(_sRate, 0.032f)
     ,inCh1Delay(0.f)
     ,inCh2Delay(0.f)
     {
         setDrive(_drive);
         setCabLvl(_cabLvl);
         setMix(mix);
-        setSatL(tilt);
+        setSatL(_tilt);
     }
 
     ~Cabinet(){}
 
     float applyCab(float currSample, unsigned int channelIndex)         //Signal processing
     {
+        //apply smoothers
+        dry = drySmoother.smooth();
+        wet = wetSmoother.smooth();
+        drive = driveSmoother.smooth();
+
+        float output;
+
         // apply drive
         output = currSample * drive;
 
@@ -56,6 +67,7 @@ public:
         output = lowpass2.applyFilter(output, channelIndex);
 
         // apply effect amount
+        output = xFade(currSample, output);
         output = xFade(currSample, output);
 
         return output;
@@ -109,6 +121,9 @@ public:
         mix = _mix;
         wet = mix * cabLvl;
         dry = 1.f - mix;
+
+        drySmoother.initSmoother(dry);
+        wetSmoother.initSmoother(wet);
     }
 
     void setCabLvl(float _cabLvl)           //set CABLVL
@@ -120,6 +135,7 @@ public:
     void setDrive(float _drive)             //set DRIVE
     {
         drive = db2af(_drive);
+        driveSmoother.initSmoother(drive);
     }
 
     void setHiCut(float _hiCut)             //set HICUT
@@ -135,23 +151,19 @@ public:
 
     void setTilt(float _tilt)               //set TILT
     {
-        lowshelf1.setTilt(_tilt, TiltFilterPasstype::lowshelf);
-        lowshelf2.setTilt(_tilt * (-1.f), TiltFilterPasstype::lowshelf);
+        lowshelf1.setTilt(_tilt);
+        lowshelf2.setTilt(_tilt * (-1.f));
         setSatL(_tilt);
     }
 
 private:
 
     float sRate;
-    float input;
     float output;
 
     /*Cabinet Controls*/
     float drive;        // [0 .. 50] dB, default 20dB
     float cabLvl;       // [-50 .. 0] dB, default -14dB
-    float hiCut;        // [60 .. 140] P, default 110 - maybe convert to Freq befor creating the object
-    float loCut;        // [20 .. 100] P, default 35 - maybe convert to Freq befor creating the object
-    float tilt;         // [-50 .. 50], default -12
     float mix;          // [0 .. 1], default 0.0
     float fold;         // [0 .. 1], default 0.25
     float asym;         // [0 .. 1], default 0.1
@@ -168,6 +180,11 @@ private:
     TiltFilters lowshelf1;
     TiltFilters lowshelf2;
 
+    // Smoother
+    Smoother drySmoother;
+    Smoother wetSmoother;
+    Smoother driveSmoother;
+
     //hp 1
     float inCh1Delay;
     float inCh2Delay;
@@ -175,7 +192,7 @@ private:
 
     inline float db2af(float dbIn)              //helper fucntion db2af
     {
-        return pow(1.122f, dbIn);
+        return pow(1.12202f, dbIn);
     }
 
     inline float sinP3(float x)                 //

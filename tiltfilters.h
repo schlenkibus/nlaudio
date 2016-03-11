@@ -1,24 +1,24 @@
 #pragma once
 #include "math.h"
 
-enum class TiltFilterPasstype : int
+enum class TiltFiltertype
 {
-    lowpass = 0,
-    highpass = 1,
-    lowshelf = 2,
-    highshelf = 3
+    lowpass,
+    highpass,
+    lowshelf,
+    highshelf
 };
 
 class TiltFilters
 {
 public:
-    TiltFilters(float _sRate, float _cutFreq = 22000.f, float _tilt = -12.f, float _slopeWidth = 2.f,
-                  float _resonance = 0.5f, TiltFilterPasstype _passtype = TiltFilterPasstype::lowshelf)           // Constructor for static a Tilt Filter
-        : sRate(_sRate)
-        , tilt(_tilt)
-        , slopeWidth(_slopeWidth)   //no min clipping, since it's hardcoded for now
-        , in(0.f)
-        , out(0.f)
+    TiltFilters(int _sRate,                           // Constructor for static a Tilt Filter
+                float _cutFreq = 22000.f,
+                float _tilt = 0.f,
+                float _slopeWidth = 2.f,
+                float _resonance = 0.5f,
+                TiltFiltertype _filtertype = TiltFiltertype::lowshelf)
+        : sRate(static_cast<float>(_sRate))
         , inCh1Delay1(0.f)          //Delays
         , inCh1Delay2(0.f)
         , outCh1Delay1(0.f)
@@ -27,11 +27,6 @@ public:
         , inCh2Delay2(0.f)
         , outCh2Delay1(0.f)
         , outCh2Delay2(0.f)
-        , sb0(0.f)                  //intirim calculations
-        , sb1(0.f)
-        , sb2(0.f)
-        , sa1(0.f)
-        , sa2(0.f)
         , b0(0.f)                   //Coefficients
         , b1(0.f)
         , b2(0.f)
@@ -40,121 +35,121 @@ public:
         , a2(0.f)
 
     {
-        setCutFreq(_cutFreq, _resonance, _passtype);
-        setTilt(_tilt, _passtype);
+        setCutFreq(_cutFreq);
+        setTilt(_tilt);
+        setResonance(_resonance);
+        setSlopeWidth(_slopeWidth);
+        setFiltertype(_filtertype);
     }
 
     ~TiltFilters(){}
 
-    void setCutFreq(float _cutFreq, float _resonance, TiltFilterPasstype _passtype)
+    void setCutFreq(float _cutFreq)                         /*set cut frequency*/
     {
-        cutFreq = _cutFreq;
+        if (_cutFreq < (sRate / 24576.f))                   //Frequency clipping
+        {
+            _cutFreq = sRate / 24576.f;
+        }
+
+        else if (_cutFreq > (sRate / 2.125f))
+        {
+            _cutFreq = sRate / 2.125f;
+        }
+
+        float omega = _cutFreq * (2.f * M_PI / sRate);      //Freqnecy to omega (warp)
+
+        omega_sin = reakSin(omega);                         //alternative to sin(omega)
+        omega_cos = reakCos(omega);                         //alternative to cos(omega)
+
+        setAlpha();
+        calcCoeff();
+    }
+
+    void setTilt(float _tilt)                               /*set tilt amount*/
+    {
+        tilt = pow(1.059f, _tilt);                          //alterative to pow(10, (tilt/ 40.f))
+        beta = 2.f * sqrt(tilt);
+
+        setAlpha();
+        calcCoeff();
+    }
+
+    void setResonance(float _resonance)                     /*set resonance*/
+    {
         resonance = _resonance;
 
-        /*Check for Frequency clipping*/
-        if (cutFreq < (sRate / 24000.f))
-        {
-            cutFreq = sRate / 24000.f;
-        }
-
-        else if (cutFreq > (sRate / 2.18f))
-        {
-            cutFreq = sRate / 2.18f;
-        }
-
-        /*check for Resonance clipping*/
-        if (resonance > 0.999f)
+        if (resonance > 0.999f)                             //Resonance clipping
         {
             resonance = 0.999f;
         }
 
-        else if (resonance < -0.999f)
-        {
-            resonance = -0.999f;
-        }
-
-        cutFreq *= (2.f * M_PI / sRate);        // Omega
-
-        //cutFreq_cos = cos(cutFreq);
-        cutFreq_cos = reakCos(cutFreq);
-
         setAlpha();
-        //alpha = sin(cutFreq) * (1.f - resonance);
-        //alpha = reakSin(cutFreq) * (1.f - resonance);
-
-        setupBquadFilter(_passtype);
+        calcCoeff();
     }
 
-    void setTilt(float _tilt, TiltFilterPasstype _passtype)
+    void setSlopeWidth(float _slopeWidth)                   /*set slope width*/
     {
-        tilt = _tilt;
-        tilt = pow(10.f, (tilt / 40.f));
+        slopeWidth = _slopeWidth;
 
         setAlpha();
-
-        setupBquadFilter(_passtype);
+        calcCoeff();
     }
 
-    float applyFilter(float currSample, unsigned int channelIndex)
+    void setFiltertype(TiltFiltertype _filtertype)          /*set filtertype*/
     {
-        in = currSample;
+        filtertype = _filtertype;
+        resetDelays();
+        calcCoeff();
+    }
+
+    float applyFilter(float currSample, unsigned int channelIndex)      /*apply coefficients to incoming sample*/
+    {
+        float output = 0.f;
 
         if(channelIndex == 0)
         {
-            sb0 = b0 / a0;
-            sb0 *= in;
-            sb1 = b1 / a0;
-            sb1 *= inCh1Delay1;
-            sb2 = b2 / a0;
-            sb2 *= inCh1Delay2;
+            output += b0 * currSample;
+            output += b1 * inCh1Delay1;
+            output += b2 * inCh1Delay2;
 
-            sa1 = -1.f * a1 / a0;
-            sa1 *= outCh1Delay1;
-            sa2 = -1.f * a2 / a0;
-            sa2 *= outCh1Delay2;
-
-            out = sb0 + sb1 + sb2 + sa1 + sa2;
+            output += a1 * outCh1Delay1;
+            output += a2 * outCh1Delay2;
 
             inCh1Delay2 = inCh1Delay1;
-            inCh1Delay1 = in;
+            inCh1Delay1 = currSample;
 
             outCh1Delay2 = outCh1Delay1;
-            outCh1Delay1 = out;
+            outCh1Delay1 = output;
         }
 
         else if (channelIndex == 1)
         {
-            sb0 = b0 / a0 * in;
-            sb1 = b1 / a0 * inCh2Delay1;
-            sb2 = b2 / a0 * inCh2Delay2;
+            output += b0 * currSample;
+            output += b1 * inCh2Delay1;
+            output += b2 * inCh2Delay2;
 
-            sa1 = -1.f * a1 / a0 * outCh2Delay1;
-            sa2 = -1.f * a2 / a0 * outCh2Delay2;
-
-            out = sb0 + sb1 + sb2 + sa1 + sa2;
+            output += a1 * outCh2Delay1;
+            output += a2 * outCh2Delay2;
 
             inCh2Delay2 = inCh2Delay1;
-            inCh2Delay1 = in;
+            inCh2Delay1 = currSample;
 
             outCh2Delay2 = outCh2Delay1;
-            outCh2Delay1 = out;
+            outCh2Delay1 = output;
         }
-
-        return out;
+        return output;
     }
 
 private:
 
-    float sRate;
-    float cutFreq;
-    float cutFreq_cos;
+    float omega_cos;
+    float omega_sin;
     float alpha;
+    float beta;
     float tilt;
-    float slopeWidth;
     float resonance;
-
-    float in;
-    float out;
+    float slopeWidth;
+    float sRate;
 
     float inCh1Delay1;          //Channel 1
     float inCh1Delay2;
@@ -166,98 +161,108 @@ private:
     float outCh2Delay1;
     float outCh2Delay2;
 
-    float sb0, sb1, sb2, sa1, sa2;              //interim calculation - array!?
+    float b0, b1, b2, a0, a1, a2;
 
-    float b0, b1, b2, a0, a1, a2;               //Coefficient - array!?
+    TiltFiltertype filtertype;
 
-
-    void setupBquadFilter(TiltFilterPasstype _passtype)
+    void calcCoeff()                                /*check which Filter is active and calculate coefficients*/
     {
-        switch(_passtype)
+        float coeff;
+        switch(filtertype)
         {
-            case TiltFilterPasstype::lowpass:
-            setupTiltLowpass();
+            case TiltFiltertype::lowpass:
+
+            a0 = 1.f + alpha;
+            a1 = omega_cos * -2.f;
+            a2 = 1.f - alpha;
+            b0 = (1 - omega_cos) / 2.f;
+            b1 = 1.f - omega_cos;
+            b2 = b0;
             break;
 
-            case TiltFilterPasstype::highpass:
-            setupTiltHighpass();
+            case TiltFiltertype::highpass:
+
+            a0 = 1.f + alpha;
+            a1 = omega_cos * -2.f;
+            a2 = 1.f - alpha;
+            b0 = (1.f + omega_cos) / 2.f;
+            b1 = (1.f + omega_cos) * -1.f;
+            b2 = b0;
             break;
 
-            case TiltFilterPasstype::highshelf:
-            setupTiltHighshelf();
+            case TiltFiltertype::lowshelf:
+            coeff = beta * alpha;
+
+            a0 = (tilt + 1.f) + (omega_cos * (tilt - 1.f)) + coeff;
+            a1 = ((tilt - 1.f) + (omega_cos * (tilt + 1.f))) * -2.f;
+            a2 = (tilt + 1.f) + (omega_cos * (tilt - 1.f)) - coeff;
+            b0 = ((tilt + 1.f) - (omega_cos * (tilt - 1.f)) + coeff) * tilt;
+            b1 = ((tilt - 1.f) - (omega_cos * (tilt + 1.f))) * 2.f * tilt;
+            b2 = ((tilt + 1.f) - (omega_cos * (tilt - 1.f)) - coeff) * tilt;
             break;
 
-            case TiltFilterPasstype::lowshelf:
-            setupTiltLowshelf();
+            case TiltFiltertype::highshelf:
+            coeff = beta * alpha;
+
+            a0 = (tilt + 1.f) - (omega_cos * (tilt - 1.f)) + coeff;
+            a1 = ((tilt - 1.f) - (omega_cos * (tilt + 1.f))) * 2.f;
+            a2 = (tilt + 1.f) - (omega_cos * (tilt - 1.f)) - coeff;
+            b0 = ((tilt + 1.f) + (omega_cos * (tilt - 1.f)) + coeff) * tilt;
+            b1 = ((tilt - 1.f) + (omega_cos * (tilt + 1.f))) * -2.f * tilt;
+            b2 = ((tilt + 1.f) + (omega_cos * (tilt - 1.f)) - coeff) * tilt;
             break;
         }
-    }
 
-    void setupTiltLowpass()
-    {
-        a0 = 1 + alpha;
-        a1 = (cutFreq_cos * -2.f);
-        a2 = 1 - alpha;
-        b0 = (1 - cutFreq_cos) / 2.f;
-        b1 = 1 - cutFreq_cos;
-        b2 = b0;
-    }
-
-    void setupTiltHighpass()
-    {
-        a0 = 1 + alpha;
-        a1 = cutFreq_cos * -2.f;
-        a2 = 1 - alpha;
-        b0 = (1 + cutFreq_cos) / 2.f;
-        b1 = (1 + cutFreq_cos) * -1.f;
-        b2 = b0;
-    }
-
-    void setupTiltLowshelf()
-    {
-        a0 = (tilt + 1.f) + (cutFreq_cos * (tilt - 1.f)) + (2.f * sqrt(tilt) * alpha);
-        a1 = ((tilt - 1.f) + (cutFreq_cos * (tilt + 1.f))) * -2.f;
-        a2 = (tilt + 1.f) + (cutFreq_cos * (tilt - 1.f)) - (2.f * sqrt(tilt) * alpha);
-        b0 = ((tilt + 1.f) - (cutFreq_cos * (tilt - 1.f)) + (2.f * sqrt(tilt) * alpha)) * tilt;
-        b1 = ((tilt - 1.f) - (cutFreq_cos * (tilt + 1.f))) * 2.f * tilt;
-        b2 = ((tilt + 1.f) - (cutFreq_cos * (tilt - 1.f)) - (2.f * sqrt(tilt) * alpha)) * tilt;
-    }
-
-    void setupTiltHighshelf()
-    {
-        a0 = (tilt + 1.f) - (cutFreq_cos * (tilt - 1.f)) + (2.f * sqrt(tilt) * alpha);
-        a1 = ((tilt - 1.f) - (cutFreq_cos * (tilt + 1.f))) * 2.f;
-        a2 = (tilt + 1.f) - (cutFreq_cos * (tilt - 1.f)) - (2.f * sqrt(tilt) * alpha);
-        b0 = ((tilt + 1.f) + (cutFreq_cos * (tilt - 1.f)) + (2.f * sqrt(tilt) * alpha)) * tilt;
-        b1 = ((tilt - 1.f) + (cutFreq_cos * (tilt + 1.f))) * -2.f * tilt;
-        b2 = ((tilt + 1.f) + (cutFreq_cos * (tilt - 1.f)) - (2.f * sqrt(tilt) * alpha)) * tilt;
+        a1 /= (-1.f * a0);          //normalize
+        a2 /= (-1.f * a0);
+        b0 /= a0;
+        b1 /= a0;
+        b2 /= a0;
     }
 
     void setAlpha()
     {
-        alpha *= (tilt + (1.f / tilt)) * (slopeWidth - 1.f);
-        alpha = sqrt(alpha + 2.f) * sin(cutFreq) * (1.f - resonance);
-        // alternative: alpha = sqrt(alpha + 2.f) * reakSin(cutFreq) * (1.f - resonance);
+        alpha = (tilt + (1.f / tilt)) * (slopeWidth - 1.f);
+        alpha = sqrt(alpha + 2.f) * omega_sin * (1.f - resonance);
     }
 
-    /*as applied in Reaktor*/
+    void resetDelays()
+    {
+        inCh1Delay1 = 0.f;          //channel 1
+        inCh1Delay2 = 0.f;
+        outCh1Delay1 = 0.f;
+        outCh1Delay2 = 0.f;
+
+        inCh2Delay1 = 0.f;          //Channel 2
+        inCh2Delay2 = 0.f;
+        outCh2Delay1 = 0.f;
+        outCh2Delay2 = 0.f;
+    }
+
+    /*as applied in Reaktor --- befindet sich hier vorübergehend*/
     float reakSin(float x){
 
         float x_square = x * x;
 
-        x = ((((((x_square * -2.39f * pow(10.f, -8.f) + 2.7526f * pow(10.f, -6.f)) * x_square + (0.198409f * pow(10.f, -3.f)))
-                * x_square + (8.33333f * pow(10.f, -3.f))) * x_square + (-0.166667f)) * x_square) + 1.f) * x;
+        x = (((((x_square * -2.39f * pow(10.f, -8.f) + 2.7526f * pow(10.f, -6.f))
+                * x_square + (0.198409f * pow(10.f, -3.f)))
+               * x_square + 0.008333f)
+              * x_square + (-0.166667f))
+             * x_square + 1.f) * x;
 
         return x;
     }
 
-    /*as applied in Reaktor*/
+    /*as applied in Reaktor --- befindet sich hier vorübergehend*/
     float reakCos(float x){
 
         float x_square = x * x;
 
-        x = (((((x_square * -2.605f * pow(10.f, -7.f) + 2.47609 * pow(10.f, -5.f)) * x_square + (-0.00138884)) * x_square + 0.0416666)
-              * x_square + (-0.499923)) * x_square) + 1.f;
+        x = (((((x_square * -2.605f * pow(10.f, -7.f) + 2.47609 * pow(10.f, -5.f))
+                * x_square + (-0.00138884))
+               * x_square + 0.0416666)
+              * x_square + (-0.499923))
+             * x_square) + 1.f;
 
         return x;
     }

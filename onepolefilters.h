@@ -9,18 +9,19 @@
     @author     Anton Schmied [2016-02-11]
 **/
 
-enum OnePoleFiltertype{
-    onepole_lowpass,
-    onepole_highpass,
-    onepole_lowshelf,
-    onepole_highshelf
+enum class OnePoleFiltertype
+{
+    lowpass,
+    highpass,
+    lowshelf,
+    highshelf
 };
 
 class OnePoleFilters{
     public:
 
-    OnePoleFilters(float _sRate, float _cutFreq = 22000, float _shelfAmp = 0.f, OnePoleFiltertype _filtertype = OnePoleFiltertype::onepole_lowpass)            //Constructor for static 1-pole bilinear LP
-        : sRate(_sRate)
+    OnePoleFilters(int _sRate, float _cutFreq = 22000, float _shelfAmp = 0.f, OnePoleFiltertype _filtertype = OnePoleFiltertype::lowpass)            //Constructor for static 1-pole bilinear LP
+        : sRate(static_cast<float>(_sRate))
         , inCh1Delay1(0.f)
         , outCh1Delay1(0.f)
         , inCh2Delay1(0.f)
@@ -35,11 +36,11 @@ class OnePoleFilters{
 
     void setCutFreq(float _cutFreq)
     {
-        if (filtertype == OnePoleFiltertype::onepole_lowshelf)
+        if (filtertype == OnePoleFiltertype::lowshelf)
         {
             _cutFreq /= shelfAmp;
         }
-        else if (filtertype == OnePoleFiltertype::onepole_highshelf)
+        else if (filtertype == OnePoleFiltertype::highshelf)
         {
             _cutFreq *= shelfAmp;
         }
@@ -129,25 +130,25 @@ private:
     {
         switch(filtertype)                        //check which Filter is active and update coefficients
         {
-            case OnePoleFiltertype::onepole_lowpass:
+            case OnePoleFiltertype::lowpass:
             a1 = (1.f - omega_tan) / (1.f + omega_tan);
             b0 = omega_tan / (1.f + omega_tan);
             b1 = omega_tan / (1.f + omega_tan);
             break;
 
-            case OnePoleFiltertype::onepole_highpass:
+            case OnePoleFiltertype::highpass:
             a1 = (1.f - omega_tan) / (1.f + omega_tan);
             b0 = 1.f / (1.f + omega_tan);
             b1 = (1.f / (1.f + omega_tan)) * -1.f;
             break;
 
-            case OnePoleFiltertype::onepole_lowshelf:
+            case OnePoleFiltertype::lowshelf:
             a1 = (1.f - omega_tan) / (1.f + omega_tan);
             b0 = ((omega_tan / (1.f + omega_tan)) * (shelfAmp_square + -1.f)) + 1.f;
             b1 = ((omega_tan / (1.f + omega_tan)) * (shelfAmp_square + -1.f)) - a1;
             break;
 
-            case OnePoleFiltertype::onepole_highshelf:
+            case OnePoleFiltertype::highshelf:
             a1 = (1.f - omega_tan) / (1.f + omega_tan);
             b0 = ((shelfAmp_square + -1.f) / (1.f + omega_tan)) + 1.f;
             b1 = (((shelfAmp_square + -1.f) / (1.f + omega_tan)) + a1) * -1.f;

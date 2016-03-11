@@ -1,11 +1,16 @@
 #include "effects.h"
 #include "onepolefilters.h"
 #include "biquadfilters.h"
+#include "altbiquadfilters.h"
 #include "cabinet.h"
+#include "smoother.h"
 
-//#define ONEPOLE 1                 //choose what you want to test here
-#define BIQUAD 1
-//#define CABINET 1
+//#define ONEPOLE 1                 //choose which filter you want to test here
+//#define BIQUAD 1
+//#define ALTBIQUAD 1
+//#define TILTFILTER 1
+#define CABINET 1
+
 
 #include "stopwatch.h"
 #include "audioalsainput.h"
@@ -17,34 +22,6 @@ extern Nl::StopWatch sw;
 
 namespace Nl {
 namespace EFFECTS{
-
-
-    /** @brief    mutes the Inputsignal depending on the state of the muteSwitch
-        @param    muteState [0 - off, 1 - on]
-        @param    current Sample
-        @param    smoothing Factor predefined
-        @param    mute factor [0..1]
-        @return   resturns the effected sample
-    */
-    float muteThis(int muteSwitch, float curSample, float sFactor, float *mFactor)
-    {
-        if(muteSwitch)                          //mFactor is außerhalb der Funktion deklariert ... eher uncool ... vielleicht!?
-        {
-            if(*mFactor <= 0.f)
-                *mFactor = 0.f;
-            else
-                *mFactor -= sFactor;
-        }
-        else if(muteSwitch == 0)
-        {
-            if(*mFactor >= 1.f)
-                *mFactor = 1.f;
-            else
-                *mFactor += sFactor;
-        }
-
-        return curSample * *mFactor;
-    }
 
     /** @brief    Callback function for Sine Generator and Audio Input - testing with Korg nano Kontrol
         @param    Input Buffer
@@ -61,35 +38,32 @@ namespace EFFECTS{
 
         int samplerate = sampleSpecs.samplerate;                //Samplerate of Audio device
 
+        static int inClipCntr = 0;
+        static int outClipCntr = 0;
+
         static float curFrequency = 0.f;                        //Frequency for the Sine Generator
-        bool reset = false;                                     //Phase Reset
 
         float curMidiValue = 0.f;                               //Midi Value [0 .. 127]
-
-        static float curVolumeFactor = 0.f;                     //current Volume Factor [0 .. ]
-        static float lastVolumeFactor = 0.f;                    //last Volume Factor [0 ..]
-        static float volumeSmoothingFactor = 0.f;               //smoothing Factor for the Volume Fader
-        static int volFadeDirection = 0;                        //Fader Direction [1 move up, -1 move down, 0 not moved]
-
-        float smoothInSec = 0.05f;                                        //Length of Smoothing in Seconds
-        int smoothInSamples = static_cast<int>(smoothInSec * samplerate); //Length of Mute Smoothing in Samples
-
-        float muteSmoothingFactor = 1.f / smoothInSamples;      //Mute Smoothing Factor
-        static float muteFactor = 0.f;                          //mute Factor [0 .. 1]
-        static int muteSwitch = 1;                              //Mute State [1 mute on, 0 mute off]
 
         float faderMaxDB = 12.f;                                //Max of the Fader Range in dB
         int midiSteps = 24;                                     //Resolution in midi steps ... !
         static float stepResolution = faderMaxDB / midiSteps;   //dB resolution in dB per midi step
 
-        static float curCrossfadeVal = 0.f;                     //crossfade values [0 .. 1] - calculated form midi
-        static float lastCrossfadeVal = 0.f;                    //crossfade values [0 .. 1]
-        static int crossfaderDirection = 0;                     //Crossfader Direction [1 turn right, -1 turn left, 0 not moved]
-        static float crossfadeSmoothingFactor = 0.f;            //Smoothing Factor for the crossfader
-        static int crossfadeSwitch = 0;                         //Crossfade On/Off
+        static Smoother volumeSmoother(samplerate, 0.032f);
+        float volumeFactor = 0.f;                               //Volume Factor [0 .. 3.98]
 
+        static Smoother muteSmoother(samplerate, 0.032f);
+        float muteFactor = 0.f;                                 //mute Factor [0 .. 1]
+        static int muteSwitch = 1;                              //Mute State [1 mute on, 0 mute off]
+
+        static Smoother crossfadeSmoother(samplerate, 0.032f);
+        float crossfadeFactor = 0.f;                            //crossfade factor [0 .. 1] - calculated form midi
+        static int crossfadeSwitch = 0;                         //Crossfade State [1 crossfade on, 0 crossfade off]
+
+        static Smoother inputSwitchSmoother(samplerate, 0.032f);
+        float inputSwitchFactor = 0.f;                          //input switch factor [0 .. 1]
         static int inputSwitch = 0;                             //Input State [0 Sine, 1 Audio Input]
-        static float inputSwitchVal = 0.f;
+
         float outputSample = 0.f;                               //output Sample which comes from AudioIn or sine generator
 
 #ifdef ONEPOLE
@@ -97,13 +71,29 @@ namespace EFFECTS{
         static float cutoffFreq;
         static float shelfAmp;
         static int switchCounter = 0;
-#elif BIQUAD
+#endif
+#ifdef BIQUAD
         static BiquadFilters biquadFilter(samplerate);          //default Values: cutoff(22000.f), shelfAmp(0.f), resonance(0.5f), passtype(lowpass)
         static float cutoffFreq;
         static float shelfAmp;
         static float resonance;
         static int switchCounter = 0;
-#elif CABINET
+#endif
+#ifdef ALTBIQUAD
+        static AltBiquadFilters altBiquadFilter(samplerate);          //default Values: cutoff(22000.f), shelfAmp(0.f), resonance(0.5f), passtype(lowpass)
+        static float cutoffFreq;
+        static float shelfAmp;
+        static float resonance;
+        static int switchCounter = 0;
+#endif
+#ifdef TILTFILTER
+        TiltFilters tiltFilter(samplerate);                  //default Values: cutoff(22000.f), shelfAmp(0.f), resonance(0.5f), passtype(lowpass)
+        static float cutoffFreq;
+        static float tilt;
+        static float resonance;
+        static int switchCounter = 0;
+#endif
+#ifdef CABINET
         static Cabinet cabinet(samplerate);
         static float hiCut;
         static float loCut;
@@ -134,54 +124,82 @@ namespace EFFECTS{
 
                     if (curMidiValue < (127 - (127 / midiSteps) * midiSteps))
                     {  
-                        curVolumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * stepResolution) / 20.f) * curMidiValue * 0.1429f;
+                        volumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * stepResolution) / 20.f) * curMidiValue * 0.1429f;
                     }
                     else
                     {
-                        curVolumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * stepResolution) / 20.f);
-                        //printf("curVolumeFactor: %f\n", curVolumeFactor);
+                        volumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * stepResolution) / 20.f);
                     }
-                }
-
-                /*Change Volumfade Direction State, if it has changed*/
-                if (lastVolumeFactor < curVolumeFactor)
-                {
-                    volFadeDirection = 1;
-                }
-                else if (lastVolumeFactor > curVolumeFactor)
-                {
-                    volFadeDirection = -1;
-                }
-                else
-                {
-                    volFadeDirection = 0;
+                    printf("volumeFactor: %f\n", volumeFactor);
+                    volumeSmoother.initSmoother(volumeFactor);
                 }
 
                 /*calculate crossfade values from midi input*/
                 if (midiByteBuffer[1] == 0x12)
                 {
-                    curCrossfadeVal = static_cast<float>(midiByteBuffer[2])/127;
-                }
-
-                /*Change Crossfade Direction State, if it has changed*/
-                if (lastCrossfadeVal < curCrossfadeVal)
-                {
-                    crossfaderDirection = 1;
-                }
-                else if (lastCrossfadeVal > curCrossfadeVal)
-                {
-                    crossfaderDirection = -1;
-                }
-                else
-                {
-                    crossfaderDirection = 0;
+                    crossfadeFactor = static_cast<float>(midiByteBuffer[2])/127;
+                    crossfadeSmoother.initSmoother(crossfadeFactor);
                 }
 
                 /*Retrieve Frequency Fader Value and calculate Frequency*/
                 if (midiByteBuffer[1] == 0x02)
                 {
                     curFrequency = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
-                    reset = true;
+                }
+
+                /*Change Input Switch State, if the Value has changed*/
+                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x17))
+                {
+                    switch (inputSwitch)
+                    {
+                        case 0:
+                        inputSwitchSmoother.initSmoother(1.f);
+                        inputSwitch=1;
+                        printf("Source: Audio Input chosen\n");
+                        break;
+
+                        case 1:
+                        inputSwitchSmoother.initSmoother(0.f);
+                        inputSwitch=0;
+                        printf("Source: Sine Generator Input\n");
+                        break;
+                    }
+                }
+
+                /*Change Mute Switch State, if the Value has changed*/
+                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x25))
+                {
+                    switch (muteSwitch)
+                    {
+                        case 0:
+                        muteSmoother.initSmoother(0.f);
+                        muteSwitch = 1;
+                        printf("Mute: ON\n");
+                        break;
+
+                        case 1:
+                        muteSmoother.initSmoother(1.f);
+                        muteSwitch = 0;
+                        printf("Mute: OFF\n");
+                        break;
+                    }
+                }
+
+                /*Change Crossfade Switch State, if the Value has changed*/
+                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x1B))
+                {
+                    switch (crossfadeSwitch)
+                    {
+                        case 0:
+                        crossfadeSwitch = 1;
+                        printf("Crossfade: ON\n");
+                        break;
+
+                        case 1:
+                        crossfadeSwitch = 0;
+                        printf("Crossfade: OFF\n");
+                        break;
+                    }
                 }
 
 #ifdef ONEPOLE
@@ -208,34 +226,37 @@ namespace EFFECTS{
                 if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
                 {
                     ++switchCounter;
+                    currSample = lowpass1.applyF0.032f)ilter(currSample, channelIndex);
+                    currSample = lowpass2.applyFilter(currSample, channelIndex);
                     if (switchCounter > 3)
                         switchCounter = 0;
 
                     if (switchCounter == 0)
                     {
-                        onePoleFilter.setFiltertype(OnePoleFiltertype::onepole_lowpass);
+                        onePoleFilter.setFiltertype(OnePoleFiltertype::lowpass);
                         printf("lowpass on\n");
                     }
 
                     if (switchCounter == 1)
                     {
-                        onePoleFilter.setFiltertype(OnePoleFiltertype::onepole_highpass);
+                        onePoleFilter.setFiltertype(OnePoleFiltertype::highpass);
                         printf("highpass on\n");
                     }
 
                     if (switchCounter == 2)
                     {
-                        onePoleFilter.setFiltertype(OnePoleFiltertype::onepole_lowshelf);
+                        onePoleFilter.setFiltertype(OnePoleFiltertype::lowshelf);
                         printf("lowshelf on\n");
                     }
 
                     if (switchCounter == 3)
                     {
-                        onePoleFilter.setFiltertype(OnePoleFiltertype::onepole_highshelf);
+                        onePoleFilter.setFiltertype(OnePoleFiltertype::highshelf);
                         printf("highshelf on\n");
                     }
                 }
-#elif BIQUAD
+#endif
+#ifdef BIQUAD
                 /*Biquad Filters*/
                 /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
                 if (midiByteBuffer[1] == 0x13)
@@ -273,42 +294,180 @@ namespace EFFECTS{
 
                     if (switchCounter == 0)
                     {
-                        biquadFilter.setFiltertype(BiquadFiltertype::biquad_lowpass);
+                        biquadFilter.setFiltertype(BiquadFiltertype::lowpass);
                         printf("lowpass on\n");
                     }
 
                     if (switchCounter == 1)
                     {
-                        biquadFilter.setFiltertype(BiquadFiltertype::biquad_highpass);
+                        biquadFilter.setFiltertype(BiquadFiltertype::highpass);
                         printf("highpass on\n");
                     }
 
                     if (switchCounter == 2)
                     {
-                        biquadFilter.setFiltertype(BiquadFiltertype::biquad_lowshelf);
+                        biquadFilter.setFiltertype(BiquadFiltertype::lowshelf);
                         printf("lowshelf on\n");
                     }
 
                     if (switchCounter == 3)
                     {
-                        biquadFilter.setFiltertype(BiquadFiltertype::biquad_highshelf);
+                        biquadFilter.setFiltertype(BiquadFiltertype::highshelf);
                         printf("highshelf on\n");
                     }
 
                 }
-#elif CABINET
+#endif
+#ifdef ALTBIQUAD
+                /*Biquad Filters*/
+                /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x13)
+                {
+                    cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
+
+                    altBiquadFilter.setCutFreq(cutoffFreq);
+                }
+
+                /*Retrieve resonance Frequency from Knob [14] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x14)
+                {
+                    resonance = (static_cast<float>(midiByteBuffer[2]) - 64.f) / 32.f;
+
+                    altBiquadFilter.setResonance(resonance);
+                }
+
+                /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
+                if (midiByteBuffer[1] == 0x08)
+                {
+                    shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64.f) * 12.f) / 64.f;
+
+                    if((switchCounter == 2) || (switchCounter == 3))
+                    {
+                        altBiquadFilter.setShelfAmp(shelfAmp);
+                    }
+                }
+
+                /*Filter Passtype Switch*/
+                if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
+                {
+                    ++switchCounter;
+                    if (switchCounter > 3)
+                        switchCounter = 0;
+
+                    if (switchCounter == 0)
+                    {
+                        altBiquadFilter.setFiltertype(AltBiquadFiltertype::lowpass);
+                        printf("lowpass on\n");
+                    }
+
+                    if (switchCounter == 1)
+                    {
+                        altBiquadFilter.setFiltertype(AltBiquadFiltertype::highpass);
+                        printf("highpass on\n");
+                    }
+
+                    if (switchCounter == 2)
+                    {
+                        altBiquadFilter.setFiltertype(AltBiquadFiltertype::lowshelf);
+                        printf("lowshelf on\n");
+                    }
+
+                    if (switchCounter == 3)
+                    {
+                        altBiquadFilter.setFiltertype(AltBiquadFiltertype::highshelf);
+                        printf("highshelf on\n");
+                    }
+                }
+#endif
+#ifdef TILTFILTER
+                /*TILT Filters*/
+                /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x13)
+                {
+                    cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
+
+                    tiltFilter.setCutFreq(cutoffFreq);
+                }
+
+                /*Retrieve resonance Frequency from Knob [14] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x14)
+                {
+                    resonance = (static_cast<float>(midiByteBuffer[2]) - 64.f) / 32.f;
+
+                    tiltFilter.setResonance(resonance);
+                }
+
+                /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
+                if (midiByteBuffer[1] == 0x08)
+                {
+                    tilt = (static_cast<float>(midiByteBuffer[2]) - 64.f) * (50.f / 64.f);
+
+                    if((switchCounter == 2) || (switchCounter == 3))
+                    {
+                        tiltFilter.setTilt(tilt);
+                    }
+                }
+
+                /*Filter Passtype Switch*/
+                if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
+                {
+                    ++switchCounter;
+                    if (switchCounter > 3)
+                        switchCounter = 0;
+
+                    if (switchCounter == 0)
+                    {
+                        tiltFilter.setFiltertype(TiltFiltertype::lowpass);
+                        printf("lowpass on\n");
+                    }
+
+                    if (switchCounter == 1)
+                    {
+                        tiltFilter.setFiltertype(TiltFiltertype::highpass);
+                        printf("highpass on\n");
+                    }
+
+                    if (switchCounter == 2)
+                    {
+                        tiltFilter.setFiltertype(TiltFiltertype::lowshelf);
+                        printf("lowshelf on\n");
+                    }
+
+                    if (switchCounter == 3)
+                    {
+                        tiltFilter.setFiltertype(TiltFiltertype::highshelf);
+                        printf("highshelf on\n");
+                    }
+
+                }
+#endif
+#ifdef CABINET
                 /*Cabinet*/
                 /*Retrieve hiCut Frequency from Knob [13] and calculate Frequency this schould be from 260Hz to 26737Hz*/
                 if (midiByteBuffer[1] == 0x13)
                 {
-                    hiCut = 260.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 19.f);
+                    // Pitch Values for better testing
+                    hiCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 60.f;
+                    printf("HiCut: %f\n", hiCut);
+
+                    hiCut = pow(2.f, (hiCut - 69.f) / 12) * 440.f;
+
+                    //hiCut = 260.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 19.f);
+
                     cabinet.setHiCut(hiCut);
                 }
 
                 /*Retrieve loCut Frequency from Knob [20] and calculate Frequency this schould be from 25Hz to 2637Hz*/
                 if (midiByteBuffer[1] == 0x14)
                 {
-                    loCut = 25.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 18.9f);
+                    // Pitch Values for better testing
+                    loCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 20.f;
+                    printf("LoCut: %f\n", loCut);
+
+                    loCut = pow(2.f, (loCut - 69.f) / 12) * 440.f;
+
+                    //loCut = 25.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 18.9f);
+
                     cabinet.setLoCut(loCut);
                 }
 
@@ -316,6 +475,7 @@ namespace EFFECTS{
                 if (midiByteBuffer[1] == 0x03)
                 {
                     mix = static_cast<float>(midiByteBuffer[2]) / 127.f;
+                    printf("Mix: %f\n", mix);
                     cabinet.setMix(mix);
                 }
 
@@ -323,6 +483,8 @@ namespace EFFECTS{
                 if (midiByteBuffer[1] == 0x04)
                 {
                     cabLvl = (static_cast<float>(midiByteBuffer[2]) - 127.f) * (50.f / 127.f);
+                    printf("Cab Lvl: %f\n", cabLvl);
+
                     cabinet.setCabLvl(cabLvl);
                 }
 
@@ -330,13 +492,17 @@ namespace EFFECTS{
                 if (midiByteBuffer[1] == 0x05)
                 {
                     drive = static_cast<float>(midiByteBuffer[2]) * (50.f / 127.f);
+                    printf("Drive: %f\n", drive);
+
                     cabinet.setDrive(drive);
                 }
 
                 /*Retrieve Tilt from Fader [08]*/
                 if (midiByteBuffer[1] == 0x08)
                 {
-                    tilt = (static_cast<float>(midiByteBuffer[2]) - 64.f) * (50.f / 64.f);
+                    tilt = (static_cast<float>(midiByteBuffer[2]) - 63.5f) * (50.f / 63.5f);
+                    printf("Tilt: %f\n", tilt);
+
                     cabinet.setTilt(tilt);
                 }
 
@@ -344,6 +510,8 @@ namespace EFFECTS{
                 if (midiByteBuffer[1] == 0x09)
                 {
                     fold = static_cast<float>(midiByteBuffer[2]) / 127.f;
+                    printf("Fold: %f\n", fold);
+
                     cabinet.setFold(fold);
                 }
 
@@ -351,179 +519,81 @@ namespace EFFECTS{
                 if (midiByteBuffer[1] == 0x0C)
                 {
                     asym = static_cast<float>(midiByteBuffer[2]) / 127.f;
+                    printf("Asym: %f\n", asym);
+
                     cabinet.setAsym(asym);
                 }
 #endif
-
-#if 0
-                /*Change frequency fade Direction State, if it has changed*/
-                if (lastFrequency < curFrequency)
-                {
-                    freqFadeDirection = 1;
-                }
-                else if (lastFrequency > curFrequency)
-                {
-                    freqFadeDirection = -1;
-                }
-                else
-                {
-                    freqFadeDirection = 0;
-                }
-#endif
-
-                /*Change Input Switch State, if the Value has changed*/
-                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x17))
-                {
-                    switch (inputSwitch)
-                    {
-                        case 0:
-                        inputSwitch=1;
-                        printf("Source: Audio Input chosen\n");
-                        break;
-
-                        case 1:
-                        inputSwitch=0;
-                        printf("Source: Sine Generator Input\n");
-                        break;
-                    }
-                }
-
-                /*Change Mute Switch State, if the Value has changed*/
-                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x25))
-                {
-                    switch (muteSwitch)
-                    {
-                        case 0:
-                        muteSwitch = 1;
-                        printf("Mute: ON\n");
-                        break;
-
-                        case 1:
-                        muteSwitch = 0;
-                        printf("Mute: OFF\n");
-                        break;
-                    }
-                }
-
-                /*Change Mute Switch State, if the Value has changed*/
-                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x1B))
-                {
-                    switch (crossfadeSwitch)
-                    {
-                        case 0:
-                        crossfadeSwitch = 1;
-                        printf("Crossfade: ON\n");
-                        break;
-
-                        case 1:
-                        crossfadeSwitch = 0;
-                        printf("Crossfade: OFF\n");
-                        break;
-                    }
-                }
-
-                /*smoothing factors- all linear for now*/
-                volumeSmoothingFactor = (curVolumeFactor - lastVolumeFactor) / smoothInSamples;
-                crossfadeSmoothingFactor = (curCrossfadeVal - lastCrossfadeVal) / smoothInSamples;
-                //freqSmoothingFactor = (curFrequency - lastFrequency) / smoothInSamples;
             }
         }
 
-#if 0
-        /*check freq fader direction and limits - apply smoother*/
-        if (((freqFadeDirection == 1) && (lastFrequency > curFrequency)) || ((freqFadeDirection == -1) && (lastFrequency < curFrequency)))
-        {
-            lastFrequency = curFrequency;
-            freqFadeDirection = 0;
-        }
-        else if (freqFadeDirection != 0)
-        {
-            lastFrequency += freqSmoothingFactor;
-            //reset = true;
-        }
-#endif
-
         float sineSamples[sampleSpecs.buffersizeInFramesPerPeriode];                        //Using Sine Generator from the function in tools.h
-        sinewave<float>(sineSamples, curFrequency, reset, sampleSpecs);
-        //sinewave<float>(sineSamples, lastFrequency, reset, sampleSpecs);
+        sinewave<float>(sineSamples, curFrequency, false, sampleSpecs);
 
         for (unsigned int frameIndex=0; frameIndex<sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex)
         {
-            /*check volume fader direction and limits - apply smoother*/
-            if (((volFadeDirection == 1) && (lastVolumeFactor > curVolumeFactor)) || ((volFadeDirection == -1) && (lastVolumeFactor < curVolumeFactor)))
-            {
-                lastVolumeFactor = curVolumeFactor;
-                volFadeDirection = 0;
-            }
-            else if (volFadeDirection != 0)
-            {
-                lastVolumeFactor += volumeSmoothingFactor;
-            }
+            volumeFactor = volumeSmoother.smooth();             //Volume Fader smoothing
 
-            /*check crossfade direction and limits - apply smoother*/
-            if (((crossfaderDirection == 1) && (lastCrossfadeVal > curCrossfadeVal)) || ((crossfaderDirection == -1) && (lastCrossfadeVal < curCrossfadeVal)))
-            {
-                lastCrossfadeVal = curCrossfadeVal;
-                crossfaderDirection = 0;
-            }
-            else if (crossfaderDirection != 0)
-            {
-                lastCrossfadeVal += crossfadeSmoothingFactor;
-            }
+            crossfadeFactor = crossfadeSmoother.smooth();       //Crossfade smoothing
+
+            muteFactor = muteSmoother.smooth();                 //Mute smoothing
+
+            inputSwitchFactor = inputSwitchSmoother.smooth();   //Input Switch smoothing
 
             for (unsigned int channelIndex = 0; channelIndex<sampleSpecs.channels; ++channelIndex)
             {
-                /*Smoothen the Input Switch if the butten has been pressed*/
-                if(inputSwitch)
+                float audioInSample = getSample(in, frameIndex, channelIndex, sampleSpecs);
+
+                float sineSample = sineSamples[frameIndex];
+
+                if (audioInSample > 1.f || audioInSample < -1.f)            //Audio Input Clipping
                 {
-                    float audioInSample = getSample(in, frameIndex, channelIndex, sampleSpecs);
-                    audioInSample *= lastVolumeFactor;
-
-                    float sineSample = sineSamples[frameIndex] * lastVolumeFactor;
-
-                    inputSwitchVal += muteSmoothingFactor;
-
-                    if(inputSwitchVal > 1)
-                        inputSwitchVal = 1.f;
-
-                    outputSample = (audioInSample * inputSwitchVal) + (sineSample * (1 - inputSwitchVal));
+                    printf("WARNING!!! AUDIO INPUT CLIPPING %d!\n", ++inClipCntr);
+                }
+                else if (sineSample > 1.f || sineSample < -1.f)             //Sine Clipping
+                {
+                    printf("WARNING!!! SINE CLIPPING %d!\n", ++inClipCntr);
                 }
                 else
                 {
-                    float audioInSample = getSample(in, frameIndex, channelIndex, sampleSpecs);
-                    audioInSample *= lastVolumeFactor;
-
-                    float sineSample = sineSamples[frameIndex] * lastVolumeFactor;
-
-                    inputSwitchVal -= muteSmoothingFactor;
-
-                    if(inputSwitchVal < 0)
-                        inputSwitchVal = 0.f;
-
-                    outputSample = (audioInSample * inputSwitchVal) + (sineSample * (1 - inputSwitchVal));
+                    inClipCntr = 0;
                 }
 
-                /*If crossfade is active, smoothen the crossfade Values*/
-                if(crossfadeSwitch)
+
+                outputSample = (audioInSample * inputSwitchFactor) + (sineSample * (1.f - inputSwitchFactor));
+
+                if(crossfadeSwitch)                             //If crossfade is active, smoothen the crossfade Values
                 {
-                    float audioInSample = getSample(in, frameIndex, channelIndex, sampleSpecs);
-                    audioInSample *= lastVolumeFactor;
-
-                    float sineSample = sineSamples[frameIndex] * lastVolumeFactor;
-
-                    outputSample = (sineSample * lastCrossfadeVal) + (audioInSample * (1 - lastCrossfadeVal));
+                    outputSample = (sineSample * crossfadeFactor) + (audioInSample * (1.f - crossfadeFactor));
                 }
 
-                /*Mute Check*/
-                outputSample = muteThis(muteSwitch, outputSample, muteSmoothingFactor, &muteFactor);                    //Mute influnce
-
-#if ONEPOLE
+#ifdef ONEPOLE
                 outputSample = onePoleFilter.applyFilter(outputSample, channelIndex);              //1-Pole Filter influence
-#elif BIQUAD
-                outputSample = biquadFilter.applyFilter(outputSample, channelIndex);               //Biquad Filter influence
-#elif CABINET
-                outputSample = cabinet.applyCab(outputSample, channelIndex);                        //Cabinet influence
 #endif
+#ifdef BIQUAD
+                outputSample = biquadFilter.applyFilter(outputSample, channelIndex);               //Biquad Filter influence
+#endif
+#ifdef ALTBIQUAD
+                outputSample = altBiquadFilter.applyFilter(outputSample, channelIndex);            //alternative Biquad approach Filter influence
+#endif
+#ifdef TILTFILTER
+                outputSample = tiltFilter.applyFilter(outputSample, channelIndex);                 //Biquad Filter influence
+#endif
+#ifdef CABINET
+                outputSample = cabinet.applyCab(outputSample, channelIndex);
+#endif
+                outputSample *= volumeFactor;               //Volume Influence
+                outputSample *= muteFactor;                 //Main Mute Influence
+
+                if (outputSample > 1.f || outputSample < -1.f)
+                {
+                    printf("WARNING!!! OUTPUT CLIPPING %d!\n", ++outClipCntr);
+                }
+                else
+                {
+                    outClipCntr = 0;
+                }
+
                 setSample(out, outputSample, frameIndex, channelIndex, sampleSpecs);
             }
         }

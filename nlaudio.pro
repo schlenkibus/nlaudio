@@ -58,7 +58,9 @@ HEADERS += \
     onepolefilters.h \
     biquadfilters.h \
     cabinet.h \
-    tiltfilters.h
+    tiltfilters.h \
+    altbiquadfilters.h \
+    smoother.h
 
 OTHER_FILES += \
     Todo.txt

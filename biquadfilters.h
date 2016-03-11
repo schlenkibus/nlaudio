@@ -1,20 +1,23 @@
 #pragma once
 #include "math.h"
 
-enum BiquadFiltertype
+enum class BiquadFiltertype
 {
-    biquad_lowpass,
-    biquad_highpass,
-    biquad_lowshelf,
-    biquad_highshelf
+    lowpass,
+    highpass,
+    lowshelf,
+    highshelf
 };
 
 class BiquadFilters
 {
 public:
-    BiquadFilters(float _sRate, float _cutFreq = 22000.f, float _shelfAmp = 0.f,
-                  float _resonance = 0.5f, BiquadFiltertype _filtertype = BiquadFiltertype::biquad_lowpass)           // Constructor for static a biquad Filter
-        : sRate(_sRate)
+    BiquadFilters(int _sRate,
+                  float _cutFreq = 22000.f,
+                  float _shelfAmp = 0.f,
+                  float _resonance = 0.5f,
+                  BiquadFiltertype _filtertype = BiquadFiltertype::lowpass)           // Constructor for static a biquad Filter
+        : sRate(static_cast<float>(_sRate))
         , inCh1Delay1(0.f)          //Delays
         , inCh1Delay2(0.f)
         , outCh1Delay1(0.f)
@@ -40,20 +43,20 @@ public:
 
     void setCutFreq(float _cutFreq)                  /*set cut frequency*/
     {
-        if (_cutFreq < (sRate / 24000.f))            //Check for Frequency clipping
+        if (_cutFreq < (sRate / 24576.f))            //Frequency clipping
         {
-            _cutFreq = sRate / 24000.f;
+            _cutFreq = sRate / 24576.f;
         }
 
-        else if (_cutFreq > (sRate / 2.18f))
+        else if (_cutFreq > (sRate / 2.125f))
         {
-            _cutFreq = sRate / 2.18f;
+            _cutFreq = sRate / 2.125f;
         }
 
         float omega = _cutFreq * (2.f * M_PI / sRate);     //Frequncy to Omega (Warp)
 
-        omega_cos = reakCos(omega);                        //alternative to cos(cutFreq);
-        omega_sin = reakSin(omega);                        //alternative to sin(cutFreq);
+        omega_cos = reakCos(omega);                        //alternative to cos(omega);
+        omega_sin = reakSin(omega);                        //alternative to sin(omega);
 
         setAlpha();
         calcCoeff();
@@ -71,7 +74,7 @@ public:
     {
         resonance = _resonance;
 
-        if (resonance > 0.999f)                     //check for resonance clipping
+        if (resonance > 0.999f)                     //Resonance clipping
         {
             resonance = 0.999f;
         }
@@ -85,7 +88,7 @@ public:
         calcCoeff();
     }
 
-    void setFiltertype(BiquadFiltertype _filtertype)                // set filtertype
+    void setFiltertype(BiquadFiltertype _filtertype)                /*set filtertype*/
     {
         filtertype = _filtertype;
         resetDelays();
@@ -93,7 +96,7 @@ public:
     }
 
 
-    float applyFilter(float currSample, unsigned int channelIndex)
+    float applyFilter(float currSample, unsigned int channelIndex)  /*apply coefficients to incoming sample*/
     {
         float output = 0.f;
 
@@ -152,93 +155,63 @@ private:
     float outCh2Delay1;
     float outCh2Delay2;
 
-    float b0, b1, b2, a0, a1, a2;               //Coefficient - array!?
+    float b0, b1, b2, a0, a1, a2;         //Coefficients
 
-    BiquadFiltertype filtertype;                //Filtertype
+    BiquadFiltertype filtertype;
 
-    void calcCoeff()
+    void calcCoeff()                                /*check which Filter is active and calculate coefficients*/
     {
         float coeff;
-        switch(filtertype)                        //check which Filter is active and update coefficients
+        switch(filtertype)
         {
-            case BiquadFiltertype::biquad_lowpass:
-            a0 = 1 + alpha;
+            case BiquadFiltertype::lowpass:
 
+            a0 = 1.f + alpha;
             a1 = omega_cos * -2.f;
-            a1 /= (-1.f * a0);
-
-            a2 = 1 - alpha;
-            a2 /= (-1.f * a0);
-
-            b0 = (1 - omega_cos) / 2.f;
-            b0 /= a0;
-
-            b1 = 1 - omega_cos;
-            b1 /= a0;
-
+            a2 = 1.f - alpha;
+            b0 = (1.f - omega_cos) / 2.f;
+            b1 = 1.f - omega_cos;
             b2 = b0;
             break;
 
-            case BiquadFiltertype::biquad_highpass:
-            a0 = 1 + alpha;
+            case BiquadFiltertype::highpass:
 
+            a0 = 1.f + alpha;
             a1 = omega_cos * -2.f;
-            a1 /= (-1.f * a0);
-
-            a2 = 1 - alpha;
-            a2 /= (-1.f * a0);
-
-            b0 = (1 + omega_cos) / 2.f;
-            b0 /= a0;
-
-            b1 = (1 + omega_cos) * -1.f;
-            b1 /= a0;
-
+            a2 = 1.f - alpha;
+            b0 = (1.f + omega_cos) / 2.f;
+            b1 = (1.f + omega_cos) * -1.f;
             b2 = b0;
             break;
 
-            case BiquadFiltertype::biquad_lowshelf:
+            case BiquadFiltertype::lowshelf:
             coeff = beta * alpha;
 
             a0 = (shelfAmp + 1.f) + (omega_cos * (shelfAmp - 1.f)) + coeff;
-
             a1 = ((shelfAmp - 1.f) + (omega_cos * (shelfAmp + 1.f))) * -2.f;
-            a1 /= (-1.f * a0);
-
             a2 = (shelfAmp + 1.f) + (omega_cos * (shelfAmp - 1.f)) - coeff;
-            a2 /= (-1.f * a0);
-
             b0 = ((shelfAmp + 1.f) - (omega_cos * (shelfAmp - 1.f)) + coeff) * shelfAmp;
-            b0 /= a0;
-
             b1 = ((shelfAmp - 1.f) - (omega_cos * (shelfAmp + 1.f))) * 2.f * shelfAmp;
-            b1 /= a0;
-
             b2 = ((shelfAmp + 1.f) - (omega_cos * (shelfAmp - 1.f)) - coeff) * shelfAmp;
-            b2 /= a0;
             break;
 
-            case BiquadFiltertype::biquad_highshelf:
+            case BiquadFiltertype::highshelf:
             coeff = beta * alpha;
 
             a0 = (shelfAmp + 1.f) - (omega_cos * (shelfAmp - 1.f)) + coeff;
-
             a1 = ((shelfAmp - 1.f) - (omega_cos * (shelfAmp + 1.f))) * 2.f;
-            a1 /= (-1.f * a0);
-
             a2 = (shelfAmp + 1.f) - (omega_cos * (shelfAmp - 1.f)) - coeff;
-            a2 /= (-1.f * a0);
-
             b0 = ((shelfAmp + 1.f) + (omega_cos * (shelfAmp - 1.f)) + coeff) * shelfAmp;
-            b0 /= a0;
-
             b1 = ((shelfAmp - 1.f) + (omega_cos * (shelfAmp + 1.f))) * -2.f * shelfAmp;
-            b1 /= a0;
-
             b2 = ((shelfAmp + 1.f) + (omega_cos * (shelfAmp - 1.f)) - coeff) * shelfAmp;
-            b2 /= a0;
             break;
         }
+
+        a1 /= (-1.f * a0);              //normalize
+        a2 /= (-1.f * a0);
+        b0 /= a0;
+        b1 /= a0;
+        b2 /= a0;
     }
 
     inline void setAlpha()
@@ -246,7 +219,7 @@ private:
         alpha = omega_sin * (1.f - resonance);
     }
 
-    void resetDelays()              //sould think about an array and smoothing...
+    void resetDelays()              /*Resets the delays if the filtertype is changed - smoothing!?*/
     {
         inCh1Delay1 = 0.f;          //Channel 1
         inCh1Delay2 = 0.f;
@@ -259,14 +232,16 @@ private:
         outCh2Delay2 = 0.f;
     }
 
-
     /*as applied in Reaktor --- befindet sich hier vorübergehend*/
     float reakSin(float x){
 
         float x_square = x * x;
 
-        x = ((((((x_square * -2.39f * pow(10.f, -8.f) + 2.7526f * pow(10.f, -6.f)) * x_square + (0.198409f * pow(10.f, -3.f)))
-                * x_square + (8.33333f * pow(10.f, -3.f))) * x_square + (-0.166667f)) * x_square) + 1.f) * x;
+        x = (((((x_square * -2.39f * pow(10.f, -8.f) + 2.7526f * pow(10.f, -6.f))
+                * x_square + (0.198409f * pow(10.f, -3.f)))
+               * x_square + 0.008333f)
+              * x_square + (-0.166667f))
+             * x_square + 1.f) * x;
 
         return x;
     }
@@ -276,8 +251,11 @@ private:
 
         float x_square = x * x;
 
-        x = (((((x_square * -2.605f * pow(10.f, -7.f) + 2.47609 * pow(10.f, -5.f)) * x_square + (-0.00138884)) * x_square + 0.0416666)
-              * x_square + (-0.499923)) * x_square) + 1.f;
+        x = (((((x_square * -2.605f * pow(10.f, -7.f) + 2.47609 * pow(10.f, -5.f))
+                * x_square + (-0.00138884))
+               * x_square + 0.0416666)
+              * x_square + (-0.499923))
+             * x_square) + 1.f;
 
         return x;
     }

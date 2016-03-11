@@ -81,21 +81,31 @@ namespace MINISYNTH {
                     notesOn--;
                 }
 
-#if 1
+
                 if (midiByteBuffer[0] == 0xB0)
                 {
                     /*Cabinet*/
                     /*Retrieve hiCut Frequency from Knob [B0 05] and calculate Frequency this schould be from 260Hz to 26737Hz*/
                     if (midiByteBuffer[1] == 0x05)
                     {
-                        hiCut = 260.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 19.f);
+                        // Pitch Values for better testing
+                        hiCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 60.f;
+                        hiCut = pow(2.f, (hiCut - 69.f) / 12) * 440.f;
+
+                        //hiCut = 260.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 19.f);
+
                         cabinet.setHiCut(hiCut);
                     }
 
                     /*Retrieve loCut Frequency from Knob [B0 50] and calculate Frequency this schould be from 25Hz to 2637Hz*/
                     if (midiByteBuffer[1] == 0x50)
                     {
-                        loCut = 25.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 18.9f);
+                        // Pitch Values for better testing
+                        loCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 20.f;
+                        loCut = pow(2.f, (loCut - 69.f) / 12) * 440.f;
+
+                        //loCut = 25.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 18.9f);
+
                         cabinet.setLoCut(loCut);
                     }
 
@@ -123,7 +133,7 @@ namespace MINISYNTH {
                     /*Retrieve Tilt from Fader [B0 52]*/
                     if (midiByteBuffer[1] == 0x52)
                     {
-                        tilt = (static_cast<float>(midiByteBuffer[2]) - 64.f) * (50.f / 64.f);
+                        tilt = (static_cast<float>(midiByteBuffer[2]) - 63.5f) * (50.f / 63.5f);
                         cabinet.setTilt(tilt);
                     }
 
@@ -141,7 +151,7 @@ namespace MINISYNTH {
                         cabinet.setAsym(asym);
                     }
                 }
-#endif
+
 #if 0
                 /*Input-Switch Selection - not used for now*/
                 if (midiByteBuffer[2] > 0x00 && midiByteBuffer[1] == 0x48)
@@ -171,8 +181,8 @@ namespace MINISYNTH {
             {
                 for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex)
                 {
-                    outputSample = sineSamples[frameIndex] * velocity;
                     outputSample = cabinet.applyCab(outputSample, channelIndex);                        //Cabinet influence
+                    outputSample = sineSamples[frameIndex] * velocity;                                  //Velocity influence
                     setSample(out, outputSample, frameIndex, channelIndex, sampleSpecs);
                 }
             }
