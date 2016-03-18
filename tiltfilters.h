@@ -1,5 +1,5 @@
 #pragma once
-#include "math.h"
+#include "tools.h"
 
 enum class TiltFiltertype
 {
@@ -58,8 +58,8 @@ public:
 
         float omega = _cutFreq * (2.f * M_PI / sRate);      //Freqnecy to omega (warp)
 
-        omega_sin = reakSin(omega);                         //alternative to sin(omega)
-        omega_cos = reakCos(omega);                         //alternative to cos(omega)
+        omega_sin = Nl::sin(omega);                         //alternative to sin(omega)
+        omega_cos = Nl::cos(omega);                         //alternative to cos(omega)
 
         setAlpha();
         calcCoeff();
@@ -89,7 +89,9 @@ public:
 
     void setSlopeWidth(float _slopeWidth)                   /*set slope width*/
     {
-        slopeWidth = _slopeWidth;
+        slopeWidth = _slopeWidth < 1.f                      //min clip check
+        ? 1.f
+        : _slopeWidth;
 
         setAlpha();
         calcCoeff();
@@ -238,7 +240,7 @@ private:
         outCh2Delay1 = 0.f;
         outCh2Delay2 = 0.f;
     }
-
+#if 0
     /*as applied in Reaktor --- befindet sich hier vorübergehend*/
     float reakSin(float x){
 
@@ -266,4 +268,5 @@ private:
 
         return x;
     }
+#endif
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "math.h"
+#include "tools.h"
 
 enum class BiquadFiltertype
 {
@@ -55,8 +55,8 @@ public:
 
         float omega = _cutFreq * (2.f * M_PI / sRate);     //Frequncy to Omega (Warp)
 
-        omega_cos = reakCos(omega);                        //alternative to cos(omega);
-        omega_sin = reakSin(omega);                        //alternative to sin(omega);
+        omega_cos = Nl::cos(omega);                        //alternative to cos(omega) -> tools.h ;
+        omega_sin = Nl::sin(omega);                        //alternative to sin(omega) -> tools.h;
 
         setAlpha();
         calcCoeff();
@@ -96,11 +96,11 @@ public:
     }
 
 
-    float applyFilter(float currSample, unsigned int channelIndex)  /*apply coefficients to incoming sample*/
+    float applyFilter(float currSample, unsigned int chInd)  /*apply coefficients to incoming sample*/
     {
         float output = 0.f;
 
-        if(channelIndex == 0)
+        if(chInd == 0)
         {
             output += b0 * currSample;
             output += b1 * inCh1Delay1;
@@ -116,7 +116,7 @@ public:
             outCh1Delay1 = output;
         }
 
-        else if (channelIndex == 1)
+        else if (chInd == 1)
         {
             output += b0 * currSample;
             output += b1 * inCh2Delay1;
@@ -232,6 +232,7 @@ private:
         outCh2Delay2 = 0.f;
     }
 
+#if 0
     /*as applied in Reaktor --- befindet sich hier vorübergehend*/
     float reakSin(float x){
 
@@ -246,6 +247,7 @@ private:
         return x;
     }
 
+
     /*as applied in Reaktor --- befindet sich hier vorübergehend*/
     float reakCos(float x){
 
@@ -259,4 +261,5 @@ private:
 
         return x;
     }
+#endif
 };

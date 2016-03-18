@@ -4,12 +4,14 @@
 #include "altbiquadfilters.h"
 #include "cabinet.h"
 #include "smoother.h"
+#include "echo.h"
 
 //#define ONEPOLE 1                 //choose which filter you want to test here
 //#define BIQUAD 1
 //#define ALTBIQUAD 1
 //#define TILTFILTER 1
-#define CABINET 1
+//#define CABINET 1
+#define ECHO 1
 
 
 #include "stopwatch.h"
@@ -104,6 +106,15 @@ namespace EFFECTS{
         static float fold;
         static float asym;
 #endif
+#ifdef ECHO
+        static Echo echo(samplerate);
+        static float delayTime;
+        static float stereoAmnt;
+        static float feedback;
+        static float hiCut;
+        static float crossFeedback;
+        static float mix;
+#endif
         auto midiBuffer = getBufferForName("MidiBuffer");
 
         /*Retrieve Midi Information if midi values have changed*/
@@ -118,7 +129,7 @@ namespace EFFECTS{
                 //printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      //MIDI Value Output
 
                 /*Retrieve Volume Fader Value and calculate current Volume*/
-                if (midiByteBuffer[1] == 0x06)
+                if (midiByteBuffer[1] == 0x02)
                 {
                     curMidiValue = static_cast<float>(midiByteBuffer[2]);
 
@@ -135,14 +146,31 @@ namespace EFFECTS{
                 }
 
                 /*calculate crossfade values from midi input*/
-                if (midiByteBuffer[1] == 0x12)
+                if (midiByteBuffer[1] == 0x03)
                 {
                     crossfadeFactor = static_cast<float>(midiByteBuffer[2])/127;
                     crossfadeSmoother.initSmoother(crossfadeFactor);
                 }
 
+                /*Change Crossfade Switch State, if the Value has changed*/
+                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x22))
+                {
+                    switch (crossfadeSwitch)
+                    {
+                        case 0:
+                        crossfadeSwitch = 1;
+                        printf("Crossfade: ON\n");
+                        break;
+
+                        case 1:
+                        crossfadeSwitch = 0;
+                        printf("Crossfade: OFF\n");
+                        break;
+                    }
+                }
+
                 /*Retrieve Frequency Fader Value and calculate Frequency*/
-                if (midiByteBuffer[1] == 0x02)
+                if (midiByteBuffer[1] == 0x16)
                 {
                     curFrequency = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
                 }
@@ -167,7 +195,7 @@ namespace EFFECTS{
                 }
 
                 /*Change Mute Switch State, if the Value has changed*/
-                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x25))
+                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x21))
                 {
                     switch (muteSwitch)
                     {
@@ -185,27 +213,10 @@ namespace EFFECTS{
                     }
                 }
 
-                /*Change Crossfade Switch State, if the Value has changed*/
-                if ((midiByteBuffer[2] > 0x00) && (midiByteBuffer[1] == 0x1B))
-                {
-                    switch (crossfadeSwitch)
-                    {
-                        case 0:
-                        crossfadeSwitch = 1;
-                        printf("Crossfade: ON\n");
-                        break;
-
-                        case 1:
-                        crossfadeSwitch = 0;
-                        printf("Crossfade: OFF\n");
-                        break;
-                    }
-                }
-
 #ifdef ONEPOLE
                 /*1-Pole Filters*/
-                /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
-                if (midiByteBuffer[1] == 0x13)
+                /*Retrieve cutoff Frequency from Knob [12] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x12)
                 {
                     cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
 
@@ -213,7 +224,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
-                if (midiByteBuffer[1] == 0x08)
+                if (midiByteBuffer[1] == 0x06)
                 {
                     shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64) * 12.f) / 64.f;
 
@@ -223,11 +234,11 @@ namespace EFFECTS{
                 }
 
                 /*Filter Passtype Switch*/
-                if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
+                if ((midiByteBuffer[1] == 0x1B) && (midiByteBuffer[2] > 0x00))
                 {
                     ++switchCounter;
-                    currSample = lowpass1.applyF0.032f)ilter(currSample, channelIndex);
-                    currSample = lowpass2.applyFilter(currSample, channelIndex);
+                    //currSample = lowpass1.applyF0.032f)ilter(currSample, channelIndex);
+                    //currSample = lowpass2.applyFilter(currSample, channelIndex);
                     if (switchCounter > 3)
                         switchCounter = 0;
 
@@ -258,16 +269,16 @@ namespace EFFECTS{
 #endif
 #ifdef BIQUAD
                 /*Biquad Filters*/
-                /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
-                if (midiByteBuffer[1] == 0x13)
+                /*Retrieve cutoff Frequency from Knob [12] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x12)
                 {
                     cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
 
                     biquadFilter.setCutFreq(cutoffFreq);
                 }
 
-                /*Retrieve resonance Frequency from Knob [14] and calculate Frequency this schould be from 20Hz to 20kHz*/
-                if (midiByteBuffer[1] == 0x14)
+                /*Retrieve resonance Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x13)
                 {
                     resonance = (static_cast<float>(midiByteBuffer[2]) - 64.f) / 32.f;
 
@@ -275,7 +286,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
-                if (midiByteBuffer[1] == 0x08)
+                if (midiByteBuffer[1] == 0x06)
                 {
                     shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64.f) * 12.f) / 64.f;
 
@@ -286,7 +297,7 @@ namespace EFFECTS{
                 }
 
                 /*Filter Passtype Switch*/
-                if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
+                if ((midiByteBuffer[1] == 0x1B) && (midiByteBuffer[2] > 0x00))
                 {
                     ++switchCounter;
                     if (switchCounter > 3)
@@ -320,16 +331,16 @@ namespace EFFECTS{
 #endif
 #ifdef ALTBIQUAD
                 /*Biquad Filters*/
-                /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
-                if (midiByteBuffer[1] == 0x13)
+                /*Retrieve cutoff Frequency from Knob [12] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x12)
                 {
                     cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
 
                     altBiquadFilter.setCutFreq(cutoffFreq);
                 }
 
-                /*Retrieve resonance Frequency from Knob [14] and calculate Frequency this schould be from 20Hz to 20kHz*/
-                if (midiByteBuffer[1] == 0x14)
+                /*Retrieve resonance Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x13)
                 {
                     resonance = (static_cast<float>(midiByteBuffer[2]) - 64.f) / 32.f;
 
@@ -337,7 +348,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
-                if (midiByteBuffer[1] == 0x08)
+                if (midiByteBuffer[1] == 0x06)
                 {
                     shelfAmp = ((static_cast<float>(midiByteBuffer[2]) - 64.f) * 12.f) / 64.f;
 
@@ -348,7 +359,7 @@ namespace EFFECTS{
                 }
 
                 /*Filter Passtype Switch*/
-                if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
+                if ((midiByteBuffer[1] == 0x1B) && (midiByteBuffer[2] > 0x00))
                 {
                     ++switchCounter;
                     if (switchCounter > 3)
@@ -381,16 +392,16 @@ namespace EFFECTS{
 #endif
 #ifdef TILTFILTER
                 /*TILT Filters*/
-                /*Retrieve cutoff Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
-                if (midiByteBuffer[1] == 0x13)
+                /*Retrieve cutoff Frequency from Knob [12] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x12)
                 {
                     cutoffFreq = 20.f * pow(2.f, static_cast<double>(midiByteBuffer[2]) / 12.75f);
 
                     tiltFilter.setCutFreq(cutoffFreq);
                 }
 
-                /*Retrieve resonance Frequency from Knob [14] and calculate Frequency this schould be from 20Hz to 20kHz*/
-                if (midiByteBuffer[1] == 0x14)
+                /*Retrieve resonance Frequency from Knob [13] and calculate Frequency this schould be from 20Hz to 20kHz*/
+                if (midiByteBuffer[1] == 0x13)
                 {
                     resonance = (static_cast<float>(midiByteBuffer[2]) - 64.f) / 32.f;
 
@@ -398,7 +409,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve shelf amplification from fader - Range -12dB .. 12dB*/
-                if (midiByteBuffer[1] == 0x08)
+                if (midiByteBuffer[1] == 0x06)
                 {
                     tilt = (static_cast<float>(midiByteBuffer[2]) - 64.f) * (50.f / 64.f);
 
@@ -409,7 +420,7 @@ namespace EFFECTS{
                 }
 
                 /*Filter Passtype Switch*/
-                if ((midiByteBuffer[1] == 0x1C) && (midiByteBuffer[2] > 0x00))
+                if ((midiByteBuffer[1] == 0x1B) && (midiByteBuffer[2] > 0x00))
                 {
                     ++switchCounter;
                     if (switchCounter > 3)
@@ -444,7 +455,7 @@ namespace EFFECTS{
 #ifdef CABINET
                 /*Cabinet*/
                 /*Retrieve hiCut Frequency from Knob [13] and calculate Frequency this schould be from 260Hz to 26737Hz*/
-                if (midiByteBuffer[1] == 0x13)
+                if (midiByteBuffer[1] == 0x12)
                 {
                     // Pitch Values for better testing
                     hiCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 60.f;
@@ -458,7 +469,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve loCut Frequency from Knob [20] and calculate Frequency this schould be from 25Hz to 2637Hz*/
-                if (midiByteBuffer[1] == 0x14)
+                if (midiByteBuffer[1] == 0x13)
                 {
                     // Pitch Values for better testing
                     loCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 20.f;
@@ -472,7 +483,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve mix amount from Fader [03]*/
-                if (midiByteBuffer[1] == 0x03)
+                if (midiByteBuffer[1] == 0x04)
                 {
                     mix = static_cast<float>(midiByteBuffer[2]) / 127.f;
                     printf("Mix: %f\n", mix);
@@ -480,7 +491,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve Cabinet Level from Fader [04]*/
-                if (midiByteBuffer[1] == 0x04)
+                if (midiByteBuffer[1] == 0x0C)
                 {
                     cabLvl = (static_cast<float>(midiByteBuffer[2]) - 127.f) * (50.f / 127.f);
                     printf("Cab Lvl: %f\n", cabLvl);
@@ -489,7 +500,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve Drive from Fader [05]*/
-                if (midiByteBuffer[1] == 0x05)
+                if (midiByteBuffer[1] == 0x09)
                 {
                     drive = static_cast<float>(midiByteBuffer[2]) * (50.f / 127.f);
                     printf("Drive: %f\n", drive);
@@ -507,7 +518,7 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve Fold from Fader [09]*/
-                if (midiByteBuffer[1] == 0x09)
+                if (midiByteBuffer[1] == 0x05)
                 {
                     fold = static_cast<float>(midiByteBuffer[2]) / 127.f;
                     printf("Fold: %f\n", fold);
@@ -516,13 +527,70 @@ namespace EFFECTS{
                 }
 
                 /*Retrieve Asym from Fader [0C]*/
-                if (midiByteBuffer[1] == 0x0C)
+                if (midiByteBuffer[1] == 0x06)
                 {
                     asym = static_cast<float>(midiByteBuffer[2]) / 127.f;
                     printf("Asym: %f\n", asym);
 
                     cabinet.setAsym(asym);
                 }
+#endif
+
+#ifdef ECHO     //CHECK THE KNOB ASSIGNMENT//
+
+                /*Echo*/
+                /*Retrieve hiCut Frequency from Knob [12] and calculate Frequency this schould be from 260Hz to 26737Hz*/
+                if (midiByteBuffer[1] == 0x12)
+                {
+                    hiCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 60.f;          // Pitch Values for better testing
+                    printf("HiCut: %f\n", hiCut);
+
+                    hiCut = pow(2.f, (hiCut - 69.f) / 12) * 440.f;
+
+                    echo.setHiCut(hiCut);
+                }
+
+                /*Retrieve mix amount from Fader [04]*/
+                if (midiByteBuffer[1] == 0x04)
+                {
+                    mix = static_cast<float>(midiByteBuffer[2]) / 127.f;
+                    printf("Mix: %f\n", mix);
+                    echo.setMix(mix);
+                }
+
+                /*Retriev delay Time from Fader [05]*/
+                if (midiByteBuffer[1] == 0x05)
+                {
+                    delayTime = static_cast<float>(midiByteBuffer[2]) / 127.f;
+                    delayTime = delayTime * delayTime * 1.5f;
+                    printf("Time: %f\n", delayTime * 1000.f);
+                    echo.setTime(delayTime);
+                }
+
+                /*Retriev Stereo Amount from Fader [06]*/
+                if (midiByteBuffer[1] == 0x06)
+                {
+                    stereoAmnt = (static_cast<float>(midiByteBuffer[2]) - 63.5f) * (33.f / 63.5f);
+                    printf("Stereo: %f\n", stereoAmnt);
+                    echo.setStereo(stereoAmnt);
+                }
+
+                /*Retriev Feedback Amount from Fader [08]*/
+                if (midiByteBuffer[1] == 0x08)
+                {
+                    feedback = static_cast<float>(midiByteBuffer[2]) / 127.f;
+                    printf("Feedback: %f\n", feedback);
+                    echo.setFeedback(feedback);
+                }
+
+                /*Retriev Cross Feedback Amount from Fader [09]*/
+                if (midiByteBuffer[1] == 0x09)
+                {
+                    crossFeedback = static_cast<float>(midiByteBuffer[2]) / 127.f;
+                    printf("Feedback: %f\n", crossFeedback);
+                    echo.setCrossFeedback(crossFeedback);
+                }
+
 #endif
             }
         }
@@ -581,6 +649,9 @@ namespace EFFECTS{
 #endif
 #ifdef CABINET
                 outputSample = cabinet.applyCab(outputSample, channelIndex);
+#endif
+#ifdef ECHO
+                outputSample = echo.applyEcho(outputSample, channelIndex);
 #endif
                 outputSample *= volumeFactor;               //Volume Influence
                 outputSample *= muteFactor;                 //Main Mute Influence

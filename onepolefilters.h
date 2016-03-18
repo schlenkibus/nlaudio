@@ -1,7 +1,5 @@
 #pragma once
-//#include <array>
-//#include <cmath>
-#include "math.h"
+#include "tools.h"
 
 /** @file       onepolefilters.h
     @date       2016-04-02
@@ -20,7 +18,10 @@ enum class OnePoleFiltertype
 class OnePoleFilters{
     public:
 
-    OnePoleFilters(int _sRate, float _cutFreq = 22000, float _shelfAmp = 0.f, OnePoleFiltertype _filtertype = OnePoleFiltertype::lowpass)            //Constructor for static 1-pole bilinear LP
+    OnePoleFilters(int _sRate,
+                   float _cutFreq = 22000,
+                   float _shelfAmp = 0.f,
+                   OnePoleFiltertype _filtertype = OnePoleFiltertype::lowpass)            //Constructor for static 1-pole bilinear LP
         : sRate(static_cast<float>(_sRate))
         , inCh1Delay1(0.f)
         , outCh1Delay1(0.f)
@@ -57,7 +58,7 @@ class OnePoleFilters{
         }
 
         _cutFreq *= (M_PI / sRate);                //Warp the incoming frequency
-        omega_tan = reakTan(_cutFreq);             //alternative to tan(cutFreq);
+        omega_tan = Nl::tan(_cutFreq);             //alternative to tan(cutFreq) -> tools.h;
 
         calcCoeff();
     }
@@ -77,17 +78,11 @@ class OnePoleFilters{
         calcCoeff();
     }
 
-    /** \ingroup Filters
-    *
-    * \brief Apply coefficients to the Input
-    * \param current Sample
-    * \param channel Index (assuming we are using 2 channels)
-    */
-    float applyFilter(float currSample, unsigned int channelIndex)
+    float applyFilter(float currSample, unsigned int chInd)
     {
         float output = 0.f;
 
-        if(channelIndex == 0)
+        if(chInd == 0)
         {
             output += b0 * currSample;
             output += b1 * inCh1Delay1;
@@ -97,7 +92,7 @@ class OnePoleFilters{
             outCh1Delay1 = output;
         }
 
-        else if (channelIndex == 1)
+        else if (chInd == 1)
         {
             output += b0 * currSample;
             output += b1 * inCh2Delay1;
@@ -164,7 +159,7 @@ private:
         inCh2Delay1 = 0.f;          //Channel 2
         outCh2Delay1 = 0.f;
     }
-
+#if 0
     /*as applied in Reaktor*/
     float reakTan(float x){
 
@@ -172,6 +167,7 @@ private:
 
         return x;
     }
+#endif
 };
 
 

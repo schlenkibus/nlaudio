@@ -238,5 +238,74 @@ inline void sinewave<float>(float *buffer, unsigned int buffersize)
     }
 }
 
+/** \ingroup Tools
+ *
+ *  \brief Calculate the sine of the incoming value (as often found in Reaktor)
+ *  \param value
+ *  \code{.cpp}
+ *  Nl::sin<float>(val)
+ *  \endcode
+*/
+template<typename T>
+inline T sin(T val)
+{
+    T val_square = val * val;
 
+    val = (((((val_square * -2.39f * pow(10.f, -8.f) + 2.7526f * pow(10.f, -6.f))
+            * val_square + (0.198409f * pow(10.f, -3.f)))
+           * val_square + 0.008333f)
+          * val_square + (-0.166667f))
+         * val_square + 1.f) * val;
+
+    return val;
+}
+
+/** \ingroup Tools
+ *
+ *  \brief Calculate the cosine of the incoming value (as often found in Reaktor)
+ *  \param value
+ *  \code{.h}
+ *  Nl::cos<float>(val)
+ *  \endcode
+*/
+template<typename T>
+inline T cos(T val)
+{
+    T val_square = val * val;
+
+    val = (((((val_square * -2.605f * pow(10.f, -7.f) + 2.47609 * pow(10.f, -5.f))
+            * val_square + (-0.00138884))
+           * val_square + 0.0416666)
+          * val_square + (-0.499923))
+         * val_square) + 1.f;
+
+    return val;
+}
+
+/** \ingroup Tools
+ *
+ *  \brief Calculate the tangent of the incoming value (as found in Reaktor)
+ *  \param value
+ *  \code{.h}
+ *  Nl::tan<float>(val)
+ *  \endcode
+*/
+template<typename T>
+inline T tan(T val)
+{
+    val = 0.133333 * pow(val, 5.f) + 0.333333 * pow(val, 3.f) + val;
+
+    return val;
+}
+
+/** @brief    calculation of dry and wet amounts depending on mix amount
+ *  @param    raw Sample
+ *  @param    processed sample
+ *  @return   a mix of both samples
+*/
+template<typename T>
+inline T db2af(T dbIn)
+{
+    return pow(1.12202f, dbIn);
+}
 } // namespace Nl

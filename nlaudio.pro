@@ -60,7 +60,8 @@ HEADERS += \
     cabinet.h \
     tiltfilters.h \
     altbiquadfilters.h \
-    smoother.h
+    smoother.h \
+    echo.h
 
 OTHER_FILES += \
     Todo.txt
