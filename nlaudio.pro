@@ -34,7 +34,8 @@ SOURCES += main.cpp \
     audiojackinput.cpp \
     audiojack.cpp \
     vamp-simple-host.cpp \
-    vamphost.cpp
+    vamphost.cpp \
+    vamphostaubiotempo.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -64,7 +65,8 @@ HEADERS += \
     nonblockingcircularbuffer.h \
     audiojackinput.h \
     audiojack.h \
-    vamphost.h
+    vamphost.h \
+    vamphostaubiotempo.h
 
 OTHER_FILES += \
     Todo.txt

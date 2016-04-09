@@ -99,12 +99,12 @@ int main()
 		}
 #endif
 
-		const int buffersize = 256;
+		const int buffersize = 512;
 		const int samplerate = 48000;
 		const int channels = 2;
 
 		//last param: fixedtempo, percussiononsets
-		auto handle = Nl::Examples::vampPlugin(audioIn, channels, buffersize, samplerate, "vamp-aubio", "aubiotempo");
+		auto handle = Nl::Examples::vampPlugin(audioIn, channels, buffersize, samplerate);
 		//auto handle = Nl::Examples::onsetDetection(audioIn, buffersize, samplerate);
 		//auto handle = Nl::Examples::jackInputToOutput(audioIn, audioOut, buffersize, samplerate);
 		//auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);

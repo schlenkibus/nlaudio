@@ -4,6 +4,7 @@
 #include "audioalsainput.h"
 #include "audioalsaoutput.h"
 #include "rawmididevice.h"
+#include "vamphostaubiotempo.h"
 #include "tools.h"
 
 #include <aubio/aubio.h>
@@ -24,59 +25,6 @@ using Vamp::HostExt::PluginLoader;
 using Vamp::HostExt::PluginWrapper;
 using Vamp::HostExt::PluginInputDomainAdapter;// Vamp plugins
 
-void
-printFeatures(int frame, int sr, int output,
-			  Plugin::FeatureSet features, std::ofstream *out, bool useFrames)
-{
-	for (unsigned int i = 0; i < features[output].size(); ++i) {
-
-		if (useFrames) {
-
-			int displayFrame = frame;
-
-			if (features[output][i].hasTimestamp) {
-				displayFrame = RealTime::realTime2Frame
-						(features[output][i].timestamp, sr);
-			}
-
-			(out ? *out : std::cout) << displayFrame;
-
-			if (features[output][i].hasDuration) {
-				displayFrame = RealTime::realTime2Frame
-						(features[output][i].duration, sr);
-				(out ? *out : std::cout) << "," << displayFrame;
-			}
-
-			(out ? *out : std::cout)  << ":";
-
-		} else {
-			static RealTime oldRt = RealTime::zeroTime;
-			RealTime rt = RealTime::frame2RealTime(frame, sr);
-			RealTime delta = rt - oldRt;
-			oldRt = rt;
-
-			if (features[output][i].hasTimestamp) {
-				rt = features[output][i].timestamp;
-			}
-
-			(out ? *out : std::cout) << delta.toString() << " BPM=" << 120.f / static_cast<double>((double)delta.msec()/1000.f + (double)delta.usec()/1000000.f + delta.sec);
-
-			if (features[output][i].hasDuration) {
-				rt = features[output][i].duration;
-				(out ? *out : std::cout) << "," << rt.toString();
-			}
-
-			(out ? *out : std::cout) << ":";
-		}
-
-		for (unsigned int j = 0; j < features[output][i].values.size(); ++j) {
-			(out ? *out : std::cout) << " " << features[output][i].values[j];
-		}
-		(out ? *out : std::cout) << " " << features[output][i].label;
-
-		(out ? *out : std::cout) << std::endl;
-	}
-}
 
 PluginLoader *loader = nullptr;
 Plugin *plugin = nullptr;
@@ -85,70 +33,12 @@ Plugin *plugin = nullptr;
 ExamplesHandle vampPlugin(const AlsaCardIdentifier &inCard,
 						  unsigned int channels,
 						  unsigned int buffersize,
-						  unsigned int samplerate,
-						  const std::string &libraryName,
-						  const std::string &pluginName)
+						  unsigned int samplerate)
 {
 
-	loader = PluginLoader::getInstance();
-	PluginLoader::PluginKey key = loader->composePluginKey(libraryName, pluginName);
-	plugin = loader->loadPlugin(key, samplerate, PluginLoader::ADAPT_ALL_SAFE);
-	if (!plugin)
-		std::cout << "ERR: " << __func__ << " no plugin" << std::endl;
-
-	int blockSize = buffersize; //plugin->getPreferredBlockSize();
-	int stepSize = 0; //plugin->getPreferredStepSize();
-
-	if (blockSize == 0) {
-		blockSize = 1024;
-	}
-	if (stepSize == 0) {
-		if (plugin->getInputDomain() == Plugin::FrequencyDomain) {
-			stepSize = blockSize/2;
-		} else {
-			stepSize = blockSize;
-		}
-	} else if (stepSize > blockSize) {
-		std::cerr << "WARNING: stepSize " << stepSize << " > blockSize " << blockSize << ", resetting blockSize to ";
-		if (plugin->getInputDomain() == Plugin::FrequencyDomain) {
-			blockSize = stepSize * 2;
-		} else {
-			blockSize = stepSize;
-		}
-		std::cerr << blockSize << std::endl;
-	}
-
-	std::cerr << "Using block size = " << blockSize << ", step size = "
-			  << stepSize << std::endl;
-
-	// The channel queries here are for informational purposes only --
-	// a PluginChannelAdapter is being used automatically behind the
-	// scenes, and it will take case of any channel mismatch
-
-	int minch = plugin->getMinChannelCount();
-	int maxch = plugin->getMaxChannelCount();
-	std::cerr << "Plugin accepts " << minch << " -> " << maxch << " channel(s)" << std::endl;
-	std::cerr << "Sound file has " << channels << " (will mix/augment if necessary)" << std::endl;
-
-	Plugin::OutputList outputs = plugin->getOutputDescriptors();
-	Plugin::OutputDescriptor od;
-
-	if (outputs.empty()) {
-		std::cerr << "ERROR: Plugin has no outputs!" << std::endl;
-		exit(-1);
-	}
-
-	for (int i=0; i<outputs.size(); i++) {
-		od = outputs[i];
-		std::cerr << "Output[" << i << "] is: \"" << od.identifier << "\"" << std::endl;
-	}
-
-	if (!plugin->initialise(channels, stepSize, blockSize)) {
-		std::cerr << "ERROR: Plugin initialise (channels = " << channels
-				  << ", stepSize = " << stepSize << ", blockSize = "
-				  << blockSize << ") failed." << std::endl;
-		exit(-1);
-	}
+	//Remider: This leaks
+	VampHostAubioTempo *bpmDetect = new VampHostAubioTempo(samplerate);
+	bpmDetect->initialize(channels, buffersize, buffersize);
 
 	ExamplesHandle ret;
 	ret.inBuffer = createBuffer("InputBuffer");
@@ -156,54 +46,23 @@ ExamplesHandle vampPlugin(const AlsaCardIdentifier &inCard,
 	ret.audioInput->setSamplerate(samplerate);
 	ret.audioInput->setChannelCount(channels);
 
+	UserPtr *ptr = new UserPtr("VampHostAubioTemp", static_cast<void*>(bpmDetect));
 
 	ret.audioInput->init();
-	ret.workingThreadHandle = registerInputCallbackOnBuffer(ret.inBuffer, vampPluginCallback);
+	ret.workingThreadHandle = registerInputCallbackOnBuffer(ret.inBuffer, vampPluginCallback, ptr);
 	ret.audioInput->start();
 
 	return ret;
 }
 
-void vampPluginCallback(uint8_t *in, size_t size, const SampleSpecs &sampleSpecs)
+void vampPluginCallback(uint8_t *in, const SampleSpecs &sampleSpecs, UserPtr *ptr)
 {
-	static long frame = 0;
-	frame += sampleSpecs.buffersizeInFramesPerPeriode;
-
-	RealTime adjustment = RealTime::zeroTime;
-
-	float **plugbuf = new float*[sampleSpecs.channels];
-	for (unsigned int c = 0; c < sampleSpecs.channels; ++c) plugbuf[c] = new float[sampleSpecs.buffersizeInFramesPerPeriode + 2];
-
-	for (unsigned int frameIndex=0; frameIndex<sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex) {
-		for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex) {
-			float currentSample = getSample(in, frameIndex, channelIndex, sampleSpecs);
-			plugbuf[channelIndex][frameIndex] = currentSample;
-		}
+	if (ptr->info != "VampHostAubioTemp") {
+		std::cerr << __func__ << ": UserPtr seems to be wrong type!" << std::endl;
 	}
 
-
-	auto wrapper = dynamic_cast<PluginWrapper *>(plugin);
-	if (wrapper) {
-		// See documentation for
-		// PluginInputDomainAdapter::getTimestampAdjustment
-		PluginInputDomainAdapter *ida =
-				wrapper->getWrapper<PluginInputDomainAdapter>();
-		if (ida) adjustment = ida->getTimestampAdjustment();
-	}
-
-	auto rt = RealTime::frame2RealTime(frame, sampleSpecs.samplerate);
-
-	bool useFrames = false;
-
-	int outputNo = 0;
-
-	//auto features = plugin->process(plugbuf, rt);
-
-
-
-	printFeatures(RealTime::realTime2Frame(rt + adjustment, sampleSpecs.samplerate),
-				  sampleSpecs.samplerate, outputNo, plugin->process(plugbuf, rt),
-				  nullptr, useFrames);
+	VampHostAubioTempo* handle = static_cast<VampHostAubioTempo*>(ptr->ptr);
+	handle->process(in, sampleSpecs);
 
 }
 
@@ -213,7 +72,7 @@ fvec_t *onset;
 fvec_t *input;
 smpl_t is_onset;
 
-void onsetDetectionCallback(u_int8_t *in, size_t size, const SampleSpecs &sampleSpecs)
+void onsetDetectionCallback(u_int8_t *in, const SampleSpecs &sampleSpecs, UserPtr *ptr)
 {
 	static int counterA = 0;
 	static int counter = 0;
@@ -253,7 +112,7 @@ ExamplesHandle onsetDetection(const AlsaCardIdentifier &inCard, unsigned int buf
 	ret.audioInput->setSamplerate(samplerate);
 
 	ret.audioInput->start();
-	ret.workingThreadHandle = registerInputCallbackOnBuffer(ret.inBuffer, onsetDetectionCallback);
+	ret.workingThreadHandle = registerInputCallbackOnBuffer(ret.inBuffer, onsetDetectionCallback, nullptr);
 
 	o = new_aubio_onset("default", buffersize, buffersize/2, samplerate);
 	input = new_fvec(buffersize);
@@ -274,12 +133,12 @@ ExamplesHandle onsetDetection(const AlsaCardIdentifier &inCard, unsigned int buf
 
 
 // In to out example
-void inToOutCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
+void inToOutCallback(u_int8_t *in, u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), UserPtr* ptr)
 {
 	static int counter = 0;
 	StopBlockTime sft(&sw, "val" + std::to_string(counter++));
 
-	memcpy(out, in, size);
+	memcpy(out, in, sampleSpecs.buffersizeInBytes);
 }
 
 ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate)
@@ -307,12 +166,12 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIde
 	ret.audioOutput->start();
 	ret.audioInput->start();
 
-	ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback);
+	ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback, nullptr);
 
 	return ret;
 }
 
-ExamplesHandle jackInputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate)
+ExamplesHandle jackInputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate, UserPtr* ptr)
 {
 	ExamplesHandle ret;
 
@@ -338,7 +197,7 @@ ExamplesHandle jackInputToOutput(const AlsaCardIdentifier &inCard, const AlsaCar
 	return ret;
 }
 
-void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs)
+void midiSineCallback(u_int8_t *out, const SampleSpecs &sampleSpecs, UserPtr *ptr)
 {
 	static int counter = 0;
 	StopBlockTime sft(&sw, "val" + std::to_string(counter++));
@@ -388,7 +247,7 @@ void midiSineCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs
 		}
 	}
 	else {
-		memset(out, 0, size);
+		memset(out, 0, sampleSpecs.buffersizeInBytesPerPeriode);
 	}
 }
 
@@ -426,15 +285,15 @@ ExamplesHandle midiSine(const AlsaCardIdentifier &audioOutCard,
 	std::cout << "MidiBufferSize: " << midiInput->getAlsaMidiBufferSize() << std::endl;
 
 	// Register a Callback
-	ret.workingThreadHandle = registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback);
+	ret.workingThreadHandle = registerOutputCallbackOnBuffer(ret.outBuffer, midiSineCallback, nullptr);
 
 	return ret;
 }
 
 // Silence Example
-void silenceCallback(u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
+void silenceCallback(u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
 {
-	memset(out, 0, size);
+	memset(out, 0, sampleSpecs.buffersizeInBytesPerPeriode);
 }
 
 ExamplesHandle silence(const AlsaCardIdentifier &audioOutCard,
@@ -458,12 +317,12 @@ ExamplesHandle silence(const AlsaCardIdentifier &audioOutCard,
 	ret.audioOutput->start();
 
 	// Register a Callback
-	ret.workingThreadHandle = registerOutputCallbackOnBuffer(ret.outBuffer, silenceCallback);
+//	ret.workingThreadHandle = registerOutputCallbackOnBuffer(ret.outBuffer, silenceCallback, nullptr);
 
 	return ret;
 }
 
-void inToOutCallbackWithMidi(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
+void inToOutCallbackWithMidi(u_int8_t *in, u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), UserPtr *ptr)
 {
 	static int counter = 0;
 	//StopBlockTime sft(&sw, "val" + std::to_string(counter++));
@@ -520,7 +379,10 @@ ExamplesHandle inputToOutputWithMidi(   const AlsaCardIdentifier &audioInCard,
 	ret.audioInput->start();
 	ret.midiInput->start();
 
-	ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallbackWithMidi);
+	//todo: this leaks
+	UserPtr *ptr = new UserPtr("unused", nullptr);
+
+	ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallbackWithMidi, ptr);
 
 	return ret;
 }

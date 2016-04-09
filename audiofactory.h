@@ -21,6 +21,20 @@
 
 namespace Nl {
 
+/**
+ * \brief The User Pointer struct
+ *
+ * A handle that is passed to the audio callbacks for userdata
+ *
+ */
+struct UserPtr {
+	UserPtr(const std::string info, void* ptr) :
+		info(info),
+		ptr(ptr) {}
+	std::string info; /**< A description of the type passed */
+	void *ptr;	/**< The actual user pointer */
+};
+
 class AudioAlsaInput;
 class AudioAlsaOutput;
 class RawMidiDevice;
@@ -28,10 +42,9 @@ class RawMidiDevice;
 /*! A shared handle to a \ref std::atomic<bool> */
 typedef std::shared_ptr<std::atomic<bool>> SharedTerminateFlag;
 
-
-typedef void (*AudioCallbackIn)(u_int8_t*, size_t size, const SampleSpecs &sampleSpecs);
-typedef void (*AudioCallbackOut)(u_int8_t*, size_t size, const SampleSpecs &sampleSpecs);
-typedef void (*AudioCallbackInOut)(u_int8_t*, uint8_t*, size_t size, const SampleSpecs &sampleSpecs);
+typedef void (*AudioCallbackIn)(u_int8_t*, const SampleSpecs &specs, UserPtr* ptr);
+typedef void (*AudioCallbackOut)(u_int8_t*, const SampleSpecs &specs, UserPtr* ptr);
+typedef void (*AudioCallbackInOut)(u_int8_t*, uint8_t*, const SampleSpecs &specs, UserPtr* ptr);
 
 /*! A shared handle to a \ref std::thread */
 typedef std::shared_ptr<std::thread> SharedThreadHandle;
@@ -71,18 +84,21 @@ SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedB
 SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
 
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
-												  AudioCallbackIn callback);
+												  AudioCallbackIn callback,
+												  UserPtr *ptr);
 WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
-												   AudioCallbackOut callback);
+												   AudioCallbackOut callback,
+												   UserPtr *ptr);
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
 												  SharedBufferHandle outBuffer,
-												  AudioCallbackInOut callback);
+												  AudioCallbackInOut callback,
+												  UserPtr* ptr);
 WorkingThreadHandle registerAutoDrainOnBuffer(SharedBufferHandle inBuffer);
 
 // Thread function, that handles blocking io calls on the buffers
 auto readAudioFunction = [](SharedBufferHandle audioBuffer,
 AudioCallbackIn callback,
-SharedTerminateFlag terminateRequest)
+SharedTerminateFlag terminateRequest, UserPtr *ptr)
 {
 
 	SampleSpecs sampleSpecs = audioBuffer->sampleSpecs();
@@ -92,7 +108,7 @@ SharedTerminateFlag terminateRequest)
 
 	while(!terminateRequest->load()) {
 		audioBuffer->get(buffer, buffersize);
-		callback(buffer, buffersize, sampleSpecs);
+		callback(buffer, sampleSpecs, ptr);
 	}
 
 	delete[] buffer;
@@ -101,7 +117,7 @@ SharedTerminateFlag terminateRequest)
 // Thread function, that handles blocking io calls on the buffers
 auto writeAudioFunction = [](SharedBufferHandle audioBuffer,
 AudioCallbackIn callback,
-SharedTerminateFlag terminateRequest) {
+SharedTerminateFlag terminateRequest, UserPtr *ptr) {
 
 	SampleSpecs sampleSpecs = audioBuffer->sampleSpecs();
 
@@ -111,7 +127,7 @@ SharedTerminateFlag terminateRequest) {
 	memset(buffer, 0, sampleSpecs.buffersizeInBytesPerPeriode);
 
 	while(!terminateRequest->load()) {
-		callback(buffer, buffersize, sampleSpecs);
+		callback(buffer, sampleSpecs, ptr);
 		audioBuffer->set(buffer, buffersize);
 	}
 
@@ -122,7 +138,7 @@ SharedTerminateFlag terminateRequest) {
 auto readWriteAudioFunction = [](SharedBufferHandle audioInBuffer,
 SharedBufferHandle audioOutBuffer,
 AudioCallbackInOut callback,
-SharedTerminateFlag terminateRequest) {
+SharedTerminateFlag terminateRequest, UserPtr *ptr) {
 
 	SampleSpecs sampleSpecsIn = audioInBuffer->sampleSpecs();
 	SampleSpecs sampleSpecsOut = audioOutBuffer->sampleSpecs();
@@ -143,7 +159,7 @@ SharedTerminateFlag terminateRequest) {
 
 	while(!terminateRequest->load()) {
 		audioInBuffer->get(inBuffer, inBuffersize);
-		callback(inBuffer, outBuffer, inBuffersize, sampleSpecsIn);
+		callback(inBuffer, outBuffer, sampleSpecsIn, ptr);
 		audioOutBuffer->set(outBuffer, inBuffersize);
 	}
 

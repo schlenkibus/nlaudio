@@ -280,14 +280,16 @@ SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedB
  *
 */
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
-													AudioCallbackIn callback)
+													AudioCallbackIn callback,
+													UserPtr *ptr)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();
     handle.thread = std::shared_ptr<std::thread>(new std::thread(readAudioFunction,
                                                                  inBuffer,
                                                                  callback,
-                                                                 handle.terminateRequest));
+																 handle.terminateRequest,
+																 ptr));
     return handle;
 }
 
@@ -304,14 +306,16 @@ WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
  *
 */
 WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
-													 AudioCallbackOut callback)
+												   AudioCallbackOut callback,
+												   UserPtr *ptr)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();
     handle.thread = std::shared_ptr<std::thread>(new std::thread(writeAudioFunction,
                                                                  outBuffer,
                                                                  callback,
-                                                                 handle.terminateRequest));
+																 handle.terminateRequest,
+																 ptr));
     return handle;
 }
 
@@ -330,7 +334,8 @@ WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
 */
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
 													SharedBufferHandle outBuffer,
-													AudioCallbackInOut callback)
+													AudioCallbackInOut callback,
+													UserPtr *ptr)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();
@@ -338,7 +343,8 @@ WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
                                                                  inBuffer,
                                                                  outBuffer,
                                                                  callback,
-                                                                 handle.terminateRequest));
+																 handle.terminateRequest,
+																 ptr));
     return handle;
 }
 
