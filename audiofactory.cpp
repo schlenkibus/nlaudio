@@ -83,8 +83,8 @@ SharedBufferHandle getBufferForName(const std::string& name)
 
 /** \ingroup Factory
  *
- * \brief Creates a handle to a RawMidiDevice device with a given \a name
- * \param name A device identifier, such as "hw:1,0,0"
+ * \brief Creates a handle to a RawMidiDevice device for a given \a card
+ * \param card A device identifier
  * \param buffer The buffer
  * \return A handle of type \ref RawMidiDevice_t
  *
@@ -101,20 +101,68 @@ SharedRawMidiDeviceHandle createRawMidiDevice(const AlsaCardIdentifier &card, Sh
 
 /** \ingroup Factory
  *
- * \brief Creates a handle to the output device with a given \a name
- * \param name A device identifier, such as "hw:1,0,0"
+ * \brief Creates a handle to the input device for a given \a card
+ * \param card A device identifier
  * \param buffer The buffer
  * \param buffersize Buffersize in frames.
- * \return A handle of type \ref AudioAlsaOutput_t
+ * \return A handle of type \ref SharedAudioHandle
  *
- * Factory function which creates a handle of type \ref AudioAlsaOutput_t to the given output device.\n
+ * Factory function which creates a handle of type \ref SharedAudioHandle to the given input device.\n
+ * ???? Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
+ * The device is automatically opened.\n
+ *
+*/
+SharedAudioHandle createJackInputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
+{
+	SharedAudioHandle input(new AudioJack(card, buffer, true));
+	input->open();
+	//input->setBufferCount(2);
+	// We want buffersize to be the latency defining parameter. Therefore we have to multiply with buffercount
+	input->setBuffersize(buffersize*input->getBufferCount());
+
+	return input;
+}
+
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to the output device for a given \a card
+ * \param card A device identifier
+ * \param buffer The buffer
+ * \param buffersize Buffersize in frames.
+ * \return A handle of type \ref SharedAudioHandle
+ *
+ * Factory function which creates a handle of type \ref SharedAudioHandle to the given output device.\n
+ * ???? Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
+ * The device is automatically opened.\n
+ *
+*/
+SharedAudioHandle createJackOutputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
+{
+	SharedAudioHandle output(new AudioJack(card, buffer, false));
+	output->open();
+	//input->setBufferCount(2);
+	// We want buffersize to be the latency defining parameter. Therefore we have to multiply with buffercount
+	output->setBuffersize(buffersize*output->getBufferCount());
+
+	return output;
+}
+
+/** \ingroup Factory
+ *
+ * \brief Creates a handle to the input device for a given \a card
+ * \param card A device identifier
+ * \param buffer The buffer
+ * \param buffersize Buffersize in frames.
+ * \return A handle of type \ref SharedAudioHandle
+ *
+ * Factory function which creates a handle of type \ref SharedAudioHandle to the given input device.\n
  * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
+SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
 {
-	SharedAudioAlsaInputHandle input(new AudioAlsaInput(card, buffer));
+	SharedAudioHandle input(new AudioAlsaInput(card, buffer));
     input->open();
     input->setBufferCount(2);
 	// We want buffersize to be the latency defining parameter. Therefore we have to multiply with buffercount
@@ -125,20 +173,20 @@ SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier& card, Sha
 
 /** \ingroup Factory
  *
- * \brief Creates a handle to the input device with a given \a name
- * \param name A device identifier, such as "hw:1,0,0"
+ * \brief Creates a handle to the input device for a given \a card
+ * \param card A device identifier
  * \param buffer The buffer
  * \param buffersize Buffersize in frames.
- * \return A handle of type \ref AudioAlsaInput_t
+ * \return A handle of type \ref SharedAudioHandle
  *
- * Factory function which creates a handle of type \ref AudioAlsaInput_t to the given input device.\n
+ * Factory function which creates a handle of type \ref SharedAudioHandle to the given input device.\n
  * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
+SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
 {
-	return createInputDevice(card, buffer, DEFAULT_BUFFERSIZE);
+	return createAlsaInputDevice(card, buffer, DEFAULT_BUFFERSIZE);
 }
 
 /** \ingroup Factory
@@ -147,7 +195,7 @@ SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier &card, Sha
  * \param buffer The buffer
  * \return A handle of type \ref AudioAlsaOutput_t
  *
- * Factory function which creates a handle of type \ref AudioAlsaInput_t to the default input device.\n
+ * Factory function which creates a handle of type \ref SharedAudioHandle to the default input device.\n
  * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
  * Buffersize is set to \ref Nl::DEFAULT_BUFFERSIZE.\n
  * The device is automatically opened.\n
@@ -161,20 +209,20 @@ SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier &card, Sha
 
 /** \ingroup Factory
  *
- * \brief Creates a handle to the output device with a given \a name
- * \param name A device identifier, such as "hw:1,0,0"
+ * \brief Creates a handle to the output device for a given \a card
+ * \param card A device identifier
  * \param buffer The buffer
  * \param buffersize Buffersize in frames.
- * \return A handle of type \ref AudioAlsaOutput_t
+ * \return A handle of type \ref SharedAudioHandle
  *
- * Factory function which creates a handle of type \ref AudioAlsaOutput_t to the given output device.\n
+ * Factory function which creates a handle of type \ref SharedAudioHandle to the given output device.\n
  * Buffercount is set to 2. (See AudioAlsaOutput::setBufferCount())\n
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize)
+SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize)
 {
-	SharedAudioAlsaOutputHandle output(new AudioAlsaOutput(card, buffer));
+	SharedAudioHandle output(new AudioAlsaOutput(card, buffer));
     output->open();
     output->setBufferCount(2);
 	// We want buffersize to be the latency defining parameter. Therefore we have to multiply with buffercount
@@ -185,8 +233,8 @@ SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, S
 
 /** \ingroup Factory
  *
- * \brief Creates a handle to the output device with a given \a name
- * \param name A device identifier, such as "hw:1,0,0"
+ * \brief Creates a handle to the output device for a given \a card
+ * \param card A device identifier
  * \param buffer The buffer
  * \return A handle of type \ref AudioAlsaOutput_t
  *
@@ -196,9 +244,9 @@ SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, S
  * The device is automatically opened.\n
  *
 */
-SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
+SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
 {
-	return createOutputDevice(card, buffer, DEFAULT_BUFFERSIZE);
+	return createAlsaOutputDevice(card, buffer, DEFAULT_BUFFERSIZE);
 }
 
 /** \ingroup Factory
@@ -293,5 +341,29 @@ WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
                                                                  handle.terminateRequest));
     return handle;
 }
+
+/** \ingroup Factory
+ *
+ * \brief Registers a callback on a \ref SharedBuffer for Input/Output operations
+ * \param inBuffer The input buffer
+ * \param outBuffer The output buffer
+ * \param callback A callback function of type \ref audioCallbackInOut
+ * \return A handle of type \ref WorkingThreadHandle, which can be used to start/stop the working thread.
+ *
+ * Factory function which creates a reading and a writing thread to perform the blocking read/write
+ * operations on the buffer. The \a callback is automatically called, when the buffers (\a inBuffer, \a outBuffer)
+ * are ready to be processed.
+ *
+*/
+WorkingThreadHandle registerAutoDrainOnBuffer(SharedBufferHandle inBuffer)
+{
+	WorkingThreadHandle handle;
+	handle.terminateRequest = createTerminateFlag();
+	handle.thread = std::shared_ptr<std::thread>(new std::thread(drainAudioFunction,
+																 inBuffer,
+																 handle.terminateRequest));
+	return handle;
+}
+
 
 } // namespace Nl

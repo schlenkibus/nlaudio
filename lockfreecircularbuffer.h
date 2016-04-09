@@ -1,31 +1,28 @@
-#ifndef LOCKFREECIRCULARBUFFER_H
-#define LOCKFREECIRCULARBUFFER_H
+#pragma once
 
 #include <atomic>
 #include <cstddef>
 
-namespace memory_sequential_consistent {
-template<typename Element, size_t Size>
+template<typename Element>
 class CircularFifo{
 public:
-  enum { Capacity = Size+1 };
+	CircularFifo() : m_tail(0), m_head(0), m_size(0) {}
+	virtual ~CircularFifo() {}
 
-  CircularFifo() : _tail(0), _head(0){}
-  virtual ~CircularFifo() {}
+	bool push(const Element& item); // pushByMOve?
+	bool pop(Element& item);
 
-  bool push(const Element& item); // pushByMOve?
-  bool pop(Element& item);
-
-  bool wasEmpty() const;
-  bool wasFull() const;
-  bool isLockFree() const;
+	bool wasEmpty() const;
+	bool wasFull() const;
+	bool isLockFree() const;
 
 private:
-  size_t increment(size_t idx) const;
+	size_t increment(size_t idx) const;
 
-  std::atomic <size_t>  _tail;  // tail(input) index
-  Element    _array[Capacity];
-  std::atomic<size_t>   _head; // head(output) index
+	std::atomic<size_t>  m_tail;  // tail(input) index
+	Element    *m_array;
+	std::atomic<size_t>   m_head; // head(output) index
+	size_t m_size;
 };
 
 
@@ -33,69 +30,62 @@ private:
 //
 // Push on tail. TailHead is only changed by producer and can be safely loaded using memory_order_relexed
 //         head is updated by consumer and must be loaded using at least memory_order_acquire
-template<typename Element, size_t Size>
-bool CircularFifo<Element, Size>::push(const Element& item)
+template<typename Element>
+bool CircularFifo<Element>::push(const Element& item)
 {
-  const auto current_tail = _tail.load();
-  const auto next_tail = increment(current_tail);
-  if(next_tail != _head.load())
-  {
-	_array[current_tail] = item;
-	_tail.store(next_tail);
-	return true;
-  }
+	const auto current_tail = m_tail.load();
+	const auto next_tail = increment(current_tail);
+	if(next_tail != m_head.load())
+	{
+		m_array[current_tail] = item;
+		m_tail.store(next_tail);
+		return true;
+	}
 
-  return false;  // full queue
+	return false;  // full queue
 }
 
 
 // Pop by Consumer can only update the head
-template<typename Element, size_t Size>
-bool CircularFifo<Element, Size>::pop(Element& item)
+template<typename Element>
+bool CircularFifo<Element>::pop(Element& item)
 {
-  const auto current_head = _head.load();
-  if(current_head == _tail.load())
-	return false;   // empty queue
+	const auto current_head = m_head.load();
+	if(current_head == m_tail.load())
+		return false;   // empty queue
 
-  item = _array[current_head];
-  _head.store(increment(current_head));
-  return true;
+	item = m_array[current_head];
+	m_head.store(increment(current_head));
+	return true;
 }
 
 // snapshot with acceptance of that this comparison function is not atomic
 // (*) Used by clients or test, since pop() avoid double load overhead by not
 // using wasEmpty()
-template<typename Element, size_t Size>
-bool CircularFifo<Element, Size>::wasEmpty() const
+template<typename Element>
+bool CircularFifo<Element>::wasEmpty() const
 {
-  return (_head.load() == _tail.load());
+	return (m_head.load() == m_tail.load());
 }
 
 // snapshot with acceptance that this comparison is not atomic
 // (*) Used by clients or test, since push() avoid double load overhead by not
 // using wasFull()
-template<typename Element, size_t Size>
-bool CircularFifo<Element, Size>::wasFull() const
+template<typename Element>
+bool CircularFifo<Element>::wasFull() const
 {
-  const auto next_tail = increment(_tail.load());
-  return (next_tail == _head.load());
+	const auto next_tail = increment(m_tail.load());
+	return (next_tail == m_head.load());
 }
 
-
-template<typename Element, size_t Size>
-bool CircularFifo<Element, Size>::isLockFree() const
+template<typename Element>
+bool CircularFifo<Element>::isLockFree() const
 {
-  return (_tail.is_lock_free() && _head.is_lock_free());
+	return (m_tail.is_lock_free() && m_head.is_lock_free());
 }
 
-template<typename Element, size_t Size>
-size_t CircularFifo<Element, Size>::increment(size_t idx) const
+template<typename Element>
+size_t CircularFifo<Element>::increment(size_t idx) const
 {
-  return (idx + 1) % Capacity;
+	return (idx + 1) % m_size;
 }
-
-
-} // sequential_consistent
-
-
-#endif // LOCKFREECIRCULARBUFFER_H

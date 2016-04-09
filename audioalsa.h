@@ -28,6 +28,8 @@ public:
 	virtual void start() = 0;
 	virtual void stop() = 0;
 
+	virtual void init() = 0;
+
 	//TODO: Changing buffer size, while playback is running might have strange sideeffects!
 	virtual void setBuffersize(unsigned int buffersize);
 	virtual unsigned int getBuffersize();

@@ -14,11 +14,9 @@ public:
 	virtual void open();
 	virtual void start();
 	virtual void stop();
+	virtual void init();
 
 	static void worker(SampleSpecs specs, AudioAlsaOutput *ptr);
 };
-
-/*! A shared handle to a \ref AudioAlsaOutput */
-typedef std::shared_ptr<AudioAlsaOutput> SharedAudioAlsaOutputHandle;
 
 } // Namespace Nl

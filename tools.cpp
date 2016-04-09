@@ -14,7 +14,7 @@ namespace Nl {
  * policy is changed to round robin
  *
 */
-int requestRealtime(void)
+int	requestRealtime(void)
 {
 		struct sched_param sched_param;
 		int ret = sched_getparam(0, &sched_param);

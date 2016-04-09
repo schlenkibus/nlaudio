@@ -9,6 +9,7 @@
 //#include <cstdint>
 #include <list>
 #include <string>
+#include <memory>
 
 namespace Nl {
 
@@ -197,10 +198,6 @@ public:
 	/** \ingroup Audio
 	 *
 	 * \brief Starts the working thread for the interface
-	 * \throws AudioAlsaException is thrown on error
-	 *
-	 * Returns the number of channels.
-	 * On error a \ref AudioAlsaException is thrown.
 	 *
 	*/
 	virtual void start() = 0;
@@ -208,15 +205,24 @@ public:
 	/** \ingroup Audio
 	 *
 	 * \brief Stopps the working thread for the interface
-	 * \throws AudioAlsaException is thrown on error
 	 *
-	 * Returns the number of channels.
-	 * On error a \ref AudioAlsaException is thrown.
-	 *
+	 * Call init() before you call start()
 	*/
 	virtual void stop() = 0;
 
+	/** \ingroup Audio
+	 *
+	 * \brief Initializes the ringbuffer
+	 *
+	 * This should be called before start()
+	*/
+	virtual void init() = 0;
+
+
 };
+
+/*! A shared handle to a \ref Audio instance */
+typedef std::shared_ptr<Audio> SharedAudioHandle;
 
 } // Namespace Nl
 

@@ -3,9 +3,15 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CFLAGS += -pg -pthread
+QMAKE_CXXFLAGS += -std=c++11 -pg -pthread
+QMAKE_LFLAGS += -pg -pthread
 LIBS += -lasound
 LIBS += -lpthread
+LIBS += -ljack
+LIBS += -laubio -L/usr/local/lib64/
+LIBS += -lvamp-hostsdk
+LIBS += -lvamp-sdk
 
 SOURCES += main.cpp \
     tools.cpp \
@@ -24,7 +30,11 @@ SOURCES += main.cpp \
     alsasubdeviceinfo.cpp \
     bufferstatistics.cpp \
     rawmidideviceexception.cpp \
-    samplespecs.cpp
+    samplespecs.cpp \
+    audiojackinput.cpp \
+    audiojack.cpp \
+    vamp-simple-host.cpp \
+    vamphost.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -50,7 +60,11 @@ HEADERS += \
     bufferstatistics.h \
     rawmidideviceexception.h \
     samplespecs.h \
-    lockfreecircularbuffer.h
+    lockfreecircularbuffer.h \
+    nonblockingcircularbuffer.h \
+    audiojackinput.h \
+    audiojack.h \
+    vamphost.h
 
 OTHER_FILES += \
     Todo.txt

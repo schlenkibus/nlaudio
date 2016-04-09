@@ -5,6 +5,7 @@
 #include <atomic>
 #include <iostream>
 #include <cmath>
+#include <cstring>
 
 #include "samplespecs.h"
 
@@ -59,7 +60,9 @@ public:
 
         m_size = size;
 
-        m_buffer = new T[m_size];
+		std::cout << m_size << std::endl;
+
+		m_buffer = new T[m_size];
         memset(m_buffer, 0, m_size);
 
         m_bytesRead = 0;
@@ -75,6 +78,8 @@ public:
     {
         init(sampleSpecs.buffersizeInBytes);
         m_sampleSpecs = sampleSpecs;
+
+		printf("bufferinit: %i\n", sampleSpecs.buffersizeInBytes);
     }
 
 	/** \ingroup Audio

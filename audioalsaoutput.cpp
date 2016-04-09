@@ -19,8 +19,6 @@ void AudioAlsaOutput::start()
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params(m_handle, m_hwParams));
 
 	SampleSpecs specs = basetype::getSpecs();
-
-	basetype::m_audioBuffer->init(specs);
 	std::cout << "NlAudioAlsaOutput Specs: " << std::endl << specs;
 
 	m_audioThread = new std::thread(AudioAlsaOutput::worker, specs, this);
@@ -36,6 +34,11 @@ void AudioAlsaOutput::stop()
 	m_audioThread = nullptr;
 }
 
+void AudioAlsaOutput::init()
+{
+	basetype::m_audioBuffer->init(basetype::getSpecs());
+}
+
 //static
 void AudioAlsaOutput::worker(SampleSpecs specs, AudioAlsaOutput *ptr)
 {
@@ -49,7 +52,7 @@ void AudioAlsaOutput::worker(SampleSpecs specs, AudioAlsaOutput *ptr)
 		if (ret < 0)
 			ptr->basetype::xrunRecovery(ptr, ret);
 		else if (ret != static_cast<int>(specs.buffersizeInFramesPerPeriode))
-			std::cout << "This should only happen, when stopping the device!" << std::endl;
+			std::cout << "Only wrote " << ret << " of " << specs.buffersizeInFramesPerPeriode << " from output device" << std::endl;
 	}
 
 	snd_pcm_abort(ptr->m_handle);

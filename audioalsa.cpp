@@ -255,6 +255,8 @@ channelcount_t AudioAlsa::getChannelCount()
  */
 SampleSpecs AudioAlsa::getSpecs()
 {
+	//TODO: snd_pcm_hw_params_get_sbits might return negative errorcode, which leads to weird segfaults
+
 	snd_pcm_format_t sampleFormat;
 	snd_pcm_hw_params_get_format(m_hwParams, &sampleFormat);
 
@@ -278,8 +280,13 @@ SampleSpecs AudioAlsa::getSpecs()
 	specs.bytesPerSamplePhysical = snd_pcm_format_physical_width(sampleFormat) / 8;
 	specs.bytesPerFrame = specs.bytesPerSample * specs.channels;
 
+	//std::cout << snd_pcm_hw_params_get_sbits(m_hwParams)  << " " << specs.bytesPerSample << "   " << specs.channels << "   " << specs.buffersizeInFrames << std::endl;
+
 	specs.buffersizeInBytes = specs.bytesPerSample * specs.channels * specs.buffersizeInFrames;
 	specs.buffersizeInBytesPerPeriode = specs.buffersizeInBytes / getBufferCount();
+
+	specs.latency = static_cast<double>(specs.buffersizeInFramesPerPeriode) /
+			static_cast<double>(specs.samplerate) * 1000.0;
 
 	return specs;
 }
@@ -315,10 +322,13 @@ BufferStatistics AudioAlsa::getStats()
  */
 int AudioAlsa::xrunRecovery(AudioAlsa *ptr, int err)
 {
+
+
 	//Atomic
 	ptr->m_xrunRecoveryCounter++;
 
 	if (err == -EPIPE) {    /* under-run */
+		std::cout << "Underrun: " << ptr->m_xrunRecoveryCounter << std::endl;
 		err = snd_pcm_prepare(ptr->m_handle);
 		if (err < 0)
 			printf("Can't recovery from underrun, prepare failed: %s\n", snd_strerror(err));

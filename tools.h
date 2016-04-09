@@ -40,14 +40,14 @@ void store(const T *buffer, unsigned int buffersize, const std::string& path)
 {
 	unsigned int i = 0;
 
-    std::ofstream out;
+	std::ofstream out;
 	out.open(path, std::ofstream::out /*| std::ofstream::app*/);
 
-    for (i=0; i<buffersize; i++)
+	for (i=0; i<buffersize; i++)
 		out << i << "," << buffer[i] << std::endl;
 
-    out.flush();
-    out.close();
+	out.flush();
+	out.close();
 }
 
 /** \ingroup Tools
@@ -74,21 +74,21 @@ inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs& 
 				(1 << (sampleSpecs.bytesPerSample * 8) / 2) :
 				0;
 
-    static float phase = 0.f;
+	static float phase = 0.f;
 	static float inc = frequency / static_cast<float>(sampleSpecs.samplerate);
 
-    if (reset) {
-        phase = 0.f;
+	if (reset) {
+		phase = 0.f;
 		inc = frequency / static_cast<float>(sampleSpecs.samplerate);
 	}
 
 	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
-        phase += inc;
+		phase += inc;
 
-	   if (phase > 0.5) phase -= 1.0;
+		if (phase > 0.5) phase -= 1.0;
 
 #if 1
-        float x = 2 * phase;
+		float x = 2 * phase;
 
 		if (x < 0) {
 			x = -x;
@@ -96,7 +96,7 @@ inline void sinewave(T *buffer, float frequency, bool reset, const SampleSpecs& 
 
 		x = 0.5 - x;
 
-        float x_square = x * x;
+		float x_square = x * x;
 		x = x * (x_square * (x_square * 2.26548 - 5.13274) + 3.14159);
 		buffer[i] = static_cast<T>(x * scale + offset);
 #else
@@ -131,7 +131,7 @@ inline void sinewave<double>(double *buffer, float frequency, bool reset, const 
 	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
 		phase += inc;
 
-	   if (phase > 0.5) phase -= 1.0;
+		if (phase > 0.5) phase -= 1.0;
 
 		double x = 2 * phase;
 		if (x < 0) x = -x;
@@ -168,7 +168,7 @@ inline void sinewave<float>(float *buffer, float frequency, bool reset, const Sa
 	for (unsigned int i=0; i<sampleSpecs.buffersizeInFramesPerPeriode; i++) {
 		phase += inc;
 
-	   if (phase > 0.5) phase -= 1.0;
+		if (phase > 0.5) phase -= 1.0;
 
 		float x = 2 * phase;
 		if (x < 0) x = -x;
@@ -176,7 +176,7 @@ inline void sinewave<float>(float *buffer, float frequency, bool reset, const Sa
 
 		float x_square = x * x;
 		buffer[i] = x * (x_square * (x_square * 2.26548 - 5.13274) + 3.14159);
-    }
+	}
 }
 
 /** \ingroup Tools
@@ -195,13 +195,13 @@ inline void sinewave(T *buffer, unsigned int buffersize)
 				std::numeric_limits<T>::max() :
 				std::numeric_limits<T>::max() / 2;
 
-    T offset = !std::numeric_limits<T>::is_signed ?
-                std::numeric_limits<T>::max() / 2 :
-                0;
+	T offset = !std::numeric_limits<T>::is_signed ?
+				std::numeric_limits<T>::max() / 2 :
+				0;
 
-    for (unsigned int i=0; i<buffersize; i++) {
-        buffer[i] = sin(2.f * M_PI * static_cast<double>(i) / static_cast<double>(buffersize)) * scale + offset;
-    }
+	for (unsigned int i=0; i<buffersize; i++) {
+		buffer[i] = sin(2.f * M_PI * static_cast<double>(i) / static_cast<double>(buffersize)) * scale + offset;
+	}
 }
 
 /** \ingroup Tools
@@ -216,9 +216,9 @@ inline void sinewave(T *buffer, unsigned int buffersize)
 template<>
 inline void sinewave<double>(double *buffer, unsigned int buffersize)
 {
-    for (unsigned int i=0; i<buffersize; i++) {
-        buffer[i] = sin(2.f * M_PI * static_cast<double>(i) / static_cast<double>(buffersize));
-    }
+	for (unsigned int i=0; i<buffersize; i++) {
+		buffer[i] = sin(2.f * M_PI * static_cast<double>(i) / static_cast<double>(buffersize));
+	}
 }
 
 /** \ingroup Tools
@@ -233,10 +233,9 @@ inline void sinewave<double>(double *buffer, unsigned int buffersize)
 template<>
 inline void sinewave<float>(float *buffer, unsigned int buffersize)
 {
-    for (unsigned int i=0; i<buffersize; i++) {
-        buffer[i] = sinf(2.f * M_PI * static_cast<float>(i) / static_cast<float>(buffersize));
-    }
+	for (unsigned int i=0; i<buffersize; i++) {
+		buffer[i] = sinf(2.f * M_PI * static_cast<float>(i) / static_cast<float>(buffersize));
+	}
 }
-
 
 } // namespace Nl

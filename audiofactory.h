@@ -17,6 +17,8 @@
 #include "audioalsaoutput.h"
 #include "rawmididevice.h"
 
+#include "audiojack.h"
+
 namespace Nl {
 
 class AudioAlsaInput;
@@ -57,13 +59,16 @@ SharedBufferHandle getBufferForName(const std::string& name);
 
 void terminateWorkingThread(WorkingThreadHandle handle);
 
-SharedAudioAlsaInputHandle createDefaultInputDevice(SharedBufferHandle buffer);
-SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer);
-SharedAudioAlsaInputHandle createInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
+SharedAudioHandle createJackInputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize);
+SharedAudioHandle createJackOutputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize);
 
-SharedAudioAlsaOutputHandle createDefaultOutputDevice(SharedBufferHandle buffer);
-SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer);
-SharedAudioAlsaOutputHandle createOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
+SharedAudioHandle createDefaultInputDevice(SharedBufferHandle buffer);
+SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer);
+SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
+
+SharedAudioHandle createDefaultOutputDevice(SharedBufferHandle buffer);
+SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer);
+SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
 
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
 												  AudioCallbackIn callback);
@@ -72,6 +77,7 @@ WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
 												  SharedBufferHandle outBuffer,
 												  AudioCallbackInOut callback);
+WorkingThreadHandle registerAutoDrainOnBuffer(SharedBufferHandle inBuffer);
 
 // Thread function, that handles blocking io calls on the buffers
 auto readAudioFunction = [](SharedBufferHandle audioBuffer,
@@ -144,5 +150,24 @@ SharedTerminateFlag terminateRequest) {
 	delete[] inBuffer;
 	delete[] outBuffer;
 };
+
+// Thread function, that just drains the buffer for testing puposes
+auto drainAudioFunction = [](SharedBufferHandle audioInBuffer,
+SharedTerminateFlag terminateRequest) {
+
+	SampleSpecs sampleSpecsIn = audioInBuffer->sampleSpecs();
+
+	const int inBuffersize = sampleSpecsIn.buffersizeInBytesPerPeriode;
+
+	u_int8_t *inBuffer = new u_int8_t[inBuffersize];
+
+	while(!terminateRequest->load()) {
+		audioInBuffer->get(inBuffer, inBuffersize);
+	}
+};
+
+
+
+
 
 } // namespace Nl

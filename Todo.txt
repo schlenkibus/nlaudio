@@ -21,3 +21,10 @@ Set Realtime
 for pid in $(ps a | grep nlaudio | cut -d ' ' -f 2); do echo $pid; sudo chrt -f -p 1 $pid; chrt -p $pid; done
 
 - ThreadSave Exceptions
+
+
+
+Realtime:
+realTimeConfigQuickScan
+
+cpufreq-set -c 0 -g performance

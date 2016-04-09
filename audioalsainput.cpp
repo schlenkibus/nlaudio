@@ -16,10 +16,11 @@ void AudioAlsaInput::start()
 {
 	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 	resetTerminateRequest();
-	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params(m_handle, m_hwParams));
 
 	SampleSpecs specs = basetype::getSpecs();
-	basetype::m_audioBuffer->init(specs);
+
+	//m_audioBuffer->init(specs.buffersizeInBytes);
+
 	std::cout << "NlAudioAlsaInput Specs: " << std::endl << specs;
 
 	m_audioThread = new std::thread(AudioAlsaInput::worker, specs, this);
@@ -33,6 +34,14 @@ void AudioAlsaInput::stop()
 	m_audioThread->join();
 	delete m_audioThread;
 	m_audioThread = nullptr;
+}
+
+void AudioAlsaInput::init()
+{
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params(m_handle, m_hwParams));
+
+	m_audioBuffer->init(basetype::getSpecs());
 }
 
 //static
@@ -49,7 +58,7 @@ void AudioAlsaInput::worker(SampleSpecs specs, AudioAlsaInput *ptr)
 		if (ret < 0)
 			ptr->basetype::xrunRecovery(ptr, ret);
 		else if (ret != static_cast<int>(specs.buffersizeInFramesPerPeriode))
-			std::cout << "This should only happen, when stopping the device!" << std::endl;
+			std::cout << "Only read " << ret << " of " << specs.buffersizeInFramesPerPeriode << " from input device." << std::endl;
 
 		// Might block, if no space in buffer
 		ptr->basetype::m_audioBuffer->set(buffer, specs.buffersizeInBytesPerPeriode);
