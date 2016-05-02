@@ -128,7 +128,5 @@ int main()
 	} catch(...) {
 		std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
 	}
-
-	return 0;
 }
 

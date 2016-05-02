@@ -83,7 +83,7 @@ public:
     /** @brief    sets fold amount
      *  @param    fold amount [0 .. 1]
     */
-    inline void setFold(float _fold)        //set FOLD amount
+    inline void setFold(float _fold)       
     {
         fold = _fold;
     }
@@ -91,7 +91,7 @@ public:
     /** @brief    sets asym amount
      *  @param    asym amount [0 .. 1]
     */
-    inline void setAsym(float _asym)         //set ASYM amount
+    inline void setAsym(float _asym)        
     {
         asym = _asym;
     }
@@ -99,15 +99,15 @@ public:
     /** @brief    sets satL amount
      *  @param    tilt amount [-50 .. 50] dB
     */
-    inline void setSatL(float _tilt)        //set SETL amount
+    inline void setSatL(float _tilt)       
     {
         satL = Nl::db2af(0.5f * _tilt);
     }
 
-    /** @brief    sets mix amount, calculate dry and wet amounts
+    /** @brief    sets mix amount, calculates dry and wet amounts
      *  @param    mix amount [0 .. 1]
     */
-    void setMix(float _mix)          //set MIX amount
+    void setMix(float _mix)          
     {
         mix = _mix;
         wet = mix * cabLvl;
@@ -120,7 +120,7 @@ public:
     /** @brief    sets cabinet level
      *  @param    fold amount [-50 .. 0] dB
     */
-    void setCabLvl(float _cabLvl)           //set CABLVL
+    void setCabLvl(float _cabLvl)         
     {
         cabLvl = Nl::db2af(_cabLvl);
         setMix(mix);
@@ -129,7 +129,7 @@ public:
     /** @brief    sets drive level
      *  @param    drive level [0 .. 50] dB
     */
-    void setDrive(float _drive)             //set DRIVE
+    void setDrive(float _drive)           
     {
         drive = Nl::db2af(_drive);
         driveSmoother.initSmoother(drive);
@@ -138,7 +138,7 @@ public:
     /** @brief    sets hiCut for the two lowpass fiters
      *  @param    hiCut [ .. ] Hz
     */
-    void setHiCut(float _hiCut)             //set HICUT
+    void setHiCut(float _hiCut)
     {
         lowpass1.setCutFreq(_hiCut);
         lowpass2.setCutFreq(_hiCut * 1.333f);
@@ -147,7 +147,7 @@ public:
     /** @brief    sets loCut for the highpass fiter
      *  @param    loCut [ .. ] Hz
     */
-    void setLoCut(float _loCut)             //set LOCUT
+    void setLoCut(float _loCut)
     {
         highpass1.setCutFreq(_loCut);
     }
@@ -155,46 +155,122 @@ public:
     /** @brief    sets tilt level for the two lowshelf filters
      *  @param    tilt [-50 .. 50] dB
     */
-    void setTilt(float _tilt)               //set TILT
+    void setTilt(float _tilt)
     {
         lowshelf1.setTilt(_tilt);
         lowshelf2.setTilt(_tilt * (-1.f));
         setSatL(_tilt);
     }
 
+    /** @brief    converts and scales the incoming values from a midi value to the destination values
+     *  @param    Midi Value in float
+     *  @param    control tag in unsigned char
+     */
+    void setCabinetParams(float ctrlVal, unsigned char ctrlTag)
+    {
+        /*Cabinet*/
+        switch(ctrlTag)                                           //not sure these are the best tags, but should do for now ...
+        {
+        case CtrlID::Hicut:
+            ctrlVal = (ctrlVal * 80.f) / 127.f + 60.f;            //Midi to Pitch [60 .. 140]
+            printf("HiCut: %f\n", ctrlVal);
+
+            ctrlVal = pow(2.f, (ctrlVal - 69.f) / 12) * 440.f;    //Pitch to Freq [261Hz .. 26580Hz]
+
+            setHiCut(ctrlVal);
+            break;
+
+        case CtrlID::Locut:
+            ctrlVal = (ctrlVal * 80.f) / 127.f + 20.f;            //Midi to Pitch [20 ..100]
+            printf("LoCut: %f\n", ctrlVal);
+
+            ctrlVal = pow(2.f, (ctrlVal - 69.f) / 12) * 440.f;    //Pitch to Freq [26Hz .. 2637Hz]
+            setLoCut(ctrlVal);
+            break;
+
+        case CtrlID::Mix:
+            ctrlVal = ctrlVal / 127.f;                            //Midi to [0 .. 1]
+            printf("Mix: %f\n", ctrlVal);
+
+            setMix(ctrlVal);
+            break;
+
+        case CtrlID::Level:
+            ctrlVal = (ctrlVal - 127.f) * (50.f / 127.f);         //Midi to [-50db .. 0dB]
+            printf("Cab Lvl: %f\n", ctrlVal);
+
+            setCabLvl(ctrlVal);
+            break;
+
+        case CtrlID::Drive:
+            ctrlVal = ctrlVal * (50.f / 127.f);                     //Midi to [0dB .. 50dB]
+            printf("Drive: %f\n", ctrlVal);
+
+            setDrive(ctrlVal);
+            break;
+
+        case CtrlID::Tilt:
+            ctrlVal = (ctrlVal - 63.5f) * (50.f / 63.5f);           //Midi to [-50dB .. 50dB]
+            printf("Tilt: %f\n", ctrlVal);
+
+            setTilt(ctrlVal);
+            break;
+
+        case CtrlID::Fold:
+            ctrlVal = ctrlVal / 127.f;                              //Midi to [0 .. 1]
+            printf("Fold: %f\n", ctrlVal);
+
+            setFold(ctrlVal);
+            break;
+
+        case CtrlID::Asym:
+            ctrlVal = ctrlVal / 127.f;                              //Midi to [0 .. 1]
+            printf("Asym: %f\n", ctrlVal);
+
+            setAsym(ctrlVal);
+            break;
+        }
+    }
+
 private:
     float sRate;                /**< samplerate */
-    float output;               /**< processed sample*/
 
-    /** Cabinet Controls*/
     float drive;                /**< drive level [0 .. 50] dB, default 20dB */
     float cabLvl;               /**< cabinet level [-50 .. 0] dB, default -14dB */
     float mix;                  /**< mix amount [0 .. 1], default 0.0 */
     float fold;                 /**< fold amount [0 .. 1], default 0.25 */
     float asym;                 /**< asym amount [0 .. 1], default 0.1 */
 
-    /** Resulting Parameters*/
-    float satL;                 /**< saturation */
+    float satL;                 /**< saturation amount */
     float wet;                  /**< wet amount */
     float dry;                  /**< dry amount */
 
-    /** filter objects */
     BiquadFilters lowpass1;     /**< first lowpass */
     BiquadFilters lowpass2;     /**< second lowpass */
     BiquadFilters highpass1;    /**< first highpass */
-    TiltFilters lowshelf1;      /**< first lowshelf1 */
+    TiltFilters lowshelf1;      /**< first lowshelf */
     TiltFilters lowshelf2;      /**< second lowshelf */
 
-    /** Smoother objects*/
     Smoother drySmoother;       /**< dry level smoother */
     Smoother wetSmoother;       /**< wet level smoother */
     Smoother driveSmoother;     /**< drive level smoother */
 
-    /** hp 1 delays */
     float inCh1Delay;           /**< channel 1 delay for internal 1. order highpass */
     float inCh2Delay;           /**< channel 2 delay for internal 1. order highpass */
 
-    /** @brief    hyperbolic sine calculation
+    enum CtrlID: unsigned char  /**< Enum class for control IDs Korg Nano Kontrol I*/
+    {
+        Hicut   = 0x3D,
+        Locut   = 0x3E,
+        Mix     = 0x32,
+        Level   = 0x37,
+        Drive   = 0x36,
+        Tilt    = 0x35,
+        Fold    = 0x33,
+        Asym    = 0x34
+    };
+
+    /** @brief    hyperbolic sine calculation - might moove to tools.h
      *  @param    raw Sample
      *  @param    channel index, 0 - Left, 1 - Right
      *  @return   processed sample
@@ -241,7 +317,7 @@ private:
     {
         x += -0.25f;
         float x_round = round(x);
-        x -= x_round;!
+        x -= x_round;
 
         x += x;
         x = fabs(x);

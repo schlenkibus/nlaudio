@@ -1,6 +1,14 @@
+/**
+ * @file       tiltfilters.h
+ * @date       2016-03-18
+ * @brief      this class is an implementation of Biquad Tilt Filters (LP, HP, LS, HS) as applied in the cabinet effect
+ * @author     Anton Schmied [date of file creation 2016-03-18]
+*/
+
 #pragma once
 #include "tools.h"
 
+/** Enum Class for filter types */
 enum class TiltFiltertype
 {
     lowpass,
@@ -12,14 +20,15 @@ enum class TiltFiltertype
 class TiltFilters
 {
 public:
-    TiltFilters(int _sRate,                           // Constructor for static a Tilt Filter
+	/** TiltFilters Constructor with default values */
+    TiltFilters(int _sRate,                          
                 float _cutFreq = 22000.f,
                 float _tilt = 0.f,
                 float _slopeWidth = 2.f,
                 float _resonance = 0.5f,
-                TiltFiltertype _filtertype = TiltFiltertype::lowshelf)
+                TiltFiltertype _filtertype = TiltFiltertype::lowpass)
         : sRate(static_cast<float>(_sRate))
-        , inCh1Delay1(0.f)          //Delays
+        , inCh1Delay1(0.f)          
         , inCh1Delay2(0.f)
         , outCh1Delay1(0.f)
         , outCh1Delay2(0.f)
@@ -27,7 +36,7 @@ public:
         , inCh2Delay2(0.f)
         , outCh2Delay1(0.f)
         , outCh2Delay2(0.f)
-        , b0(0.f)                   //Coefficients
+        , b0(0.f)                  
         , b1(0.f)
         , b2(0.f)
         , a0(0.f)
@@ -44,7 +53,10 @@ public:
 
     ~TiltFilters(){}
 
-    void setCutFreq(float _cutFreq)                         /*set cut frequency*/
+	/** @brief    sets cut frequency
+     *  @param    cut frequency in Hz
+    */
+    void setCutFreq(float _cutFreq)
     {
         if (_cutFreq < (sRate / 24576.f))                   //Frequency clipping
         {
@@ -58,14 +70,17 @@ public:
 
         float omega = _cutFreq * (2.f * M_PI / sRate);      //Freqnecy to omega (warp)
 
-        omega_sin = Nl::sin(omega);                         //alternative to sin(omega)
-        omega_cos = Nl::cos(omega);                         //alternative to cos(omega)
+        omega_sin = Nl::sin(omega);                         //alternative to sin(omega) -> tools.h
+        omega_cos = Nl::cos(omega);                         //alternative to cos(omega) -> tools.h
 
         setAlpha();
         calcCoeff();
     }
 
-    void setTilt(float _tilt)                               /*set tilt amount*/
+	/** @brief    sets tilt amount, somewhat similar to shelf amplification
+     *  @param    tilt in dB
+    */
+    void setTilt(float _tilt)
     {
         tilt = pow(1.059f, _tilt);                          //alterative to pow(10, (tilt/ 40.f))
         beta = 2.f * sqrt(tilt);
@@ -74,7 +89,10 @@ public:
         calcCoeff();
     }
 
-    void setResonance(float _resonance)                     /*set resonance*/
+	/** @brief    sets resonance
+     *  @param    resonance
+    */
+    void setResonance(float _resonance)
     {
         resonance = _resonance;
 
@@ -87,7 +105,10 @@ public:
         calcCoeff();
     }
 
-    void setSlopeWidth(float _slopeWidth)                   /*set slope width*/
+	/** @brief    sets slope width
+     *  @param    slope width
+    */
+    void setSlopeWidth(float _slopeWidth)
     {
         slopeWidth = _slopeWidth < 1.f                      //min clip check
         ? 1.f
@@ -97,14 +118,22 @@ public:
         calcCoeff();
     }
 
-    void setFiltertype(TiltFiltertype _filtertype)          /*set filtertype*/
+	/** @brief    sets filter type
+     *  @param    filter type <TiltFiltertype>
+    */
+    void setFiltertype(TiltFiltertype _filtertype)
     {
         filtertype = _filtertype;
         resetDelays();
         calcCoeff();
     }
 
-    float applyFilter(float currSample, unsigned int channelIndex)      /*apply coefficients to incoming sample*/
+	/** @brief    applies the specified filter to the incoming sample depending on the channel
+     *  @param    raw Sample
+     *  @param    channel index, 0 - Left, 1 - Right
+     *  @return   processed sample
+    */
+    float applyFilter(float currSample, unsigned int channelIndex)
     {
         float output = 0.f;
 
@@ -142,32 +171,106 @@ public:
         return output;
     }
 
+    /** @brief    interface method which converts and scales the incoming midi values and passes these to the respective methods
+     *  @param    midi control value [0 ... 127]
+     *  @param    midi control adress
+    */
+    void setFilterParams(float ctrlVal, unsigned char ctrlID)
+    {
+        switch (ctrlID)
+        {
+        case CtrlID::Cutfreq:
+            ctrlVal = 20.f * pow(2.f, ctrlVal / 12.75f);                    //Midi to Freq [20Hz .. 19930Hz]
+            setCutFreq(ctrlVal);
+            break;
+
+        case CtrlID::Tilt:
+            ctrlVal = ((ctrlVal - 64.f) * 12.f) / 64.f;                     //Midi to [-12dB .. 12dB] linear
+            setTilt(ctrlVal);
+            break;
+
+         case CtrlID::Resonance:
+            ctrlVal = (ctrlVal - 64.f) / 32.f;                              //Midi to [-1 .. 1]
+            setResonance(ctrlVal);
+            break;
+
+        case CtrlID::Slopewidth:
+            ctrlVal = (ctrlVal / 127.f * 4.f) + 1.f;                        //Midi to [1 .. 5]
+            setSlopeWidth(ctrlVal);
+            break;
+
+        case CtrlID::Filtertype:
+            static int counter = 0;
+
+            if (static_cast<int>(ctrlVal) > 0)
+            {
+                ++counter;
+                if (counter > 3) { counter = 0;}
+                switch(counter)
+                {
+                    case 0:
+                    setFiltertype(TiltFiltertype::lowpass);
+                    printf("lowpass on\n");
+                    break;
+
+                    case 1:
+                    setFiltertype(TiltFiltertype::highpass);
+                    printf("highpass on\n");
+                    break;
+
+                    case 2:
+                    setFiltertype(TiltFiltertype::lowshelf);
+                    printf("lowshelf on\n");
+                    break;
+
+                    case 3:
+                    setFiltertype(TiltFiltertype::highshelf);
+                    printf("highshelf on\n");
+                    break;
+                }
+            }
+            break;
+        }
+    }
+
 private:
 
-    float omega_cos;
-    float omega_sin;
-    float alpha;
-    float beta;
-    float tilt;
-    float resonance;
-    float slopeWidth;
-    float sRate;
+    float omega_cos;				/**< cosine of the warped frequency */
+    float omega_sin;				/**< sine of the warped frequency */
+    float alpha;					/**< a product of omega_sin and resonance */
+    float beta;						/**< helper variable when tilt is set */
+    float tilt;						/**< normalized tilt amount */
+    float resonance;				/**< filter resonance */
+    float slopeWidth;				/**< slope width */
+    float sRate;					/**< samplerate */
 
-    float inCh1Delay1;          //Channel 1
-    float inCh1Delay2;
-    float outCh1Delay1;
-    float outCh1Delay2;
+    float inCh1Delay1;         		/**< Channel 1 Input Delay 1 */
+    float inCh1Delay2;				/**< Channel 1 Input Delay 2 */
+    float outCh1Delay1;				/**< Channel 1 Output Delay 1 */
+    float outCh1Delay2;				/**< Channel 1 Output Delay 2 */
 
-    float inCh2Delay1;          //Channel 2
-    float inCh2Delay2;
-    float outCh2Delay1;
-    float outCh2Delay2;
+    float inCh2Delay1;          	/**< Channel 2 Input Delay 1 */
+    float inCh2Delay2;				/**< Channel 2 Input Delay 2 */
+    float outCh2Delay1;				/**< Channel 2 Output Delay 1 */
+    float outCh2Delay2;				/**< Channel 2 Output Delay 2 */
 
-    float b0, b1, b2, a0, a1, a2;
+    float b0, b1, b2, a0, a1, a2;	/**< Filter Coefficients */
 
     TiltFiltertype filtertype;
 
-    void calcCoeff()                                /*check which Filter is active and calculate coefficients*/
+    enum CtrlID: unsigned char      /**< enum class for control IDs KORG Nano Kontrol*/
+    {
+        Cutfreq    = 0x12,
+        Tilt       = 0x06,
+        Resonance  = 0x13,
+        Slopewidth = 0x08,
+        Filtertype = 0x1B
+    };
+
+
+    /** @brief    calculates the coefficients depending on the chosen filter type
+    */
+    void calcCoeff()
     {
         float coeff;
         switch(filtertype)
@@ -222,12 +325,16 @@ private:
         b2 /= a0;
     }
 
+    /** @brief    alpha calculation
+    */
     void setAlpha()
     {
         alpha = (tilt + (1.f / tilt)) * (slopeWidth - 1.f);
         alpha = sqrt(alpha + 2.f) * omega_sin * (1.f - resonance);
     }
 
+    /** @brief    resetes the delays if the filter type is changed
+    */
     void resetDelays()
     {
         inCh1Delay1 = 0.f;          //channel 1
@@ -240,33 +347,4 @@ private:
         outCh2Delay1 = 0.f;
         outCh2Delay2 = 0.f;
     }
-#if 0
-    /*as applied in Reaktor --- befindet sich hier vorübergehend*/
-    float reakSin(float x){
-
-        float x_square = x * x;
-
-        x = (((((x_square * -2.39f * pow(10.f, -8.f) + 2.7526f * pow(10.f, -6.f))
-                * x_square + (0.198409f * pow(10.f, -3.f)))
-               * x_square + 0.008333f)
-              * x_square + (-0.166667f))
-             * x_square + 1.f) * x;
-
-        return x;
-    }
-
-    /*as applied in Reaktor --- befindet sich hier vorübergehend*/
-    float reakCos(float x){
-
-        float x_square = x * x;
-
-        x = (((((x_square * -2.605f * pow(10.f, -7.f) + 2.47609 * pow(10.f, -5.f))
-                * x_square + (-0.00138884))
-               * x_square + 0.0416666)
-              * x_square + (-0.499923))
-             * x_square) + 1.f;
-
-        return x;
-    }
-#endif
 };

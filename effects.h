@@ -6,7 +6,14 @@
     @author     Anton Schmied [2016-02-04]
 **/
 
+#include "onepolefilters.h"
+#include "biquadfilters.h"
+#include "tiltfilters.h"
+#include "cabinet.h"
+#include "echo.h"
+
 #include "audiofactory.h"
+#include "smoother.h"
 
 namespace Nl {
 namespace EFFECTS {

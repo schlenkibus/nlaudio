@@ -1,3 +1,6 @@
+
+TARGET = nlaudio
+
 TEMPLATE = app
 CONFIG += console
 CONFIG -= app_bundle
@@ -59,10 +62,11 @@ HEADERS += \
     biquadfilters.h \
     cabinet.h \
     tiltfilters.h \
-    altbiquadfilters.h \
     smoother.h \
     echo.h
 
 OTHER_FILES += \
     Todo.txt
+
+FORMS +=
 

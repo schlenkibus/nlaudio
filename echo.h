@@ -1,15 +1,21 @@
+/**
+ * @file       echo.h
+ * @date       2016-03-18
+ * @brief      this class is an implementation of the echo effect as found in Reaktor
+ * @author     Anton Schmied [date of file creation 2016-03-18]
+*/
+
 #pragma once
 
 #include "smoother.h"
 #include "onepolefilters.h"
-
-#include <cmath>
 #include <array>
 
 class Echo
 {
 public:
-    Echo(int _sRate,                    //Constructor with default values
+	/** Echo Constructor with default values */
+    Echo(int _sRate,
          float _time = 0.375f,
          float _stereo = 0.f,
          float _feedback = 0.5f,
@@ -38,57 +44,55 @@ public:
     
     ~Echo(){}
 
-    float applyEcho(float currSample, unsigned int chInd)        //Signal Processing
+	/** @brief    processes the incoming sample depending on the channel
+     *  @param    raw Sample
+     *  @param    channel index, 0 - Left, 1 - Right
+     *  @return   processed sample
+    */
+    float applyEcho(float currSample, unsigned int chInd)
     {
-        //apply Smoothers
-        dry = drySmoother.smooth();
+        dry = drySmoother.smooth();									//apply Smoothers
         wet = wetSmoother.smooth();
         fbLocal = fbLocalSmoother.smooth();
         fbCross = fbCrossSmoother.smooth();
 
         float output = 0.f;
 
-        if (chInd == 0)          //Channel L
+        if (chInd == 0)			//Channel L
         {
             output = currSample + (channelDelayL * fbLocal) + (channelDelayR * fbCross);
 
-            //smooth delay time
-            lp2hz(chInd);
+            lp2hz(chInd);											//smooth delay time
 
-            //apply delay
-            output = delay(output, chInd);
+            output = delay(output, chInd);							//apply delay
 
-            //apply 1-pole lowpass
-            output = lowpass.applyFilter(output, chInd);
+            output = lowpass.applyFilter(output, chInd);			//apply 1-pole lowpass
 
-            //apply 1-pole highpass
-            channelDelayL = highpass.applyFilter(output, chInd);
+            channelDelayL = highpass.applyFilter(output, chInd);	//apply 1-pole highpass
 
         }
         else if (chInd == 1)     //Channel R
         {
             output = currSample + (channelDelayR * fbLocal) + (channelDelayL * fbCross);
 
-            //smooth delay time
-            lp2hz(chInd);
+            lp2hz(chInd);											//smooth delay time
 
-            //apply delay
-            output = delay(output, chInd);
+            output = delay(output, chInd);							//apply delay
 
-            //apply 1-pole lowpass
-            output = lowpass.applyFilter(output, chInd);
+            output = lowpass.applyFilter(output, chInd);			//apply 1-pole lowpass
 
-            //apply 1-pole highpass
-            channelDelayR = highpass.applyFilter(output, chInd);
+            channelDelayR = highpass.applyFilter(output, chInd); 	//apply 1-pole highpass
         }
 
-        // apply effect amount
-        output = xFade(currSample, output);
+        output = xFade(currSample, output);							// apply effect amount
 
         return output;
     }
-    
-    void setMix(float _mix)          //set MIX amount
+
+    /** @brief    sets mix amount, calculate dry and wet amounts
+     *  @param    mix amount [0 .. 1]
+    */   
+    void setMix(float _mix)
     {
         float mix_square = _mix * _mix;
         wet = (mix_square + mix_square) - mix_square * mix_square;
@@ -98,82 +102,154 @@ public:
         wetSmoother.initSmoother(wet);
     }
 
-    void setHiCut(float _hiCut)             //set HICUT
+    /** @brief    sets hiCut for the lowpass fiter
+     *  @param    hiCut frequnecy in Hz
+    */
+    void setHiCut(float _hiCut)
     {
         lowpass.setCutFreq(_hiCut);
     }
-    
-    void setTime(float _time)               //set Delay Time for L/R-Channels depending on Stereo Amount
+ 
+    /** @brief    sets Delay Time
+     *  @param    delay time in ms
+    */ 
+    void setTime(float _time)
     {
         delayTime = _time;;
         setChannelDelays();
     }
 
-    void setStereo(float _stereoAmnt)             //set Stereo Amount
+    /** @brief    sets Stereo Amount
+     *  @param    stereo amount [-1 .. 1]
+    */ 
+    void setStereo(float _stereoAmnt)
     {
         stereoAmnt = _stereoAmnt;
         setChannelDelays();
     }
 
+    /** @brief    sets Delay Time for L/R-Channels depending on Stereo Amount
+    */ 
     inline void setChannelDelays()
     {
         delayTimeL = (1.f + stereoAmnt * 0.0101f) * delayTime;
         delayTimeR = (1.f - stereoAmnt * 0.0101f) * delayTime;
     }
 
-
-    void setFeedback(float _feedback)             //set Feedback Amount
+	/** @brief    sets Feedback Amount
+     *  @param    feedback [0 .. 1]
+    */ 
+    void setFeedback(float _feedback)   
     {
         fbAmnt = _feedback;
         calcFB();
     }
 
-    void setCrossFeedback(float _crossFeedback)   //set Cross Feedback Amount
+	/** @brief    sets Cross Feedback Amount
+     *  @param    cross feedback [0 .. 1]
+    */ 
+    void setCrossFeedback(float _crossFeedback)
     {
         xfbAmnt = _crossFeedback;
         calcFB();
     }
 
+    void setEchoParams(float ctrlVal, unsigned char ctrlTag)
+    {
+        switch (ctrlTag)
+        {
+        case CtrlID::Hicut:
+            ctrlVal = (ctrlVal * 80.f) / 127.f + 60.f;          // Pitch Values for better testing
+            printf("HiCut: %f\n", ctrlVal);
+
+            ctrlVal = pow(2.f, (ctrlVal - 69.f) / 12) * 440.f;
+
+            setHiCut(ctrlVal);
+            break;
+
+        case CtrlID::Mix:
+            ctrlVal = ctrlVal / 127.f;
+            printf("Mix: %f\n", ctrlVal);
+            setMix(ctrlVal);
+            break;
+
+        case CtrlID::Dtime:
+            ctrlVal = ctrlVal / 127.f;
+            ctrlVal = ctrlVal * ctrlVal * 1.5f;
+            printf("Time: %f\n", ctrlVal * 1000.f);
+            setTime(ctrlVal);
+            break;
+
+        case CtrlID::Stereo:
+            ctrlVal = (ctrlVal - 63.5f) * (33.f / 63.5f);
+            printf("Stereo: %f\n", ctrlVal);
+            setStereo(ctrlVal);
+            break;
+
+        case CtrlID::Feedback:
+            ctrlVal = ctrlVal / 127.f;
+            printf("Feedback: %f\n", ctrlVal);
+            setFeedback(ctrlVal);
+            break;
+
+        case CtrlID::Xfeedback:
+            ctrlVal = ctrlVal / 127.f;
+            printf("Feedback: %f\n", ctrlVal);
+            setCrossFeedback(ctrlVal);
+        }
+    }
+
 private:
     
-    /*Echo Controls*/
-    float sRate;
-    float stereoAmnt;
-    float delayTime;
-    float fbAmnt;
-    float xfbAmnt;
+    float sRate;					/**< samplerate */
+    float stereoAmnt;				/**< stereo amount */
+    float delayTime;				/**< delay time */
+    float fbAmnt;					/**< feedback amount - external*/
+    float xfbAmnt;					/**< cross feedback amount - external*/
 
-    /*Resulting Parameters*/
-    float wet;
-    float dry;
-    float fbLocal;
-    float fbCross;
-    float delayTimeL;
-    float delayTimeR;
-    float delayTimeL_lp;
-    float delayTimeR_lp;
+    float wet;						/**< wet amount */
+    float dry;						/**< dry amount */
+    float fbLocal;					/**< local feedback amount - internal*/
+    float fbCross;					/**< cross feedback amount - internal*/
+    float delayTimeL;				/**< left channel delay time */
+    float delayTimeR;				/**< right channel delay time */
+    float delayTimeL_lp;			/**< left channel delay time processed through 2Hz-lowpass */
+    float delayTimeR_lp;			/**< right channel delay time processed through 2Hz-lowpass */
 
-    std::array<float,132072> sampleBufferL;
-    std::array<float,132072> sampleBufferR;
+    std::array<float,131072> sampleBufferL;		/**< sample buffer for the left channel */
+    std::array<float,131072> sampleBufferR;		/**< sample buffer for the right channel */
 
-    //Filter objects
-    OnePoleFilters lowpass;
-    OnePoleFilters highpass;
+    OnePoleFilters lowpass;			/**< lowpass filter*/
+    OnePoleFilters highpass;		/**< highpass filter */
 
-    // Smoother objects
-    Smoother drySmoother;
-    Smoother wetSmoother;
-    Smoother fbLocalSmoother;
-    Smoother fbCrossSmoother;
+    Smoother drySmoother;			/**< dry amount smoother */	
+    Smoother wetSmoother;			/**< wet smount smoother */
+    Smoother fbLocalSmoother;		/**< local feedback smoother */
+    Smoother fbCrossSmoother;		/**< cross feedback smoother */	
 
-    float channelDelayL;
-    float channelDelayR;
+    float channelDelayL;			/**<  delayed sample processed through the 1-Pole highpass - left channel*/
+    float channelDelayR;			/**<  delayed sample processed through the 1-Pole highpass - right channel*/	
 
-    // lp2Hz delays
-    float inCh1Delay;
-    float inCh2Delay;
+    float inCh1Delay;				/**< internal 2Hz lowpass Channel 1 Input Delay */
+    float inCh2Delay;				/**< internal 2Hz lowpass Channel 2 Input Delay */
 
-    float delay(float sampleIN, unsigned int chInd)                                  //Delay component -- might also move!
+    enum CtrlID: unsigned char  /**< Enum class for control IDs Korg Nano Kontrol I*/
+    {
+        Hicut     = 0x12,
+        Mix       = 0x04,
+        Dtime     = 0x05,
+        Stereo    = 0x06,
+        Feedback  = 0x08,
+        Xfeedback = 0x09
+    };
+
+    /** @brief    main delay function, writes to delay buffer, reads from delay buffer, 
+	 *  		  interpolates 4 neighbouring values, all dependant on the channel index
+     *  @param    raw sample
+	 *  @param 	  channel index
+	 *  @return	  processed sample
+    */
+    float delay(float sampleIN, unsigned int chInd)                              
     {
         float sampleOUT = 0.f;
 
@@ -193,7 +269,6 @@ private:
             if (ind_tm1 < 0)
             {
                 ind_tm1 = 0;
-
             }
             int ind_t0  = delaySamplesL_int;
             int ind_tp1 = delaySamplesL_int + 1;
@@ -204,11 +279,16 @@ private:
             ind_tp1 = indxL - ind_tp1;
             ind_tp2 = indxL - ind_tp2;
 
-            if (ind_tm1 < 0.f)  {ind_tm1 += sampleBufferL.size();}        //Wrap
+            ind_tm1 &= (sampleBufferL.size() - 1);                         //Wrap with a mask sampleBuffer.size()-1
+            ind_t0  &= (sampleBufferL.size() - 1);
+            ind_tp1 &= (sampleBufferL.size() - 1);
+            ind_tp2 &= (sampleBufferL.size() - 1);
+#if 0
+            if (ind_tm1 < 0.f)  {ind_tm1 += sampleBufferL.size();}        //Wrap as found in Reaktor
             if (ind_t0  < 0.f)  {ind_t0  += sampleBufferL.size();}
             if (ind_tp1 < 0.f)  {ind_tp1 += sampleBufferL.size();}
             if (ind_tp2 < 0.f)  {ind_tp2 += sampleBufferL.size();}
-
+#endif
             sampleOUT = interpolRT(delaySamplesL_fract, sampleBufferL[ind_tm1], sampleBufferL[ind_t0], sampleBufferL[ind_tp1], sampleBufferL[ind_tp2]);
 
             ++indxL;
@@ -230,7 +310,6 @@ private:
             {
                 ind_tm1 = 0;
             }
-
             int ind_t0  = delaySamplesR_int;
             int ind_tp1 = delaySamplesR_int + 1;
             int ind_tp2 = delaySamplesR_int + 2;
@@ -240,11 +319,16 @@ private:
             ind_tp1 = indxR - ind_tp1;
             ind_tp2 = indxR - ind_tp2;
 
-            if (ind_tm1 < 0.f)  {ind_tm1 += sampleBufferR.size();}        //Wrap
+            ind_tm1 &= (sampleBufferR.size() - 1);                          //Wrap with a mask sampleBuffer.size()-1
+            ind_t0  &= (sampleBufferR.size() - 1);
+            ind_tp1 &= (sampleBufferR.size() - 1);
+            ind_tp2 &= (sampleBufferR.size() - 1);
+#if 0
+            if (ind_tm1 < 0.f)  {ind_tm1 += sampleBufferR.size();}        //Wrap as found in Reaktor
             if (ind_t0  < 0.f)  {ind_t0  += sampleBufferR.size();}
             if (ind_tp1 < 0.f)  {ind_tp1 += sampleBufferR.size();}
             if (ind_tp2 < 0.f)  {ind_tp2 += sampleBufferR.size();}
-
+#endif
             sampleOUT = interpolRT(delaySamplesR_fract, sampleBufferR[ind_tm1], sampleBufferR[ind_t0], sampleBufferR[ind_tp1], sampleBufferR[ind_tp2]);
 
             indxR += 1;
@@ -255,7 +339,9 @@ private:
         return sampleOUT;
     }
 
-    void calcFB()                                           //Calculate feedback amounts and initialize Smoothers
+    /** @brief    calculates feedback amount and initializes smoothers
+    */
+    void calcFB()
     {
         fbLocal = fbAmnt * (1.f - xfbAmnt);
         fbCross = fbAmnt * xfbAmnt;
@@ -264,15 +350,18 @@ private:
         fbCrossSmoother.initSmoother(fbCross);
     }
 
-    void lp2hz(unsigned int chInd)     //noch mal mit dem Cabinet hp1  vergleichen!!!
+	/** @brief    internal first order 2Hz lowpass to smooth delay times when changed
+     *  @param    channel index
+    */
+    void lp2hz(unsigned int chInd)
     {
-        float w0 = 2.f * (2.f * M_PI / sRate);                //Normalize 2Hz
+        float w0 = 2.f * (2.f * M_PI / sRate);              //normalize 2Hz
 
         if(w0 > 1.9f)                                       //Clip
             w0 = 1.9f;
 
 
-        if (chInd == 0)                              //process
+        if (chInd == 0)                              		//process
         {
             delayTimeL_lp = delayTimeL - inCh1Delay;
             delayTimeL_lp = delayTimeL_lp * w0 + inCh1Delay;
@@ -289,6 +378,14 @@ private:
         }
     }
 
+	/** @brief    interpolation of 4 neighbouring samples from the delay buffers
+     *  @param    fractional part of the number of the delay samples
+	 *  @param	  sample from delay buffer with index n-1
+	 *  @param	  sample from delay buffer with index n
+	 *  @param	  sample from delay buffer with index n+1
+	 *  @param	  sample from delay buffer with index n+2
+	 *  @return	  interpolated value of the four samples
+    */
     float interpolRT(float fract, float sample_tm1, float sample_t0, float sample_tp1, float sample_tp2)
     {
         float fract_square = fract * fract;
@@ -301,7 +398,12 @@ private:
         return sample_t0 + fract * a + fract_cub * (a + b + 2.f*c) - fract_square * (2.f*a + b + 3.f*c);
     }
 
-    inline float xFade(float sampleIn1, float sampleIn2)            //xFade Function, input1 - raw input, input2 - processed input
+    /** @brief    calculation of dry and wet amounts depending on mix amount
+     *  @param    raw Sample
+     *  @param    processed sample
+     *  @return   a mix of both samples
+    */
+	inline float xFade(float sampleIn1, float sampleIn2)
     {
         return ((sampleIn1 * dry) + (sampleIn2 * wet));
     }
