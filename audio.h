@@ -217,8 +217,6 @@ public:
 	 * This should be called before start()
 	*/
 	virtual void init() = 0;
-
-
 };
 
 /*! A shared handle to a \ref Audio instance */

@@ -20,34 +20,22 @@
 
 #include <iostream>
 #include <ostream>
+#include <stdio.h>
 
 #include "audioalsainput.h"
 #include "audioalsaoutput.h"
-
 #include "midi.h"
 #include "rawmididevice.h"
-
-#include <stdio.h>
-
 #include "audiofactory.h"
 #include "examples.h"
-
 #include "tools.h"
-
 #include "audioalsa.h"
-
 #include "stopwatch.h"
-
 #include "alsacardidentifier.h"
-
 #include "blockingcircularbuffer.h"
-
 #include "audioalsaexception.h"
-
 #include "alsacardidentifier.h"
-
 #include "samplespecs.h"
-
 
 #include "audiojack.h"
 #include "audiojackinput.h"
@@ -71,7 +59,7 @@ int main()
 			std::cout << *it << std::endl;
 		*/
 
-		Nl::AlsaCardIdentifier audioOut(8,0,0, "USB Device");
+		Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
 		Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
 		Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
 #if 1
@@ -99,14 +87,14 @@ int main()
 		}
 #endif
 
-		const int buffersize = 512;
+		const int buffersize = 2048;
 		const int samplerate = 48000;
 		const int channels = 2;
 
 		//last param: fixedtempo, percussiononsets
-		auto handle = Nl::Examples::vampPlugin(audioIn, channels, buffersize, samplerate);
+		//auto handle = Nl::Examples::vampPlugin(audioIn, channels, buffersize, samplerate);
 		//auto handle = Nl::Examples::onsetDetection(audioIn, buffersize, samplerate);
-		//auto handle = Nl::Examples::jackInputToOutput(audioIn, audioOut, buffersize, samplerate);
+		auto handle = Nl::Examples::jackInputToOutput(audioIn, audioOut, buffersize, samplerate);
 		//auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
 		//auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
 		//auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);

@@ -1,6 +1,6 @@
 #include "vamphost.h"
 
-VampHost::VampHost(const std::string &libraryName, const std::string &pluginName, unsigned int samplerate) :
+VampHost::VampHost(const std::string &libraryName, const std::string &pluginName, unsigned int samplerate, unsigned int printIndex) :
 	m_libraryName(libraryName),
 	m_pluginName(pluginName),
 	m_initialized(false),
@@ -9,7 +9,8 @@ VampHost::VampHost(const std::string &libraryName, const std::string &pluginName
 	m_buffer(nullptr),
 	m_channels(-1),
 	m_blockSize(-1),
-	m_stepSize(-1)
+	m_stepSize(-1),
+	m_printIndex(printIndex)
 {
 	if (!loadPlugin(libraryName, pluginName, samplerate))
 		std::cerr << "ERROR: Can not load plugin!" << std::endl;
@@ -36,7 +37,7 @@ bool VampHost::loadPlugin(const std::string &libraryName, const std::string &plu
 		std::cerr << "ERROR: Plugin has no outputs!" << std::endl;
 	}
 
-	for (int i=0; i<outputs.size(); i++) {
+	for (unsigned int i=0; i<outputs.size(); i++) {
 		Plugin::OutputDescriptor od = outputs[i];
 		std::cerr << "Output[" << i << "] is: \"" << od.identifier << "\"" << std::endl;
 	}
@@ -59,7 +60,7 @@ bool VampHost::initialize(unsigned int channels, unsigned int stepSize, unsigned
 	}
 
 	m_buffer = new float*[channels];
-	for (int i=0; i<channels; i++) m_buffer[i] = new float[blockSize+2];
+	for (unsigned int i=0; i<channels; i++) m_buffer[i] = new float[blockSize+2];
 
 	return true;
 }

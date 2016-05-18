@@ -281,7 +281,7 @@ SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedB
 */
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
 													AudioCallbackIn callback,
-													UserPtr *ptr)
+													SharedUserPtr ptr)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();
@@ -307,7 +307,7 @@ WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
 */
 WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
 												   AudioCallbackOut callback,
-												   UserPtr *ptr)
+												   SharedUserPtr ptr)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();
@@ -335,7 +335,7 @@ WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
 													SharedBufferHandle outBuffer,
 													AudioCallbackInOut callback,
-													UserPtr *ptr)
+													SharedUserPtr ptr)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();

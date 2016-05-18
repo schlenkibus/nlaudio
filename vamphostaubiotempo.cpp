@@ -10,15 +10,15 @@ using Vamp::HostExt::PluginLoader;
 using Vamp::HostExt::PluginWrapper;
 using Vamp::HostExt::PluginInputDomainAdapter;
 
-VampHostAubioTempo::VampHostAubioTempo(unsigned int samplerate) :
-	basetype("vamp-aubio", "aubiotempo", samplerate)
+VampHostAubioTempo::VampHostAubioTempo(const std::string& libraryName, const std::string& pluginName, unsigned int samplerate, unsigned int printIndex) :
+	basetype(libraryName, pluginName, samplerate, printIndex)
 {
 }
 
 void VampHostAubioTempo::process(uint8_t *samples, const Nl::SampleSpecs& specs)
 {
-	static unsigned long frameNo;
-	frameNo++;
+	static unsigned long frameNo = 0;
+	frameNo += specs.buffersizeInFramesPerPeriode;
 
 	RealTime adjustment = RealTime::zeroTime;
 
@@ -42,9 +42,7 @@ void VampHostAubioTempo::process(uint8_t *samples, const Nl::SampleSpecs& specs)
 	auto rt = RealTime::frame2RealTime(frameNo, specs.samplerate);
 	//auto features = plugin->process(plugbuf, rt);
 
-	int outputNo = 0;
-
 	basetype::printFeatures(RealTime::realTime2Frame(rt + adjustment, specs.samplerate),
-				  specs.samplerate, outputNo, basetype::m_plugin->process(basetype::m_buffer, rt), false);
+				  specs.samplerate, basetype::m_printIndex, basetype::m_plugin->process(basetype::m_buffer, rt), false);
 }
 

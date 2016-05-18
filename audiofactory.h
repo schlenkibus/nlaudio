@@ -28,12 +28,17 @@ namespace Nl {
  *
  */
 struct UserPtr {
+	UserPtr() :
+		info("unused"),
+		ptr(nullptr) {}
 	UserPtr(const std::string info, void* ptr) :
 		info(info),
 		ptr(ptr) {}
 	std::string info; /**< A description of the type passed */
 	void *ptr;	/**< The actual user pointer */
 };
+
+typedef std::shared_ptr<UserPtr> SharedUserPtr;
 
 class AudioAlsaInput;
 class AudioAlsaOutput;
@@ -42,9 +47,9 @@ class RawMidiDevice;
 /*! A shared handle to a \ref std::atomic<bool> */
 typedef std::shared_ptr<std::atomic<bool>> SharedTerminateFlag;
 
-typedef void (*AudioCallbackIn)(u_int8_t*, const SampleSpecs &specs, UserPtr* ptr);
-typedef void (*AudioCallbackOut)(u_int8_t*, const SampleSpecs &specs, UserPtr* ptr);
-typedef void (*AudioCallbackInOut)(u_int8_t*, uint8_t*, const SampleSpecs &specs, UserPtr* ptr);
+typedef void (*AudioCallbackIn)(u_int8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
+typedef void (*AudioCallbackOut)(u_int8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
+typedef void (*AudioCallbackInOut)(u_int8_t*, uint8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
 
 /*! A shared handle to a \ref std::thread */
 typedef std::shared_ptr<std::thread> SharedThreadHandle;
@@ -85,20 +90,20 @@ SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedB
 
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
 												  AudioCallbackIn callback,
-												  UserPtr *ptr);
+												  SharedUserPtr ptr);
 WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
 												   AudioCallbackOut callback,
-												   UserPtr *ptr);
+												   SharedUserPtr ptr);
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
 												  SharedBufferHandle outBuffer,
 												  AudioCallbackInOut callback,
-												  UserPtr* ptr);
+												  SharedUserPtr ptr);
 WorkingThreadHandle registerAutoDrainOnBuffer(SharedBufferHandle inBuffer);
 
 // Thread function, that handles blocking io calls on the buffers
 auto readAudioFunction = [](SharedBufferHandle audioBuffer,
 AudioCallbackIn callback,
-SharedTerminateFlag terminateRequest, UserPtr *ptr)
+SharedTerminateFlag terminateRequest, SharedUserPtr ptr)
 {
 
 	SampleSpecs sampleSpecs = audioBuffer->sampleSpecs();
@@ -117,7 +122,7 @@ SharedTerminateFlag terminateRequest, UserPtr *ptr)
 // Thread function, that handles blocking io calls on the buffers
 auto writeAudioFunction = [](SharedBufferHandle audioBuffer,
 AudioCallbackIn callback,
-SharedTerminateFlag terminateRequest, UserPtr *ptr) {
+SharedTerminateFlag terminateRequest, SharedUserPtr ptr) {
 
 	SampleSpecs sampleSpecs = audioBuffer->sampleSpecs();
 
@@ -138,7 +143,7 @@ SharedTerminateFlag terminateRequest, UserPtr *ptr) {
 auto readWriteAudioFunction = [](SharedBufferHandle audioInBuffer,
 SharedBufferHandle audioOutBuffer,
 AudioCallbackInOut callback,
-SharedTerminateFlag terminateRequest, UserPtr *ptr) {
+SharedTerminateFlag terminateRequest, SharedUserPtr ptr) {
 
 	SampleSpecs sampleSpecsIn = audioInBuffer->sampleSpecs();
 	SampleSpecs sampleSpecsOut = audioOutBuffer->sampleSpecs();
@@ -181,9 +186,5 @@ SharedTerminateFlag terminateRequest) {
 		audioInBuffer->get(inBuffer, inBuffersize);
 	}
 };
-
-
-
-
 
 } // namespace Nl

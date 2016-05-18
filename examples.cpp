@@ -37,8 +37,8 @@ ExamplesHandle vampPlugin(const AlsaCardIdentifier &inCard,
 {
 
 	//Remider: This leaks
-	VampHostAubioTempo *bpmDetect = new VampHostAubioTempo(samplerate);
-	bpmDetect->initialize(channels, buffersize, buffersize);
+	VampHostAubioTempo *bpmDetect = new VampHostAubioTempo("vamp-aubio", "beatroot", samplerate, 0);
+	bpmDetect->initialize(channels, 480, buffersize);
 
 	ExamplesHandle ret;
 	ret.inBuffer = createBuffer("InputBuffer");
@@ -46,7 +46,7 @@ ExamplesHandle vampPlugin(const AlsaCardIdentifier &inCard,
 	ret.audioInput->setSamplerate(samplerate);
 	ret.audioInput->setChannelCount(channels);
 
-	UserPtr *ptr = new UserPtr("VampHostAubioTemp", static_cast<void*>(bpmDetect));
+	SharedUserPtr ptr(new UserPtr("VampHostAubioTemp", static_cast<void*>(bpmDetect)));
 
 	ret.audioInput->init();
 	ret.workingThreadHandle = registerInputCallbackOnBuffer(ret.inBuffer, vampPluginCallback, ptr);
@@ -55,7 +55,7 @@ ExamplesHandle vampPlugin(const AlsaCardIdentifier &inCard,
 	return ret;
 }
 
-void vampPluginCallback(uint8_t *in, const SampleSpecs &sampleSpecs, UserPtr *ptr)
+void vampPluginCallback(uint8_t *in, const SampleSpecs &sampleSpecs, SharedUserPtr ptr)
 {
 	if (ptr->info != "VampHostAubioTemp") {
 		std::cerr << __func__ << ": UserPtr seems to be wrong type!" << std::endl;
@@ -72,7 +72,7 @@ fvec_t *onset;
 fvec_t *input;
 smpl_t is_onset;
 
-void onsetDetectionCallback(u_int8_t *in, const SampleSpecs &sampleSpecs, UserPtr *ptr)
+void onsetDetectionCallback(u_int8_t *in, const SampleSpecs &sampleSpecs, SharedUserPtr ptr)
 {
 	static int counterA = 0;
 	static int counter = 0;
@@ -129,11 +129,11 @@ ExamplesHandle onsetDetection(const AlsaCardIdentifier &inCard, unsigned int buf
 	return ret;
 }
 
-
-
-
 // In to out example
-void inToOutCallback(u_int8_t *in, u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), UserPtr* ptr)
+void inToOutCallback(u_int8_t *in,
+					 u_int8_t *out,
+					 const SampleSpecs &sampleSpecs __attribute__ ((unused)),
+					 SharedUserPtr ptr __attribute__ ((unused)))
 {
 	static int counter = 0;
 	StopBlockTime sft(&sw, "val" + std::to_string(counter++));
@@ -166,12 +166,16 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIde
 	ret.audioOutput->start();
 	ret.audioInput->start();
 
-	ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback, nullptr);
+	SharedUserPtr ptr(new UserPtr("unused", nullptr));
+	ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallback, ptr);
 
 	return ret;
 }
 
-ExamplesHandle jackInputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate, UserPtr* ptr)
+ExamplesHandle jackInputToOutput(const AlsaCardIdentifier &inCard,
+								 const AlsaCardIdentifier &outCard,
+								 unsigned int buffersize,
+								 unsigned int samplerate)
 {
 	ExamplesHandle ret;
 
@@ -179,7 +183,7 @@ ExamplesHandle jackInputToOutput(const AlsaCardIdentifier &inCard, const AlsaCar
 	ret.audioInput = createJackInputDevice(inCard, ret.inBuffer, buffersize);
 	//ret.audioInput->setSamplerate(samplerate);
 
-	//ret.outBuffer = createBuffer("OutputBuffer");
+	ret.outBuffer = createBuffer("OutputBuffer");
 	//ret.audioOutput = createJackOutputDevice(outCard, ret.outBuffer, buffersize);
 	//ret.audioOutput->setSamplerate(samplerate);
 
@@ -197,7 +201,9 @@ ExamplesHandle jackInputToOutput(const AlsaCardIdentifier &inCard, const AlsaCar
 	return ret;
 }
 
-void midiSineCallback(u_int8_t *out, const SampleSpecs &sampleSpecs, UserPtr *ptr)
+void midiSineCallback(u_int8_t *out,
+					  const SampleSpecs &sampleSpecs,
+					  SharedUserPtr ptr __attribute__ ((unused)))
 {
 	static int counter = 0;
 	StopBlockTime sft(&sw, "val" + std::to_string(counter++));
@@ -322,7 +328,9 @@ ExamplesHandle silence(const AlsaCardIdentifier &audioOutCard,
 	return ret;
 }
 
-void inToOutCallbackWithMidi(u_int8_t *in, u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), UserPtr *ptr)
+void inToOutCallbackWithMidi(u_int8_t *in, u_int8_t *out,
+							 const SampleSpecs &sampleSpecs __attribute__ ((unused)),
+							 SharedUserPtr ptr __attribute__ ((unused)))
 {
 	static int counter = 0;
 	//StopBlockTime sft(&sw, "val" + std::to_string(counter++));
@@ -379,8 +387,7 @@ ExamplesHandle inputToOutputWithMidi(   const AlsaCardIdentifier &audioInCard,
 	ret.audioInput->start();
 	ret.midiInput->start();
 
-	//todo: this leaks
-	UserPtr *ptr = new UserPtr("unused", nullptr);
+	SharedUserPtr ptr(new UserPtr("unused", nullptr));
 
 	ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, inToOutCallbackWithMidi, ptr);
 

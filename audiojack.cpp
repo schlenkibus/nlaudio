@@ -21,7 +21,6 @@ AudioJack::~AudioJack()
 	close();
 }
 
-
 void AudioJack::open()
 {
 	jack_status_t status;
@@ -33,6 +32,7 @@ void AudioJack::open()
 										 m_isInput ? JackPortIsInput : JackPortIsOutput, 0)) == nullptr) {
 		std::cout << "### some error on calling jack_port_register" << std::endl;
 	}
+
 }
 
 void AudioJack::close()
@@ -50,6 +50,9 @@ void AudioJack::close()
 void AudioJack::start()
 {
 	int ret = 0;
+
+	init();
+
 	if ((ret = jack_set_process_callback(m_jackClient, AudioJack::worker, nullptr)) != 0) {
 		std::cout << "### some error on calling jack_set_process_callback(" << ret << ")" << std::endl;
 	}

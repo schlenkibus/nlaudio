@@ -20,7 +20,7 @@ using Vamp::HostExt::PluginInputDomainAdapter;
 class VampHost
 {
 public:
-	VampHost(const std::string &libraryName, const std::string& pluginName, unsigned int samplerate);
+	VampHost(const std::string &libraryName, const std::string& pluginName, unsigned int samplerate, unsigned int printIndex);
 	virtual ~VampHost();
 
 	bool initialize(unsigned int channels, unsigned int stepSize, unsigned int blockSize);
@@ -43,7 +43,7 @@ private:
 protected:
 	Plugin *m_plugin;
 	float **m_buffer;
-
+	unsigned int m_printIndex;
 
 };
 
