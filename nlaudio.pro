@@ -1,10 +1,13 @@
+QT       += core gui
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = nlaudio
 
 TEMPLATE = app
 CONFIG += console
 CONFIG -= app_bundle
-CONFIG -= qt
+#CONFIG -= qt
 
 QMAKE_CXXFLAGS += -std=c++11
 LIBS += -lasound
@@ -29,7 +32,16 @@ SOURCES += main.cpp \
     rawmidideviceexception.cpp \
     samplespecs.cpp \
     minisynth.cpp \
-    effects.cpp
+    effects.cpp \
+    oscshapeui.cpp \
+    onepolefilters.cpp \
+    biquadfilters.cpp \
+    tiltfilters.cpp \
+    cabinet.cpp \
+    echo.cpp \
+    oscillator.cpp \
+    phase22.cpp \
+    smoother.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -63,10 +75,16 @@ HEADERS += \
     cabinet.h \
     tiltfilters.h \
     smoother.h \
-    echo.h
+    echo.h \
+    oscshapeui.h \
+    phase22.h \
+    oscillator.h \
+    reaktortoolbox.h \
+    toolbox.h
 
 OTHER_FILES += \
     Todo.txt
 
-FORMS +=
+FORMS += \
+    oscshapeui.ui
 

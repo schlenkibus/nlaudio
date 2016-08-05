@@ -21,6 +21,23 @@ extern Nl::StopWatch sw;
 namespace Nl {
 namespace EFFECTS{
 
+// Objects
+Smoother volumeSmoother;
+Smoother muteSmoother;
+Smoother crossfadeSmoother;
+Smoother inputSwitchSmoother;
+
+
+void initializeEffects(int samplerate)
+{
+    volumeSmoother = Smoother(samplerate, 0.032f);
+    muteSmoother = Smoother(samplerate, 0.032f);
+    crossfadeSmoother = Smoother(samplerate, 0.032f);
+    inputSwitchSmoother = Smoother(samplerate, 0.032f);
+
+}
+
+
     /** @brief    Callback function for Sine Generator and Audio Input - testing with Korg nano Kontrol
         @param    Input Buffer
         @param    Output Buffer
@@ -34,50 +51,55 @@ namespace EFFECTS{
         sw.stop();
         sw.start("val" + std::to_string(counter++));
 
-        int samplerate = sampleSpecs.samplerate;                //Samplerate of Audio device
+        int samplerate = sampleSpecs.samplerate;                // Samplerate of Audio device
 
         static int inClipCntr = 0;
         static int outClipCntr = 0;
 
-        static float curFrequency = 0.f;                        //Frequency for the Sine Generator
+        static float curFrequency = 0.f;                        // Frequency for the Sine Generator
 
-        float curMidiValue = 0.f;                               //Midi Value [0 .. 127]
+        float curMidiValue = 0.f;                               // Midi Value [0 .. 127]
 
-        float faderMaxDB = 12.f;                                //Max of the Fader Range in dB
-        int midiSteps = 24;                                     //Resolution in midi steps ... !
-        static float stepResolution = faderMaxDB / midiSteps;   //dB resolution in dB per midi step
+        float faderMaxDB = 12.f;                                // Max of the Fader Range in dB
+        int midiSteps = 24;                                     // Resolution in midi steps ... !
+        static float stepResolution = faderMaxDB / midiSteps;   // dB resolution in dB per midi step
 
         static Smoother volumeSmoother(samplerate, 0.032f);
-        float volumeFactor = 0.f;                               //Volume Factor [0 .. 3.98]
+        float volumeFactor = 0.f;                               // Volume Factor [0 .. 3.98]
 
         static Smoother muteSmoother(samplerate, 0.032f);
-        float muteFactor = 0.f;                                 //mute Factor [0 .. 1]
-        static int muteSwitch = 1;                              //Mute State [1 mute on, 0 mute off]
+        float muteFactor = 0.f;                                 // Mute Factor [0 .. 1]
+        static int muteSwitch = 1;                              // Mute State [1 mute on, 0 mute off]
 
         static Smoother crossfadeSmoother(samplerate, 0.032f);
-        float crossfadeFactor = 0.f;                            //crossfade factor [0 .. 1] - calculated form midi
-        static int crossfadeSwitch = 0;                         //Crossfade State [1 crossfade on, 0 crossfade off]
+        float crossfadeFactor = 0.f;                            // Crossfade factor [0 .. 1] - calculated form midi
+        static int crossfadeSwitch = 0;                         // Crossfade State [1 crossfade on, 0 crossfade off]
 
         static Smoother inputSwitchSmoother(samplerate, 0.032f);
-        float inputSwitchFactor = 0.f;                          //input switch factor [0 .. 1]
-        static int inputSwitch = 0;                             //Input State [0 Sine, 1 Audio Input]
+        float inputSwitchFactor = 0.f;                          // Input switch factor [0 .. 1]
+        static int inputSwitch = 0;                             // Input State [0 Sine, 1 Audio Input]
 
-        float outputSample = 0.f;                               //output Sample which comes from AudioIn or sine generator
+        float outputSample = 0.f;                               // Output Sample which comes from AudioIn or sine generator
 
 #ifdef ONEPOLEFILTER
-        static OnePoleFilters onePoleFilter(samplerate);
+        static OnePoleFilters filter_l;                         // default Values: cutFreq: 22000.f, shelfAmp: 0.f, filterType: Lowpass
+        static OnePoleFilters filter_r;
 #endif
 #ifdef BIQUADFILTER
-        static BiquadFilters biquadFilter(samplerate);          //default Values: cutoff(22000.f), shelfAmp(0.f), resonance(0.5f), passtype(lowpass)
+        static BiquadFilters biquadFilter_l;                    // default Values: cutFreq: 22000.f, shelfAmp: 0.f, resonance: 0.5f, filterType: Lowpass
+        static BiquadFilters biquadFilter_r;
 #endif
 #ifdef TILTFILTER
-        static TiltFilters tiltFilter(samplerate);              //default Values: cutoff(22000.f), shelfAmp(0.f), resonance(0.5f), passtype(lowpass)
+        static TiltFilters tiltFilter_l;                        // default Values: cutFreq: 22000.f, shelfAmp: 0.f, resonance: 0.5f, filterType: Lowpass
+        static TiltFilters tiltFilter_r;
 #endif
 #ifdef CABINET
-        static Cabinet cabinet(samplerate);
+        static Cabinet cabinet_L;
+        static Cabinet cabinet_R;
 #endif
+
 #ifdef ECHO
-        static Echo echo(samplerate);
+        static Echo echo;
 #endif
         auto midiBuffer = getBufferForName("MidiBuffer");
 
@@ -177,16 +199,20 @@ namespace EFFECTS{
                     }
                 }
 #ifdef ONEPOLEFILTER
-                onePoleFilter.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
+                filter_l.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
+                filter_r.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
 #endif
 #ifdef BIQUADFILTER
-                biquadFilter.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
+                biquadFilter_l.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
+                biquadFilter_r.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
 #endif
 #ifdef TILTFILTER
-                tiltFilter.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
+                tiltFilter_l.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
+                tiltFilter_r.setFilterParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
 #endif
 #ifdef CABINET
-                cabinet.setCabinetParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
+                cabinet_L.setCabinetParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
+                cabinet_R.setCabinetParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
 #endif
 #ifdef ECHO
                 echo.setEchoParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
@@ -208,7 +234,7 @@ namespace EFFECTS{
 
             inputSwitchFactor = inputSwitchSmoother.smooth();   //Input Switch smoothing
 
-            for (unsigned int channelIndex = 0; channelIndex<sampleSpecs.channels; ++channelIndex)
+            for (unsigned int channelIndex = 0; channelIndex < sampleSpecs.channels; ++channelIndex)
             {
                 float audioInSample = getSample(in, frameIndex, channelIndex, sampleSpecs);
 
@@ -235,17 +261,48 @@ namespace EFFECTS{
                     outputSample = (sineSample * crossfadeFactor) + (audioInSample * (1.f - crossfadeFactor));
                 }
 
+
+                switch (channelIndex)                // apply filter on the active channel
+                {
 #ifdef ONEPOLEFILTER
-                outputSample = onePoleFilter.applyFilter(outputSample, channelIndex);              //1-Pole Filter influence
+                    case 0:
+                    outputSample = filter_l.applyFilter(outputSample);              //1-Pole Filter influence
+                    break;
+
+                    case 1:
+                    outputSample = filter_r.applyFilter(outputSample);              //1-Pole Filter influence
+                    break;
 #endif
 #ifdef BIQUADFILTER
-                outputSample = biquadFilter.applyFilter(outputSample, channelIndex);               //Biquad Filter influence
+                    case 0:
+                    outputSample = biquadFilter_l.applyFilter(outputSample);              //1-Pole Filter influence
+                    break;
+
+                    case 1:
+                    outputSample = biquadFilter_r.applyFilter(outputSample);              //1-Pole Filter influence
+                    break;
 #endif
 #ifdef TILTFILTER
-                outputSample = tiltFilter.applyFilter(outputSample, channelIndex);                 //Biquad Filter influence
+                    case 0:
+                    outputSample = tiltFilter_l.applyFilter(outputSample);              //1-Pole Filter influence
+                    break;
+
+                    case 1:
+                    outputSample = tiltFilter_r.applyFilter(outputSample);              //1-Pole Filter influence
+                    break;
 #endif
+                }
 #ifdef CABINET
-                outputSample = cabinet.applyCab(outputSample, channelIndex);
+                switch (channelIndex)
+                {
+                    case 0:
+                    outputSample = cabinet_L.applyCab(outputSample);
+                    break;
+
+                    case 1:
+                    outputSample = cabinet_R.applyCab(outputSample);
+                    break;
+                }
 #endif
 #ifdef ECHO
                 outputSample = echo.applyEcho(outputSample, channelIndex);

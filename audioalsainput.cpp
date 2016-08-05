@@ -30,7 +30,6 @@ void AudioAlsaInput::stop()
 	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
 	setTerminateRequest();
 
-
     m_audioThread->join();
 	delete m_audioThread;
 	m_audioThread = nullptr;

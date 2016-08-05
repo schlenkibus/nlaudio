@@ -1,0 +1,35 @@
+\hypertarget{classStopFunctionTime}{\section{Stop\-Function\-Time Class Reference}
+\label{classStopFunctionTime}\index{Stop\-Function\-Time@{Stop\-Function\-Time}}
+}
+
+
+Helper class, that measures time duration for the time the object exists.  
+
+
+
+
+{\ttfamily \#include $<$stopwatch.\-h$>$}
+
+
+
+\subsection{Detailed Description}
+Helper class, that measures time duration for the time the object exists. 
+
+This class calls Stop\-Watch\-::start(\char`\"{}\char`\"{}) in constructor ans Stop\-Watch\-::stop() in destructor. Hence it can be used like this, to measure the total executiontime of a function\-:
+
+
+\begin{DoxyCode}
+StopWatch sw();
+
+\textcolor{keywordtype}{void} anyFunction()
+\{
+   \hyperlink{classStopFunctionTime}{StopFunctionTime} sft(&sw, \textcolor{stringliteral}{"Valuename"}); \textcolor{comment}{// Start measuring time from here.}
+
+   \textcolor{comment}{// Some very expensive code here}
+\}
+\end{DoxyCode}
+ 
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+stopwatch.\-h\end{DoxyCompactItemize}

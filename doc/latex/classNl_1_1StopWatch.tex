@@ -1,0 +1,48 @@
+\hypertarget{classNl_1_1StopWatch}{\section{Nl\-:\-:Stop\-Watch Class Reference}
+\label{classNl_1_1StopWatch}\index{Nl\-::\-Stop\-Watch@{Nl\-::\-Stop\-Watch}}
+}
+
+
+Helper class, that measures time durations.  
+
+
+
+
+{\ttfamily \#include $<$stopwatch.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{group__Tools_ga086b4f40c93978f661d5154f31081677}{Stop\-Watch} (const std\-::string \&name)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+void \hyperlink{group__Tools_ga0171f821750460729b49db731d20e214}{start} (const std\-::string \&name)
+\begin{DoxyCompactList}\small\item\em Set start timestamp to now. \end{DoxyCompactList}\item 
+void \hyperlink{group__Tools_ga2b770511bceacff939c8bbf69e25445f}{stop} ()
+\begin{DoxyCompactList}\small\item\em Set stop timestamp to now. \end{DoxyCompactList}\item 
+std\-::ostream \& \hyperlink{group__Tools_gacd1b3793ab5f126af64122dcfabf1020}{print\-Detailed} (std\-::ostream \&rhs)
+\begin{DoxyCompactList}\small\item\em Prints a detailed list with all timestamps. \end{DoxyCompactList}\item 
+std\-::ostream \& \hyperlink{group__Tools_ga8d07863904ca88de29fe3906ee1ae0a6}{print\-Summary} (std\-::ostream \&rhs)
+\begin{DoxyCompactList}\small\item\em Prints a summary of all timestamps. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Helper class, that measures time durations. 
+
+This class can be used to log execution time.
+
+
+\begin{DoxyCode}
+\hyperlink{group__Tools_ga086b4f40c93978f661d5154f31081677}{StopWatch} sw();
+\textcolor{keywordtype}{void} anyFunction()
+\{
+   sw.\hyperlink{group__Tools_ga0171f821750460729b49db731d20e214}{start}(\textcolor{stringliteral}{"TimePointName"});
+   \textcolor{comment}{// Some very expensive code here}
+   sw.\hyperlink{group__Tools_ga2b770511bceacff939c8bbf69e25445f}{stop}();
+\}
+\end{DoxyCode}
+ 
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+stopwatch.\-h\item 
+stopwatch.\-cpp\end{DoxyCompactItemize}

@@ -1,0 +1,68 @@
+\hypertarget{classNl_1_1RawMidiDevice}{\section{Nl\-:\-:Raw\-Midi\-Device Class Reference}
+\label{classNl_1_1RawMidiDevice}\index{Nl\-::\-Raw\-Midi\-Device@{Nl\-::\-Raw\-Midi\-Device}}
+}
+
+
+\hyperlink{classNl_1_1Midi}{Midi} implementation for alsa raw midi.  
+
+
+
+
+{\ttfamily \#include $<$rawmididevice.\-h$>$}
+
+Inheritance diagram for Nl\-:\-:Raw\-Midi\-Device\-:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNl_1_1RawMidiDevice}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{group__Midi_ga8be460b3e5b9b06cb21d1b47f7f488ab}{Raw\-Midi\-Device} (const \hyperlink{classNl_1_1AlsaCardIdentifier}{Alsa\-Card\-Identifier} \&card, std\-::shared\-\_\-ptr$<$ \hyperlink{classNl_1_1BlockingCircularBuffer}{Blocking\-Circular\-Buffer}$<$ uint8\-\_\-t $>$$>$ buffer)
+\begin{DoxyCompactList}\small\item\em Constructor. \end{DoxyCompactList}\item 
+\hyperlink{group__Midi_ga8ede83b60ff88f34a597952ea1bd32fb}{$\sim$\-Raw\-Midi\-Device} ()
+\begin{DoxyCompactList}\small\item\em Deconstructor. \end{DoxyCompactList}\item 
+virtual void \hyperlink{group__Midi_gace91f1137effd037eca8b3b959508f91}{open} ()
+\begin{DoxyCompactList}\small\item\em Open the interface. \end{DoxyCompactList}\item 
+virtual void \hyperlink{group__Midi_gaa66489de15df30f282637b8a1bcd263d}{close} ()
+\begin{DoxyCompactList}\small\item\em Close the interface. \end{DoxyCompactList}\item 
+virtual void \hyperlink{group__Midi_ga9ca4e486b5df388d9000ea8ef48d31a8}{start} ()
+\begin{DoxyCompactList}\small\item\em Start the interface. \end{DoxyCompactList}\item 
+virtual void \hyperlink{group__Midi_gae95fcc2ce4b3681d34f341b2d5c9276e}{stop} ()
+\begin{DoxyCompactList}\small\item\em Stop the interface. \end{DoxyCompactList}\item 
+void \hyperlink{group__Midi_gaf9dfa04b59e579eb3e4a24c8979bdc57}{set\-Alsa\-Midi\-Buffer\-Size} (unsigned int size)
+\begin{DoxyCompactList}\small\item\em Set Alsa's midi buffer size. \end{DoxyCompactList}\item 
+unsigned int \hyperlink{group__Midi_gad34ca9297599d1dc8113fded930263ce}{get\-Alsa\-Midi\-Buffer\-Size} ()
+\begin{DoxyCompactList}\small\item\em Get Alsa's midi buffer size. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\-::list$<$ \hyperlink{structNl_1_1MidiCard}{Midi\-Card} $>$ \hyperlink{group__Midi_gaf6f05ac177aed9d05e06f34a776b5317}{get\-Available\-Devices} ()
+\begin{DoxyCompactList}\small\item\em Static function that lists alsa midi devices. \end{DoxyCompactList}\item 
+static std\-::string \hyperlink{group__Midi_ga9c95def97d341828fa23d3bf1a0b3c29}{get\-First\-Device} ()
+\begin{DoxyCompactList}\small\item\em Static function that returns first available alsa midi device. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classNl_1_1RawMidiDevice_a9c773439bde734734607e1f4a39265a0}{std\-::atomic$<$ bool $>$ {\bfseries m\-\_\-request\-Terminate}}\label{classNl_1_1RawMidiDevice_a9c773439bde734734607e1f4a39265a0}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\hyperlink{classNl_1_1Midi}{Midi} implementation for alsa raw midi. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em device} & Alsa device id such as \char`\"{}hw\-:0,1\char`\"{} \\
+\hline
+{\em buffer} & Buffer to store midi data to \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+rawmididevice.\-h\item 
+rawmididevice.\-cpp\end{DoxyCompactItemize}

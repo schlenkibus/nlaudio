@@ -11,9 +11,9 @@
 #include "tiltfilters.h"
 #include "cabinet.h"
 #include "echo.h"
+#include "smoother.h"
 
 #include "audiofactory.h"
-#include "smoother.h"
 
 namespace Nl {
 namespace EFFECTS {

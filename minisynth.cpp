@@ -1,16 +1,93 @@
-#include "minisynth.h"
+﻿#include "minisynth.h"
 
 #include "stopwatch.h"
 #include "audioalsainput.h"
 #include "audioalsaoutput.h"
 #include "rawmididevice.h"
 #include "tools.h"
+
+#include "phase22.h"
+#include "smoother.h"
 #include "cabinet.h"
+
+//------------- activate applications here
+#define CABINET
 
 extern Nl::StopWatch sw;
 
 namespace Nl {
 namespace MINISYNTH {
+
+#define NUM_VOICES 12
+
+//--------------- Objects
+Smoother volumeSmoother;
+Phase22 voice[NUM_VOICES];
+
+#ifdef CABINET
+Cabinet cabinet;
+#endif
+
+//--------------- Voice Allocation global variables
+static int voiceState[NUM_VOICES] = {};                               // which voices are active? 1 - on, 0 - off
+
+static int oldestAssigned;
+static int youngestAssigned;
+static int nextAssigned[NUM_VOICES] = {};                             // array with the next elemts per voice
+static int previousAssigned[NUM_VOICES] = {};
+
+static int numAssigned;
+
+static int oldestReleased;                                           // index of the earliest disabled voice (full use: earliest turned on)
+static int youngestReleased;                                         // index of the last disabled voice (full use: last turned on)
+static int nextReleased[NUM_VOICES] = {};
+
+//--------------- step resolution caculation
+float faderMaxDB = 12.f;                                // Max of the Fader Range in dB
+int midiSteps = 24;                                     // Resolution in midi steps ... !
+float stepResolution = faderMaxDB / midiSteps;          // dB resolution in dB per midi step
+
+
+
+
+/******************************************************************************/
+/** @brief   initialisation function for all synth components and
+ *           voice allocation variables
+*******************************************************************************/
+
+    void initializeSynth(int sampleRate)
+    {
+        volumeSmoother = Smoother(sampleRate, 0.032f);          // Volume Smoother
+        volumeSmoother.initSmoother(1.f);
+
+        voice[NUM_VOICES] = Phase22();                          // Phase22 Voices
+
+        for (unsigned int i = 0; i < NUM_VOICES; i++)
+        {
+            voice[i].setVoiceNumber(i);
+        }
+
+#ifdef CABINET
+        cabinet = Cabinet();                                    // Cabinet Effect
+#endif
+
+        for (int i = 0; i < NUM_VOICES; i++)                    // Voice Allocation Initialization
+        {
+            voiceState[i] = -1;
+        }
+
+        numAssigned = 0;
+        oldestAssigned = 0;
+        oldestReleased = 0;
+        youngestAssigned = 0;
+        youngestReleased = NUM_VOICES - 1;
+
+        for (int i = 0; i < NUM_VOICES - 1; i++)
+        {
+            nextReleased[i] = i + 1;
+        }
+    }
+
 
 
     /** @brief    Callback function for Sine Generator and Audio Input - testing with ReMote 61
@@ -26,172 +103,165 @@ namespace MINISYNTH {
         sw.stop();
         sw.start("val" + std::to_string(counter++));
 
-        int samplerate = sampleSpecs.samplerate;                //Samplerate of Audio device
-        static float outputSample = 0.f;
+        // Nicht die ideale Lösung für die Initialisierung. Warte auf Update des Frameworks (04.08.2016)
+        static bool init = false;
 
-        static float frequency = 0.f;                                       //Sine Frequency
-        static float velocity = 0.f;                                        //Velocity value
-        static int notesOn = 0;                                             //1 Note is played, 0 Note is not played        
-        bool reset = false;                                                 //Phase reset
+        if (!init)
+        { 
+            initializeSynth(sampleSpecs.samplerate);
 
-        static Cabinet cabinet(samplerate);
-        static float hiCut;
-        static float loCut;
-        static float mix;
-        static float cabLvl;
-        static float drive;
-        static float tilt;
-        static float fold;
-        static float asym;
+            // Initialization done
+            init = true;
+        }
 
         auto midiBuffer = getBufferForName("MidiBuffer");
 
-        /*Retrieve Midi Information if midi values have changed*/
+        //---------------- Retrieve Midi Information if midi values have changed
         if (midiBuffer)
         {
-            unsigned char midiByteBuffer[3];                                /*MidiByteBuffer Structure: [0] - , [1] - Played Note Address, [2] - Velocity*/
+            unsigned char midiByteBuffer[3];                                // MidiByteBuffer Structure: [0] - , [1] - Played Note Address, [2] - Velocity
 
             while (midiBuffer->availableToRead() >= 3)
             {
                 midiBuffer->get(midiByteBuffer, 3);
 
+//                printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      // MIDI Value Control Output
 
-                printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      //MIDI Value Control Output
-
-                if (midiByteBuffer[0] == 0x90)
+                /*Retrieve Volume Fader Value and calculate current Volume*/
+                if (midiByteBuffer[1] == 0x30 && (midiByteBuffer[0] == 0xB0 || midiByteBuffer[0] == 0xB1))
                 {
-                    if (midiByteBuffer[2] > 0x00)
+                    float curMidiValue = static_cast<float>(midiByteBuffer[2]);
+                    float volumeFactor;
+
+                    if (curMidiValue < (127 - (127 / midiSteps) * midiSteps))
                     {
-                        notesOn++;
-
-                            frequency = pow(2.f, static_cast<float>((midiByteBuffer[1]-69)/12.f))*440.f;    //From MIDI to Frequency
-
-                            reset = true;
-
-                            //velocity = static_cast<float>(midiByteBuffer[2])/127.f;                       //From MIDI to Velocity [0.0 .. 1.0] - linear
-                            velocity = pow(10,(static_cast<float>(midiByteBuffer[2]+1.f)-64.f)/64.f)/10.f;  //From MIDI to Velocity [0.0 .. 1.0] - logarithmic
+                        volumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * stepResolution) / 20.f) * curMidiValue * 0.1429f;
                     }
                     else
                     {
-                        notesOn--;
+                        volumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * stepResolution) / 20.f);
                     }
-                }
-                else if (midiByteBuffer[0] == 0x80)
-                {
-                    notesOn--;
+                    printf("volumeFactor: %f\n", volumeFactor);
+                    volumeSmoother.initSmoother(volumeFactor);
                 }
 
+                int midiVal = static_cast<int>(midiByteBuffer[1]);
 
-                if (midiByteBuffer[0] == 0xB0)
+                // Voice Allocation - Note On
+                if (midiByteBuffer[0] == 0x90 || midiByteBuffer[0] == 0x91 || midiByteBuffer[0] == 0x92)         // key down
                 {
-                    /*Cabinet*/
-                    /*Retrieve hiCut Frequency from Knob [B0 05] and calculate Frequency this schould be from 260Hz to 26737Hz*/
-                    if (midiByteBuffer[1] == 0x05)
+                    int v;
+
+                    if (numAssigned < NUM_VOICES)
                     {
-                        // Pitch Values for better testing
-                        hiCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 60.f;
-                        hiCut = pow(2.f, (hiCut - 69.f) / 12) * 440.f;
+                        if (numAssigned == 0)
+                        {
+                            oldestAssigned = oldestReleased;
+                            youngestAssigned = oldestReleased;
+                        }
 
-                        //hiCut = 260.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 19.f);
+                        v = oldestReleased;
+                        oldestReleased = nextReleased[v];
 
-                        cabinet.setHiCut(hiCut);
+                        numAssigned++;
+                    }
+                    else
+                    {
+                        v = oldestAssigned;
+                        oldestAssigned = nextAssigned[v];
                     }
 
-                    /*Retrieve loCut Frequency from Knob [B0 50] and calculate Frequency this schould be from 25Hz to 2637Hz*/
-                    if (midiByteBuffer[1] == 0x50)
+                    previousAssigned[v] = youngestAssigned;
+                    nextAssigned[youngestAssigned] = v;
+
+                    youngestAssigned = v;
+
+                    voiceState[v] = midiVal;
+
+
+                    voice[v].setPitch(static_cast<float>(midiVal));
+//                    voice[v].resetPhase(); // hier ist es falsch
+                }
+
+                // Voice Allocation - Note Off
+                else if (midiByteBuffer[0] == 0x80 || midiByteBuffer[0] == 0x81 || midiByteBuffer[0] == 0x82)    // key up
+                {
+                    int v;
+
+                    for (v = 0; v < NUM_VOICES; v++)
                     {
-                        // Pitch Values for better testing
-                        loCut = (static_cast<float>(midiByteBuffer[2]) * 80.f) / 127.f + 20.f;
-                        loCut = pow(2.f, (loCut - 69.f) / 12) * 440.f;
+                        if (voiceState[v] == midiVal)
+                        {
+                            nextReleased[youngestReleased] = v;
+                            youngestReleased = v;
 
-                        //loCut = 25.f * pow(2.f, static_cast<float>(midiByteBuffer[2]) / 18.9f);
+                            if (numAssigned == NUM_VOICES)
+                            {
+                                oldestReleased = v;
+                            }
 
-                        cabinet.setLoCut(loCut);
-                    }
+                            numAssigned--;
 
-                    /*Retrieve mix amount from Fader [B0 6C]*/
-                    if (midiByteBuffer[1] == 0x6C)
-                    {
-                        mix = static_cast<float>(midiByteBuffer[2]) / 127.f;
-                        cabinet.setMix(mix);
-                    }
+                            if (oldestAssigned == v)
+                            {
+                                oldestAssigned = nextAssigned[v];
 
-                    /*Retrieve Cabinet Level from Fader [B0 6E]*/
-                    if (midiByteBuffer[1] == 0x6E)
-                    {
-                        cabLvl = (static_cast<float>(midiByteBuffer[2]) - 127.f) * (50.f / 127.f);
-                        cabinet.setCabLvl(cabLvl);
-                    }
+                            }
+                            else if (youngestAssigned == v)
+                            {
+                                youngestAssigned = previousAssigned[v];
+                            }
+                            else
+                            {
+                                nextAssigned[previousAssigned[v]] = nextAssigned[v];
+                                previousAssigned[nextAssigned[v]] = previousAssigned[v];
+                            }
 
-                    /*Retrieve Drive from Fader [B0 6D]*/
-                    if (midiByteBuffer[1] == 0x6D)
-                    {
-                        drive = static_cast<float>(midiByteBuffer[2]) * (50.f / 127.f);
-                        cabinet.setDrive(drive);
-                    }
+                            voiceState[v] = -1;
 
-                    /*Retrieve Tilt from Fader [B0 52]*/
-                    if (midiByteBuffer[1] == 0x52)
-                    {
-                        tilt = (static_cast<float>(midiByteBuffer[2]) - 63.5f) * (50.f / 63.5f);
-                        cabinet.setTilt(tilt);
-                    }
-
-                    /*Retrieve Fold from Fader [B0 53]*/
-                    if (midiByteBuffer[1] == 0x53)
-                    {
-                        fold = static_cast<float>(midiByteBuffer[2]) / 127.f;
-                        cabinet.setFold(fold);
-                    }
-
-                    /*Retrieve Asym from Fader [B0 55]*/
-                    if (midiByteBuffer[1] == 0x55)
-                    {
-                        asym = static_cast<float>(midiByteBuffer[2]) / 127.f;
-                        cabinet.setAsym(asym);
+                            break;
+                        }
                     }
                 }
 
-#if 0
-                /*Input-Switch Selection - not used for now*/
-                if (midiByteBuffer[2] > 0x00 && midiByteBuffer[1] == 0x48)
+                for(unsigned int i = 0; i < NUM_VOICES; i++)
                 {
-                    switch(inputSwitch)
-                    {
-                        case 0:
-                        inputSwitch=1;
-                        break;
+                    voice[i].setOscParams(midiByteBuffer[0], midiByteBuffer[1], static_cast<float>(midiByteBuffer[2]));
+                }
 
-                        case 1:
-                        inputSwitch=0;
-                        break;
-                    }
+#ifdef CABINET
+                if (midiByteBuffer[0] == 0xB2)
+                {
+                    cabinet.setCabinetParams(static_cast<float>(midiByteBuffer[2]), midiByteBuffer[1]);
                 }
 #endif
             }
         }
 
-        /*Check if the note is being played*/
-        if (notesOn > 0)
-        {
-            float sineSamples[sampleSpecs.buffersizeInFramesPerPeriode];
-            sinewave<float>(sineSamples, frequency, reset, sampleSpecs);
 
-            for (unsigned int frameIndex=0; frameIndex<sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex)
+        for (unsigned int frameIndex = 0; frameIndex < sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex)
+        {
+            float outputSample = 0.f;
+            float volumeFactor;
+
+            volumeFactor = volumeSmoother.smooth();             //Volume Fader smoothing
+
+            for(unsigned int i = 0; i < NUM_VOICES; i++)        //Calculate the output of all the voices if these are active
+                if(voiceState[i] > -1)
+                    outputSample += voice[i].makeNoise();
+
+            outputSample = cabinet.applyCab(outputSample);
+            outputSample *= volumeFactor;
+
+
+            for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex)
             {
-                for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex)
-                {
-                    outputSample = cabinet.applyCab(outputSample, channelIndex);                        //Cabinet influence
-                    outputSample = sineSamples[frameIndex] * velocity;                                  //Velocity influence
-                    setSample(out, outputSample, frameIndex, channelIndex, sampleSpecs);
-                }
+                setSample(out, outputSample, frameIndex, channelIndex, sampleSpecs);
             }
         }
-        else
-        {
-            memset(out,0, size);
-        }
     }
+
+
 
     miniSynthHandle miniSynthMidiControl(const AlsaCardIdentifier &audioInCard,
                                          const AlsaCardIdentifier &audioOutCard,

@@ -281,8 +281,8 @@ WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
  *
 */
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
-													SharedBufferHandle outBuffer,
-													AudioCallbackInOut callback)
+                                                  SharedBufferHandle outBuffer,
+                                                  AudioCallbackInOut callback)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();

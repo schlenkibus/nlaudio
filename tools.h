@@ -238,6 +238,7 @@ inline void sinewave<float>(float *buffer, unsigned int buffersize)
     }
 }
 
+#if 0
 /** \ingroup Tools
  *
  *  \brief Calculate the sine of the incoming value (as often found in Reaktor)
@@ -308,4 +309,6 @@ inline T db2af(T dbIn)
 {
     return pow(1.12202f, dbIn);
 }
+
+#endif
 } // namespace Nl

@@ -18,6 +18,10 @@
  *
  */
 
+//#define OSCGUI
+#include <QApplication>     //for the gui
+#include "oscshapeui.h"
+
 #include <iostream>
 #include <ostream>
 
@@ -53,8 +57,20 @@ using namespace std;
 //TODO: Glbal Variables are bad (even in a namespace)
 Nl::StopWatch sw("AudioCallback");
 
+//
+#include "phase22.h"
+
+#if OSCGUI
+int main(int argc, char *argv[])
+{
+
+    QApplication a(argc, argv);
+    OscShapeUI w;
+    w.show();
+#else
 int main()
 {
+#endif
 
 	try {
 		auto availableDevices = Nl::getDetailedCardInfos();
@@ -79,10 +95,10 @@ int main()
         //auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
 
         //this is for the MiniSynth
-        //auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
+        auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
 
         //this is for the Effects
-        auto handle = Nl::EFFECTS::effectsMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
+//        auto handle = Nl::EFFECTS::effectsMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
 
 		// Wait for user to exit by pressing 'q'
 		// Print buffer statistics on other keys
@@ -94,10 +110,10 @@ int main()
 		//		 a deadlock with the audio callback.
 
 		//while(true) {
-
-
-        while(getchar() != 'q') {
-			std::cout << sw << std::endl;
+#if 1
+        while(getchar() != 'q')
+        {
+            std::cout << sw << std::endl;
 
 			if (handle.audioOutput) std::cout << "Audio: Output Statistics:" << std::endl
 											  << handle.audioOutput->getStats() << std::endl;
@@ -115,6 +131,7 @@ int main()
 
 			//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
+#endif
 
 		// Tell worker thread to cleanup and quit
 		Nl::terminateWorkingThread(handle.workingThreadHandle);
@@ -128,5 +145,9 @@ int main()
 	} catch(...) {
 		std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
 	}
+
+#ifdef OSCGUI
+    return a.exec();
+#endif
 }
 
