@@ -29,6 +29,5 @@ private:
     float mHeldValue;           // incremented value with every step
     float mInc;                 // increment value, which is constant once set
 
-
     inline void setInc(int _sRate, float _smTime);
 };
