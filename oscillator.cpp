@@ -23,10 +23,8 @@ Oscillator::Oscillator()
     , mOscPhase(0.f)
     , mFluctAmnt(0.f)
     , mPhaseStateVar(0.f)
-    , mEdge(true)
     , mChirpFilter()
 {
-
     setSeed(1);
 }
 
@@ -42,38 +40,28 @@ float Oscillator::applyOscillator(float _oscFreq)
     float output = 0.f;                                     // Output sample
     float currPhase = 0.f;
 
-    if (mEdge)
-    {
-        float randVal = calcRandVal();
-        float currFreq = randVal * mFluctAmnt * _oscFreq;
-        mPhaseInc = (_oscFreq + currFreq) / mSampleRate;
-    }
-
     mModRadians = mChirpFilter.applyFilter(mModRadians);
 
-    mOscPhase += mPhaseInc;
-    mOscPhase -= round(mOscPhase);                          // Wrap
-///    OR
-//    if (mOscPhase > 0.5f)
-//    {
-//        mOscPhase -= 1.0f;
-//    }
-
     currPhase = mOscPhase + mModRadians;
-    currPhase += (0.25f);
+    currPhase += (-0.25f);
 
     currPhase -= round(currPhase);                        // Wrap
 
     if (fabs(mPhaseStateVar - currPhase) > 0.5f)
     {
-        mEdge = true;
-    }
-    else
-    {
-        mEdge = false;
+        calcInc(_oscFreq);
     }
 
     mPhaseStateVar = currPhase;
+
+    mOscPhase += mPhaseInc;
+    mOscPhase -= round(mOscPhase);                          // Wrap
+    ///    OR
+    //    if (mOscPhase > 0.5f)
+    //    {
+    //        mOscPhase -= 1.0f;
+    //    }
+
     output = oscSinP3(currPhase);
 
     return output;
@@ -159,6 +147,25 @@ inline float Oscillator::oscSinP3(float _x)
     return _x;
 }
 
+
+
+/******************************************************************************/
+/** calculation of the incremen factor
+ *  @param  Frequency from the pitch of the key
+*******************************************************************************/
+
+void Oscillator::calcInc(float _oscFreq)
+{
+    float randVal = calcRandVal();
+    float currFreq = randVal * mFluctAmnt * _oscFreq;
+    mPhaseInc = (_oscFreq + currFreq) / mSampleRate;
+}
+
+
+/******************************************************************************/
+/** resets the Phase if changed
+ *  @param  phase [-0.5 .. 0.5]
+*******************************************************************************/
 
 void Oscillator::resetPhase(float _phase)
 {

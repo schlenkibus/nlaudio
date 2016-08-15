@@ -7,8 +7,8 @@
 #include "tools.h"
 #include <atomic>
 
-//select application here, check the midiIDs in the corresponding header files
-//ONLY CABINET and ECHO are predefined to run simultaniously
+// ------------- activate applications here
+// ONLY CABINET and ECHO are predefined to run simultaniously
 
 //#define ONEPOLEFILTER
 //#define BIQUADFILTER
@@ -21,20 +21,98 @@ extern Nl::StopWatch sw;
 namespace Nl {
 namespace EFFECTS{
 
-// Objects
+//--------------- Variables
+
+static float curFrequency;                  // Frequency for the Sine Generator
+
+float faderMaxDB;                           // Max of the Fader Range in dB
+int midiSteps;                              // Resolution in midi steps ... !
+float faderStepResolution;                  // dB resolution in dB per midi step
+
+float crossfadeFactor;                      // Crossfade factor [0 .. 1] - calculated form midi
+
+static int inClipCntr;                      // Clipping Counter for Input
+static int outClipCntr;                     // Clipping Counter for Output
+
+static int inputSwitch;                     // Input State [0 Sine, 1 Audio Input]
+static int muteSwitch;                      // Mute State [1 mute on, 0 mute off]
+static int crossfadeSwitch;                 // Crossfade State [1 crossfade on, 0 crossfade off]
+
+static float volumeFactor;                  // Volume Factor [0 .. 3.98]
+
+
+//--------------- Objects
+
 Smoother volumeSmoother;
 Smoother muteSmoother;
 Smoother crossfadeSmoother;
 Smoother inputSwitchSmoother;
 
+#ifdef ONEPOLEFILTER
+OnePoleFilters filter_l;                         // default Values: cutFreq: 22000.f, shelfAmp: 0.f, filterType: Lowpass
+OnePoleFilters filter_r;
+#endif
+#ifdef BIQUADFILTER
+BiquadFilters biquadFilter_l;                    // default Values: cutFreq: 22000.f, shelfAmp: 0.f, resonance: 0.5f, filterType: Lowpass
+BiquadFilters biquadFilter_r;
+#endif
+#ifdef TILTFILTER
+TiltFilters tiltFilter_l;                        // default Values: cutFreq: 22000.f, shelfAmp: 0.f, resonance: 0.5f, filterType: Lowpass
+TiltFilters tiltFilter_r;
+#endif
+#ifdef CABINET
+Cabinet cabinet_L;
+Cabinet cabinet_R;
+#endif
+#ifdef ECHO
+Echo echo;
+#endif
+
 
 void initializeEffects(int samplerate)
 {
+    curFrequency = 440.f;
+
+    faderMaxDB = 12.f;
+    midiSteps = 24;
+    faderStepResolution = faderMaxDB / midiSteps;
+
+    crossfadeFactor = 0.f;
+
+    inClipCntr = 0;
+    outClipCntr = 0;
+
+    inputSwitch = 0;
+    muteSwitch = 1;
+    crossfadeSwitch = 0;
+
+    volumeFactor = 0.f;
+
     volumeSmoother = Smoother(samplerate, 0.032f);
     muteSmoother = Smoother(samplerate, 0.032f);
     crossfadeSmoother = Smoother(samplerate, 0.032f);
     inputSwitchSmoother = Smoother(samplerate, 0.032f);
 
+#ifdef ONEPOLEFILTER
+        filter_l = OnePoleFilters();                         // default Values: cutFreq: 22000.f, shelfAmp: 0.f, filterType: Lowpass
+        filter_r = OnePoleFilters();
+#endif
+#ifdef BIQUADFILTER
+        biquadFilter_l = BiquadFilters();                    // default Values: cutFreq: 22000.f, shelfAmp: 0.f, resonance: 0.5f, filterType: Lowpass
+        biquadFilter_r = BiquadFilters();
+#endif
+#ifdef TILTFILTER
+        tiltFilter_l = TiltFilters();                        // default Values: cutFreq: 22000.f, shelfAmp: 0.f, resonance: 0.5f, filterType: Lowpass
+        tiltFilter_r = TiltFilters();
+#endif
+#ifdef CABINET
+        cabinet_L = Cabinet();
+        cabinet_R = Cabinet();
+#endif
+
+#ifdef ECHO
+        echo = Echo();
+#endif
 }
 
 
@@ -51,56 +129,18 @@ void initializeEffects(int samplerate)
         sw.stop();
         sw.start("val" + std::to_string(counter++));
 
-        int samplerate = sampleSpecs.samplerate;                // Samplerate of Audio device
+        // Nicht die ideale Lösung für die Initialisierung. Warte auf Update des Frameworks (04.08.2016)
+        static bool init = false;
 
-        static int inClipCntr = 0;
-        static int outClipCntr = 0;
+        if (!init)
+        {
+            initializeEffects(sampleSpecs.samplerate);
 
-        static float curFrequency = 0.f;                        // Frequency for the Sine Generator
+            // Initialization done
+            init = true;
+        }
 
-        float curMidiValue = 0.f;                               // Midi Value [0 .. 127]
 
-        float faderMaxDB = 12.f;                                // Max of the Fader Range in dB
-        int midiSteps = 24;                                     // Resolution in midi steps ... !
-        static float stepResolution = faderMaxDB / midiSteps;   // dB resolution in dB per midi step
-
-        static Smoother volumeSmoother(samplerate, 0.032f);
-        float volumeFactor = 0.f;                               // Volume Factor [0 .. 3.98]
-
-        static Smoother muteSmoother(samplerate, 0.032f);
-        float muteFactor = 0.f;                                 // Mute Factor [0 .. 1]
-        static int muteSwitch = 1;                              // Mute State [1 mute on, 0 mute off]
-
-        static Smoother crossfadeSmoother(samplerate, 0.032f);
-        float crossfadeFactor = 0.f;                            // Crossfade factor [0 .. 1] - calculated form midi
-        static int crossfadeSwitch = 0;                         // Crossfade State [1 crossfade on, 0 crossfade off]
-
-        static Smoother inputSwitchSmoother(samplerate, 0.032f);
-        float inputSwitchFactor = 0.f;                          // Input switch factor [0 .. 1]
-        static int inputSwitch = 0;                             // Input State [0 Sine, 1 Audio Input]
-
-        float outputSample = 0.f;                               // Output Sample which comes from AudioIn or sine generator
-
-#ifdef ONEPOLEFILTER
-        static OnePoleFilters filter_l;                         // default Values: cutFreq: 22000.f, shelfAmp: 0.f, filterType: Lowpass
-        static OnePoleFilters filter_r;
-#endif
-#ifdef BIQUADFILTER
-        static BiquadFilters biquadFilter_l;                    // default Values: cutFreq: 22000.f, shelfAmp: 0.f, resonance: 0.5f, filterType: Lowpass
-        static BiquadFilters biquadFilter_r;
-#endif
-#ifdef TILTFILTER
-        static TiltFilters tiltFilter_l;                        // default Values: cutFreq: 22000.f, shelfAmp: 0.f, resonance: 0.5f, filterType: Lowpass
-        static TiltFilters tiltFilter_r;
-#endif
-#ifdef CABINET
-        static Cabinet cabinet_L;
-        static Cabinet cabinet_R;
-#endif
-
-#ifdef ECHO
-        static Echo echo;
-#endif
         auto midiBuffer = getBufferForName("MidiBuffer");
 
         /*Retrieve Midi Information if midi values have changed*/
@@ -117,15 +157,15 @@ void initializeEffects(int samplerate)
                 /*Retrieve Volume Fader Value and calculate current Volume*/
                 if (midiByteBuffer[1] == 0x02 || midiByteBuffer[1] == 0x2A)
                 {
-                    curMidiValue = static_cast<float>(midiByteBuffer[2]);
+                    float curMidiValue = static_cast<float>(midiByteBuffer[2]);
 
                     if (curMidiValue < (127 - (127 / midiSteps) * midiSteps))
                     {  
-                        volumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * stepResolution) / 20.f) * curMidiValue * 0.1429f;
+                        volumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * faderStepResolution) / 20.f) * curMidiValue * 0.1429f;
                     }
                     else
                     {
-                        volumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * stepResolution) / 20.f);
+                        volumeFactor = pow(10.f, (faderMaxDB - (127.f - curMidiValue) * faderStepResolution) / 20.f);
                     }
                     printf("volumeFactor: %f\n", volumeFactor);
                     volumeSmoother.initSmoother(volumeFactor);
@@ -230,9 +270,9 @@ void initializeEffects(int samplerate)
 
             crossfadeFactor = crossfadeSmoother.smooth();       //Crossfade smoothing
 
-            muteFactor = muteSmoother.smooth();                 //Mute smoothing
+            float muteFactor = muteSmoother.smooth();                 //Mute smoothing
 
-            inputSwitchFactor = inputSwitchSmoother.smooth();   //Input Switch smoothing
+            float inputSwitchFactor = inputSwitchSmoother.smooth();   //Input Switch smoothing
 
             for (unsigned int channelIndex = 0; channelIndex < sampleSpecs.channels; ++channelIndex)
             {
@@ -254,7 +294,7 @@ void initializeEffects(int samplerate)
                 }
 
 
-                outputSample = (audioInSample * inputSwitchFactor) + (sineSample * (1.f - inputSwitchFactor));
+                float outputSample = (audioInSample * inputSwitchFactor) + (sineSample * (1.f - inputSwitchFactor));
 
                 if(crossfadeSwitch)                             //If crossfade is active, smoothen the crossfade Values
                 {

@@ -180,7 +180,7 @@ float stepResolution = faderMaxDB / midiSteps;          // dB resolution in dB p
 
 
                     voice[v].setPitch(static_cast<float>(midiVal));
-//                    voice[v].resetPhase(); // hier ist es falsch
+                    voice[v].resetPhase(); // hier ist es falsch
                 }
 
                 // Voice Allocation - Note Off
@@ -249,8 +249,9 @@ float stepResolution = faderMaxDB / midiSteps;          // dB resolution in dB p
             for(unsigned int i = 0; i < NUM_VOICES; i++)        //Calculate the output of all the voices if these are active
                 if(voiceState[i] > -1)
                     outputSample += voice[i].makeNoise();
-
+#ifdef CABINET
             outputSample = cabinet.applyCab(outputSample);
+#endif
             outputSample *= volumeFactor;
 
 

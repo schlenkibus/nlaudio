@@ -38,11 +38,13 @@ public:
     void setupChirpFilter(float _chirpFrequency);
 
     void resetPhase(float _phase);
+    void calcInc(float _oscFreq);
 
 
 private:
 
     float mSampleRate;              // Samplerate
+//    float mOscFreq;                 // Oscillator Frequnecy
     float mOscPhase;                // Oscillator Phase
     float mFluctAmnt;               // Fluctuation Amount
     float mModRadians;              // Modulated phase Radians
@@ -50,15 +52,12 @@ private:
     float mPhaseInc;                // Phase increment
     float mPhaseStateVar;           // Phase state Variable
 
-    bool mEdge;                     // Phase Edge
     signed int mRandValStateVar;    // Random value state variable
 
-    NlToolbox::Filters::ChirpFilter mChirpFilter;
+    NlToolbox::Filters::ChirpFilter mChirpFilter;   // Chirp Filter instance
 
-    // Random Module
-
-
-    /// these functions should be in a toolbox as independant modules!
-    inline float oscSinP3(float x);                 // careful, this one is a bit different than the rest
+    inline float oscSinP3(float x);                 // this function should probably be in a toolbox as independant module
+                                                    // careful, this one is a bit different than sinP3(), that already is
+                                                    // part of the toolbox family
 
 };

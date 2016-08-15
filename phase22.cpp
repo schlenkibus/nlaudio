@@ -8,8 +8,6 @@
 
 #include "phase22.h"
 
-
-
 /******************************************************************************/
 /** Phase22 Default Constructor
  * @brief    initialization of the modules local variabels with default values
@@ -567,6 +565,9 @@ float Phase22::makeNoise()
 
     moduleA.mOsc.setModulationRadians(modedPhaseA);
     moduleB.mOsc.setModulationRadians(modedPhaseB);
+
+    moduleA.mOsc.calcInc(moduleA.mFrequency);
+    moduleB.mOsc.calcInc(moduleB.mFrequency);
 
     oscSampleA = moduleA.mOsc.applyOscillator(moduleA.mFrequency);
     oscSampleB = moduleB.mOsc.applyOscillator(moduleB.mFrequency);
