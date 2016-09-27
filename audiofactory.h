@@ -89,15 +89,15 @@ SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedB
 SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
 
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
-												  AudioCallbackIn callback,
-												  SharedUserPtr ptr);
+						  AudioCallbackIn callback,
+						  SharedUserPtr ptr);
 WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
-												   AudioCallbackOut callback,
-												   SharedUserPtr ptr);
+						   AudioCallbackOut callback,
+						   SharedUserPtr ptr);
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
-												  SharedBufferHandle outBuffer,
-												  AudioCallbackInOut callback,
-												  SharedUserPtr ptr);
+						  SharedBufferHandle outBuffer,
+						  AudioCallbackInOut callback,
+						  SharedUserPtr ptr);
 WorkingThreadHandle registerAutoDrainOnBuffer(SharedBufferHandle inBuffer);
 
 // Thread function, that handles blocking io calls on the buffers
