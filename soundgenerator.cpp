@@ -3,13 +3,13 @@
     @date		2016-07-20
     @version	0.2
     @author		Anton Schmied[2016-07-20]
-    @brief		Phase22 Class member and method definitions
+    @brief		Soundgenerator Class member and method definitions
 *******************************************************************************/
 
-#include "phase22.h"
+#include "soundgenerator.h"
 
 /******************************************************************************/
-/** Phase22 Default Constructor
+/** Soundgenerator Default Constructor
  * @brief    initialization of the modules local variabels with default values
  *           SampleRate:            48 kHz
  *           Phase:                 0.f
@@ -22,7 +22,7 @@
  *           Asym:                  0.f
 *******************************************************************************/
 
-Phase22::Phase22()                          // Default Constructor
+Soundgenerator::Soundgenerator()                          // Default Constructor
     : mSampleRate(48000.f)
 {
     moduleA.mGain = 0.5f;
@@ -50,12 +50,12 @@ Phase22::Phase22()                          // Default Constructor
 
 
 /******************************************************************************/
-/** Phase22 Parameterized Constructor
+/** Soundgenerator Parameterized Constructor
  * @brief    initialization of the modules local variabels with custom
  *           parameters
 *******************************************************************************/
 
-Phase22::Phase22(int _sampleRate,               // Parameterized Constructor
+Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized Constructor
                  float _phase,
                  float _gain,
                  float _pitchOffset,
@@ -97,11 +97,17 @@ Phase22::Phase22(int _sampleRate,               // Parameterized Constructor
  *  @param    incoming pitch
 *******************************************************************************/
 
-void Phase22::setPitch(float _pitch)
+void Soundgenerator::setPitch(float _pitch)
 {
     mPitch = _pitch - 60.f;
-    moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
-    moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
+//    moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
+//    moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
+
+    moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
+    moduleA.mOsc.calcInc();
+
+    moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
+    moduleB.mOsc.calcInc();
 }
 
 
@@ -112,7 +118,7 @@ void Phase22::setPitch(float _pitch)
  *  @param    voice number 0 - 11
 *******************************************************************************/
 
-void Phase22::setVoiceNumber(unsigned int _voiceNumber)
+void Soundgenerator::setVoiceNumber(unsigned int _voiceNumber)
 {
     moduleA.mOsc.setSeed(_voiceNumber + 1);
     moduleB.mOsc.setSeed(_voiceNumber + 1 + 111);
@@ -123,12 +129,12 @@ void Phase22::setVoiceNumber(unsigned int _voiceNumber)
 /*****************************************************************************/
 /** @brief    interface method which converts and scales the incoming midi
  *            values and passes these to the respective methods or parameters
- *  @param    midi instrument ID -> enum  InstrID (phase22.h)
- *  @param    midi control ID -> enum CtrlID (phase22.h)
+ *  @param    midi instrument ID -> enum  InstrID (Soundgenerator.h)
+ *  @param    midi control ID -> enum CtrlID (Soundgenerator.h)
  *  @param    midi control value [0 ... 127]
 ******************************************************************************/
 
-void Phase22::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
+void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
 {
     switch (_instrID)
     {
@@ -142,7 +148,9 @@ void Phase22::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float 
             printf("A: Pitch Offset: %f\n", _ctrlVal);
 
             moduleA.mPitchOffset = _ctrlVal;
-            moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
+//            moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
+            moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
+            moduleA.mOsc.calcInc();
             break;
 
             case CtrlID::KEYTRACKING:
@@ -154,7 +162,9 @@ void Phase22::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float 
             printf("A: Key Tracking: %f\n", _ctrlVal);
 
             moduleA.mKeyTracking = _ctrlVal / 100.f;
-            moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
+//            moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
+            moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
+            moduleA.mOsc.calcInc();
             break;
 
             case CtrlID::PHASE:
@@ -310,7 +320,7 @@ void Phase22::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float 
             _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 //            _ctrlVal = pow(2.f, ((_ctrlVal - 1.5f) - 69.f) / 12.f) * 440.f;
 
-            moduleA.mOsc.setupChirpFilter(_ctrlVal);
+            moduleA.mOsc.setChirpFreq(_ctrlVal);
             break;
 
             case CtrlID::GAIN:
@@ -338,7 +348,9 @@ void Phase22::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float 
             printf("B: Pitch Offset: %f\n", _ctrlVal);
 
             moduleB.mPitchOffset = _ctrlVal;
-            moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
+//            moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
+            moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
+            moduleB.mOsc.calcInc();
             break;
 
             case CtrlID::KEYTRACKING:
@@ -350,7 +362,9 @@ void Phase22::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float 
             printf("B: Key Tracking: %f\n", _ctrlVal);
 
             moduleB.mKeyTracking = _ctrlVal / 100.f;
-            moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
+//            moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
+            moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
+            moduleB.mOsc.calcInc();
             break;
 
             case CtrlID::PHASE:
@@ -506,7 +520,7 @@ void Phase22::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float 
             _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 //            _ctrlVal = pow(2.f, ((_ctrlVal - 1.5f) - 69.f) / 12.f) * 440.f;
 
-            moduleB.mOsc.setupChirpFilter(_ctrlVal);
+            moduleB.mOsc.setChirpFreq(_ctrlVal);
             break;
 
             case CtrlID::GAIN:
@@ -533,7 +547,7 @@ void Phase22::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float 
  *            event
 *******************************************************************************/
 
-void Phase22::resetPhase()
+void Soundgenerator::resetPhase()
 {
     moduleA.mOsc.resetPhase(moduleA.mPhase);
     moduleB.mOsc.resetPhase(moduleB.mPhase);
@@ -548,7 +562,7 @@ void Phase22::resetPhase()
  *  @return   a mix of 2 samples deriving from the oscillator and shaper processes
 *******************************************************************************/
 
-float Phase22::makeNoise()
+float Soundgenerator::makeNoise()
 {
     float sampleA;          // resulating samples after modulation process
     float sampleB;
@@ -563,14 +577,14 @@ float Phase22::makeNoise()
     float modedPhaseA = (moduleA.mSelfMix * moduleA.mPmSelf) + (moduleA.mCrossMix * moduleA.mPmCross);
     float modedPhaseB = (moduleB.mSelfMix * moduleB.mPmSelf) + (moduleB.mCrossMix * moduleB.mPmCross);
 
-    moduleA.mOsc.setModulationRadians(modedPhaseA);
-    moduleB.mOsc.setModulationRadians(modedPhaseB);
+    moduleA.mOsc.setModPhase(modedPhaseA);
+    moduleB.mOsc.setModPhase(modedPhaseB);
 
-    moduleA.mOsc.calcInc(moduleA.mFrequency);
-    moduleB.mOsc.calcInc(moduleB.mFrequency);
+//    moduleA.mOsc.calcInc(moduleA.mFrequency);
+//    moduleB.mOsc.calcInc(moduleB.mFrequency);
 
-    oscSampleA = moduleA.mOsc.applyOscillator(moduleA.mFrequency);
-    oscSampleB = moduleB.mOsc.applyOscillator(moduleB.mFrequency);
+    oscSampleA = moduleA.mOsc.applyOscillator();
+    oscSampleB = moduleB.mOsc.applyOscillator();
 
     shaperSampleA = applyShaper(oscSampleA, moduleA.mDrive, moduleA.mFold, moduleA.mAsym);
     shaperSampleB = applyShaper(oscSampleB, moduleB.mDrive, moduleB.mFold, moduleB.mAsym);
@@ -601,7 +615,7 @@ float Phase22::makeNoise()
  *  @return   processed sample
 *******************************************************************************/
 
-float Phase22::applyShaper(float _currSample, float _drive, float _fold, float _asym)
+float Soundgenerator::applyShaper(float _currSample, float _drive, float _fold, float _asym)
 {
     _currSample *= _drive;
 
@@ -628,7 +642,7 @@ float Phase22::applyShaper(float _currSample, float _drive, float _fold, float _
  *  @return   frequency in Hz
 *******************************************************************************/
 
-inline float Phase22::calcOscFrequency(float _pitch, float _keyTracking, float _pitchOffset)
+inline float Soundgenerator::calcOscFrequency(float _pitch, float _keyTracking, float _pitchOffset)
 {
     _pitch = _pitch * _keyTracking + _pitchOffset;
 
@@ -645,7 +659,8 @@ inline float Phase22::calcOscFrequency(float _pitch, float _keyTracking, float _
         }
     }
 
-    float frequency = pow(2.f, (_pitch - 69) / 12.f) * 440.f;
+    return NlToolbox::Conversion::pitch2freq(_pitch);
+//    float frequency = pow(2.f, (_pitch - 69) / 12.f) * 440.f;
 
-    return frequency;
+//    return frequency;
 }

@@ -1,25 +1,25 @@
 #pragma once
 
 #include "tools.h"
-#include "toolbox.h"
+#include "nltoolbox.h"
 #include "oscillator.h"
 
-class Phase22
+class Soundgenerator
 {
 public:
-    Phase22();                      // Default Constructor
+    Soundgenerator();                      // Default Constructor
 
-    Phase22(int _sampleRate,        // Parameterized Constructor
-            float _phase,
-            float _gain,
-            float _pitchOffset,
-            float _keyTracking,
-            float _mainMixAmoount,
-            float _drive,
-            float _fold,
-            float _asym);
+    Soundgenerator(int _sampleRate,        // Parameterized Constructor
+                    float _phase,
+                    float _gain,
+                    float _pitchOffset,
+                    float _keyTracking,
+                    float _mainMixAmoount,
+                    float _drive,
+                    float _fold,
+                    float _asym);
 
-    ~Phase22(){}                    // Destructor
+    ~Soundgenerator(){}                    // Destructor
 
 
     void setPitch(float _pitch);
@@ -36,7 +36,7 @@ private:
     float mSampleRate;              // Samplerate
     float mPitch;                   // Pitch of the played note/ key
 
-    struct Phase22modules           // Struct for shared Parameters of both Oscillators and Shapers
+    struct Generatormodules           // Struct for shared Parameters of both Oscillators and Shapers
     {
         float mGain;                // Module gain
         float mMainMixAmount;       // Mix Amount between Oscillator and Shaper

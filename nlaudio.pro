@@ -40,8 +40,8 @@ SOURCES += main.cpp \
     cabinet.cpp \
     echo.cpp \
     oscillator.cpp \
-    phase22.cpp \
-    smoother.cpp
+    smoother.cpp \
+    soundgenerator.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -77,10 +77,10 @@ HEADERS += \
     smoother.h \
     echo.h \
     oscshapeui.h \
-    phase22.h \
     oscillator.h \
     reaktortoolbox.h \
-    toolbox.h
+    nltoolbox.h \
+    soundgenerator.h
 
 OTHER_FILES += \
     Todo.txt

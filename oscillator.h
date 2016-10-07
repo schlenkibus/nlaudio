@@ -9,7 +9,7 @@
 
 #pragma once
 #include "tools.h"
-#include "toolbox.h"
+#include "nltoolbox.h"
 
 class Oscillator
 {
@@ -17,46 +17,47 @@ public:
     Oscillator();                   // Default Constructor
 
     Oscillator(int _samplerate,     // Parameterized Contructor
+               float _oscFreq,
                float _oscPhase,
+               float _modPhase,
                float _fluctAmnt,
-               float _modRadians);
+               float _chirpFreq);
 
     ~Oscillator(){}                 // Class Destructor
 
-    float applyOscillator(float _oscFreq);
+    float applyOscillator();
 
-    float applyChirpFilter(float _input);
-
-    float randomize();
-    float calcRandVal();
-
-    void setOscFrequency(float _oscFreq);
-    void setFluctuation(float _oscFluctAmnt);
-    void setModulationRadians(float _modRadians);
-
-    void setSeed(signed int _voiceNumber);
-    void setupChirpFilter(float _chirpFrequency);
+    void setOscFreq(float _oscFreq);
 
     void resetPhase(float _phase);
-    void calcInc(float _oscFreq);
+    void setModPhase(float _modPhase);
+
+    void calcInc();
+
+    void setFluctuation(float _oscFluctAmnt);
+    void setSeed(signed int _voiceNumber);
+    float calcRandVal();
+
+    void setChirpFreq(float _chirpFrequency);
 
 
 private:
 
     float mSampleRate;              // Samplerate
-//    float mOscFreq;                 // Oscillator Frequnecy
-    float mOscPhase;                // Oscillator Phase
-    float mFluctAmnt;               // Fluctuation Amount
-    float mModRadians;              // Modulated phase Radians
+    float mOscFreq;                 // Oscillator Frequnecy
 
-    float mPhaseInc;                // Phase increment
+    float mOscPhase;                // Oscillator Phase
+    float mModPhase;                // Modulated phase Radians
     float mPhaseStateVar;           // Phase state Variable
 
+    float mPhaseInc;                // Phase increment
+
+    float mFluctAmnt;               // Fluctuation Amount
     signed int mRandValStateVar;    // Random value state variable
 
     NlToolbox::Filters::ChirpFilter mChirpFilter;   // Chirp Filter instance
 
-    inline float oscSinP3(float x);                 // this function should probably be in a toolbox as independant module
+    inline float oscSinP3(float _currPhase);        // this function should probably be in a toolbox as independant module
                                                     // careful, this one is a bit different than sinP3(), that already is
                                                     // part of the toolbox family
 

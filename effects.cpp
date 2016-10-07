@@ -11,10 +11,10 @@
 // ONLY CABINET and ECHO are predefined to run simultaniously
 
 //#define ONEPOLEFILTER
-//#define BIQUADFILTER
+#define BIQUADFILTER
 //#define TILTFILTER
-#define CABINET
-#define ECHO
+//#define CABINET
+//#define ECHO
 
 extern Nl::StopWatch sw;
 

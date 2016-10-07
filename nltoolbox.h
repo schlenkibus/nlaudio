@@ -67,8 +67,8 @@ inline float sin(float x)
     float x_square = x * x;
 
     x = (((((x_square * -2.39f * pow(10.f, -8.f) + 2.7526f * pow(10.f, -6.f))
-            * x_square + (0.198409f * pow(10.f, -3.f)))
-           * x_square + 0.008333f)
+            * x_square + (-0.000198409f))
+           * x_square + 0.00833333f)
           * x_square + (-0.166667f))
          * x_square + 1.f) * x;
 

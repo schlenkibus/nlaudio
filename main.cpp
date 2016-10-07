@@ -58,7 +58,7 @@ using namespace std;
 Nl::StopWatch sw("AudioCallback");
 
 //
-#include "phase22.h"
+#include "soundgenerator.h"
 
 #if OSCGUI
 int main(int argc, char *argv[])

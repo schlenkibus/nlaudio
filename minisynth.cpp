@@ -6,7 +6,7 @@
 #include "rawmididevice.h"
 #include "tools.h"
 
-#include "phase22.h"
+#include "soundgenerator.h"
 #include "smoother.h"
 #include "cabinet.h"
 
@@ -22,7 +22,7 @@ namespace MINISYNTH {
 
 //--------------- Objects
 Smoother volumeSmoother;
-Phase22 voice[NUM_VOICES];
+Soundgenerator voice[NUM_VOICES];
 
 #ifdef CABINET
 Cabinet cabinet;
@@ -60,7 +60,7 @@ float stepResolution = faderMaxDB / midiSteps;          // dB resolution in dB p
         volumeSmoother = Smoother(sampleRate, 0.032f);          // Volume Smoother
         volumeSmoother.initSmoother(1.f);
 
-        voice[NUM_VOICES] = Phase22();                          // Phase22 Voices
+        voice[NUM_VOICES] = Soundgenerator();                          // Phase22 Voices
 
         for (unsigned int i = 0; i < NUM_VOICES; i++)
         {
@@ -180,7 +180,7 @@ float stepResolution = faderMaxDB / midiSteps;          // dB resolution in dB p
 
 
                     voice[v].setPitch(static_cast<float>(midiVal));
-                    voice[v].resetPhase(); // hier ist es falsch
+                    voice[v].resetPhase(); // hier ist es falsch, oder auch nicht ... ?!
                 }
 
                 // Voice Allocation - Note Off

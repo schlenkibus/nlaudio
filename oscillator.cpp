@@ -15,41 +15,59 @@
  * @brief    initialization of the modules local variabels with default values
  *           SampleRate:            48 kHz
  *           Chirp Cut Frequency:   7677 Hz
- *           Seed/ VoiceNumber:     1
 *******************************************************************************/
 
 Oscillator::Oscillator()
     : mSampleRate(48000)
+    , mOscFreq(0.f)
     , mOscPhase(0.f)
-    , mFluctAmnt(0.f)
+    , mModPhase(0.f)
     , mPhaseStateVar(0.f)
+    , mPhaseInc(0.f)
+    , mFluctAmnt(0.f)
+    , mRandValStateVar(0)
     , mChirpFilter()
 {
-    setSeed(1);
 }
 
+
+/******************************************************************************/
+/** Oscillator Parameterized Constructor
+ * @brief    initialization of the modules local variabels with predefined values
+ *
+*******************************************************************************/
+
+Oscillator::Oscillator(int _samplerate, float _oscFreq, float _oscPhase, float _modPhase, float _fluctAmnt, float _chirpFreq)
+    : mSampleRate(static_cast<float>(_samplerate))
+    , mOscFreq(_oscFreq)
+    , mOscPhase(_oscPhase)
+    , mModPhase(_modPhase)
+    , mPhaseStateVar(0.f)
+    , mPhaseInc(0.f)
+    , mFluctAmnt(_fluctAmnt)
+    , mRandValStateVar(0)
+    , mChirpFilter(_samplerate, _chirpFreq)
+{
+}
 
 
 /******************************************************************************/
 /** Main Oscillator Function
  *  @param  radiant for phase modulation
+ *  @return sine sample
 *******************************************************************************/
 
-float Oscillator::applyOscillator(float _oscFreq)
+float Oscillator::applyOscillator()
 {
-    float output = 0.f;                                     // Output sample
-    float currPhase = 0.f;
+    float currPhase = mOscPhase + mModPhase;
 
-    mModRadians = mChirpFilter.applyFilter(mModRadians);
-
-    currPhase = mOscPhase + mModRadians;
     currPhase += (-0.25f);
 
     currPhase -= round(currPhase);                        // Wrap
 
-    if (fabs(mPhaseStateVar - currPhase) > 0.5f)
+    if (fabs(mPhaseStateVar - currPhase) > 0.5f)          // Check edge
     {
-        calcInc(_oscFreq);
+        calcInc();
     }
 
     mPhaseStateVar = currPhase;
@@ -62,33 +80,54 @@ float Oscillator::applyOscillator(float _oscFreq)
     //        mOscPhase -= 1.0f;
     //    }
 
-    output = oscSinP3(currPhase);
-
-    return output;
+    return oscSinP3(currPhase);
 }
 
 
-
 /******************************************************************************/
-/** sets the initial Value for the randomize() algorythm
- *  @param  _voiceNumber
+/** sets the oscillator frequency
+ *  @param  _oscFreq
 *******************************************************************************/
 
-void Oscillator::setSeed(signed int _voiceNumber)
+void Oscillator::setOscFreq(float _oscFreq)
 {
-    mRandValStateVar = _voiceNumber;
+    mOscFreq = _oscFreq;
 }
 
 
 
 /******************************************************************************/
-/** sets the initial value of the modulation radians
+/** resets the Phase if changed
+ *  @param  phase [-0.5 .. 0.5]
+*******************************************************************************/
+
+void Oscillator::resetPhase(float _phase)
+{
+    mOscPhase = _phase;
+}
+
+
+
+/******************************************************************************/
+/** sets the modulated part of the phase
  *  @param  modulation radians
 *******************************************************************************/
 
-void Oscillator::setModulationRadians(float _modRadians)
+void Oscillator::setModPhase(float _modPhase)
 {
-    mModRadians = _modRadians;
+    mModPhase = mChirpFilter.applyFilter(_modPhase);
+}
+
+
+
+/******************************************************************************/
+/** calculation of the increment factor
+*******************************************************************************/
+
+void Oscillator::calcInc()
+{
+    float modFreq = calcRandVal() * mFluctAmnt * mOscFreq;
+    mPhaseInc = (mOscFreq + modFreq) / mSampleRate;
 }
 
 
@@ -101,6 +140,18 @@ void Oscillator::setModulationRadians(float _modRadians)
 void Oscillator::setFluctuation(float _oscFluctAmnt)
 {
     mFluctAmnt = _oscFluctAmnt;
+}
+
+
+
+/******************************************************************************/
+/** sets the initial value of the randomValue for future calculation
+ *  @param  any integer
+*******************************************************************************/
+
+void Oscillator::setSeed(signed int _randVal)
+{
+    mRandValStateVar = _randVal;
 }
 
 
@@ -119,55 +170,34 @@ float Oscillator::calcRandVal()
 
 
 
-
 /******************************************************************************/
-/** Chirp Filter Setup
+/** Chirp filter frequency setup
  *  @param  Filter Cut Frequency in Hz
 *******************************************************************************/
 
-void Oscillator::setupChirpFilter(float _chirpFrequency)
+void Oscillator::setChirpFreq(float _chirpFreq)
 {
-    mChirpFilter.setFrequency(_chirpFrequency);
+    mChirpFilter.setFrequency(_chirpFreq);
 }
 
 
 
-inline float Oscillator::oscSinP3(float _x)
+/******************************************************************************/
+/** Sine value calculation
+ *  @param  current phase value
+ *  @return a sine value
+*******************************************************************************/
+
+inline float Oscillator::oscSinP3(float _currPhase)
 {
     // _x += -0.25f;
     // _x -= round(_x);
 
-    _x += _x;
-    _x = fabs(_x);
-    _x = 0.5f - _x;
+    float x = _currPhase + _currPhase;
+    x = fabs(x);
+    x = 0.5f - x;
 
-    float x_square = _x * _x;
-    _x = _x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);
+    float x_square = x * x;
 
-    return _x;
-}
-
-
-
-/******************************************************************************/
-/** calculation of the incremen factor
- *  @param  Frequency from the pitch of the key
-*******************************************************************************/
-
-void Oscillator::calcInc(float _oscFreq)
-{
-    float randVal = calcRandVal();
-    float currFreq = randVal * mFluctAmnt * _oscFreq;
-    mPhaseInc = (_oscFreq + currFreq) / mSampleRate;
-}
-
-
-/******************************************************************************/
-/** resets the Phase if changed
- *  @param  phase [-0.5 .. 0.5]
-*******************************************************************************/
-
-void Oscillator::resetPhase(float _phase)
-{
-    mOscPhase = _phase;
+    return x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);
 }
