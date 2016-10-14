@@ -1,5 +1,5 @@
 /******************************************************************************/
-/** @file		cabinet.cpp
+/** @file		soundgenerator.cpp
     @date		2016-07-20
     @version	0.2
     @author		Anton Schmied[2016-07-20]
@@ -39,8 +39,8 @@ Soundgenerator::Soundgenerator()                          // Default Constructor
 
     moduleA.mPmSelf = 0.f;
     moduleA.mPmCross = 0.f;
-    moduleA.mPmSelfAmount = 0.f;
-    moduleA.mPmCrossAmount = 0.f;
+    moduleA.mPmSelfShaper = 0.f;
+    moduleA.mPmCrossShaper = 0.f;
     moduleA.mSelfMix = 0.f;
     moduleA.mCrossMix = 0.f;
 
@@ -60,14 +60,14 @@ Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized C
                  float _gain,
                  float _pitchOffset,
                  float _keyTracking,
-                 float _mainMixAmoount,
+                 float _mainMixAmount,
                  float _drive,
                  float _fold,
                  float _asym)
     : mSampleRate(static_cast<float>(_sampleRate))
 {
     moduleA.mGain = _gain;
-    moduleA.mMainMixAmount = _mainMixAmoount;
+    moduleA.mMainMixAmount = _mainMixAmount;
 
     moduleA.mOsc = Oscillator();
 
@@ -80,8 +80,8 @@ Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized C
 
     moduleA.mPmSelf = 0.f;
     moduleA.mPmCross = 0.f;
-    moduleA.mPmSelfAmount = 0.f;
-    moduleA.mPmCrossAmount = 0.f;
+    moduleA.mPmSelfShaper = 0.f;
+    moduleA.mPmCrossShaper = 0.f;
     moduleA.mSelfMix = 0.f;
     moduleA.mCrossMix = 0.f;
 
@@ -100,8 +100,6 @@ Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized C
 void Soundgenerator::setPitch(float _pitch)
 {
     mPitch = _pitch - 60.f;
-//    moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
-//    moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
 
     moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
     moduleA.mOsc.calcInc();
@@ -134,7 +132,7 @@ void Soundgenerator::setVoiceNumber(unsigned int _voiceNumber)
  *  @param    midi control value [0 ... 127]
 ******************************************************************************/
 
-void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
+void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
 {
     switch (_instrID)
     {
@@ -148,7 +146,7 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
             printf("A: Pitch Offset: %f\n", _ctrlVal);
 
             moduleA.mPitchOffset = _ctrlVal;
-//            moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
+
             moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
             moduleA.mOsc.calcInc();
             break;
@@ -162,7 +160,7 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
             printf("A: Key Tracking: %f\n", _ctrlVal);
 
             moduleA.mKeyTracking = _ctrlVal / 100.f;
-//            moduleA.mFrequency = calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset);
+
             moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
             moduleA.mOsc.calcInc();
             break;
@@ -291,7 +289,7 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
 
             printf("A: Shaper PM Self: %f\n", _ctrlVal);
 
-            moduleA.mPmSelfAmount = _ctrlVal;
+            moduleA.mPmSelfShaper = _ctrlVal;
             break;
 
             case CtrlID::PMCROSSAMNT:
@@ -304,7 +302,7 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
 
             printf("A: Shaper PM B: %f\n", _ctrlVal);
 
-            moduleA.mPmCrossAmount = _ctrlVal;
+            moduleA.mPmCrossShaper = _ctrlVal;
             break;
 
             case CtrlID::CHIRPFREQ:
@@ -318,7 +316,6 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
             printf("A: Chirp Freq: %f\n", _ctrlVal);
 
             _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
-//            _ctrlVal = pow(2.f, ((_ctrlVal - 1.5f) - 69.f) / 12.f) * 440.f;
 
             moduleA.mOsc.setChirpFreq(_ctrlVal);
             break;
@@ -348,7 +345,7 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
             printf("B: Pitch Offset: %f\n", _ctrlVal);
 
             moduleB.mPitchOffset = _ctrlVal;
-//            moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
+
             moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
             moduleB.mOsc.calcInc();
             break;
@@ -362,7 +359,7 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
             printf("B: Key Tracking: %f\n", _ctrlVal);
 
             moduleB.mKeyTracking = _ctrlVal / 100.f;
-//            moduleB.mFrequency = calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset);
+
             moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
             moduleB.mOsc.calcInc();
             break;
@@ -491,7 +488,7 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
 
             printf("B: Shaper PM Self: %f\n", _ctrlVal);
 
-            moduleB.mPmSelfAmount = _ctrlVal;
+            moduleB.mPmSelfShaper = _ctrlVal;
             break;
 
             case CtrlID::PMCROSSAMNT:
@@ -504,7 +501,7 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
 
             printf("B: Shaper PM A: %f\n", _ctrlVal);
 
-            moduleB.mPmCrossAmount = _ctrlVal;
+            moduleB.mPmCrossShaper = _ctrlVal;
             break;
 
             case CtrlID::CHIRPFREQ:
@@ -518,7 +515,6 @@ void Soundgenerator::setOscParams(unsigned char _instrID, unsigned char _ctrlID,
             printf("B: Chirp Freq: %f\n", _ctrlVal);
 
             _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
-//            _ctrlVal = pow(2.f, ((_ctrlVal - 1.5f) - 69.f) / 12.f) * 440.f;
 
             moduleB.mOsc.setChirpFreq(_ctrlVal);
             break;
@@ -562,46 +558,30 @@ void Soundgenerator::resetPhase()
  *  @return   a mix of 2 samples deriving from the oscillator and shaper processes
 *******************************************************************************/
 
-float Soundgenerator::makeNoise()
+float Soundgenerator::generateSound()
 {
-    float sampleA;          // resulating samples after modulation process
-    float sampleB;
-    float outputSample;
-
-    float oscSampleA;       // Oscillator samples
-    float oscSampleB;
-
-    float shaperSampleA;    // Shaper samples
-    float shaperSampleB;
-
-    float modedPhaseA = (moduleA.mSelfMix * moduleA.mPmSelf) + (moduleA.mCrossMix * moduleA.mPmCross);
-    float modedPhaseB = (moduleB.mSelfMix * moduleB.mPmSelf) + (moduleB.mCrossMix * moduleB.mPmCross);
+    float modedPhaseA = (moduleA.mSelfMix * moduleA.mPmSelf) + (moduleB.mCrossMix * moduleA.mPmCross);
+    float modedPhaseB = (moduleB.mSelfMix * moduleB.mPmSelf) + (moduleA.mCrossMix * moduleB.mPmCross);
 
     moduleA.mOsc.setModPhase(modedPhaseA);
     moduleB.mOsc.setModPhase(modedPhaseB);
 
-//    moduleA.mOsc.calcInc(moduleA.mFrequency);
-//    moduleB.mOsc.calcInc(moduleB.mFrequency);
+    float oscSampleA = moduleA.mOsc.applyOscillator();
+    float oscSampleB = moduleB.mOsc.applyOscillator();
 
-    oscSampleA = moduleA.mOsc.applyOscillator();
-    oscSampleB = moduleB.mOsc.applyOscillator();
+    float shaperSampleA = applyShaper(oscSampleA, moduleA.mDrive, moduleA.mFold, moduleA.mAsym);
+    float shaperSampleB = applyShaper(oscSampleB, moduleB.mDrive, moduleB.mFold, moduleB.mAsym);
 
-    shaperSampleA = applyShaper(oscSampleA, moduleA.mDrive, moduleA.mFold, moduleA.mAsym);
-    shaperSampleB = applyShaper(oscSampleB, moduleB.mDrive, moduleB.mFold, moduleB.mAsym);
+    moduleA.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mPmSelfShaper);
+    moduleA.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleB.mPmCrossShaper);
 
-    ///*das muss noch mal überprüft werden!!! */
-    moduleA.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mPmSelfAmount);
-    moduleA.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleA.mPmCrossAmount);
+    moduleB.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mPmSelfShaper);
+    moduleB.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleA.mPmCrossShaper);
 
-    moduleB.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mPmSelfAmount);
-    moduleB.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleB.mPmCrossAmount);
+    float sampleA = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mMainMixAmount);
+    float sampleB = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mMainMixAmount);
 
-    sampleA = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mMainMixAmount);
-    sampleB = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mMainMixAmount);
-
-    outputSample = NlToolbox::Crossfades::crossFade(sampleA, sampleB, moduleA.mGain, moduleB.mGain);
-
-    return outputSample;
+    return NlToolbox::Crossfades::crossFade(sampleA, sampleB, moduleA.mGain, moduleB.mGain);
 }
 
 
@@ -660,7 +640,4 @@ inline float Soundgenerator::calcOscFrequency(float _pitch, float _keyTracking, 
     }
 
     return NlToolbox::Conversion::pitch2freq(_pitch);
-//    float frequency = pow(2.f, (_pitch - 69) / 12.f) * 440.f;
-
-//    return frequency;
 }

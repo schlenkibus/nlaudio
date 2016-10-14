@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tools.h"
+//#include "tools.h"
 #include "nltoolbox.h"
 #include "oscillator.h"
 
@@ -24,10 +24,10 @@ public:
 
     void setPitch(float _pitch);
     void setVoiceNumber(unsigned int _voiceNumber);
-    void setOscParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
+    void setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
     void resetPhase();
 
-    float makeNoise();
+    float generateSound();
     float applyShaper(float _currSample, float _drive, float _fold, float _asym);
 
 
@@ -36,7 +36,7 @@ private:
     float mSampleRate;              // Samplerate
     float mPitch;                   // Pitch of the played note/ key
 
-    struct Generatormodules           // Struct for shared Parameters of both Oscillators and Shapers
+    struct Generatormodules          // Struct for shared Parameters of both Oscillators and Shapers
     {
         float mGain;                // Module gain
         float mMainMixAmount;       // Mix Amount between Oscillator and Shaper
@@ -44,7 +44,6 @@ private:
         Oscillator mOsc;            // Osciallator
 
         float mPhase;               // Oscillator phase
-        float mFrequency;           // Oscillator frequency
         float mPitchOffset;         // Oscillator pitch offset
         float mKeyTracking;         // Oscialltor key tracking amount
 
@@ -54,11 +53,11 @@ private:
 
         float mPmSelf;              // Self Phase Modulation, Oscillator Feedback
         float mPmCross;             // Cross Phase Modulation, Oscialltor Feedback
-        float mPmSelfAmount;        // Self Phase Modulation Amount, Shaper Feedback
-        float mPmCrossAmount;       // Cross Phase Modulation Amount, Shaper Feedback
+        float mPmSelfShaper;        // Self Phase Modulation Amount, Shaper Feedback
+        float mPmCrossShaper;       // Cross Phase Modulation Amount, Shaper Feedback
 
-        float mSelfMix;             // Resulting Self Phase Modulation Mix
-        float mCrossMix;            // Resulting Cross Phase Modulation Mix
+        float mSelfMix;             // Mix between modules own osciallator and shaper samples
+        float mCrossMix;            // Mix between the modules own osciallator sample and the opposite modules shaper samples
 
     } moduleA, moduleB;
 
@@ -72,7 +71,7 @@ private:
         CHIRPFREQ    = 0x26,
 
         PMSELF       = 0x1A,        //PM Self
-        PMCROSS      = 0x1B,        //PM B
+        PMCROSS      = 0x1B,        //PM B / PM A
         PMFEEDBCK    = 0x1C,        //PM FB
         PMSELFAMNT   = 0x24,        //PM Shaper Self A
         PMCROSSAMNT  = 0x25,        //PM Shaper B

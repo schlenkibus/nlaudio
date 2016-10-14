@@ -180,7 +180,7 @@ float stepResolution = faderMaxDB / midiSteps;          // dB resolution in dB p
 
 
                     voice[v].setPitch(static_cast<float>(midiVal));
-                    voice[v].resetPhase(); // hier ist es falsch, oder auch nicht ... ?!
+                    voice[v].resetPhase();
                 }
 
                 // Voice Allocation - Note Off
@@ -226,7 +226,7 @@ float stepResolution = faderMaxDB / midiSteps;          // dB resolution in dB p
 
                 for(unsigned int i = 0; i < NUM_VOICES; i++)
                 {
-                    voice[i].setOscParams(midiByteBuffer[0], midiByteBuffer[1], static_cast<float>(midiByteBuffer[2]));
+                    voice[i].setGenParams(midiByteBuffer[0], midiByteBuffer[1], static_cast<float>(midiByteBuffer[2]));
                 }
 
 #ifdef CABINET
@@ -248,7 +248,7 @@ float stepResolution = faderMaxDB / midiSteps;          // dB resolution in dB p
 
             for(unsigned int i = 0; i < NUM_VOICES; i++)        //Calculate the output of all the voices if these are active
                 if(voiceState[i] > -1)
-                    outputSample += voice[i].makeNoise();
+                    outputSample += voice[i].generateSound();
 #ifdef CABINET
             outputSample = cabinet.applyCab(outputSample);
 #endif
