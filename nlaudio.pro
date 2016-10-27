@@ -41,7 +41,10 @@ SOURCES += main.cpp \
     echo.cpp \
     oscillator.cpp \
     smoother.cpp \
-    soundgenerator.cpp
+    soundgenerator.cpp \
+    shaper.cpp \
+    outputmixer.cpp \
+    voicemanager.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -80,7 +83,11 @@ HEADERS += \
     oscillator.h \
     reaktortoolbox.h \
     nltoolbox.h \
-    soundgenerator.h
+    soundgenerator.h \
+    shaper.h \
+    outputmixer.h \
+    voicemanager.h \
+    sharedoutputs.h
 
 OTHER_FILES += \
     Todo.txt

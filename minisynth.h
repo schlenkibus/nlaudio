@@ -7,9 +7,12 @@
 **/
 
 #include "audiofactory.h"
+#include "voicemanager.h"
+
 
 namespace Nl {
 namespace MINISYNTH {
+
 
     struct miniSynthHandle {
         WorkingThreadHandle workingThreadHandle;

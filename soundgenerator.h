@@ -1,8 +1,21 @@
+/******************************************************************************/
+/** @file		soundgenerator.h
+    @date		2016-07-20
+    @version	0.2
+    @author		Anton Schmied[2016-07-20]
+    @brief		An implementation of the sound generating Class
+                with two oscillators and two shapers
+                as used in the C15 and implemented in Reaktor
+
+    @note       Oder man macht ein ganzes array an werten und
+                nur einen soundgenerator ... uuurgh ...
+*******************************************************************************/
+
 #pragma once
 
-//#include "tools.h"
 #include "nltoolbox.h"
 #include "oscillator.h"
+#include "shaper.h"
 
 class Soundgenerator
 {
@@ -14,42 +27,37 @@ public:
                     float _gain,
                     float _pitchOffset,
                     float _keyTracking,
-                    float _mainMixAmoount,
-                    float _drive,
-                    float _fold,
-                    float _asym);
+                    float _mainMixAmount);
 
     ~Soundgenerator(){}                    // Destructor
 
+    float mPitch;                          // Pitch of the played note/ key
+    float mSampleA, mSampleB;              // Generated Samples
+//    float mMainOut;                        // mal testweise ...
+
+
+    void generateSound();
 
     void setPitch(float _pitch);
     void setVoiceNumber(unsigned int _voiceNumber);
-    void setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
     void resetPhase();
-
-    float generateSound();
-    float applyShaper(float _currSample, float _drive, float _fold, float _asym);
-
+    void setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
 
 private:
 
     float mSampleRate;              // Samplerate
-    float mPitch;                   // Pitch of the played note/ key
 
-    struct Generatormodules          // Struct for shared Parameters of both Oscillators and Shapers
+    struct Generatormodules         // Struct for shared Parameters of both Oscillators and Shapers
     {
         float mGain;                // Module gain
         float mMainMixAmount;       // Mix Amount between Oscillator and Shaper
 
         Oscillator mOsc;            // Osciallator
+        Shaper mShaper;             // Shaper
 
         float mPhase;               // Oscillator phase
         float mPitchOffset;         // Oscillator pitch offset
         float mKeyTracking;         // Oscialltor key tracking amount
-
-        float mDrive;               // Shaper drive amount
-        float mFold;                // Shaper fold amount
-        float mAsym;                // Shaper asymmetry amount
 
         float mPmSelf;              // Self Phase Modulation, Oscillator Feedback
         float mPmCross;             // Cross Phase Modulation, Oscialltor Feedback
@@ -58,6 +66,8 @@ private:
 
         float mSelfMix;             // Mix between modules own osciallator and shaper samples
         float mCrossMix;            // Mix between the modules own osciallator sample and the opposite modules shaper samples
+
+        float mRingMod;             // Ring modulation amount
 
     } moduleA, moduleB;
 
@@ -73,11 +83,12 @@ private:
         PMSELF       = 0x1A,        //PM Self
         PMCROSS      = 0x1B,        //PM B / PM A
         PMFEEDBCK    = 0x1C,        //PM FB
-        PMSELFAMNT   = 0x24,        //PM Shaper Self A
-        PMCROSSAMNT  = 0x25,        //PM Shaper B
+        PMSELFSHAPER = 0x24,        //PM Shaper Self A
+        PMCROSSSHAPER= 0x25,        //PM Shaper B
 
         DRIVE        = 0x29,
         MAINMIX      = 0x2A,
+        RING         = 0x2C,
         FOLD         = 0x2D,
         ASYM         = 0x2E,
 

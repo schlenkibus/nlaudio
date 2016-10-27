@@ -348,12 +348,28 @@ namespace Conversion {
 /*****************************************************************************/
 /** @brief    conversion from a value in dB in to an amplification factor
  *  @param    value in dB
- *  @return   processed sample
+ *  @return   value as amplitude factor
 ******************************************************************************/
 
 inline float db2af(float dbIn)
 {
     return pow(1.12202f, dbIn);
+}
+
+
+
+/*****************************************************************************/
+/** @brief    conversion from a value as amplitude factor into dB
+ *  @param    value as amplitude factor
+ *  @return   value in dB
+******************************************************************************/
+
+inline float af2db(float afIn)
+{
+    if (afIn == 0.f)                        // vorsichthalber gegen ne = schützen
+        afIn = 1.f * pow(10.f, 15.f);
+
+    return 20.f * log10(afIn);      // gibt es eine feine annäherung?
 }
 
 

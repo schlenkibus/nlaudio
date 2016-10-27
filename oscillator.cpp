@@ -53,7 +53,6 @@ Oscillator::Oscillator(int _samplerate, float _oscFreq, float _oscPhase, float _
 
 /******************************************************************************/
 /** Main Oscillator Function
- *  @param  radiant for phase modulation
  *  @return sine sample
 *******************************************************************************/
 

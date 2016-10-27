@@ -17,9 +17,6 @@
  *           Pitch Offset:          60.f ct
  *           Key Tracking:          1.f
  *           Main Mix Amount:       0.f
- *           Drive:                 0.18f
- *           Fold:                  0.5
- *           Asym:                  0.f
 *******************************************************************************/
 
 Soundgenerator::Soundgenerator()                          // Default Constructor
@@ -29,13 +26,11 @@ Soundgenerator::Soundgenerator()                          // Default Constructor
     moduleA.mMainMixAmount = 0.f;
 
     moduleA.mOsc = Oscillator();
+    moduleA.mShaper = Shaper();
 
     moduleA.mPhase = 0.f;
     moduleA.mPitchOffset = 60.f;
     moduleA.mKeyTracking = 1.f;
-    moduleA.mDrive = 0.18f;
-    moduleA.mFold = 0.5f;
-    moduleA.mAsym = 0.f;
 
     moduleA.mPmSelf = 0.f;
     moduleA.mPmCross = 0.f;
@@ -43,6 +38,8 @@ Soundgenerator::Soundgenerator()                          // Default Constructor
     moduleA.mPmCrossShaper = 0.f;
     moduleA.mSelfMix = 0.f;
     moduleA.mCrossMix = 0.f;
+
+    moduleA.mRingMod = 0.f;
 
     moduleB = moduleA;
 }
@@ -60,23 +57,18 @@ Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized C
                  float _gain,
                  float _pitchOffset,
                  float _keyTracking,
-                 float _mainMixAmount,
-                 float _drive,
-                 float _fold,
-                 float _asym)
+                 float _mainMixAmount)
     : mSampleRate(static_cast<float>(_sampleRate))
 {
     moduleA.mGain = _gain;
     moduleA.mMainMixAmount = _mainMixAmount;
 
     moduleA.mOsc = Oscillator();
+    moduleA.mShaper = Shaper();
 
     moduleA.mPhase = _phase;
     moduleA.mPitchOffset = _pitchOffset;
     moduleA.mKeyTracking = _keyTracking;
-    moduleA.mDrive = _drive;
-    moduleA.mFold = _fold;
-    moduleA.mAsym = _asym;
 
     moduleA.mPmSelf = 0.f;
     moduleA.mPmCross = 0.f;
@@ -85,7 +77,48 @@ Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized C
     moduleA.mSelfMix = 0.f;
     moduleA.mCrossMix = 0.f;
 
+    moduleA.mRingMod = 0.f;
+
     moduleB = moduleA;
+}
+
+
+
+/******************************************************************************/
+/** @brief    main function which calculates the modulated phase depending
+ *            on mix amounts (self modulation, cross modulation, feedback modulation),
+ *            calculates the samples of the 2 oscillators and 2 shapers
+*******************************************************************************/
+
+void Soundgenerator::generateSound()
+{
+    float modedPhaseA = (moduleA.mSelfMix * moduleA.mPmSelf) + (moduleB.mCrossMix * moduleA.mPmCross);
+    float modedPhaseB = (moduleB.mSelfMix * moduleB.mPmSelf) + (moduleA.mCrossMix * moduleB.mPmCross);
+
+    moduleA.mOsc.setModPhase(modedPhaseA);
+    moduleB.mOsc.setModPhase(modedPhaseB);
+
+    float oscSampleA = moduleA.mOsc.applyOscillator();
+    float oscSampleB = moduleB.mOsc.applyOscillator();
+
+    float shaperSampleA = moduleA.mShaper.applyShaper(oscSampleA);
+    float shaperSampleB = moduleB.mShaper.applyShaper(oscSampleB);
+
+    moduleA.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mPmSelfShaper);
+    moduleA.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleB.mPmCrossShaper);
+
+    moduleB.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mPmSelfShaper);
+    moduleB.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleA.mPmCrossShaper);
+
+    mSampleA = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mMainMixAmount);
+    mSampleB = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mMainMixAmount);
+
+    // Ring Modulation
+    float crossSample = mSampleA * mSampleB;
+    mSampleA = NlToolbox::Crossfades::bipolarCrossFade(mSampleA, crossSample, moduleA.mRingMod);
+    mSampleB = NlToolbox::Crossfades::bipolarCrossFade(mSampleB, crossSample, moduleB.mRingMod);
+
+//    mMainOut = NlToolbox::Crossfades::crossFade(mSampleA, mSampleB, moduleA.mGain, moduleB.mGain);
 }
 
 
@@ -124,6 +157,19 @@ void Soundgenerator::setVoiceNumber(unsigned int _voiceNumber)
 
 
 
+/******************************************************************************/
+/** @brief    phase reset for each oscillator, which happens with every note on
+ *            event
+*******************************************************************************/
+
+void Soundgenerator::resetPhase()
+{
+    moduleA.mOsc.resetPhase(moduleA.mPhase);
+    moduleB.mOsc.resetPhase(moduleB.mPhase);
+}
+
+
+
 /*****************************************************************************/
 /** @brief    interface method which converts and scales the incoming midi
  *            values and passes these to the respective methods or parameters
@@ -140,198 +186,220 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
         switch (_ctrlID)
         {
+            /*********************** Oscillator Controls ***********************/
+
             case CtrlID::OFFSETPITCH:
-            _ctrlVal -= 20;
+                _ctrlVal -= 20;
 
-            printf("A: Pitch Offset: %f\n", _ctrlVal);
+                printf("A: Pitch Offset: %f\n", _ctrlVal);
 
-            moduleA.mPitchOffset = _ctrlVal;
+                moduleA.mPitchOffset = _ctrlVal;
 
-            moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
-            moduleA.mOsc.calcInc();
-            break;
+                moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
+                moduleA.mOsc.calcInc();
+                break;
 
             case CtrlID::KEYTRACKING:
-            if (_ctrlVal > 105)
-            {
-                _ctrlVal = 105;
-            }
+                if (_ctrlVal > 105)
+                {
+                    _ctrlVal = 105;
+                }
 
-            printf("A: Key Tracking: %f\n", _ctrlVal);
+                printf("A: Key Tracking: %f\n", _ctrlVal);
 
-            moduleA.mKeyTracking = _ctrlVal / 100.f;
+                moduleA.mKeyTracking = _ctrlVal / 100.f;
 
-            moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
-            moduleA.mOsc.calcInc();
-            break;
-
-            case CtrlID::PHASE:
-            _ctrlVal = (_ctrlVal / 126.f) - 0.5f;
-
-            if (_ctrlVal > 0.5f)
-            {
-                _ctrlVal = 0.5f;
-            }
-
-            printf("A: Phase: %f\n", _ctrlVal);
-
-            moduleA.mPhase = _ctrlVal;
-            break;
-
-            case CtrlID::MAINMIX:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("A: Main Mix: %f\n", _ctrlVal);
-
-            moduleA.mMainMixAmount = _ctrlVal;
-            break;
-
-            case CtrlID::DRIVE:
-            _ctrlVal = _ctrlVal / 2.f;
-
-            if (_ctrlVal > 43.f)
-            {
-                _ctrlVal = 43.f;
-            }
-
-            _ctrlVal = pow(10.f, (_ctrlVal / 20.f)) * 0.18f - 0.18f;
-
-            if (_ctrlVal > 25.f)
-            {
-                _ctrlVal = 25.f;
-            }
-
-            printf("A: Drive: %f\n", _ctrlVal);
-
-            moduleA.mDrive = _ctrlVal + 0.18f;
-            break;
-
-            case CtrlID::FOLD:
-            _ctrlVal /= 126.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("A: Fold: %f\n", _ctrlVal);
-
-            moduleA.mFold = _ctrlVal;
-            break;
-
-            case CtrlID::ASYM:
-            _ctrlVal /= 126.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("A: Asym: %f\n", _ctrlVal);
-
-            moduleA.mAsym= _ctrlVal;
-            break;
+                moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
+                moduleA.mOsc.calcInc();
+                break;
 
             case CtrlID::FLUCT:
-            _ctrlVal /= 126.f;
+                _ctrlVal /= 126.f;
 
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
 
-            printf("A: Fluct: %f\n", _ctrlVal);
+                printf("A: Fluct: %f\n", _ctrlVal);
 
-            _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
+                _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
 
-            moduleA.mOsc.setFluctuation(_ctrlVal);
+                moduleA.mOsc.setFluctuation(_ctrlVal);
+                break;
 
-            break;
+            case CtrlID::PHASE:
+                _ctrlVal = (_ctrlVal / 126.f) - 0.5f;
 
-            case CtrlID::PMSELF:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+                if (_ctrlVal > 0.5f)
+                {
+                    _ctrlVal = 0.5f;
+                }
 
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
+                printf("A: Phase: %f\n", _ctrlVal);
 
-            printf("A: PM Self: %f\n", _ctrlVal);
-
-            moduleA.mPmSelf = fabs(_ctrlVal) * _ctrlVal * 0.5f;
-            break;
-
-            case CtrlID::PMCROSS:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("A: PM B: %f\n", _ctrlVal);
-
-            moduleA.mPmCross = fabs(_ctrlVal) * _ctrlVal;
-            break;
-
-            case CtrlID::PMSELFAMNT:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("A: Shaper PM Self: %f\n", _ctrlVal);
-
-            moduleA.mPmSelfShaper = _ctrlVal;
-            break;
-
-            case CtrlID::PMCROSSAMNT:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("A: Shaper PM B: %f\n", _ctrlVal);
-
-            moduleA.mPmCrossShaper = _ctrlVal;
-            break;
+                moduleA.mPhase = _ctrlVal;
+                break;
 
             case CtrlID::CHIRPFREQ:
-            _ctrlVal = (_ctrlVal + 160.f) / 2.f;
+                _ctrlVal = (_ctrlVal + 160.f) / 2.f;
 
-            if (_ctrlVal > 140.f)
-            {
-                _ctrlVal = 140.f;
-            }
+                if (_ctrlVal > 140.f)
+                {
+                    _ctrlVal = 140.f;
+                }
 
-            printf("A: Chirp Freq: %f\n", _ctrlVal);
+                printf("A: Chirp Freq: %f\n", _ctrlVal);
 
-            _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
+                _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 
-            moduleA.mOsc.setChirpFreq(_ctrlVal);
+                moduleA.mOsc.setChirpFreq(_ctrlVal);
+                break;
+
+            case CtrlID::PMSELF:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: PM Self: %f\n", _ctrlVal);
+
+                moduleA.mPmSelf = fabs(_ctrlVal) * _ctrlVal * 0.5f;
+                break;
+
+            case CtrlID::PMCROSS:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: PM B: %f\n", _ctrlVal);
+
+                moduleA.mPmCross = fabs(_ctrlVal) * _ctrlVal;
+                break;
+
+            case CtrlID::PMSELFSHAPER:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Shaper PM Self: %f\n", _ctrlVal);
+
+                moduleA.mPmSelfShaper = _ctrlVal;
+                break;
+
+            case CtrlID::PMCROSSSHAPER:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Shaper PM B: %f\n", _ctrlVal);
+
+                moduleA.mPmCrossShaper = _ctrlVal;
+                break;
+
+
+
+            /*********************** Shaper Controls ***********************/
+
+            case CtrlID::MAINMIX:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Main Mix: %f\n", _ctrlVal);
+
+                moduleA.mMainMixAmount = _ctrlVal;
+                break;
+
+            case CtrlID::DRIVE:
+                _ctrlVal = _ctrlVal / 2.f;
+
+                if (_ctrlVal > 43.f)
+                {
+                    _ctrlVal = 43.f;
+                }
+
+                _ctrlVal = pow(10.f, (_ctrlVal / 20.f)) * 0.18f - 0.18f;
+
+                if (_ctrlVal > 25.f)
+                {
+                    _ctrlVal = 25.f;
+                }
+
+                printf("A: Drive: %f\n", _ctrlVal);
+
+                moduleA.mShaper.setDrive(_ctrlVal + 0.18f);
+                break;
+
+            case CtrlID::FOLD:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Fold: %f\n", _ctrlVal);
+
+                moduleA.mShaper.setFold(_ctrlVal);
+                break;
+
+            case CtrlID::ASYM:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Asym: %f\n", _ctrlVal);
+
+                moduleA.mShaper.setAsym(_ctrlVal);
+                break;
+
+            case CtrlID::RING:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Ring Modulation: %f\n", _ctrlVal);
+
+                moduleA.mRingMod = _ctrlVal;
             break;
+
+
+
+            /*********************** Temporal Controls ***********************/
 
             case CtrlID::GAIN:
-            _ctrlVal = (_ctrlVal / 126.f);
+                _ctrlVal = (_ctrlVal / 126.f);
 
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
 
-            printf("A: Gain: %f\n", _ctrlVal);
+                printf("A: Gain: %f\n", _ctrlVal);
 
-            moduleA.mGain = _ctrlVal;
-            break;
+                moduleA.mGain = _ctrlVal;
+                break;
         }
         break;
 
@@ -339,277 +407,224 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
         switch (_ctrlID)
         {
+            /*********************** Oscillator Controls ***********************/
+
             case CtrlID::OFFSETPITCH:
-            _ctrlVal -= 20;
+                _ctrlVal -= 20;
 
-            printf("B: Pitch Offset: %f\n", _ctrlVal);
+                printf("B: Pitch Offset: %f\n", _ctrlVal);
 
-            moduleB.mPitchOffset = _ctrlVal;
+                moduleB.mPitchOffset = _ctrlVal;
 
-            moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
-            moduleB.mOsc.calcInc();
-            break;
+                moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
+                moduleB.mOsc.calcInc();
+                break;
 
             case CtrlID::KEYTRACKING:
-            if (_ctrlVal > 105)
-            {
-                _ctrlVal = 105;
-            }
+                if (_ctrlVal > 105)
+                {
+                    _ctrlVal = 105;
+                }
 
-            printf("B: Key Tracking: %f\n", _ctrlVal);
+                printf("B: Key Tracking: %f\n", _ctrlVal);
 
-            moduleB.mKeyTracking = _ctrlVal / 100.f;
+                moduleB.mKeyTracking = _ctrlVal / 100.f;
 
-            moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
-            moduleB.mOsc.calcInc();
-            break;
+                moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
+                moduleB.mOsc.calcInc();
+                break;
 
             case CtrlID::PHASE:
-            _ctrlVal = (_ctrlVal / 126.f) - 0.5f;
+                _ctrlVal = (_ctrlVal / 126.f) - 0.5f;
 
-            if (_ctrlVal > 0.5f)
-            {
-                _ctrlVal = 0.5f;
-            }
+                if (_ctrlVal > 0.5f)
+                {
+                    _ctrlVal = 0.5f;
+                }
 
-            printf("B: Phase: %f\n", _ctrlVal);
+                printf("B: Phase: %f\n", _ctrlVal);
 
-            moduleB.mPhase = _ctrlVal;
-            break;
-
-            case CtrlID::MAINMIX:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("B: Main Mix: %f\n", _ctrlVal);
-
-            moduleB.mMainMixAmount = _ctrlVal;
-            break;
-
-            case CtrlID::DRIVE:
-            _ctrlVal = _ctrlVal / 2.f;
-
-            if (_ctrlVal > 43.f)
-            {
-                _ctrlVal = 43.f;
-            }
-
-            _ctrlVal = pow(10.f, (_ctrlVal / 20.f)) * 0.18f - 0.18f;
-
-            if (_ctrlVal > 25.f)
-            {
-                _ctrlVal = 25.f;
-            }
-
-            printf("B: Drive: %f\n", _ctrlVal);
-
-            moduleB.mDrive = _ctrlVal + 0.18f;
-            break;
-
-            case CtrlID::FOLD:
-            _ctrlVal /= 126.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("B: Fold: %f\n", _ctrlVal);
-
-            moduleB.mFold = _ctrlVal;
-            break;
-
-            case CtrlID::ASYM:
-            _ctrlVal /= 126.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("B: Asym: %f\n", _ctrlVal);
-
-            moduleB.mAsym = _ctrlVal;
-            break;
-
-            case CtrlID::FLUCT:
-            _ctrlVal /= 126.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("B: Fluct: %f\n", _ctrlVal);
-
-            _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
-
-            moduleB.mOsc.setFluctuation(_ctrlVal);
-
-            break;
-
-            case CtrlID::PMSELF:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("B: PM Self: %f\n", _ctrlVal);
-
-            moduleB.mPmSelf = fabs(_ctrlVal) * _ctrlVal * 0.5f;
-            break;
-
-            case CtrlID::PMCROSS:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("B: PM A: %f\n", _ctrlVal);
-
-            moduleB.mPmCross = fabs(_ctrlVal) * _ctrlVal;
-            break;
-
-            case CtrlID::PMSELFAMNT:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("B: Shaper PM Self: %f\n", _ctrlVal);
-
-            moduleB.mPmSelfShaper = _ctrlVal;
-            break;
-
-            case CtrlID::PMCROSSAMNT:
-            _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
-
-            printf("B: Shaper PM A: %f\n", _ctrlVal);
-
-            moduleB.mPmCrossShaper = _ctrlVal;
-            break;
+                moduleB.mPhase = _ctrlVal;
+                break;
 
             case CtrlID::CHIRPFREQ:
-            _ctrlVal = (_ctrlVal + 160.f) / 2.f;
+                _ctrlVal = (_ctrlVal + 160.f) / 2.f;
 
-            if (_ctrlVal > 140.f)
-            {
-                _ctrlVal = 140.f;
-            }
+                if (_ctrlVal > 140.f)
+                {
+                    _ctrlVal = 140.f;
+                }
 
-            printf("B: Chirp Freq: %f\n", _ctrlVal);
+                printf("B: Chirp Freq: %f\n", _ctrlVal);
 
-            _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
+                _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 
-            moduleB.mOsc.setChirpFreq(_ctrlVal);
-            break;
+                moduleB.mOsc.setChirpFreq(_ctrlVal);
+                break;
+
+            case CtrlID::PMSELF:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: PM Self: %f\n", _ctrlVal);
+
+                moduleB.mPmSelf = fabs(_ctrlVal) * _ctrlVal * 0.5f;
+                break;
+
+            case CtrlID::PMCROSS:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: PM A: %f\n", _ctrlVal);
+
+                moduleB.mPmCross = fabs(_ctrlVal) * _ctrlVal;
+                break;
+
+            case CtrlID::PMSELFSHAPER:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Shaper PM Self: %f\n", _ctrlVal);
+
+                moduleB.mPmSelfShaper = _ctrlVal;
+                break;
+
+            case CtrlID::PMCROSSSHAPER:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Shaper PM A: %f\n", _ctrlVal);
+
+                moduleB.mPmCrossShaper = _ctrlVal;
+                break;
+
+
+
+            /*********************** Shaper Controls ***********************/
+
+            case CtrlID::MAINMIX:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Main Mix: %f\n", _ctrlVal);
+
+                moduleB.mMainMixAmount = _ctrlVal;
+                break;
+
+            case CtrlID::DRIVE:
+                _ctrlVal = _ctrlVal / 2.f;
+
+                if (_ctrlVal > 43.f)
+                {
+                    _ctrlVal = 43.f;
+                }
+
+                _ctrlVal = pow(10.f, (_ctrlVal / 20.f)) * 0.18f - 0.18f;
+
+                if (_ctrlVal > 25.f)
+                {
+                    _ctrlVal = 25.f;
+                }
+
+                printf("B: Drive: %f\n", _ctrlVal);
+
+                moduleB.mShaper.setDrive(_ctrlVal + 0.18f);
+                break;
+
+            case CtrlID::FOLD:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Fold: %f\n", _ctrlVal);
+
+                moduleB.mShaper.setFold(_ctrlVal);
+                break;
+
+            case CtrlID::ASYM:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Asym: %f\n", _ctrlVal);
+
+                moduleB.mShaper.setAsym(_ctrlVal);
+                break;
+
+            case CtrlID::FLUCT:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Fluct: %f\n", _ctrlVal);
+
+                _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
+
+                moduleB.mOsc.setFluctuation(_ctrlVal);
+                break;
+
+            case CtrlID::RING:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Ring Modulation: %f\n", _ctrlVal);
+
+                moduleB.mRingMod = _ctrlVal;
+                break;
+
+
+            /*********************** Temporal Controls ***********************/
 
             case CtrlID::GAIN:
-            _ctrlVal = (_ctrlVal / 126.f);
+                _ctrlVal = (_ctrlVal / 126.f);
 
-            if (_ctrlVal > 1.f)
-            {
-                _ctrlVal = 1.f;
-            }
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
 
-            printf("B: Gain: %f\n", _ctrlVal);
+                printf("B: Gain: %f\n", _ctrlVal);
 
-            moduleB.mGain = _ctrlVal;
-            break;
+                moduleB.mGain = _ctrlVal;
+                break;
         }
         break;
     }
 }
 
-
-
-/******************************************************************************/
-/** @brief    phase reset for each oscillator, which happens with every note on
- *            event
-*******************************************************************************/
-
-void Soundgenerator::resetPhase()
-{
-    moduleA.mOsc.resetPhase(moduleA.mPhase);
-    moduleB.mOsc.resetPhase(moduleB.mPhase);
-}
-
-
-
-/******************************************************************************/
-/** @brief    main function which calculates the modulated phase depending
- *            on mix amounts (self modulation, cross modulation, feedback modulation),
- *            calculates the samples of the 2 oscillators and 2 shapers
- *  @return   a mix of 2 samples deriving from the oscillator and shaper processes
-*******************************************************************************/
-
-float Soundgenerator::generateSound()
-{
-    float modedPhaseA = (moduleA.mSelfMix * moduleA.mPmSelf) + (moduleB.mCrossMix * moduleA.mPmCross);
-    float modedPhaseB = (moduleB.mSelfMix * moduleB.mPmSelf) + (moduleA.mCrossMix * moduleB.mPmCross);
-
-    moduleA.mOsc.setModPhase(modedPhaseA);
-    moduleB.mOsc.setModPhase(modedPhaseB);
-
-    float oscSampleA = moduleA.mOsc.applyOscillator();
-    float oscSampleB = moduleB.mOsc.applyOscillator();
-
-    float shaperSampleA = applyShaper(oscSampleA, moduleA.mDrive, moduleA.mFold, moduleA.mAsym);
-    float shaperSampleB = applyShaper(oscSampleB, moduleB.mDrive, moduleB.mFold, moduleB.mAsym);
-
-    moduleA.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mPmSelfShaper);
-    moduleA.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleB.mPmCrossShaper);
-
-    moduleB.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mPmSelfShaper);
-    moduleB.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleA.mPmCrossShaper);
-
-    float sampleA = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mMainMixAmount);
-    float sampleB = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mMainMixAmount);
-
-    return NlToolbox::Crossfades::crossFade(sampleA, sampleB, moduleA.mGain, moduleB.mGain);
-}
-
-
-
-/******************************************************************************/
-/** @brief    shaper function
- *  @param    raw sample
- *  @param    drive amount
- *  @param    fold amount
- *  @param    asymmetry amount
- *  @return   processed sample
-*******************************************************************************/
-
-float Soundgenerator::applyShaper(float _currSample, float _drive, float _fold, float _asym)
-{
-    _currSample *= _drive;
-
-    float ctrl = _currSample;
-
-    _currSample = NlToolbox::Math::sinP3(_currSample);
-    _currSample = NlToolbox::Others::threeRanges(_currSample, ctrl, _fold);
-
-    float currSample_square = _currSample * _currSample + (-0.5f);
-
-    _currSample = NlToolbox::Others::parAsym(_currSample, currSample_square, _asym);
-
-    return _currSample;
-}
 
 
 

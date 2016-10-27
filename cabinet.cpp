@@ -219,63 +219,63 @@ void Cabinet::setCabinetParams(float _ctrlVal, unsigned char _ctrlTag)
     switch(_ctrlTag)
     {
         case CtrlId::HICUT:
-        _ctrlVal = (_ctrlVal * 80.f) / 127.f + 60.f;            //Midi to Pitch [60 .. 140]
-        printf("HiCut: %f\n", _ctrlVal);
+            _ctrlVal = (_ctrlVal * 80.f) / 127.f + 60.f;            //Midi to Pitch [60 .. 140]
+            printf("HiCut: %f\n", _ctrlVal);
 
-        _ctrlVal = pow(2.f, (_ctrlVal - 69.f) / 12) * 440.f;    //Pitch to Freq [261Hz .. 26580Hz]
+            _ctrlVal = pow(2.f, (_ctrlVal - 69.f) / 12) * 440.f;    //Pitch to Freq [261Hz .. 26580Hz]
 
-        setHiCut(_ctrlVal);
-        break;
+            setHiCut(_ctrlVal);
+            break;
 
         case CtrlId::LOCUT:
-        _ctrlVal = (_ctrlVal * 80.f) / 127.f + 20.f;            //Midi to Pitch [20 ..100]
-        printf("LoCut: %f\n", _ctrlVal);
+            _ctrlVal = (_ctrlVal * 80.f) / 127.f + 20.f;            //Midi to Pitch [20 ..100]
+            printf("LoCut: %f\n", _ctrlVal);
 
-        _ctrlVal = pow(2.f, (_ctrlVal - 69.f) / 12) * 440.f;    //Pitch to Freq [26Hz .. 2637Hz]
-        setLoCut(_ctrlVal);
-        break;
+            _ctrlVal = pow(2.f, (_ctrlVal - 69.f) / 12) * 440.f;    //Pitch to Freq [26Hz .. 2637Hz]
+            setLoCut(_ctrlVal);
+            break;
 
         case CtrlId::MIX:
-        _ctrlVal = _ctrlVal / 127.f;                            //Midi to [0 .. 1]
-        printf("Mix: %f\n", _ctrlVal);
+            _ctrlVal = _ctrlVal / 127.f;                            //Midi to [0 .. 1]
+            printf("Mix: %f\n", _ctrlVal);
 
-        setMix(_ctrlVal);
-        break;
+            setMix(_ctrlVal);
+            break;
 
         case CtrlId::CABLEVEL:
-        _ctrlVal = (_ctrlVal - 127.f) * (50.f / 127.f);         //Midi to [-50db .. 0dB]
-        printf("Cab Lvl: %f\n", _ctrlVal);
+            _ctrlVal = (_ctrlVal - 127.f) * (50.f / 127.f);         //Midi to [-50db .. 0dB]
+            printf("Cab Lvl: %f\n", _ctrlVal);
 
-        setCabLvl(_ctrlVal);
-        break;
+            setCabLvl(_ctrlVal);
+            break;
 
         case CtrlId::DRIVE:
-        _ctrlVal = _ctrlVal * (50.f / 127.f);                     //Midi to [0dB .. 50dB]
-        printf("Drive: %f\n", _ctrlVal);
+            _ctrlVal = _ctrlVal * (50.f / 127.f);                     //Midi to [0dB .. 50dB]
+            printf("Drive: %f\n", _ctrlVal);
 
-        setDrive(_ctrlVal);
-        break;
+            setDrive(_ctrlVal);
+            break;
 
         case CtrlId::TILT:
-        _ctrlVal = (_ctrlVal - 63.5f) * (50.f / 63.5f);           //Midi to [-50dB .. 50dB]
-        printf("Tilt: %f\n", _ctrlVal);
+            _ctrlVal = (_ctrlVal - 63.5f) * (50.f / 63.5f);           //Midi to [-50dB .. 50dB]
+            printf("Tilt: %f\n", _ctrlVal);
 
-        setTilt(_ctrlVal);
-        break;
+            setTilt(_ctrlVal);
+            break;
 
         case CtrlId::FOLD:
-        _ctrlVal = _ctrlVal / 127.f;                              //Midi to [0 .. 1]
-        printf("Fold: %f\n", _ctrlVal);
+            _ctrlVal = _ctrlVal / 127.f;                              //Midi to [0 .. 1]
+            printf("Fold: %f\n", _ctrlVal);
 
-        setFold(_ctrlVal);
-        break;
+            setFold(_ctrlVal);
+            break;
 
         case CtrlId::ASYM:
-        _ctrlVal = _ctrlVal / 127.f;                              //Midi to [0 .. 1]
-        printf("Asym: %f\n", _ctrlVal);
+            _ctrlVal = _ctrlVal / 127.f;                              //Midi to [0 .. 1]
+            printf("Asym: %f\n", _ctrlVal);
 
-        setAsym(_ctrlVal);
-        break;
+            setAsym(_ctrlVal);
+            break;
     }
 }
 
@@ -294,11 +294,11 @@ float Cabinet::applyCab(float _currSample)
 
     float output = 0.f;
 
-    output = _currSample * mDrive;                        // apply drive
+    output = _currSample * mDrive;                    // apply drive
 
     output = mHighpass.applyFilter(output);           // apply biquad highpass filter
 
-    output = mLowshelf1.applyFilter(output);           // apply first biquad tilt lowshelf filters
+    output = mLowshelf1.applyFilter(output);          // apply first biquad tilt lowshelf filters
 
     output = sineShaper(output);
 
