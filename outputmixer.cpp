@@ -84,8 +84,6 @@ void Outputmixer::applyOutputmixer()
     // Pan + Sine Sat for all voices
     for (int i = 0; i < NUM_VOICES; i++)
     {
-//        printf("%f\n", gKeyPitch[i]);
-
         // Pan + Smooth .. .naja ... eher nur Pan!
         a_R[i] = (mKeyPanArray[i] + mAPan) * mALevel;
         a_L[i] = (mKeyPanArray[i] + (1.f - mAPan)) * mALevel;
