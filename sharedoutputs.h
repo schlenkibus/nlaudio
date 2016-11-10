@@ -8,6 +8,8 @@ extern float gSoundGenOut_A[NUM_VOICES];
 extern float gSoundGenOut_B[NUM_VOICES];
 
 extern float gKeyPitch[NUM_VOICES];
+extern float gVoiceVelocity[NUM_VOICES];
+
 
 #if 0
 struct SharedModuleOutputs

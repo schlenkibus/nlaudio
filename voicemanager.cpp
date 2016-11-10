@@ -8,6 +8,12 @@
 
 #include "voicemanager.h"
 
+float gSoundGenOut_A[NUM_VOICES] = {};
+float gSoundGenOut_B[NUM_VOICES] = {};
+
+float gKeyPitch[NUM_VOICES] = {};
+float gVoiceVelocity[NUM_VOICES] = {};
+
 /******************************************************************************/
 /** Voice Manager Default Constructor
  * @brief    initialization of the modules local variabels with default values
@@ -32,7 +38,6 @@ VoiceManager::VoiceManager()
 
     mainOut_L = 0.f;
     mainOut_R = 0.f;
-
 }
 
 
@@ -74,7 +79,7 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
         case InstrID::KEYUP_2:
         case InstrID::KEYUP_3:
 
-            vallocProcess(_instrID, _ctrlID);
+            vallocProcess(_instrID, _ctrlID, _ctrlVal);
 
             break;
 
@@ -83,7 +88,7 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
         case InstrID::KEYDOWN_2:
         case InstrID::KEYDOWN_3:
 
-            vallocProcess(_instrID, _ctrlID);
+            vallocProcess(_instrID, _ctrlID, _ctrlVal);
 
             break;
     }
@@ -98,22 +103,18 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 
 void VoiceManager::voiceLoop()
 {
-    mainOut_L = 0.f;
-    mainOut_R = 0.f;
-
     for(unsigned int i = 0; i < NUM_VOICES; i++)
     {
         mSoundGenerator[i].generateSound();
 
         gSoundGenOut_A[i] = mSoundGenerator[i].mSampleA;
         gSoundGenOut_B[i] = mSoundGenerator[i].mSampleB;
-
-        mOutputMixer.applyOutputmixer();
     }
+
+    mOutputMixer.applyOutputmixer();
 
     mainOut_R = mOutputMixer.mSample_R;
     mainOut_L = mOutputMixer.mSample_L;
-
 }
 
 
@@ -149,9 +150,10 @@ void VoiceManager::vallocInit()
  *  @param    ID for keyUp or keyDown
 *******************************************************************************/
 
-void VoiceManager::vallocProcess(unsigned char _instrID, float _ctrlVal)
+void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, float _velocity)
 {
-    if (_instrID == InstrID::KEYDOWN_0 || _instrID == InstrID::KEYDOWN_1|| _instrID == InstrID::KEYDOWN_2 || _instrID == InstrID::KEYDOWN_3)  // key down
+    if (_keyDirection == InstrID::KEYDOWN_0 || _keyDirection == InstrID::KEYDOWN_1
+            || _keyDirection == InstrID::KEYDOWN_2 || _keyDirection == InstrID::KEYDOWN_3)  // key down
     {
         int v;
 
@@ -179,22 +181,23 @@ void VoiceManager::vallocProcess(unsigned char _instrID, float _ctrlVal)
 
         vYoungestAssigned = v;
 
-        vVoiceState[v] = _ctrlVal;
+        vVoiceState[v] = _pitch;
 
-        mSoundGenerator[v].setPitch(_ctrlVal);
+        mSoundGenerator[v].setPitch(_pitch);
         mSoundGenerator[v].resetPhase();
 
-        gKeyPitch[v] = _ctrlVal;
-//        printf("%f\n", gKeyPitch[v]);
+        gKeyPitch[v] = _pitch;
+        gVoiceVelocity[v] = _velocity/127.f;
     }
 
-    else if (_instrID == InstrID::KEYUP_0 || _instrID == InstrID::KEYUP_1 || _instrID == InstrID::KEYUP_2 || _instrID == InstrID::KEYUP_3)  // key up
+    else if (_keyDirection == InstrID::KEYUP_0 || _keyDirection == InstrID::KEYUP_1
+             || _keyDirection == InstrID::KEYUP_2 || _keyDirection == InstrID::KEYUP_3)  // key up
     {
         int v;
 
         for (v = 0; v < NUM_VOICES; v++)
         {
-            if (vVoiceState[v] == _ctrlVal)
+            if (vVoiceState[v] == _pitch)
             {
                 vNextReleased[vYoungestReleased] = v;
                 vYoungestReleased = v;
@@ -223,6 +226,7 @@ void VoiceManager::vallocProcess(unsigned char _instrID, float _ctrlVal)
 
                 vVoiceState[v] = -1;
                 gKeyPitch[v] = -1;
+                gVoiceVelocity[v] = 0.f;
 
                 break;
             }

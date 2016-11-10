@@ -13,6 +13,7 @@
 
 #include "nltoolbox.h"
 #include "smoother.h"
+#include "onepolefilters.h"
 
 class Outputmixer
 {
@@ -66,6 +67,9 @@ private:
 
     float mKeypan;
     float mKeyPanArray[NUM_VOICES];
+
+    OnePoleFilters mLeftHighpass;
+    OnePoleFilters mRightHighpass;
 
     Smoother mALevelSmoother;
     Smoother mAPanSmoother;

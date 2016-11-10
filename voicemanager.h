@@ -63,7 +63,7 @@ private:
 
 #if 1
     void vallocInit();
-    void vallocProcess(unsigned char _instrID, float _ctrlVal);
+    void vallocProcess(unsigned char _keyDirection, float _pitch, float _velocity);
 
     //--------------- Voice Allocation global variables
     int vVoiceState[NUM_VOICES] = {};                               // which voices are active? 1 - on, 0 - off

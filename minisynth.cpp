@@ -50,7 +50,7 @@ VoiceManager voiceManager;
             {
                 midiBuffer->get(midiByteBuffer, 3);
 
-                // printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      // MIDI Value Control Output
+//                printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      // MIDI Value Control Output
 
                 // pass Midi Values over to the Voice Manager
                 voiceManager.evalMidiEvents(midiByteBuffer[0], midiByteBuffer[1], static_cast<float>(midiByteBuffer[2]));

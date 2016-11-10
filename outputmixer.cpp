@@ -14,8 +14,10 @@
 *******************************************************************************/
 
 Outputmixer::Outputmixer()
+    : mLeftHighpass(48000, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS)
+    , mRightHighpass(48000, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS)
     //-------------------------- Smoother
-    : mALevelSmoother(48000.f, 0.032f)
+    , mALevelSmoother(48000.f, 0.032f)
     , mAPanSmoother(48000.f, 0.032f)
     , mBLevelSmoother(48000.f, 0.032f)
     , mBPanSmoother(48000.f, 0.032f)
@@ -69,6 +71,7 @@ void Outputmixer::applyOutputmixer()
     mKeypan = mKeypanSmoother.smooth();
     calcKeyPan();
 
+    /// Die folgenden Variablen und Schleifen müssen nicht jedes Mal neu erschaffen werden!!!
     float a_R[NUM_VOICES] = {};
     float a_L[NUM_VOICES] = {};
 
@@ -86,11 +89,11 @@ void Outputmixer::applyOutputmixer()
     {
         // Pan + Smooth .. .naja ... eher nur Pan!
         a_R[i] = (mKeyPanArray[i] + mAPan) * mALevel;
-        a_L[i] = (mKeyPanArray[i] + (1.f - mAPan)) * mALevel;
+        a_L[i] = (1.f - (mKeyPanArray[i] + mAPan)) * mALevel;
 
 
         b_R[i] = (mKeyPanArray[i] + mBPan) * mBLevel;
-        b_L[i] = (mKeyPanArray[i] + (1.f - mBPan)) * mBLevel;
+        b_L[i] = (1.f - (mKeyPanArray[i] + mBPan)) * mBLevel;
 
         // apply pan to samples for each voice
         main_L[i] = (a_L[i] * gSoundGenOut_A[i]) + (b_L[i] * gSoundGenOut_B[i]);
@@ -123,9 +126,13 @@ void Outputmixer::applyOutputmixer()
     // Voice combiner - Alle Stimmen "stumpf" addieren!!
     for (int i = 0; i < NUM_VOICES; i++)
     {
-        mSample_L += main_L[i];
-        mSample_R += main_R[i];
+        mSample_L += (main_L[i] * gVoiceVelocity[i]);
+        mSample_R += (main_R[i] * gVoiceVelocity[i]);
     }
+
+    /// Hier kommt ein 1-Pole HP hin Frage ob das wirklich der richtige ist!!
+    mSample_L = mLeftHighpass.applyFilter(mSample_L);
+    mSample_R = mRightHighpass.applyFilter(mSample_R);
 
     // Level adustment
     mSample_L *= mMainLevel;
@@ -292,7 +299,7 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
 
 void Outputmixer::setALevel(float _level)
 {
-    mALevel = _level;
+    mALevel = _level * 2.f;
     mALevelSmoother.initSmoother(mALevel);
 
 }
@@ -319,7 +326,7 @@ void Outputmixer::setAPan(float _pan)
 
 void Outputmixer::setBLevel(float _level)
 {
-    mBLevel = _level;
+    mBLevel = _level * 2.f;
     mBLevelSmoother.initSmoother(mBLevel);
 }
 
@@ -463,6 +470,6 @@ void Outputmixer::calcKeyPan()
 {
     for(int i = 0; i < NUM_VOICES; i++)
     {
-        mKeyPanArray[i] = (gKeyPitch[i] * mKeypan) + 0.f;       // hier fehl noch unison pan
+        mKeyPanArray[i] = ((gKeyPitch[i] - 66.f) * mKeypan) + 0.f;       // hier fehl noch unison pan
     }
 }
