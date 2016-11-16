@@ -9,6 +9,8 @@
 
 #pragma once
 
+#define REMOTE61        // controller define
+
 #include "nltoolbox.h"
 #include "smoother.h"
 #include "onepolefilters.h"
@@ -30,7 +32,11 @@ public:
 
     ~Echo(){}                           // Class Destructor
 
+    float mDelayOutL;
+    float mDelayOutR;
+
     float applyEcho(float _currSample, unsigned int _chInd);
+    void applyEcho(float _rawLeftSample, float _rawRightSample);
 
     void setMix(float _mix);
     void setHiCut(float _hiCut);
@@ -43,9 +49,7 @@ public:
 
     void setEchoParams(float _ctrlVal, unsigned char _ctrlTag);
 
-
 private:
-    
     float mSampleRate;              // samplerate
     float mFeedbackAmnt;            // feedback amount - external
     float mCrossFeedbackAmnt;       // cross feedback amount - external
@@ -79,14 +83,26 @@ private:
     }leftChannel, rightChannel;
 
 
-    enum CtrlId: unsigned char                  // Enum class for control IDs (Korg Nano Kontrol I)
+    enum CtrlId: unsigned char
     {
+#ifdef NANOKONTROL_I
+        // Enum class for control IDs (Korg Nano Kontrol I)
         HICUT             = 0x12,
         MIX               = 0x04,
         DELAYTIME         = 0x05,
         STEREOAMNT        = 0x06,
         FEEDBACKAMNT      = 0x08,
         CROSSFEEDBACKAMNT = 0x09
+#endif
+#ifdef REMOTE61
+        // Enum class for control IDs (ReMote 61)
+        DELAYTIME         = 0x29,
+        STEREOAMNT        = 0x2A,
+        FEEDBACKAMNT      = 0x2B,
+        CROSSFEEDBACKAMNT = 0x2C,
+        HICUT             = 0x2D,
+        MIX               = 0x30
+#endif
     };
 
     float delay(float _inputSample, float _delayTime, unsigned int _chInd);

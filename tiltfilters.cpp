@@ -132,8 +132,8 @@ void TiltFilters::setResonance(float _resonance)
 void TiltFilters::setSlopeWidth(float _slopeWidth)
 {
     mSlopeWidth = _slopeWidth < 1.f                      //min clip check
-    ? 1.f
-    : _slopeWidth;
+            ? 1.f
+            : _slopeWidth;
 
     setAlpha();
     calcCoeff();
@@ -196,24 +196,24 @@ void TiltFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlID)
     switch (_ctrlID)
     {
         case CtrlId::CUTFREQ:
-        _ctrlVal = 20.f * pow(2.f, _ctrlVal / 12.75f);                    //Midi to Freq [20Hz .. 19930Hz]
-        setCutFreq(_ctrlVal);
-        break;
+            _ctrlVal = 20.f * pow(2.f, _ctrlVal / 12.75f);                    //Midi to Freq [20Hz .. 19930Hz]
+            setCutFreq(_ctrlVal);
+            break;
 
         case CtrlId::TILT:
-        _ctrlVal = ((_ctrlVal - 64.f) * 12.f) / 64.f;                     //Midi to [-12dB .. 12dB] linear
-        setTilt(_ctrlVal);
-        break;
+            _ctrlVal = ((_ctrlVal - 64.f) * 12.f) / 64.f;                     //Midi to [-12dB .. 12dB] linear
+            setTilt(_ctrlVal);
+            break;
 
         case CtrlId::RESONANCE:
-        _ctrlVal = (_ctrlVal - 64.f) / 32.f;                              //Midi to [-1 .. 1]
-        setResonance(_ctrlVal);
-        break;
+            _ctrlVal = (_ctrlVal - 64.f) / 32.f;                              //Midi to [-1 .. 1]
+            setResonance(_ctrlVal);
+            break;
 
         case CtrlId::SLOPEWIDTH:
-        _ctrlVal = (_ctrlVal / 127.f * 4.f) + 1.f;                        //Midi to [1 .. 5]
-        setSlopeWidth(_ctrlVal);
-        break;
+            _ctrlVal = (_ctrlVal / 127.f * 4.f) + 1.f;                        //Midi to [1 .. 5]
+            setSlopeWidth(_ctrlVal);
+            break;
 
         case CtrlId::FILTERTYPE:
         {
@@ -231,24 +231,24 @@ void TiltFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlID)
                 switch (mFilterCounter)
                 {
                     case 0:
-                    setFilterType(TiltFilterType::LOWPASS);
-                    printf("lowpass on\n");
-                    break;
+                        setFilterType(TiltFilterType::LOWPASS);
+                        printf("lowpass on\n");
+                        break;
 
                     case 1:
-                    setFilterType(TiltFilterType::HIGHPASS);
-                    printf("highpass on\n");
-                    break;
+                        setFilterType(TiltFilterType::HIGHPASS);
+                        printf("highpass on\n");
+                        break;
 
                     case 2:
-                    setFilterType(TiltFilterType::LOWSHELF);
-                    printf("lowshelf on\n");
-                    break;
+                        setFilterType(TiltFilterType::LOWSHELF);
+                        printf("lowshelf on\n");
+                        break;
 
                     case 3:
-                    setFilterType(TiltFilterType::HIGHSHELF);
-                    printf("highshelf on\n");
-                    break;
+                        setFilterType(TiltFilterType::HIGHSHELF);
+                        printf("highshelf on\n");
+                        break;
                 }
             }
         }
@@ -269,46 +269,42 @@ void TiltFilters::calcCoeff()
     switch (mFilterType)
     {
         case TiltFilterType::LOWPASS:
-
-		mA0 = 1.f + mAlpha;
-        mA1 = mOmegaCos * -2.f;
-        mA2 = 1.f - mAlpha;
-        mB0 = (1 - mOmegaCos) / 2.f;
-        mB1 = 1.f - mOmegaCos;
-        mB2 = mB0;
-        break;
+            mA0 = 1.f + mAlpha;
+            mA1 = mOmegaCos * -2.f;
+            mA2 = 1.f - mAlpha;
+            mB0 = (1 - mOmegaCos) / 2.f;
+            mB1 = 1.f - mOmegaCos;
+            mB2 = mB0;
+            break;
 
         case TiltFilterType::HIGHPASS:
-
-        mA0 = 1.f + mAlpha;
-        mA1 = mOmegaCos * -2.f;
-        mA2 = 1.f - mAlpha;
-        mB0 = (1.f + mOmegaCos) / 2.f;
-        mB1 = (1.f + mOmegaCos) * -1.f;
-        mB2 = mB0;
-        break;
+            mA0 = 1.f + mAlpha;
+            mA1 = mOmegaCos * -2.f;
+            mA2 = 1.f - mAlpha;
+            mB0 = (1.f + mOmegaCos) / 2.f;
+            mB1 = (1.f + mOmegaCos) * -1.f;
+            mB2 = mB0;
+            break;
 
         case TiltFilterType::LOWSHELF:
-        coeff = mBeta * mAlpha;
-
-        mA0 = (mTilt + 1.f) + (mOmegaCos * (mTilt - 1.f)) + coeff;
-        mA1 = ((mTilt - 1.f) + (mOmegaCos * (mTilt + 1.f))) * -2.f;
-        mA2 = (mTilt + 1.f) + (mOmegaCos * (mTilt - 1.f)) - coeff;
-        mB0 = ((mTilt + 1.f) - (mOmegaCos * (mTilt - 1.f)) + coeff) * mTilt;
-        mB1 = ((mTilt - 1.f) - (mOmegaCos * (mTilt + 1.f))) * 2.f * mTilt;
-        mB2 = ((mTilt + 1.f) - (mOmegaCos * (mTilt - 1.f)) - coeff) * mTilt;
-        break;
+            coeff = mBeta * mAlpha;
+            mA0 = (mTilt + 1.f) + (mOmegaCos * (mTilt - 1.f)) + coeff;
+            mA1 = ((mTilt - 1.f) + (mOmegaCos * (mTilt + 1.f))) * -2.f;
+            mA2 = (mTilt + 1.f) + (mOmegaCos * (mTilt - 1.f)) - coeff;
+            mB0 = ((mTilt + 1.f) - (mOmegaCos * (mTilt - 1.f)) + coeff) * mTilt;
+            mB1 = ((mTilt - 1.f) - (mOmegaCos * (mTilt + 1.f))) * 2.f * mTilt;
+            mB2 = ((mTilt + 1.f) - (mOmegaCos * (mTilt - 1.f)) - coeff) * mTilt;
+            break;
 
         case TiltFilterType::HIGHSHELF:
-        coeff = mBeta * mAlpha;
-
-        mA0 = (mTilt + 1.f) - (mOmegaCos * (mTilt - 1.f)) + coeff;
-        mA1 = ((mTilt - 1.f) - (mOmegaCos * (mTilt + 1.f))) * 2.f;
-        mA2 = (mTilt + 1.f) - (mOmegaCos * (mTilt - 1.f)) - coeff;
-        mB0 = ((mTilt + 1.f) + (mOmegaCos * (mTilt - 1.f)) + coeff) * mTilt;
-        mB1 = ((mTilt - 1.f) + (mOmegaCos * (mTilt + 1.f))) * -2.f * mTilt;
-        mB2 = ((mTilt + 1.f) + (mOmegaCos * (mTilt - 1.f)) - coeff) * mTilt;
-        break;
+            coeff = mBeta * mAlpha;
+            mA0 = (mTilt + 1.f) - (mOmegaCos * (mTilt - 1.f)) + coeff;
+            mA1 = ((mTilt - 1.f) - (mOmegaCos * (mTilt + 1.f))) * 2.f;
+            mA2 = (mTilt + 1.f) - (mOmegaCos * (mTilt - 1.f)) - coeff;
+            mB0 = ((mTilt + 1.f) + (mOmegaCos * (mTilt - 1.f)) + coeff) * mTilt;
+            mB1 = ((mTilt - 1.f) + (mOmegaCos * (mTilt + 1.f))) * -2.f * mTilt;
+            mB2 = ((mTilt + 1.f) + (mOmegaCos * (mTilt - 1.f)) - coeff) * mTilt;
+            break;
     }
 
     mA1 /= (-1.f * mA0);          //normalize

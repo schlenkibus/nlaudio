@@ -194,50 +194,99 @@ void Echo::setEchoParams(float _ctrlVal, unsigned char _ctrlTag)
     switch (_ctrlTag)
     {
         case CtrlId::HICUT:
-        _ctrlVal = (_ctrlVal * 80.f) / 127.f + 60.f;          // Pitch Values for better testing
-        printf("HiCut: %f\n", _ctrlVal);
+            _ctrlVal = (_ctrlVal * 80.f) / 127.f + 60.f;          // Pitch Values for better testing
+            printf("HiCut: %f\n", _ctrlVal);
 
-        _ctrlVal = pow(2.f, (_ctrlVal - 69.f) / 12) * 440.f;
+            _ctrlVal = pow(2.f, (_ctrlVal - 69.f) / 12) * 440.f;
 
-        setHiCut(_ctrlVal);
-        break;
+            setHiCut(_ctrlVal);
+            break;
 
         case CtrlId::MIX:
-        _ctrlVal = _ctrlVal / 127.f;
-        printf("Mix: %f\n", _ctrlVal);
+            _ctrlVal = _ctrlVal / 127.f;
+            printf("Mix: %f\n", _ctrlVal);
 
-        setMix(_ctrlVal);
-        break;
+            setMix(_ctrlVal);
+            break;
 
         case CtrlId::DELAYTIME:
-        _ctrlVal = _ctrlVal / 127.f;
-        _ctrlVal = _ctrlVal * _ctrlVal * 1.5f;
-        printf("Time: %f\n", _ctrlVal * 1000.f);
+            _ctrlVal = _ctrlVal / 127.f;
+            _ctrlVal = _ctrlVal * _ctrlVal * 1.5f;
+            printf("Time: %f\n", _ctrlVal * 1000.f);
 
-        setDelayTime(_ctrlVal);
-        break;
+            setDelayTime(_ctrlVal);
+            break;
 
         case CtrlId::STEREOAMNT:
-        _ctrlVal = (_ctrlVal - 63.5f) * (33.f / 63.5f);
-        printf("Stereo: %f\n", _ctrlVal);
+//            _ctrlVal = (_ctrlVal - 63.5f) * (33.f / 63.5f);           // nicht wirklich ne 0 vorhanden!
+            _ctrlVal = ((_ctrlVal / 63.f) - 1.f);
 
-        setStereoAmount(_ctrlVal);
-        break;
+            if (_ctrlVal > 1.f)
+            {
+                _ctrlVal = 1.f;
+            }
+
+            _ctrlVal = _ctrlVal * 33.f;
+            printf("Stereo: %f\n", _ctrlVal);
+
+            setStereoAmount(_ctrlVal);
+            break;
 
         case CtrlId::FEEDBACKAMNT:
-        _ctrlVal = _ctrlVal / 127.f;
-        printf("Feedback: %f\n", _ctrlVal);
+            _ctrlVal = _ctrlVal / 127.f;
+            printf("Feedback: %f\n", _ctrlVal);
 
-        setFeedbackAmount(_ctrlVal);
-        break;
+            setFeedbackAmount(_ctrlVal);
+            break;
 
         case CtrlId::CROSSFEEDBACKAMNT:
-        _ctrlVal = _ctrlVal / 127.f;
-        printf("Cross Feedback: %f\n", _ctrlVal);
+            _ctrlVal = _ctrlVal / 127.f;
+            printf("Cross Feedback: %f\n", _ctrlVal);
 
-        setCrossFeedbackAmount(_ctrlVal);
-        break;
+            setCrossFeedbackAmount(_ctrlVal);
+            break;
     }
+}
+
+
+/*****************************************************************************/
+/** @brief    processes the incoming samples of both channels
+ *  @param    raw left Sample, raw right Sample
+******************************************************************************/
+
+void Echo::applyEcho(float _rawLeftSample, float _rawRightSample)
+{
+    // apply Smoothers
+    mDry = mDrySmoother.smooth();
+    mWet = mWetSmoother.smooth();
+    mLocalFeedback = mLocalFeedbackSmoother.smooth();
+    mCrossFeedback = mCrossFeedbackSmoother.smooth();
+
+    // Left Channel
+    float processedLeftSample = _rawLeftSample + (leftChannel.mChannelStateVar * mLocalFeedback) + (rightChannel.mChannelStateVar * mCrossFeedback);
+
+    float leftDelayTime = leftChannel.mLowpass2Hz.applyFilter(leftChannel.mDelayTime);
+
+    processedLeftSample = delay(processedLeftSample, leftDelayTime, 0);							// apply delay
+
+    processedLeftSample = leftChannel.mLowpass.applyFilter(processedLeftSample);                 // apply 1-pole lowpass
+
+    leftChannel.mChannelStateVar = leftChannel.mHighpass.applyFilter(processedLeftSample);         // apply 1-pole highpass
+
+    //Right Channel
+    float processedRightSample = _rawRightSample + (rightChannel.mChannelStateVar * mLocalFeedback) + (leftChannel.mChannelStateVar * mCrossFeedback);
+
+    float rightDelayTime = rightChannel.mLowpass2Hz.applyFilter(rightChannel.mDelayTime);
+
+    processedRightSample = delay(processedRightSample, rightDelayTime, 1);							// apply delay
+
+    processedRightSample = rightChannel.mLowpass.applyFilter(processedRightSample);                 // apply 1-pole lowpass
+
+    rightChannel.mChannelStateVar = rightChannel.mHighpass.applyFilter(processedRightSample);         // apply 1-pole highpass
+
+    // Crossfade
+    mDelayOutL = NlToolbox::Crossfades::crossFade(_rawLeftSample, processedLeftSample, mDry, mWet);
+    mDelayOutR = NlToolbox::Crossfades::crossFade(_rawRightSample, processedRightSample, mDry, mWet);
 }
 
 

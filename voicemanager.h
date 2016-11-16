@@ -8,7 +8,6 @@
 
 #pragma once
 
-//#include "globalsynthdefines.h"
 #include "sharedoutputs.h"
 
 #include "nltoolbox.h"
@@ -34,32 +33,9 @@ private:
     Soundgenerator mSoundGenerator[NUM_VOICES];             // 12 Generatoren ... naja ...
     Outputmixer mOutputMixer;
 
-    struct MonoModules{
-        Echo    mEcho;
-        Cabinet mCabinet;
-    }monoModule_L, monoModule_R;
-
-#if 0
-    struct PolyModuleOutputs{
-        float mSoundGenOut_A;
-        float mSoundGenOut_B;
-//        float mEnvOut_A;
-//        float mEnvOut_B;
-//        float mEnvOut_C;
-//        float mGateOut;
-//        float mCombFilterOut;
-//        float mVRFilterOut;
-//        float mFeedbackMixerOut;
-    }polyOuts[NUM_VOICES];
-#endif
-
-    //-------------- MonoOuts
-    float mOutputMixerOut_L;
-    float mOutputMixerOut_R;
-    float mCabinetOut_L;
-    float mCabinetOut_R;
-    float mEchoOut_L;
-    float mEchoOut_R;
+    // Effects
+    Echo mEcho;
+    Cabinet mLeftCabinet, mRightCabinet;
 
 #if 1
     void vallocInit();
@@ -86,17 +62,20 @@ private:
         KEYUP_1             = 0x81,
         KEYUP_2             = 0x82,
         KEYUP_3             = 0x83,
+        KEYUP_4             = 0x84,
 
         KEYDOWN_0           = 0x90,
         KEYDOWN_1           = 0x91,
         KEYDOWN_2           = 0x92,
         KEYDOWN_3           = 0x93,
+        KEYDOWN_4           = 0x94,
 
         SG_A_PARAM          = 0xB0,
         SG_B_PARAM          = 0xB1,
 
         CABINET_PARAM       = 0xB2,
-        OUTPUTMIXER_PARAM   = 0xB3
+        OUTPUTMIXER_PARAM   = 0xB3,
+        ECHO_PARAM          = 0xB4
     };
 
 };

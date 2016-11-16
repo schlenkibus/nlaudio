@@ -8,8 +8,6 @@
 
 #include "cabinet.h"
 
-
-
 /******************************************************************************/
 /** Cabinet Default Constructor
  * @brief    initialization of the modules local variabels with default values
@@ -280,6 +278,36 @@ void Cabinet::setCabinetParams(float _ctrlVal, unsigned char _ctrlTag)
 }
 
 
+
+/*****************************************************************************/
+/** @brief    applies the cabinet effect to the incoming sample
+ *  @param    raw Sample
+******************************************************************************/
+
+void Cabinet::applyCab(float _rawSample)
+{
+    mDry = mDrySmoother.smooth();                         //apply smoothers
+    mWet = mWetSmoother.smooth();
+    mDrive = mDriveSmoother.smooth();
+
+    float processedSample = _rawSample * mDrive;              // apply drive
+
+    processedSample = mHighpass.applyFilter(processedSample);           // apply biquad highpass filter
+
+    processedSample = mLowshelf1.applyFilter(processedSample);          // apply first biquad tilt lowshelf filters
+
+    processedSample = sineShaper(processedSample);                      // apply shaper
+
+    processedSample = mLowshelf2.applyFilter(processedSample);           // apply second biquad tilt lowshelf filters
+
+    processedSample = mLowpass1.applyFilter(processedSample);            // apply biquad lowpass filters
+    processedSample = mLowpass2.applyFilter(processedSample);
+
+    mCabinetOut = NlToolbox::Crossfades::crossFade(_rawSample, processedSample, mDry, mWet);       // apply crossfade between the incoming and the processed sample
+}
+
+
+#if 0
 /*****************************************************************************/
 /** @brief    applies the cabinet effect to the incoming sample depending on the channel
  *  @param    raw Sample
@@ -311,6 +339,7 @@ float Cabinet::applyCab(float _currSample)
 
     return output;
 }
+#endif
 
 
 

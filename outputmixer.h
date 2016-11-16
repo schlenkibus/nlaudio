@@ -29,6 +29,11 @@ public:
 
     void applyOutputmixer();
 
+    /// das ist neu!!! ersetz die obere Funktion hoffentlich bald!
+    void applyOutputMixer(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter);
+    void applySmoothers();
+    void calcKeyPan();
+
     void setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal);
 
     void setALevel(float _level);
@@ -48,6 +53,7 @@ public:
     void setKeyPan(float _keypan);
 
 private:
+    /// safe!
     float mALevel;
     float mAPan;
     float mBLevel;
@@ -64,9 +70,9 @@ private:
     float mAsym;
 
     float mMainLevel;
-
     float mKeypan;
-    float mKeyPanArray[NUM_VOICES];
+
+    float mPitchPanArray[NUM_VOICES];
 
     OnePoleFilters mLeftHighpass;
     OnePoleFilters mRightHighpass;
@@ -87,10 +93,10 @@ private:
     Smoother mMainLevelSmoother;
     Smoother mKeypanSmoother;
 
-    void calcKeyPan();
 
-    enum CtrlID: unsigned char      // enum for controm IDs novation ReMOTE61
+    enum CtrlID: unsigned char
     {
+        // enum for controm IDs novation ReMOTE61
         A_LEVEL             = 0x15,
         A_PAN               = 0x1F,
         B_LEVEL             = 0x16,

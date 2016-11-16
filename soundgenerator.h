@@ -72,8 +72,10 @@ private:
     } moduleA, moduleB;
 
 
-    enum CtrlID: unsigned char  // enums for control IDs novation ReMOTE61
+    enum CtrlID: unsigned char
     {
+        // enums for control IDs novation ReMOTE61
+
         OFFSETPITCH  = 0x15,
         KEYTRACKING  = 0x16,
         PHASE        = 0x17,

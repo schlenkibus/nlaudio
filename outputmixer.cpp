@@ -49,7 +49,108 @@ Outputmixer::Outputmixer()
 }
 
 
+/******************************************************************************/
+/** @brief    calls the smoothing functions fpr each sample
+*******************************************************************************/
 
+void Outputmixer::applySmoothers()
+{
+    mALevel = mALevelSmoother.smooth();
+    mAPan = mAPanSmoother.smooth();
+    mBLevel = mBLevelSmoother.smooth();
+    mBPan = mBPanSmoother.smooth();
+    mCombLevel = mCombLevelSmoother.smooth();
+    mCombPan = mCombPanSmoother.smooth();
+    mSVFilterLevel = mSVFilterLevelSmoother.smooth();
+    mSVFilterPan = mSVFilterPanSmoother.smooth();
+
+    mMainLevel = mMainLevelSmoother.smooth();
+
+    mKeypan = mKeypanSmoother.smooth();
+}
+
+/******************************************************************************/
+/** @brief    main function which calculates the mix of the A and B samples
+ *            depending ...
+*******************************************************************************/
+
+void Outputmixer::applyOutputMixer(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter)
+{
+    static unsigned int voiceNumber = 0;
+
+    // panning
+    /// soll das wirklich jedes mal berechnet werden ... :/
+    float pan_AR = (mPitchPanArray[voiceNumber] + mAPan) * mALevel;
+    float pan_AL = (1.f - (mPitchPanArray[voiceNumber] + mAPan)) * mALevel;
+
+    float pan_BR = (mPitchPanArray[voiceNumber] + mBPan) * mBLevel;
+    float pan_BL = (1.f - (mPitchPanArray[voiceNumber] + mBPan)) * mBLevel;
+
+    float main_R = (pan_AR * _sampleA) + (pan_BR * _sampleB);
+    float main_L = (pan_AL * _sampleA) + (pan_BL * _sampleB);
+
+    /*
+    float pan_CombR = (mPitchPanArray[voiceNumber] + mCombPan) * mCombLevel;
+    float pan_CombL = (1.f - (mPitchPanArray[voiceNumber] + mCombPan)) * mCombLevel;
+
+    float pan_SVFilterR = (mPitchPanArray[voiceNumber] + mSVFilterPan) * mSVFilterLevel;
+    float pan_SVFilterL = (1.f - (mPitchPanArray[voiceNumber] + mSVFilterPan)) * mSVFilterLevel;
+
+    main_L = (pan_AL * _sampleA) + (pan_BL * _sampleB) + (pan_CombL * _sampleComb) + (pan_SVFilterL * _sampleSVFilter);
+    main_R = (pan_AR * _sampleA) + (pan_BR * _sampleB) + (pan_CombR * _sampleComb) + (pan_SVFilterR * _sampleSVFilter);
+    */
+
+    float ctrlSample;
+    float squareSample;
+
+    // Shape Left Sample
+    main_L = mDrive * main_L;
+    ctrlSample = main_L;
+
+    main_L = NlToolbox::Math::sinP3(main_L);
+    main_L = NlToolbox::Others::threeRanges(main_L, ctrlSample, mFold);
+
+    squareSample = main_L * main_L;
+    main_L = NlToolbox::Others::parAsym(main_L, squareSample, mAsym);
+
+    // Shape Right Sample
+    main_R = mDrive * main_R;
+    ctrlSample = main_R;
+
+    main_R = NlToolbox::Math::sinP3(main_R);
+    main_R = NlToolbox::Others::threeRanges(main_R, ctrlSample, mFold);
+
+    squareSample = main_R * main_R;
+    main_R = NlToolbox::Others::parAsym(main_R, squareSample, mAsym);
+
+    // Combine the voices
+    if (voiceNumber == 0)
+    {
+        mSample_L = 0.f;
+        mSample_R = 0.f;
+    }
+
+    /// die velocity hier ist temporär, da wir noch keine envelopes haben ...
+    mSample_L += (main_L * gVoiceVelocity[voiceNumber]);
+    mSample_R += (main_R * gVoiceVelocity[voiceNumber]);
+
+    voiceNumber++;
+
+    if (voiceNumber == NUM_VOICES)
+    {
+        /// 1-Pole-HP, Frage ob dieser so richtig ist
+        mSample_L = mLeftHighpass.applyFilter(mSample_L);
+        mSample_R = mRightHighpass.applyFilter(mSample_R);
+
+        // Level adjustment
+        mSample_L *= mMainLevel;
+        mSample_R *= mMainLevel;
+
+        voiceNumber = 0;
+    }
+}
+
+#if 0
 /******************************************************************************/
 /** @brief    main function which calculates the mix of the A and B samples
  *            depending ...
@@ -88,12 +189,12 @@ void Outputmixer::applyOutputmixer()
     for (int i = 0; i < NUM_VOICES; i++)
     {
         // Pan + Smooth .. .naja ... eher nur Pan!
-        a_R[i] = (mKeyPanArray[i] + mAPan) * mALevel;
-        a_L[i] = (1.f - (mKeyPanArray[i] + mAPan)) * mALevel;
+        a_R[i] = (mPitchPanArray[i] + mAPan) * mALevel;
+        a_L[i] = (1.f - (mPitchPanArray[i] + mAPan)) * mALevel;
 
 
-        b_R[i] = (mKeyPanArray[i] + mBPan) * mBLevel;
-        b_L[i] = (1.f - (mKeyPanArray[i] + mBPan)) * mBLevel;
+        b_R[i] = (mPitchPanArray[i] + mBPan) * mBLevel;
+        b_L[i] = (1.f - (mPitchPanArray[i] + mBPan)) * mBLevel;
 
         // apply pan to samples for each voice
         main_L[i] = (a_L[i] * gSoundGenOut_A[i]) + (b_L[i] * gSoundGenOut_B[i]);
@@ -130,7 +231,7 @@ void Outputmixer::applyOutputmixer()
         mSample_R += (main_R[i] * gVoiceVelocity[i]);
     }
 
-    /// Hier kommt ein 1-Pole HP hin Frage ob das wirklich der richtige ist!!
+    /// Hier kommt ein 1-Pole HP hin, Frage ob das wirklich der richtige ist!!
     mSample_L = mLeftHighpass.applyFilter(mSample_L);
     mSample_R = mRightHighpass.applyFilter(mSample_R);
 
@@ -138,6 +239,7 @@ void Outputmixer::applyOutputmixer()
     mSample_L *= mMainLevel;
     mSample_R *= mMainLevel;
 }
+#endif
 
 
 
@@ -470,6 +572,6 @@ void Outputmixer::calcKeyPan()
 {
     for(int i = 0; i < NUM_VOICES; i++)
     {
-        mKeyPanArray[i] = ((gKeyPitch[i] - 66.f) * mKeypan) + 0.f;       // hier fehl noch unison pan
+        mPitchPanArray[i] = ((gKeyPitch[i] - 66.f) * mKeypan) + 0.f;       // hier fehl noch unison pan
     }
 }

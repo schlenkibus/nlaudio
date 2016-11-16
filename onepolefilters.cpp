@@ -66,18 +66,18 @@ void OnePoleFilters::setCutFreq(float _cutFreq)
     switch (mFilterType)
     {
         case OnePoleFilterType::LOWSHELF:
-        _cutFreq /= mShelfAmp;
-        break;
+            _cutFreq /= mShelfAmp;
+            break;
 
         case OnePoleFilterType::HIGHSHELF:
-        _cutFreq *= mShelfAmp;
-        break;
+            _cutFreq *= mShelfAmp;
+            break;
 
         case OnePoleFilterType::HIGHPASS:
-        break;
+            break;
 
         case OnePoleFilterType::LOWPASS:
-        break;
+            break;
     }
 
     if (_cutFreq < (mSampleRate / 24000.f))             // clipping check
@@ -161,18 +161,17 @@ void OnePoleFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlId)
     switch (_ctrlId)
     {
         case CtrlId::CUTFREQ:
-        _ctrlVal = 20.f * pow(2.f, _ctrlVal / 12.75f);              // Midi to Freq [20Hz .. 19930Hz]
-        setCutFreq(_ctrlVal);
-        break;
+            _ctrlVal = 20.f * pow(2.f, _ctrlVal / 12.75f);              // Midi to Freq [20Hz .. 19930Hz]
+            setCutFreq(_ctrlVal);
+            break;
 
         case CtrlId::SHELFAMP:
-        _ctrlVal = ((_ctrlVal - 64.f) * 12.f) / 64.f;               // Midi to [-12dB .. 12dB] linear
-        setShelfAmp(_ctrlVal);
-        break;
+            _ctrlVal = ((_ctrlVal - 64.f) * 12.f) / 64.f;               // Midi to [-12dB .. 12dB] linear
+            setShelfAmp(_ctrlVal);
+            break;
 
         case CtrlId::FILTERTYPE:
         {
-
             if (static_cast<int>(_ctrlVal) > 0)
             {
                 ++mFilterCounter;
@@ -185,24 +184,24 @@ void OnePoleFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlId)
                 switch (mFilterCounter)
                 {
                     case 0:
-                    setFilterType(OnePoleFilterType::LOWPASS);
-                    printf("lowpass on\n");
-                    break;
+                        setFilterType(OnePoleFilterType::LOWPASS);
+                        printf("lowpass on\n");
+                        break;
 
                     case 1:
-                    setFilterType(OnePoleFilterType::HIGHPASS);
-                    printf("highpass on\n");
-                    break;
+                        setFilterType(OnePoleFilterType::HIGHPASS);
+                        printf("highpass on\n");
+                        break;
 
                     case 2:
-                    setFilterType(OnePoleFilterType::LOWSHELF);
-                    printf("lowshelf on\n");
-                    break;
+                        setFilterType(OnePoleFilterType::LOWSHELF);
+                        printf("lowshelf on\n");
+                        break;
 
                     case 3:
-                    setFilterType(OnePoleFilterType::HIGHSHELF);
-                    printf("highshelf on\n");
-                    break;
+                        setFilterType(OnePoleFilterType::HIGHSHELF);
+                        printf("highshelf on\n");
+                        break;
                 }
             }
         }
@@ -221,28 +220,28 @@ void OnePoleFilters::calcCoeff()
     switch (mFilterType)
     {
         case OnePoleFilterType::LOWPASS:
-        mA1 = (1.f - mOmegaTan) / (1.f + mOmegaTan);
-        mB0 = mOmegaTan / (1.f + mOmegaTan);
-        mB1 = mOmegaTan / (1.f + mOmegaTan);
-        break;
+            mA1 = (1.f - mOmegaTan) / (1.f + mOmegaTan);
+            mB0 = mOmegaTan / (1.f + mOmegaTan);
+            mB1 = mOmegaTan / (1.f + mOmegaTan);
+            break;
 
         case OnePoleFilterType::HIGHPASS:
-        mA1 = (1.f - mOmegaTan) / (1.f + mOmegaTan);
-        mB0 = 1.f / (1.f + mOmegaTan);
-        mB1 = (1.f / (1.f + mOmegaTan)) * -1.f;
-        break;
+            mA1 = (1.f - mOmegaTan) / (1.f + mOmegaTan);
+            mB0 = 1.f / (1.f + mOmegaTan);
+            mB1 = (1.f / (1.f + mOmegaTan)) * -1.f;
+            break;
 
         case OnePoleFilterType::LOWSHELF:
-        mA1 = (1.f - mOmegaTan) / (1.f + mOmegaTan);
-        mB0 = ((mOmegaTan / (1.f + mOmegaTan)) * (mShelfAmpSquare + -1.f)) + 1.f;
-        mB1 = ((mOmegaTan / (1.f + mOmegaTan)) * (mShelfAmpSquare + -1.f)) - mA1;
-        break;
+            mA1 = (1.f - mOmegaTan) / (1.f + mOmegaTan);
+            mB0 = ((mOmegaTan / (1.f + mOmegaTan)) * (mShelfAmpSquare + -1.f)) + 1.f;
+            mB1 = ((mOmegaTan / (1.f + mOmegaTan)) * (mShelfAmpSquare + -1.f)) - mA1;
+            break;
 
         case OnePoleFilterType::HIGHSHELF:
-        mA1 = (1.f - mOmegaTan) / (1.f + mOmegaTan);
-        mB0 = ((mShelfAmpSquare + -1.f) / (1.f + mOmegaTan)) + 1.f;
-        mB1 = (((mShelfAmpSquare + -1.f) / (1.f + mOmegaTan)) + mA1) * -1.f;
-        break;
+            mA1 = (1.f - mOmegaTan) / (1.f + mOmegaTan);
+            mB0 = ((mShelfAmpSquare + -1.f) / (1.f + mOmegaTan)) + 1.f;
+            mB1 = (((mShelfAmpSquare + -1.f) / (1.f + mOmegaTan)) + mA1) * -1.f;
+            break;
     }
 }
 

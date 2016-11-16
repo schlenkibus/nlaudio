@@ -24,10 +24,10 @@ VoiceManager::VoiceManager()
     mSoundGenerator[NUM_VOICES] = Soundgenerator();          // Soundgenerator for each Voice
     mOutputMixer = Outputmixer();                            // Outputmixer
 
-    monoModule_L.mCabinet = Cabinet();                       // Cabinet Effect
-    monoModule_L.mEcho = Echo();                             // Echo Effect
+    mLeftCabinet = Cabinet();
+    mRightCabinet = Cabinet();
 
-    monoModule_R = monoModule_L;                             // Module Copy
+    mEcho = Echo();
 
     for (unsigned int i = 0; i < NUM_VOICES; i++)
     {
@@ -55,18 +55,14 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 
             for(unsigned int i = 0; i < NUM_VOICES; i++)
             {
-                // Soundgenerator Parameters
                 mSoundGenerator[i].setGenParams(_instrID, _ctrlID, _ctrlVal);
             }
-
             break;
 
         case InstrID::CABINET_PARAM:
 
-            // Cabinet Parameters
-            monoModule_L.mCabinet.setCabinetParams(_ctrlVal, _ctrlID);
-            monoModule_R.mCabinet.setCabinetParams(_ctrlVal, _ctrlID);
-
+            mLeftCabinet.setCabinetParams(_ctrlVal, _ctrlID);
+            mRightCabinet.setCabinetParams(_ctrlVal, _ctrlID);
             break;
 
         case InstrID::OUTPUTMIXER_PARAM:
@@ -74,22 +70,27 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
             mOutputMixer.setOutputmixerParams(_ctrlID, _ctrlVal);
             break;
 
+        case InstrID::ECHO_PARAM:
+
+            mEcho.setEchoParams(_ctrlVal, _ctrlID);
+            break;
+
         case InstrID::KEYUP_0:
         case InstrID::KEYUP_1:
         case InstrID::KEYUP_2:
         case InstrID::KEYUP_3:
+        case InstrID::KEYUP_4:
 
             vallocProcess(_instrID, _ctrlID, _ctrlVal);
-
             break;
 
         case InstrID::KEYDOWN_0:
         case InstrID::KEYDOWN_1:
         case InstrID::KEYDOWN_2:
         case InstrID::KEYDOWN_3:
+        case InstrID::KEYDOWN_4:
 
             vallocProcess(_instrID, _ctrlID, _ctrlVal);
-
             break;
     }
 }
@@ -103,18 +104,28 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 
 void VoiceManager::voiceLoop()
 {
+    // non voice related processes
+    mOutputMixer.applySmoothers();
+    mOutputMixer.calcKeyPan();
+
+    // main dsp loop
     for(unsigned int i = 0; i < NUM_VOICES; i++)
     {
         mSoundGenerator[i].generateSound();
 
-        gSoundGenOut_A[i] = mSoundGenerator[i].mSampleA;
-        gSoundGenOut_B[i] = mSoundGenerator[i].mSampleB;
+        mOutputMixer.applyOutputMixer(mSoundGenerator[i].mSampleA, mSoundGenerator[i].mSampleB, 0.f, 0.f);
     }
 
-    mOutputMixer.applyOutputmixer();
+    ///hier kommen die effekte hin: Cab, Echo usw.!
+    // Cabinet
+    mRightCabinet.applyCab(mOutputMixer.mSample_R);
+    mLeftCabinet.applyCab(mOutputMixer.mSample_L);
 
-    mainOut_R = mOutputMixer.mSample_R;
-    mainOut_L = mOutputMixer.mSample_L;
+    // Echo
+    mEcho.applyEcho(mLeftCabinet.mCabinetOut, mRightCabinet.mCabinetOut);
+
+    mainOut_L = mEcho.mDelayOutL;
+    mainOut_R = mEcho.mDelayOutR;
 }
 
 
@@ -150,10 +161,11 @@ void VoiceManager::vallocInit()
  *  @param    ID for keyUp or keyDown
 *******************************************************************************/
 
-void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, float _velocity)
+void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, float _velocity)        // key down
 {
     if (_keyDirection == InstrID::KEYDOWN_0 || _keyDirection == InstrID::KEYDOWN_1
-            || _keyDirection == InstrID::KEYDOWN_2 || _keyDirection == InstrID::KEYDOWN_3)  // key down
+            || _keyDirection == InstrID::KEYDOWN_2 || _keyDirection == InstrID::KEYDOWN_3
+            || _keyDirection == InstrID::KEYDOWN_4)
     {
         int v;
 
@@ -190,8 +202,9 @@ void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, floa
         gVoiceVelocity[v] = _velocity/127.f;
     }
 
-    else if (_keyDirection == InstrID::KEYUP_0 || _keyDirection == InstrID::KEYUP_1
-             || _keyDirection == InstrID::KEYUP_2 || _keyDirection == InstrID::KEYUP_3)  // key up
+    else if (_keyDirection == InstrID::KEYUP_0 || _keyDirection == InstrID::KEYUP_1         // key up
+             || _keyDirection == InstrID::KEYUP_2 || _keyDirection == InstrID::KEYUP_3
+             || _keyDirection == InstrID::KEYUP_4)
     {
         int v;
 

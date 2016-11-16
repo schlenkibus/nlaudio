@@ -9,6 +9,8 @@
 
 #pragma once
 
+#define REMOTE61        // controller define
+
 #include "math.h"
 #include "nltoolbox.h"
 #include "biquadfilters.h"
@@ -33,6 +35,7 @@ public:
 
     ~Cabinet(){}                            // Class Destructor
 
+    float mCabinetOut;                      // public processed sample
 
     inline void setFold(float _fold);
     inline void setAsym(float _asym);
@@ -47,7 +50,10 @@ public:
 
     void setCabinetParams(float _ctrlVal, unsigned char _ctrlTag);
 
+    void applyCab(float _rawSample);
+#if 0
     float applyCab(float _currSample);
+#endif
     float sineShaper(float _currSample);
 
 
@@ -78,27 +84,27 @@ private:
 
     enum CtrlId: unsigned char    // Enum class for control IDs (Korg Nano Kontrol I)
     {
+#ifdef NANOKONTROL_I
         // Enum class for control IDs (Korg Nano Kontrol I)
-
-//        HICUT    = 0x3D,
-//        LOCUT    = 0x3E,
-//        MIX      = 0x32,
-//        CABLEVEL = 0x37,
-//        DRIVE    = 0x36,
-//        TILT     = 0x35,
-//        FOLD     = 0x33,
-//        ASYM     = 0x34
-
+        HICUT    = 0x3D,
+        LOCUT    = 0x3E,
+        MIX      = 0x32,
+        CABLEVEL = 0x37,
+        DRIVE    = 0x36,
+        TILT     = 0x35,
+        FOLD     = 0x33,
+        ASYM     = 0x34
+#endif
+#ifdef REMOTE61
         // Enum class for control IDs (ReMote 61)
-
-        HICUT    = 0x2E,
-        LOCUT    = 0x2F,
-        MIX      = 0x29,
-        CABLEVEL = 0x30,
-        DRIVE    = 0x2D,
-        TILT     = 0x2C,
+        DRIVE    = 0x29,
         FOLD     = 0x2A,
-        ASYM     = 0x2B
-
+        ASYM     = 0x2B,
+        TILT     = 0x2C,
+        HICUT    = 0x2D,
+        LOCUT    = 0x2E,
+        CABLEVEL = 0x2F,
+        MIX      = 0x30
+#endif
     };
 };

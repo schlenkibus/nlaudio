@@ -5,7 +5,6 @@
 #include "audioalsaoutput.h"
 #include "rawmididevice.h"
 
-
 //------------- activate applications here
 extern Nl::StopWatch sw;
 
@@ -28,6 +27,7 @@ VoiceManager voiceManager;
         sw.stop();
         sw.start("val" + std::to_string(counter++));
 
+#ifdef SYNTH
         // Nicht die ideale Lösung für die Initialisierung. Warte auf Update des Frameworks (04.08.2016)
         static bool init = false;
 
@@ -38,6 +38,7 @@ VoiceManager voiceManager;
             // Initialization done
             init = true;
         }
+#endif
 
         auto midiBuffer = getBufferForName("MidiBuffer");
 
@@ -51,20 +52,28 @@ VoiceManager voiceManager;
                 midiBuffer->get(midiByteBuffer, 3);
 
 //                printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      // MIDI Value Control Output
-
+#ifdef SYNTH
                 // pass Midi Values over to the Voice Manager
                 voiceManager.evalMidiEvents(midiByteBuffer[0], midiByteBuffer[1], static_cast<float>(midiByteBuffer[2]));
+#endif
             }
         }
 
+#ifndef SYNTH
+        float outputSample = 0.f;
+#endif
 
         for (unsigned int frameIndex = 0; frameIndex < sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex)
         {
+
+#ifdef SYNTH
             voiceManager.voiceLoop();                           // voice manager main loop
+#endif
 
             for (unsigned int channelIndex = 0; channelIndex<sampleSpecs.channels; ++channelIndex)
             {
-#if 1
+
+#ifdef SYNTH
                 float outputSample = (channelIndex == 0)
                         ? voiceManager.mainOut_L
                         : voiceManager.mainOut_R;

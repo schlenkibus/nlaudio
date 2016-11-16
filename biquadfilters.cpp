@@ -178,19 +178,19 @@ void BiquadFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlId)
     switch (_ctrlId)
     {
         case CtrlId::CUTFREQ:
-        _ctrlVal = 20.f * pow(2.f, _ctrlVal / 12.75f);                    //Midi to Freq [20Hz .. 19930Hz]
-        setCutFreq(_ctrlVal);
-        break;
+            _ctrlVal = 20.f * pow(2.f, _ctrlVal / 12.75f);                    //Midi to Freq [20Hz .. 19930Hz]
+            setCutFreq(_ctrlVal);
+            break;
 
         case CtrlId::SHELFAMP:
-        _ctrlVal = ((_ctrlVal - 64.f) * 12.f) / 64.f;                     //Midi to [-12dB .. 12dB] linear
-        setShelfAmp(_ctrlVal);
-        break;
+            _ctrlVal = ((_ctrlVal - 64.f) * 12.f) / 64.f;                     //Midi to [-12dB .. 12dB] linear
+            setShelfAmp(_ctrlVal);
+            break;
 
         case CtrlId::RESONANCE:
-        _ctrlVal = (_ctrlVal - 64.f) / 32.f;                              //Midi to [-1 .. 1]
-        setResonance(_ctrlVal);
-        break;
+            _ctrlVal = (_ctrlVal - 64.f) / 32.f;                              //Midi to [-1 .. 1]
+            setResonance(_ctrlVal);
+            break;
 
         case CtrlId::FILTERTYPE:
         {
@@ -206,24 +206,24 @@ void BiquadFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlId)
                 switch(mFilterCounter)
                 {
                     case 0:
-                    setFiltertype(BiquadFilterType::LOWPASS);
-                    printf("lowpass on\n");
-                    break;
+                        setFiltertype(BiquadFilterType::LOWPASS);
+                        printf("lowpass on\n");
+                        break;
 
                     case 1:
-                    setFiltertype(BiquadFilterType::HIGHPASS);
-                    printf("highpass on\n");
-                    break;
+                        setFiltertype(BiquadFilterType::HIGHPASS);
+                        printf("highpass on\n");
+                        break;
 
                     case 2:
-                    setFiltertype(BiquadFilterType::LOWSHELF);
-                    printf("lowshelf on\n");
-                    break;
+                        setFiltertype(BiquadFilterType::LOWSHELF);
+                        printf("lowshelf on\n");
+                        break;
 
                     case 3:
-                    setFiltertype(BiquadFilterType::HIGHSHELF);
-                    printf("highshelf on\n");
-                    break;
+                        setFiltertype(BiquadFilterType::HIGHSHELF);
+                        printf("highshelf on\n");
+                        break;
                 }
             }
         }
@@ -245,45 +245,45 @@ void BiquadFilters::calcCoeff()
     {
         case BiquadFilterType::LOWPASS:
 
-        mA0 = 1.f + mAlpha;
-        mA1 = mOmegaCos * -2.f;
-        mA2 = 1.f - mAlpha;
-        mB0 = (1.f - mOmegaCos) / 2.f;
-        mB1 = 1.f - mOmegaCos;
-        mB2 = mB0;
-        break;
+            mA0 = 1.f + mAlpha;
+            mA1 = mOmegaCos * -2.f;
+            mA2 = 1.f - mAlpha;
+            mB0 = (1.f - mOmegaCos) / 2.f;
+            mB1 = 1.f - mOmegaCos;
+            mB2 = mB0;
+            break;
 
         case BiquadFilterType::HIGHPASS:
 
-        mA0 = 1.f + mAlpha;
-        mA1 = mOmegaCos * -2.f;
-        mA2 = 1.f - mAlpha;
-        mB0 = (1.f + mOmegaCos) / 2.f;
-        mB1 = (1.f + mOmegaCos) * -1.f;
-        mB2 = mB0;
-        break;
+            mA0 = 1.f + mAlpha;
+            mA1 = mOmegaCos * -2.f;
+            mA2 = 1.f - mAlpha;
+            mB0 = (1.f + mOmegaCos) / 2.f;
+            mB1 = (1.f + mOmegaCos) * -1.f;
+            mB2 = mB0;
+            break;
 
         case BiquadFilterType::LOWSHELF:
-        coeff = mBeta * mAlpha;
+            coeff = mBeta * mAlpha;
 
-        mA0 = (mShelfAmp + 1.f) + (mOmegaCos * (mShelfAmp - 1.f)) + coeff;
-        mA1 = ((mShelfAmp - 1.f) + (mOmegaCos * (mShelfAmp + 1.f))) * -2.f;
-        mA2 = (mShelfAmp + 1.f) + (mOmegaCos * (mShelfAmp - 1.f)) - coeff;
-        mB0 = ((mShelfAmp + 1.f) - (mOmegaCos * (mShelfAmp - 1.f)) + coeff) * mShelfAmp;
-        mB1 = ((mShelfAmp - 1.f) - (mOmegaCos * (mShelfAmp + 1.f))) * 2.f * mShelfAmp;
-        mB2 = ((mShelfAmp + 1.f) - (mOmegaCos * (mShelfAmp - 1.f)) - coeff) * mShelfAmp;
-        break;
+            mA0 = (mShelfAmp + 1.f) + (mOmegaCos * (mShelfAmp - 1.f)) + coeff;
+            mA1 = ((mShelfAmp - 1.f) + (mOmegaCos * (mShelfAmp + 1.f))) * -2.f;
+            mA2 = (mShelfAmp + 1.f) + (mOmegaCos * (mShelfAmp - 1.f)) - coeff;
+            mB0 = ((mShelfAmp + 1.f) - (mOmegaCos * (mShelfAmp - 1.f)) + coeff) * mShelfAmp;
+            mB1 = ((mShelfAmp - 1.f) - (mOmegaCos * (mShelfAmp + 1.f))) * 2.f * mShelfAmp;
+            mB2 = ((mShelfAmp + 1.f) - (mOmegaCos * (mShelfAmp - 1.f)) - coeff) * mShelfAmp;
+            break;
 
         case BiquadFilterType::HIGHSHELF:
-        coeff = mBeta * mAlpha;
+            coeff = mBeta * mAlpha;
 
-        mA0 = (mShelfAmp + 1.f) - (mOmegaCos * (mShelfAmp - 1.f)) + coeff;
-        mA1 = ((mShelfAmp - 1.f) - (mOmegaCos * (mShelfAmp + 1.f))) * 2.f;
-        mA2 = (mShelfAmp + 1.f) - (mOmegaCos * (mShelfAmp - 1.f)) - coeff;
-        mB0 = ((mShelfAmp + 1.f) + (mOmegaCos * (mShelfAmp - 1.f)) + coeff) * mShelfAmp;
-        mB1 = ((mShelfAmp - 1.f) + (mOmegaCos * (mShelfAmp + 1.f))) * -2.f * mShelfAmp;
-        mB2 = ((mShelfAmp + 1.f) + (mOmegaCos * (mShelfAmp - 1.f)) - coeff) * mShelfAmp;
-        break;
+            mA0 = (mShelfAmp + 1.f) - (mOmegaCos * (mShelfAmp - 1.f)) + coeff;
+            mA1 = ((mShelfAmp - 1.f) - (mOmegaCos * (mShelfAmp + 1.f))) * 2.f;
+            mA2 = (mShelfAmp + 1.f) - (mOmegaCos * (mShelfAmp - 1.f)) - coeff;
+            mB0 = ((mShelfAmp + 1.f) + (mOmegaCos * (mShelfAmp - 1.f)) + coeff) * mShelfAmp;
+            mB1 = ((mShelfAmp - 1.f) + (mOmegaCos * (mShelfAmp + 1.f))) * -2.f * mShelfAmp;
+            mB2 = ((mShelfAmp + 1.f) + (mOmegaCos * (mShelfAmp - 1.f)) - coeff) * mShelfAmp;
+            break;
     }
 
     mA1 /= (-1.f * mA0);              //normalize
