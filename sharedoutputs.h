@@ -4,6 +4,8 @@
 #define NUM_VOICES 12
 #define NUM_CHANNELS 2
 
+#define SMOOTHEROBJ
+
 extern float gSoundGenOut_A[NUM_VOICES];
 extern float gSoundGenOut_B[NUM_VOICES];
 

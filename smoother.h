@@ -8,6 +8,7 @@
 *******************************************************************************/
 
 #pragma once
+#include "nltoolbox.h"
 
 class Smoother
 {
@@ -23,6 +24,10 @@ public:
     float smooth();
 
 private:
+    float mSampleRate;
+    float mSmoothingTime;
+
+    float mTarget;
     float mBase;				// starting value of the smoothing ramp
     float mDiff;				// difference between the starting and ending points of the curve
     float mRamp;				// ramp value, which is incremented with every step or is 1 if the curve is not applied
@@ -30,4 +35,5 @@ private:
     float mInc;                 // increment value, which is constant once set
 
     inline void setInc(int _sRate, float _smTime);
+    inline void setInc();
 };

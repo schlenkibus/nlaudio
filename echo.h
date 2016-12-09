@@ -22,7 +22,7 @@ public:
 
     Echo ();                            // Default Constructor
 
-    Echo(int _sampleRate,               // Parameterized Constructor
+    Echo(uint32_t _sampleRate,               // Parameterized Constructor
          float _delayTime,
          float _stereo,
          float _feedbackAmnt,
@@ -35,7 +35,7 @@ public:
     float mDelayOutL;
     float mDelayOutR;
 
-    float applyEcho(float _currSample, unsigned int _chInd);
+    float applyEcho(float _currSample, uint32_t _chInd);
     void applyEcho(float _rawLeftSample, float _rawRightSample);
 
     void setMix(float _mix);
@@ -47,7 +47,7 @@ public:
     void setFeedbackAmount(float _feedback);
     void setCrossFeedbackAmount(float _crossFeedback);
 
-    void setEchoParams(float _ctrlVal, unsigned char _ctrlTag);
+    void setEchoParams(unsigned char _ctrlTag, float _ctrlVal);
 
 private:
     float mSampleRate;              // samplerate
@@ -62,10 +62,35 @@ private:
     float mLocalFeedback;           // local feedback amount - internal
     float mCrossFeedback;			// cross feedback amount - internal
 
+#ifdef SMOOTHEROBJ
     Smoother mDrySmoother;                      // dry amount smoother
     Smoother mWetSmoother;                      // wet smount smoother
     Smoother mLocalFeedbackSmoother;            // local feedback smoother
     Smoother mCrossFeedbackSmoother;            // cross feedback smoother
+#else
+    uint32_t mEchoSmoother;                     // Smoother Mask
+    float mInc;
+
+    float mDry_base;                            // Dry Smoothing values
+    float mDry_target;
+    float mDry_diff;
+    float mDry_ramp;
+
+    float mWet_base;                            // Wet Smoothing values
+    float mWet_target;
+    float mWet_diff;
+    float mWet_ramp;
+
+    float mLFeedback_base;                      // Local Feedback Smoothing values
+    float mLFeedback_target;
+    float mLFeedback_diff;
+    float mLFeedback_ramp;
+
+    float mCFeedback_base;                      // Cross Feedback Smoothing values
+    float mCFeedback_target;
+    float mCFeedback_diff;
+    float mCFeedback_ramp;
+#endif
 
     struct EchoChannel{                         // Struct for channel dependant modules and variables
 
@@ -74,7 +99,7 @@ private:
         float mDelayTime;                           // channel delay time
 
         std::array<float,131072> mSampleBuffer;     // sample buffer for writing and reading the samples of each channel
-        unsigned int mSampleBufferIndx;             // sample buffer index counter
+        uint32_t mSampleBufferIndx;                 // sample buffer index counter
 
         OnePoleFilters mLowpass;                    // lowpass filter
         OnePoleFilters mHighpass;                   // highpass filter at 50Hz
@@ -105,9 +130,9 @@ private:
 #endif
     };
 
-    float delay(float _inputSample, float _delayTime, unsigned int _chInd);
+    float delay(float _inputSample, float _delayTime, uint32_t _chInd);
 #if 0
-    float delay(float _inputSample, float _delayTime, std::array<float,131072> &_sampleBuffer, unsigned int &_sampleBufferIndx);
+    float delay(float _inputSample, float _delayTime, std::array<float,131072> &_sampleBuffer, uint32_t &_sampleBufferIndx);
 #endif
     void calcFeedback();
 };

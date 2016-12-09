@@ -35,7 +35,7 @@ public:
     void calcInc();
 
     void setFluctuation(float _oscFluctAmnt);
-    void setSeed(signed int _voiceNumber);
+    void setSeed(unsigned int _voiceNumber);
     float calcRandVal();
 
     void setChirpFreq(float _chirpFrequency);

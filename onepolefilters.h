@@ -25,7 +25,7 @@ public:
 
     OnePoleFilters();                               // Default Constructor
 
-    OnePoleFilters(int _sampleRate,                 // Parameterized Constructor
+    OnePoleFilters(uint32_t _sampleRate,                 // Parameterized Constructor
                    float _cutFreq,
                    float _shelfAmp,
                    OnePoleFilterType _filterType);
@@ -36,7 +36,7 @@ public:
     void setCutFreq(float _cutFreq);
     void setShelfAmp(float _shelfAmp);
     void setFilterType(OnePoleFilterType _filterType);
-    void setFilterParams(float _ctrlVal, unsigned char _ctrlId);
+    void setFilterParams(unsigned char _ctrlId, float _ctrlVal);
 
     float applyFilter(float _currSample);
 
@@ -58,7 +58,7 @@ private:
     float mB0, mB1, mA1;                            // Filter Coefficients
 
     OnePoleFilterType mFilterType;                  // FilterType
-    unsigned int mFilterCounter;                    // counter variable if the module is used with all filterTypes
+    uint32_t mFilterCounter;                         // counter variable if the module is used with all filterTypes
                                                     // (0 = lowpass, 1 = highpass, 2 = lowshelf, 3 = highshelf)
 
     enum CtrlId: unsigned char                      // Enum for control IDs (Korg Nano Kontrol I)

@@ -148,7 +148,7 @@ void Oscillator::setFluctuation(float _oscFluctAmnt)
  *  @param  any integer
 *******************************************************************************/
 
-void Oscillator::setSeed(signed int _randVal)
+void Oscillator::setSeed(unsigned int _randVal)
 {
     mRandValStateVar = _randVal;
 }

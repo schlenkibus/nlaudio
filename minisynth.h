@@ -6,8 +6,6 @@
     @author     Anton Schmied [2016-02-04]
 **/
 
-#define SYNTH           // turn synth on and off by define
-
 #include "audiofactory.h"
 #include "voicemanager.h"
 

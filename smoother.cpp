@@ -13,11 +13,14 @@
  * @brief    initialization of the modules local variabels with default
  *           parameters
  *           Samplerate:        48000 Hz
- *           smoothing time:    0.032 ms
+ *           smoothing time:    0.032 s
 *******************************************************************************/
 
 Smoother::Smoother()
-    : mBase(0.f)
+//    : mSampleRate(48000.f)          /// new
+//    , mSmoothingTime(0.032f)        /// new
+    : mTarget(0.f)                  /// new
+    , mBase(0.f)
     , mDiff(0.f)
     , mRamp(1.f)
     , mHeldValue(0.f)
@@ -33,9 +36,11 @@ Smoother::Smoother()
  *           parameters
 *******************************************************************************/
 
-Smoother::Smoother(int _sRate,
-                   float _smTime)
-    : mBase(0.f)
+Smoother::Smoother(int _sRate, float _smTime)
+//    : mSampleRate(static_cast<float>(_sRate))          /// new
+//    , mSmoothingTime(_smTime)        /// new
+    : mTarget(0.f)                  /// new
+    , mBase(0.f)
     , mDiff(0.f)
     , mRamp(1.f)
     , mHeldValue(0.f)
@@ -52,9 +57,16 @@ Smoother::Smoother(int _sRate,
 
 void Smoother::initSmoother(float _currValue)
 {
+    mTarget = _currValue;
     mBase = mHeldValue;
-    mDiff = _currValue - mHeldValue;
+    mDiff = mTarget - mBase;
     mRamp = 0.f;
+
+//    setInc();
+
+//    mBase = mHeldValue;
+//    mDiff = _currValue - mHeldValue;
+//    mRamp = 0.f;
 }
 
 
@@ -69,15 +81,27 @@ float Smoother::smooth()
     if (mRamp < 1.f)
     {
         mRamp += mInc;
+        mHeldValue = mBase + mDiff * mRamp;
     }
     else
     {
-        mRamp = 1.f;
+        mHeldValue = mTarget;
     }
 
-    mHeldValue = mBase + mDiff * mRamp;
-
     return mHeldValue;
+
+//    if (mRamp < 1.f)
+//    {
+//        mRamp += mInc;
+//    }
+//    else
+//    {
+//        mRamp = 1.f;
+//    }
+
+
+//    mHeldValue = mBase + mDiff * mRamp;
+//    return mHeldValue;
 }
 
 
@@ -92,4 +116,19 @@ inline void Smoother::setInc(int _sRate, float _smTime)
 {
     mInc = 5.f / (static_cast<float>(_sRate) * _smTime);
 }
+
+inline void Smoother::setInc()
+{
+    mInc = mDiff / (mSmoothingTime * mSampleRate);
+}
+
+
+
+
+
+
+
+
+
+
 

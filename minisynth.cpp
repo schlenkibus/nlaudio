@@ -1,6 +1,12 @@
 ﻿#include "minisynth.h"
 
+#define SYNTH           // turn synth on and off by define
+//#define PASCALSW
+#define CPU_STOPWATCH
+
 #include "stopwatch.h"
+#include "cpu_stopwatch.h"
+
 #include "audioalsainput.h"
 #include "audioalsaoutput.h"
 #include "rawmididevice.h"
@@ -13,31 +19,42 @@ namespace MINISYNTH {
 
 //--------------- Objects
 VoiceManager voiceManager;
+CPU_Stopwatch cpu_sw;
 
     /** @brief    Callback function for Sine Generator and Audio Input - testing with ReMote 61
         @param    Input Buffer
         @param    Output Buffer
+
         @param    buffer size
         @param    Sample Specs
     */
     void miniSynthCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
     {
+#ifdef PASCALSW
         static int counter = 0;
         //StopBlockTime sft(&sw, "val" + std::to_string(counter++));
         sw.stop();
         sw.start("val" + std::to_string(counter++));
+#endif
 
 #ifdef SYNTH
         // Nicht die ideale Lösung für die Initialisierung. Warte auf Update des Frameworks (04.08.2016)
         static bool init = false;
 
         if (!init)
-        { 
+        {
+#ifdef CPU_STOPWATCH
+            cpu_sw = CPU_Stopwatch();
+#endif
             voiceManager = VoiceManager();                          // Vocie Manager
-
             // Initialization done
             init = true;
         }
+#endif
+
+#ifdef CPU_STOPWATCH
+        static int counter = 0;
+        cpu_sw.start();
 #endif
 
         auto midiBuffer = getBufferForName("MidiBuffer");
@@ -82,6 +99,19 @@ VoiceManager voiceManager;
                 setSample(out, outputSample, frameIndex, channelIndex, sampleSpecs);
             }
         }
+
+#ifdef CPU_STOPWATCH
+        cpu_sw.stop();
+        counter++;
+
+        if (counter == NUMBER_OF_TS)
+        {
+            cpu_sw.calcCPU();
+
+            std::cout << "CPU Peak: " << cpu_sw.mCPU_peak << std::endl;
+            counter = 0;
+        }
+#endif
     }
 
 

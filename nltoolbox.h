@@ -3,6 +3,10 @@
 #include <cmath>
 #include "tools.h"
 
+#ifndef DNC_CONST
+#define DNC_CONST 1e-18
+#endif
+
 
 namespace NlToolbox {
 
@@ -215,7 +219,7 @@ struct Highpass30Hz
         float output;
 
         output = _sample - mInStateVar;
-        mInStateVar = output * mOmega + mInStateVar;
+        mInStateVar = (output * mOmega + mInStateVar) + DNC_CONST;
 
         return output;
     }
@@ -268,7 +272,7 @@ struct Lowpass2Hz
         output = _sample - mStateVar;
         output = output * mOmega + mStateVar;
 
-        mStateVar = output;
+        mStateVar = output + DNC_CONST;
 
         return output;
     }
@@ -330,7 +334,7 @@ struct ChirpFilter
         tmpVar = output;
 
         output = (output + mStateVar) * mOmega;     // FIR
-        mStateVar = tmpVar;
+        mStateVar = tmpVar + DNC_CONST;
 
         return output;
     }

@@ -72,24 +72,27 @@ int main()
 {
 #endif
 
-	try {
-		auto availableDevices = Nl::getDetailedCardInfos();
-		for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it)
-			std::cout << *it << std::endl;
+    Nl::requestRealtime();                                  // Realtime Request
 
-		auto availableDevs = Nl::AlsaCardIdentifier::getCardIdentifiers();
-		for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
-			std::cout << *it << std::endl;
+    try
+    {
+        auto availableDevices = Nl::getDetailedCardInfos();
+        for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it)
+            std::cout << *it << std::endl;
+
+        auto availableDevs = Nl::AlsaCardIdentifier::getCardIdentifiers();
+        for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
+            std::cout << *it << std::endl;
 
         Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
-		Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
+        Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
         Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
 
-		const int buffersize = 256;
-		const int samplerate = 48000;
+        const int buffersize = 256;
+        const int samplerate = 48000;
 
-		//auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
-		//auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
+        //auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
+        //auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
         //auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
         //auto handle = Nl::Examples::midiSineWithMidi(audioOut, midiIn, buffersize, samplerate);
         //auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
@@ -98,16 +101,16 @@ int main()
         auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
 
         //this is for the Effects
-//        auto handle = Nl::EFFECTS::effectsMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
+        //        auto handle = Nl::EFFECTS::effectsMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
 
-		// Wait for user to exit by pressing 'q'
-		// Print buffer statistics on other keys
-		// TODO: We might have a deadlock here:
-		//		 sw.printSummary() holds a lock
-		//		 audioXX->getStats() holds a lock
-		//		 inMidiBuffer->getStats() holds a lock
-		//	     The calls should happen in this order. Otherwise we trigger
-		//		 a deadlock with the audio callback.
+        // Wait for user to exit by pressing 'q'
+        // Print buffer statistics on other keys
+        // TODO: We might have a deadlock here:
+        //		 sw.printSummary() holds a lock
+        //		 audioXX->getStats() holds a lock
+        //		 inMidiBuffer->getStats() holds a lock
+        //	     The calls should happen in this order. Otherwise we trigger
+        //		 a deadlock with the audio callback.
 
 		//while(true) {
 #if 1
@@ -115,36 +118,36 @@ int main()
         {
             std::cout << sw << std::endl;
 
-			if (handle.audioOutput) std::cout << "Audio: Output Statistics:" << std::endl
-											  << handle.audioOutput->getStats() << std::endl;
-			if (handle.audioInput) std::cout << "Audio: Input Statistics:" << std::endl
-											 << handle.audioInput->getStats() << std::endl;
+            if (handle.audioOutput) std::cout << "Audio: Output Statistics:" << std::endl
+                                              << handle.audioOutput->getStats() << std::endl;
+            if (handle.audioInput) std::cout << "Audio: Input Statistics:" << std::endl
+                                             << handle.audioInput->getStats() << std::endl;
 
-			if (handle.inMidiBuffer) {
-				unsigned long rxBytes, txBytes;
-				handle.inMidiBuffer->getStat(&rxBytes, &txBytes);
-				std::cout << "Midi: Input Statistics:" << std::endl
-						  << "rxBytes=" << rxBytes << "  txBytes=" << txBytes << std::endl;
-			}
+            if (handle.inMidiBuffer) {
+                unsigned long rxBytes, txBytes;
+                handle.inMidiBuffer->getStat(&rxBytes, &txBytes);
+                std::cout << "Midi: Input Statistics:" << std::endl
+                          << "rxBytes=" << rxBytes << "  txBytes=" << txBytes << std::endl;
+            }
 
-			std::cout << "BufferCount: " << handle.audioInput->getBufferCount() << std::endl;
+            std::cout << "BufferCount: " << handle.audioInput->getBufferCount() << std::endl;
 
-			//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		}
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
 #endif
 
-		// Tell worker thread to cleanup and quit
-		Nl::terminateWorkingThread(handle.workingThreadHandle);
-		if (handle.audioOutput) handle.audioOutput->stop();
-		if (handle.audioInput) handle.audioInput->stop();
+        // Tell worker thread to cleanup and quit
+        Nl::terminateWorkingThread(handle.workingThreadHandle);
+        if (handle.audioOutput) handle.audioOutput->stop();
+        if (handle.audioInput) handle.audioInput->stop();
 
-	} catch (Nl::AudioAlsaException& e) {
-		std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
-	} catch (std::exception& e) {
-		std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
-	} catch(...) {
-		std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
-	}
+    } catch (Nl::AudioAlsaException& e) {
+        std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
+    } catch (std::exception& e) {
+        std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
+    } catch(...) {
+        std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
+    }
 
 #ifdef OSCGUI
     return a.exec();

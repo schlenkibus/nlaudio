@@ -20,15 +20,13 @@
 *******************************************************************************/
 
 OnePoleFilters::OnePoleFilters()
+    : mSampleRate(48000.f)
+    , mFilterCounter(0)
 {
-    mSampleRate = 48000.f;
-
     setCutFreq(22000.f);
     setShelfAmp(0.f);
     setFilterType(OnePoleFilterType::LOWPASS);
     resetStateVariables();
-
-    mFilterCounter = 0;
 }
 
 
@@ -39,19 +37,17 @@ OnePoleFilters::OnePoleFilters()
  *           parameters
 *******************************************************************************/
 
-OnePoleFilters::OnePoleFilters(int _sampleRate,
+OnePoleFilters::OnePoleFilters(uint32_t _sampleRate,
                                float _cutFreq,
                                float _shelfAmp,
                                OnePoleFilterType _filterType)
+    : mSampleRate(static_cast<float>(_sampleRate))
+    , mFilterCounter(0)
 {
-    mSampleRate = static_cast<float>(_sampleRate);
-
     setCutFreq(_cutFreq);
     setShelfAmp(_shelfAmp);
     setFilterType(_filterType);
     resetStateVariables();
-
-    mFilterCounter = 0.f;
 }
 
 
@@ -91,7 +87,7 @@ void OnePoleFilters::setCutFreq(float _cutFreq)
     }
 
     _cutFreq *= (M_PI / mSampleRate);                   // Frequency warp
-    mOmegaTan = NlToolbox::Math::tan(_cutFreq);                      // alternative to tan(cutFreq) -> tools.h;
+    mOmegaTan = NlToolbox::Math::tan(_cutFreq);         // alternative to tan(cutFreq) -> tools.h;
 
     calcCoeff();
 }
@@ -135,14 +131,14 @@ void OnePoleFilters::setFilterType(OnePoleFilterType _filterType)
 
 float OnePoleFilters::applyFilter(float _currSample)
 {
-    float output = 0.f;
+    float output;
 
-    output += mB0 * _currSample;
+    output  = mB0 * _currSample;
     output += mB1 * mInStateVar;
     output += mA1 * mOutStateVar;
 
-    mInStateVar = _currSample;
-    mOutStateVar = output;
+    mInStateVar = _currSample + DNC_CONST;
+    mOutStateVar = output + DNC_CONST;
 
     return output;
 }
@@ -156,7 +152,7 @@ float OnePoleFilters::applyFilter(float _currSample)
  *  @param    midi control ID -> enum CtrlID (onepolefilters.h)
 ******************************************************************************/
 
-void OnePoleFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlId)
+void OnePoleFilters::setFilterParams(unsigned char _ctrlId, float _ctrlVal)
 {
     switch (_ctrlId)
     {
@@ -172,7 +168,7 @@ void OnePoleFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlId)
 
         case CtrlId::FILTERTYPE:
         {
-            if (static_cast<int>(_ctrlVal) > 0)
+            if (static_cast<uint32_t>(_ctrlVal) > 0)
             {
                 ++mFilterCounter;
 

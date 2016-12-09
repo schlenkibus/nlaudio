@@ -4,6 +4,8 @@
 namespace Nl {
 
 #include <sched.h>
+#include <errno.h>
+#include <string.h>
 
 /** \ingroup Tools
  *
@@ -18,14 +20,20 @@ int requestRealtime(void)
 {
 		struct sched_param sched_param;
 		int ret = sched_getparam(0, &sched_param);
-		if (ret != 0) {
-				printf("Scheduler getparam failed...\n");
+
+        if (ret != 0) {
+                printf("Scheduler getparam failed; %i...\n", ret);
 				return ret;
 		}
+
 		sched_param.sched_priority = sched_get_priority_max(SCHED_RR);
-		ret = sched_setscheduler(0, SCHED_RR, &sched_param);
-		if (ret != 0) {
-				printf("Scheduler setprio failed...\n");
+
+        ret = sched_setscheduler(0, SCHED_RR, &sched_param);
+
+        if (ret != 0) {
+                printf("Scheduler setprio failed; %i ...\n", ret);
+                printf("%i\n", errno);
+                printf("%s\n", strerror(errno));
 				return ret;
 		}
 

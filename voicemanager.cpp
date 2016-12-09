@@ -20,8 +20,17 @@ float gVoiceVelocity[NUM_VOICES] = {};
 *******************************************************************************/
 
 VoiceManager::VoiceManager()
+    : mainOut_L(0.f)
+    , mainOut_R(0.f)
 {
-    mSoundGenerator[NUM_VOICES] = Soundgenerator();          // Soundgenerator for each Voice
+#ifdef MANYGENS
+    for(int i = 0; i < NUM_VOICES; i++)
+        mSoundGenerator[i] = Soundgenerator();          // Soundgenerator for each Voice
+#endif
+#ifdef ONEGEN
+    mSoundGenerator = OneSoundgenerator();
+#endif
+
     mOutputMixer = Outputmixer();                            // Outputmixer
 
     mLeftCabinet = Cabinet();
@@ -29,15 +38,14 @@ VoiceManager::VoiceManager()
 
     mEcho = Echo();
 
-    for (unsigned int i = 0; i < NUM_VOICES; i++)
+#ifdef MANYGENS
+    for (int i = 0; i < NUM_VOICES; i++)
     {
         mSoundGenerator[i].setVoiceNumber(i);
     }
+#endif
 
     vallocInit();
-
-    mainOut_L = 0.f;
-    mainOut_R = 0.f;
 }
 
 
@@ -52,17 +60,21 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
     {
         case InstrID::SG_A_PARAM:
         case InstrID::SG_B_PARAM:
-
-            for(unsigned int i = 0; i < NUM_VOICES; i++)
+#ifdef MANYGENS
+            for(int i = 0; i < NUM_VOICES; i++)
             {
                 mSoundGenerator[i].setGenParams(_instrID, _ctrlID, _ctrlVal);
             }
+#endif
+#ifdef ONEGEN
+            mSoundGenerator.setGenParams(_instrID, _ctrlID, _ctrlVal);
+#endif
             break;
 
         case InstrID::CABINET_PARAM:
 
-            mLeftCabinet.setCabinetParams(_ctrlVal, _ctrlID);
-            mRightCabinet.setCabinetParams(_ctrlVal, _ctrlID);
+            mLeftCabinet.setCabinetParams(_ctrlID, _ctrlVal);
+            mRightCabinet.setCabinetParams(_ctrlID, _ctrlVal);
             break;
 
         case InstrID::OUTPUTMIXER_PARAM:
@@ -72,7 +84,7 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 
         case InstrID::ECHO_PARAM:
 
-            mEcho.setEchoParams(_ctrlVal, _ctrlID);
+            mEcho.setEchoParams(_ctrlID, _ctrlVal);
             break;
 
         case InstrID::KEYUP_0:
@@ -108,13 +120,22 @@ void VoiceManager::voiceLoop()
     mOutputMixer.applySmoothers();
     mOutputMixer.calcKeyPan();
 
+#ifdef MANYGENS
     // main dsp loop
     for(unsigned int i = 0; i < NUM_VOICES; i++)
     {
         mSoundGenerator[i].generateSound();
-
         mOutputMixer.applyOutputMixer(mSoundGenerator[i].mSampleA, mSoundGenerator[i].mSampleB, 0.f, 0.f);
     }
+#endif
+#ifdef ONEGEN
+    mSoundGenerator.generateSound();
+
+    for(unsigned int i = 0; i < NUM_VOICES; i++)
+    {
+        mOutputMixer.applyOutputMixer(mSoundGenerator.mSampleA[i], mSoundGenerator.mSampleB[i], 0.f, 0.f);
+    }
+#endif
 
     ///hier kommen die effekte hin: Cab, Echo usw.!
     // Cabinet
@@ -194,9 +215,14 @@ void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, floa
         vYoungestAssigned = v;
 
         vVoiceState[v] = _pitch;
-
+#ifdef MANYGENS
         mSoundGenerator[v].setPitch(_pitch);
         mSoundGenerator[v].resetPhase();
+#endif
+#ifdef ONEGEN
+        mSoundGenerator.setPitch(_pitch, v);
+        mSoundGenerator.resetPhase(v);
+#endif
 
         gKeyPitch[v] = _pitch;
         gVoiceVelocity[v] = _velocity/127.f;

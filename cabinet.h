@@ -23,7 +23,7 @@ public:
 
     Cabinet();                              // Default Constructor
 
-    Cabinet(int _sampleRate,                // Parameterized Constructor
+    Cabinet(uint32_t _sampleRate,                // Parameterized Constructor
             float _drive,
             float _tilt,
             float _hiCut,
@@ -48,7 +48,7 @@ public:
     void setHiCut(float _hiCut);
     void setLoCut(float _loCut);
 
-    void setCabinetParams(float _ctrlVal, unsigned char _ctrlTag);
+    void setCabinetParams(unsigned char _ctrlTag, float _ctrlVal);
 
     void applyCab(float _rawSample);
 #if 0
@@ -78,9 +78,29 @@ private:
     TiltFilters mLowshelf2;        // second lowshelf
     NlToolbox::Filters::Highpass30Hz mHighpass30Hz;        // 1-Pole 30Hz Highpass for Smoothing within the sineShaper function
 
+#ifdef SMOOTHEROBJ
     Smoother mDrySmoother;         // dry level smoother
     Smoother mWetSmoother;         // wet level smoother
     Smoother mDriveSmoother;       // drive level smoother
+#else
+    uint32_t mCSmootherMask;      // Smoother Maske
+    float mInc;                     // Smoother Increment
+
+    float mDry_base;
+    float mDry_target;
+    float mDry_diff;
+    float mDry_ramp;
+
+    float mWet_base;
+    float mWet_target;
+    float mWet_diff;
+    float mWet_ramp;
+
+    float mDrive_base;
+    float mDrive_target;
+    float mDrive_diff;
+    float mDrive_ramp;
+#endif
 
     enum CtrlId: unsigned char    // Enum class for control IDs (Korg Nano Kontrol I)
     {

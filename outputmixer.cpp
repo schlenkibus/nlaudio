@@ -16,6 +16,7 @@
 Outputmixer::Outputmixer()
     : mLeftHighpass(48000, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS)
     , mRightHighpass(48000, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS)
+#ifdef SMOOTHEROBJ
     //-------------------------- Smoother
     , mALevelSmoother(48000.f, 0.032f)
     , mAPanSmoother(48000.f, 0.032f)
@@ -30,6 +31,10 @@ Outputmixer::Outputmixer()
     , mAsymSmoother(48000.f, 0.032f)
     , mMainLevelSmoother(48000.f, 0.032f)
     , mKeypanSmoother(48000.f, 0.032f)
+#else
+    , mOMSmootherMask(0)
+    , mInc(5.f / (static_cast<float>(48000.f) * 0.032))
+#endif
 {
     setALevel(0.f);
     setAPan(0.f);
@@ -55,6 +60,7 @@ Outputmixer::Outputmixer()
 
 void Outputmixer::applySmoothers()
 {
+#ifdef SMOOTHEROBJ
     mALevel = mALevelSmoother.smooth();
     mAPan = mAPanSmoother.smooth();
     mBLevel = mBLevelSmoother.smooth();
@@ -67,6 +73,300 @@ void Outputmixer::applySmoothers()
     mMainLevel = mMainLevelSmoother.smooth();
 
     mKeypan = mKeypanSmoother.smooth();
+#else
+    if (mOMSmootherMask)
+    {
+        // A Level Smoother
+        if (mALevel_ramp < 1.0)
+        {
+            mALevel_ramp += mInc;
+
+            if (mALevel_ramp > 1.0)
+            {
+                mALevel = mALevel_target;
+                mOMSmootherMask &= 0xFFFE;
+            }
+            else
+            {
+                mALevel = mALevel_base + mALevel_diff * mALevel_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mALevel = mALevel_target;
+            mOMSmootherMask &= 0xFFFE;
+        }
+#endif
+        // A Pan Smoother
+        if (mAPan_ramp < 1.0)
+        {
+            mAPan_ramp += mInc;
+
+            if (mAPan_ramp > 1.0)
+            {
+                mAPan = mAPan_target;
+                mOMSmootherMask &= 0xFFFD;
+            }
+            else
+            {
+                mAPan = mAPan_base + mAPan_diff * mAPan_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mAPan = mAPan_target;
+            mOMSmootherMask &= 0xFFFD;
+        }
+#endif
+        // B Level Smoother
+        if (mBLevel_ramp < 1.0)
+        {
+            mBLevel_ramp += mInc;
+
+            if (mBLevel_ramp > 1.0)
+            {
+                mBLevel = mBLevel_target;
+                mOMSmootherMask &= 0xFFFB;
+            }
+            else
+            {
+                mBLevel = mBLevel_base + mBLevel_diff * mBLevel_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mBLevel = mBLevel_target;
+            mOMSmootherMask &= 0xFFFB;
+        }
+#endif
+        // B Pan Smoother
+        if (mBPan_ramp < 1.0)
+        {
+            mBPan_ramp += mInc;
+
+            if (mBPan_ramp > 1.0)
+            {
+                mBPan = mBPan_target;
+                mOMSmootherMask &= 0xFFF7;
+            }
+            else
+            {
+                mBPan = mBPan_base + mBPan_diff * mBPan_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mBPan = mBPan_target;
+            mOMSmootherMask &= 0xFFF7;
+        }
+#endif
+        // Comb Level Smoother
+        if (mCombLevel_ramp < 1.0)
+        {
+            mCombLevel_ramp += mInc;
+
+            if (mCombLevel_ramp > 1.0)
+            {
+                mCombLevel = mCombLevel_target;
+                mOMSmootherMask &= 0xFFEF;
+            }
+            else
+            {
+                mCombLevel = mCombLevel_base + mCombLevel_diff * mCombLevel_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mCombLevel = mCombLevel_target;
+            mOMSmootherMask &= 0xFFEF;
+        }
+#endif
+        // Comb Pan Smoother
+        if (mCombPan_ramp < 1.0)
+        {
+            mCombPan_ramp += mInc;
+
+            if (mCombPan_ramp > 1.0)
+            {
+                mCombPan = mCombPan_target;
+                mOMSmootherMask &= 0xFFDF;
+            }
+            else
+            {
+                mCombPan = mCombPan_base + mCombPan_diff * mCombPan_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mCombPan = mCombPan_target;
+            mOMSmootherMask &= 0xFFDF;
+        }
+#endif
+        // SV Filter Level Smoother
+        if (mSVFilterLevel_ramp < 1.0)
+        {
+            mSVFilterLevel_ramp += mInc;
+
+            if (mSVFilterLevel_ramp > 1.0)
+            {
+                mSVFilterLevel = mSVFilterLevel_target;
+                mOMSmootherMask &= 0xFFBF;
+            }
+            else
+            {
+                mSVFilterLevel = mSVFilterLevel_base + mSVFilterLevel_diff * mSVFilterLevel_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mSVFilterLevel = mSVFilterLevel_target;
+            mOMSmootherMask &= 0xFFBF;
+        }
+#endif
+        // SV Filter Pan Smoother
+        if (mSVFilterPan_ramp < 1.0)
+        {
+            mSVFilterPan_ramp += mInc;
+
+            if (mSVFilterPan_ramp > 1.0)
+            {
+                mSVFilterPan = mSVFilterPan_target;
+                mOMSmootherMask &= 0xFF7F;
+            }
+            else
+            {
+                mSVFilterPan = mSVFilterPan_base + mSVFilterPan_diff * mSVFilterPan_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mSVFilterPan = mSVFilterPan_target;
+            mOMSmootherMask &= 0xFF7F;
+        }
+#endif
+        /// new
+        // Drive Smoother
+        if (mDrive_ramp < 1.0)
+        {
+            mDrive_ramp += mInc;
+
+            if (mDrive_ramp > 1.0)
+            {
+                mDrive = mDrive_target;
+                mOMSmootherMask &= 0xFEFF;
+            }
+            else
+            {
+                mDrive = mDrive_base + mDrive_diff * mDrive_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mDrive = mDrive_target;
+            mOMSmootherMask &= 0xFEFF;
+        }
+#endif
+        // Fold Smoother
+        if (mFold_ramp < 1.0)
+        {
+            mFold_ramp += mInc;
+
+            if (mFold_ramp > 1.0)
+            {
+                mFold = mFold_target;
+                mOMSmootherMask &= 0xFDFF;
+            }
+            else
+            {
+                mFold = mFold_base + mFold_diff * mFold_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mFold = mFold_target;
+            mOMSmootherMask &= 0xFDFF;
+        }
+#endif
+
+        // Asym Smoother
+        if (mAsym_ramp < 1.0)
+        {
+            mAsym_ramp += mInc;
+
+            if (mAsym_ramp > 1.0)
+            {
+                mAsym = mAsym_target;
+                mOMSmootherMask &= 0xFBFF;
+            }
+            else
+            {
+                mAsym = mAsym_base + mAsym_diff * mAsym_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mAsym = mAsym_target;
+            mOMSmootherMask &= 0xFBFF;
+        }
+#endif
+        // Main Level Smoother
+        if (mMainLevel_ramp < 1.0)
+        {
+            mMainLevel_ramp += mInc;
+
+            if (mMainLevel_ramp > 1.0)
+            {
+                mMainLevel = mMainLevel_target;
+                mOMSmootherMask &= 0xF7FF;
+            }
+            else
+            {
+                mMainLevel = mMainLevel_base + mMainLevel_diff * mMainLevel_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mMainLevel = mMainLevel_target;
+            mOMSmootherMask &= 0xF7FF;
+        }
+#endif
+        // Key Pan Smoother
+        if (mKeypan_ramp < 1.0)
+        {
+            mKeypan_ramp += mInc;
+
+            if (mKeypan_ramp > 1.0)
+            {
+                mKeypan = mKeypan_target;
+                mOMSmootherMask &= 0xFFF;
+            }
+            else
+            {
+                mKeypan = mKeypan_base + mKeypan_diff * mKeypan_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mKeypan = mKeypan_target;
+            mOMSmootherMask &= 0xEFFF;
+        }
+#endif
+    }
+
+#endif
 }
 
 /******************************************************************************/
@@ -401,9 +701,18 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
 
 void Outputmixer::setALevel(float _level)
 {
+#ifdef SMOOTHEROBJ
     mALevel = _level * 2.f;
     mALevelSmoother.initSmoother(mALevel);
+#else
+    mALevel_target = _level * 2.f;
 
+    mALevel_base = mALevel;
+    mALevel_diff = mALevel_target - mALevel_base;
+
+    mOMSmootherMask |= 0x0001; //ID 1;
+    mALevel_ramp = 0.0;
+#endif
 }
 
 
@@ -415,8 +724,19 @@ void Outputmixer::setALevel(float _level)
 
 void Outputmixer::setAPan(float _pan)
 {
+#ifdef SMOOTHEROBJ
     mAPan = (_pan * 0.005f) + 0.5f;
     mAPanSmoother.initSmoother(mAPan);
+#else
+    mAPan_target = (_pan * 0.005f) + 0.5f;
+
+    mAPan_base = mAPan;
+    mAPan_diff = mAPan_target - mAPan_base;
+
+    mOMSmootherMask|= 0x0002; //ID 2;
+
+    mAPan_ramp = 0.0;
+#endif
 }
 
 
@@ -428,8 +748,18 @@ void Outputmixer::setAPan(float _pan)
 
 void Outputmixer::setBLevel(float _level)
 {
+#ifdef SMOOTHEROBJ
     mBLevel = _level * 2.f;
     mBLevelSmoother.initSmoother(mBLevel);
+#else
+    mBLevel_target = _level * 2.f;
+
+    mBLevel_base = mBLevel;
+    mBLevel_diff = mBLevel_target - mBLevel_base;
+
+    mOMSmootherMask|= 0x0004; //ID 3;
+    mBLevel_ramp = 0.0;
+#endif
 }
 
 
@@ -441,8 +771,18 @@ void Outputmixer::setBLevel(float _level)
 
 void Outputmixer::setBPan(float _pan)
 {
+#ifdef SMOOTHEROBJ
     mBPan = (_pan * 0.005f) + 0.5f;
     mBPanSmoother.initSmoother(mBPan);
+#else
+    mBPan_target = (_pan * 0.005f) + 0.5f;
+
+    mBPan_base = mBPan;
+    mBPan_diff = mBPan_target - mBPan_base;
+
+    mOMSmootherMask|= 0x0008; //ID 4;
+    mBPan_ramp = 0.0;
+#endif
 }
 
 
@@ -454,8 +794,19 @@ void Outputmixer::setBPan(float _pan)
 
 void Outputmixer::setCombLevel(float _level)
 {
+#ifdef SMOOTHEROBJ
     mCombLevel = _level;
     mCombLevelSmoother.initSmoother(mCombLevel);
+#else
+    mCombLevel_target = _level;
+
+    mCombLevel_base = mCombLevel;
+    mCombLevel_diff = mCombLevel_target - mCombLevel_base;
+
+    mOMSmootherMask|= 0x0010; //ID 5;
+    mCombLevel_ramp = 0.0;
+
+#endif
 }
 
 
@@ -467,8 +818,18 @@ void Outputmixer::setCombLevel(float _level)
 
 void Outputmixer::setCombPan(float _pan)
 {
+#ifdef SMOOTHEROBJ
     mCombPan = (_pan * 0.005f) + 0.5f;
     mCombPanSmoother.initSmoother(mCombPan);
+#else
+    mCombPan_target = (_pan * 0.005f) + 0.5f;
+
+    mCombPan_base = mCombPan;
+    mCombPan_diff = mCombPan_target - mCombPan_base;
+
+    mOMSmootherMask|= 0x0020; //ID 6;
+    mCombPan_ramp = 0.0;
+#endif
 }
 
 
@@ -480,8 +841,18 @@ void Outputmixer::setCombPan(float _pan)
 
 void Outputmixer::setSVFilterLevel(float _level)
 {
+#ifdef SMOOTHEROBJ
     mSVFilterLevel = _level;
     mSVFilterLevelSmoother.initSmoother(mSVFilterLevel);
+#else
+    mSVFilterLevel_target = _level;
+
+    mSVFilterLevel_base = mSVFilterLevel;
+    mSVFilterLevel_diff = mSVFilterLevel_target - mSVFilterLevel_base;
+
+    mOMSmootherMask|= 0x0040; //ID 7;
+    mSVFilterLevel_ramp = 0.0;
+#endif
 }
 
 
@@ -493,8 +864,18 @@ void Outputmixer::setSVFilterLevel(float _level)
 
 void Outputmixer::setSVFilterPan(float _pan)
 {
+#ifdef SMOOTHEROBJ
     mSVFilterPan = (_pan * 0.005f) + 0.5f;
     mSVFilterPanSmoother.initSmoother(mSVFilterPan);
+#else
+    mSVFilterPan_target = (_pan * 0.005f) + 0.5f;
+
+    mSVFilterPan_base = mSVFilterPan;
+    mSVFilterPan_diff = mSVFilterPan_target - mSVFilterPan_base;
+
+    mOMSmootherMask|= 0x0080; //ID 8;
+    mSVFilterPan_ramp = 0.0;
+#endif
 }
 
 
@@ -506,8 +887,18 @@ void Outputmixer::setSVFilterPan(float _pan)
 
 void Outputmixer::setDrive(float _drive)
 {
+#ifdef SMOOTHEROBJ
     mDrive = NlToolbox::Conversion::db2af(_drive) * 0.25f;
     mDriveSmoother.initSmoother(mDrive);
+#else
+    mDrive_target = NlToolbox::Conversion::db2af(_drive) * 0.25f;
+
+    mDrive_base = mDrive;
+    mDrive_diff = mDrive_target - mDrive_base;
+
+    mOMSmootherMask|= 0x0100; //ID 9;
+    mDrive_ramp = 0.0;
+#endif
 }
 
 
@@ -519,8 +910,18 @@ void Outputmixer::setDrive(float _drive)
 
 void Outputmixer::setFold(float _fold)
 {
+#ifdef SMOOTHEROBJ
     mFold = _fold;
     mFoldSmoother.initSmoother(mFold);
+#else
+    mFold_target = _fold;
+
+    mFold_base = mFold;
+    mFold_diff = mFold_target - mFold_base;
+
+    mOMSmootherMask|= 0x0200; //ID 10;
+    mFold_ramp = 0.0;
+#endif
 }
 
 
@@ -532,8 +933,18 @@ void Outputmixer::setFold(float _fold)
 
 void Outputmixer::setAsym(float _asym)
 {
+#ifdef SMOOTHEROBJ
     mAsym = _asym;
     mAsymSmoother.initSmoother(mAsym);
+#else
+    mAsym_target = _asym;
+
+    mAsym_base = mAsym;
+    mAsym_diff = mAsym_target - mAsym_base;
+
+    mOMSmootherMask|= 0x0400; //ID 11;
+    mAsym_ramp = 0.0;
+#endif
 }
 
 
@@ -545,8 +956,18 @@ void Outputmixer::setAsym(float _asym)
 
 void Outputmixer::setMainLevel(float _level)
 {
+#ifdef SMOOTHEROBJ
     mMainLevel = _level * _level * 0.64f;
     mMainLevelSmoother.initSmoother(mMainLevel);
+#else
+    mMainLevel_target = _level * _level * 0.64f;
+
+    mMainLevel_base = mMainLevel;
+    mMainLevel_diff = mMainLevel_target - mMainLevel_base;
+
+    mOMSmootherMask|= 0x0800; //ID 12;
+    mMainLevel_ramp = 0.0;
+#endif
 }
 
 
@@ -558,8 +979,18 @@ void Outputmixer::setMainLevel(float _level)
 
 void Outputmixer::setKeyPan(float _keypan)
 {
+#ifdef SMOOTHEROBJ
     mKeypan = _keypan / 60.f;
     mKeypanSmoother.initSmoother(mKeypan);
+#else
+    mKeypan_target = _keypan / 60.f;
+
+    mKeypan_base = mKeypan;
+    mKeypan_diff = mKeypan_target - mKeypan_base;
+
+    mOMSmootherMask|= 0x1000; //ID 13;
+    mKeypan_ramp = 0.0;
+#endif
 }
 
 

@@ -1,14 +1,11 @@
 /******************************************************************************/
-/** @file		soundgenerator.h
-    @date		2016-07-20
-    @version	0.2
-    @author		Anton Schmied[2016-07-20]
-    @brief		An implementation of the sound generating Class
-                with two oscillators and two shapers
-                as used in the C15 and implemented in Reaktor
-
-    @note       Oder man macht ein ganzes array an werten und
-                nur einen soundgenerator ... uuurgh ...
+/** @file		onesoundgenerator.h
+    @date		2016-12-01
+    @version	0.1
+    @author		Anton Schmied[2016-12-01]
+    @brief		Alternative implementation of the sound generating Class
+                This solution shuld work with a single generator and twelve for
+                each voice
 *******************************************************************************/
 
 #pragma once
@@ -17,44 +14,38 @@
 #include "oscillator.h"
 #include "shaper.h"
 
-class Soundgenerator
+
+class OneSoundgenerator
 {
 public:
-    Soundgenerator();                      // Default Constructor
+    OneSoundgenerator();                        // Default Constructor
 
-    Soundgenerator(int _sampleRate,        // Parameterized Constructor
+    OneSoundgenerator(int _sampleRate,          // Parameterized Constructor
                     float _phase,
-//                    float _gain,
                     float _pitchOffset,
                     float _keyTracking,
                     float _mainMixAmount);
 
-    ~Soundgenerator(){}                    // Destructor
+    ~OneSoundgenerator(){}                      // Destructor
 
-    float mPitch;                          // Pitch of the played note/ key
-    float mSampleA, mSampleB;              // Generated Samples
-
-
-//    float mMainOut;                        // mal testweise ...
-
+    // we need 12 of each ...
+    float mPitch[12];
+    float mSampleA[12], mSampleB[12];
 
     void generateSound();
 
-    void setPitch(float _pitch);
-    void setVoiceNumber(unsigned int _voiceNumber);
-    void resetPhase();
+    void setPitch(float _pitch, unsigned int _voiceNumber);
+    void resetPhase(unsigned int _voiceNumber);
+//    void setVoiceNumer();           // Eigentlich kann das in dem Oscillator passieren ... Zumindest in dieser Version, oder was?
+
     void setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
 
 private:
-
     float mSampleRate;              // Samplerate
 
     struct Generatormodules         // Struct for shared Parameters of both Oscillators and Shapers
     {
-//        float mGain;                // Module gain
-        float mShaperMixAmount;       // Mix Amount between Oscillator and Shaper
-
-        Oscillator mOsc;            // Osciallator
+        Oscillator mOsc[12];        // 12 Oscillators, for each voice
         Shaper mShaper;             // Shaper
 
         float mPhase;               // Oscillator phase
@@ -66,10 +57,11 @@ private:
         float mPmSelfShaper;        // Self Phase Modulation Amount, Shaper Feedback
         float mPmCrossShaper;       // Cross Phase Modulation Amount, Shaper Feedback
 
-        float mSelfMix;             // Mix between modules own osciallator and shaper samples
-        float mCrossMix;            // Mix between the modules own osciallator sample and the opposite modules shaper samples
-
+        float mShaperMixAmount;     // Mix Amount between Oscillator and Shaper
         float mRingMod;             // Ring modulation amount
+
+        float mSelfMix[12];         // Mix between modules own osciallator and shaper samples
+        float mCrossMix[12];        // Mix between the modules own osciallator sample and the opposite modules shaper samples
 
     } moduleA, moduleB;
 
@@ -95,8 +87,6 @@ private:
         RING         = 0x2C,
         FOLD         = 0x2D,
         ASYM         = 0x2E,
-
-//        GAIN         = 0x2F          //Gain
     };
 
     enum InstrID: unsigned char

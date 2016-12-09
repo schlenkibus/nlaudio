@@ -21,7 +21,7 @@ class Outputmixer
 public:
     Outputmixer();                  // Default Constructor
 
-//    Outputmixer();                // Parametrized Constructor
+//    Outputmixer();                // Parametrized Constructor - fehlt!
 
     ~Outputmixer(){}                // Destructor
 
@@ -77,6 +77,7 @@ private:
     OnePoleFilters mLeftHighpass;
     OnePoleFilters mRightHighpass;
 
+#ifdef SMOOTHEROBJ
     Smoother mALevelSmoother;
     Smoother mAPanSmoother;
     Smoother mBLevelSmoother;
@@ -92,7 +93,75 @@ private:
 
     Smoother mMainLevelSmoother;
     Smoother mKeypanSmoother;
+#else
+    uint32_t mOMSmootherMask;
+    float mInc;
 
+    float mALevel_base;
+    float mALevel_target;
+    float mALevel_diff;
+    float mALevel_ramp;
+
+    float mAPan_base;
+    float mAPan_target;
+    float mAPan_diff;
+    float mAPan_ramp;
+
+    float mBLevel_base;
+    float mBLevel_target;
+    float mBLevel_diff;
+    float mBLevel_ramp;
+
+    float mBPan_base;
+    float mBPan_target;
+    float mBPan_diff;
+    float mBPan_ramp;
+
+    float mCombLevel_base;
+    float mCombLevel_target;
+    float mCombLevel_diff;
+    float mCombLevel_ramp;
+
+    float mCombPan_base;
+    float mCombPan_target;
+    float mCombPan_diff;
+    float mCombPan_ramp;
+
+    float mSVFilterLevel_base;
+    float mSVFilterLevel_target;
+    float mSVFilterLevel_diff;
+    float mSVFilterLevel_ramp;
+
+    float mSVFilterPan_base;
+    float mSVFilterPan_target;
+    float mSVFilterPan_diff;
+    float mSVFilterPan_ramp;
+
+    float mDrive_base;
+    float mDrive_target;
+    float mDrive_diff;
+    float mDrive_ramp;
+
+    float mFold_base;
+    float mFold_target;
+    float mFold_diff;
+    float mFold_ramp;
+
+    float mAsym_base;
+    float mAsym_target;
+    float mAsym_diff;
+    float mAsym_ramp;
+
+    float mMainLevel_base;
+    float mMainLevel_target;
+    float mMainLevel_diff;
+    float mMainLevel_ramp;
+
+    float mKeypan_base;
+    float mKeypan_target;
+    float mKeypan_diff;
+    float mKeypan_ramp;
+#endif
 
     enum CtrlID: unsigned char
     {

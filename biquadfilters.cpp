@@ -39,7 +39,7 @@ BiquadFilters::BiquadFilters()
  *           parameters
 *******************************************************************************/
 
-BiquadFilters::BiquadFilters(int _sampleRate,
+BiquadFilters::BiquadFilters(uint32_t _sampleRate,
                              float _cutFreq,
                              float _shelfAmp,
                              float _resonance,
@@ -146,20 +146,20 @@ void BiquadFilters::setFiltertype(BiquadFilterType _filterType)
 
 float BiquadFilters::applyFilter(float _currSample)
 {
-    float output = 0.f;
+    float output;
 
-    output += mB0 * _currSample;
+    output  = mB0 * _currSample;
     output += mB1 * mInStateVar1;
     output += mB2 * mInStateVar2;
 
     output += mA1 * mOutStateVar1;
     output += mA2 * mOutStateVar2;
 
-    mInStateVar2 = mInStateVar1;
-    mInStateVar1 = _currSample;
+    mInStateVar2 = mInStateVar1 + DNC_CONST;
+    mInStateVar1 = _currSample  + DNC_CONST;
 
-    mOutStateVar2 = mOutStateVar1;
-    mOutStateVar1 = output;
+    mOutStateVar2 = mOutStateVar1 + DNC_CONST;
+    mOutStateVar1 = output + DNC_CONST;
 
     return output;
 }
@@ -173,7 +173,7 @@ float BiquadFilters::applyFilter(float _currSample)
  *  @param    midi control ID -> enum CtrlID (biquadfilters.h)
 ******************************************************************************/
 
-void BiquadFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlId)
+void BiquadFilters::setFilterParams(unsigned char _ctrlId, float _ctrlVal)
 {
     switch (_ctrlId)
     {
@@ -194,7 +194,7 @@ void BiquadFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlId)
 
         case CtrlId::FILTERTYPE:
         {
-            if (static_cast<int>(_ctrlVal) > 0)
+            if (static_cast<uint32_t>(_ctrlVal) > 0)
             {
                 ++mFilterCounter;
 

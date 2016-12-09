@@ -26,10 +26,15 @@ Echo::Echo()
     : mSampleRate(48000.f)
     , mFeedbackAmnt(0.5f)
     , mCrossFeedbackAmnt(0.f)
+#ifdef SMOOTHEROBJ
     , mDrySmoother(48000.f, 0.032f)
     , mWetSmoother(48000.f, 0.032f)
     , mLocalFeedbackSmoother(48000.f, 0.032f)
     , mCrossFeedbackSmoother(48000.f, 0.032f)
+#else
+    , mEchoSmoother(0x0000)
+    , mInc(5.f / (48000.f * 0.032f))
+#endif
 {
     leftChannel.mDelayTime = 0.f;
     leftChannel.mChannelStateVar = 0.f;
@@ -55,7 +60,7 @@ Echo::Echo()
  *           parameters
 *******************************************************************************/
 
-Echo::Echo(int _sampleRate,
+Echo::Echo(uint32_t _sampleRate,
            float _delayTime,
            float _stereoAmnt,
            float _feedbackAmnt,
@@ -65,10 +70,15 @@ Echo::Echo(int _sampleRate,
     : mSampleRate(static_cast<float>(_sampleRate))
     , mFeedbackAmnt(_feedbackAmnt)
     , mCrossFeedbackAmnt(_crossFeedbackAmnt)
+#ifdef SMOOTHEROBJ
     , mDrySmoother(_sampleRate, 0.032f)
     , mWetSmoother(_sampleRate, 0.032f)
     , mLocalFeedbackSmoother(_sampleRate, 0.032f)
     , mCrossFeedbackSmoother(_sampleRate, 0.032f)
+#else
+    , mEchoSmoother(0x0000)
+    , mInc(5.f / (48000.f * 0.032f))
+#endif
 {
     leftChannel.mDelayTime = 0.f;
     leftChannel.mChannelStateVar = 0.f;
@@ -95,12 +105,32 @@ Echo::Echo(int _sampleRate,
 
 void Echo::setMix(float _mix)
 {
+#ifdef SMOOTHEROBJ
     float mix_square = _mix * _mix;
     mWet = (mix_square + mix_square) - mix_square * mix_square;
     mDry = (1.f - mix_square + 1.f - mix_square) - (1.f - mix_square) * (1.f - mix_square);      //dry = 1.f - 4.f * mix_square + mix_square * mix_square;
 
     mDrySmoother.initSmoother(mDry);
     mWetSmoother.initSmoother(mWet);
+#else
+    float mix_square = _mix * _mix;
+
+    // wet amount
+    mWet_target = (mix_square + mix_square) - mix_square * mix_square;
+    mWet_base = mWet;
+    mWet_diff = mWet_target - mWet_base;
+
+    mEchoSmoother |= 0x0001; //1
+    mWet_ramp = 0.f;
+
+    // dry amount
+    mDry_target = (1.f - mix_square + 1.f - mix_square) - (1.f - mix_square) * (1.f - mix_square);
+    mDry_base = mDry;
+    mDry_diff = mDry_target - mDry_base;
+
+    mEchoSmoother |= 0x0002; //2;
+    mDry_ramp = 0.f;
+#endif
 }
 
 
@@ -189,7 +219,7 @@ void Echo::setCrossFeedbackAmount(float _crossFeedbackAmnt)
  *  @param    midi control ID -> enum CtrlID (echo.h)
 ******************************************************************************/
 
-void Echo::setEchoParams(float _ctrlVal, unsigned char _ctrlTag)
+void Echo::setEchoParams(unsigned char _ctrlTag, float _ctrlVal)
 {
     switch (_ctrlTag)
     {
@@ -218,8 +248,7 @@ void Echo::setEchoParams(float _ctrlVal, unsigned char _ctrlTag)
             break;
 
         case CtrlId::STEREOAMNT:
-//            _ctrlVal = (_ctrlVal - 63.5f) * (33.f / 63.5f);           // nicht wirklich ne 0 vorhanden!
-            _ctrlVal = ((_ctrlVal / 63.f) - 1.f);
+             _ctrlVal = ((_ctrlVal / 63.f) - 1.f);
 
             if (_ctrlVal > 1.f)
             {
@@ -256,12 +285,64 @@ void Echo::setEchoParams(float _ctrlVal, unsigned char _ctrlTag)
 
 void Echo::applyEcho(float _rawLeftSample, float _rawRightSample)
 {
+#ifdef SMOOTHEROBJ
     // apply Smoothers
     mDry = mDrySmoother.smooth();
     mWet = mWetSmoother.smooth();
     mLocalFeedback = mLocalFeedbackSmoother.smooth();
     mCrossFeedback = mCrossFeedbackSmoother.smooth();
+#else
+    if (mEchoSmoother)
+    {
+        // Dry Smoother
+        if (mDry_ramp < 1.0)
+        {
+            mDry_ramp += mInc;
+            mDry = mDry_base + mDry_diff * mDry_ramp;
+        }
+        else
+        {
+            mDry = mDry_target;
+            mEchoSmoother &= 0xFFFE;
+        }
 
+        // Wet Smoother
+        if (mWet_ramp < 1.0)
+        {
+            mWet_ramp += mInc;
+            mWet = mWet_base + mWet_diff * mWet_ramp;
+        }
+        else
+        {
+            mWet = mWet_target;
+            mEchoSmoother &= 0xFFFD;
+        }
+
+        // Local Feedback Smoother
+        if (mLFeedback_ramp < 1.0)
+        {
+            mLFeedback_ramp += mInc;
+            mLocalFeedback = mLFeedback_base + mLFeedback_diff * mLFeedback_ramp;
+        }
+        else
+        {
+            mLocalFeedback = mLFeedback_target;
+            mEchoSmoother &= 0xFFFB;
+        }
+
+        // Cross Feedback Smoother
+        if (mCFeedback_ramp < 1.0)
+        {
+            mCFeedback_ramp += mInc;
+            mCrossFeedback = mCFeedback_base + mCFeedback_diff * mCFeedback_ramp;
+        }
+        else
+        {
+            mCrossFeedback = mCFeedback_target;
+            mEchoSmoother &= 0xFFF7;
+        }
+    }
+#endif
     // Left Channel
     float processedLeftSample = _rawLeftSample + (leftChannel.mChannelStateVar * mLocalFeedback) + (rightChannel.mChannelStateVar * mCrossFeedback);
 
@@ -271,7 +352,7 @@ void Echo::applyEcho(float _rawLeftSample, float _rawRightSample)
 
     processedLeftSample = leftChannel.mLowpass.applyFilter(processedLeftSample);                 // apply 1-pole lowpass
 
-    leftChannel.mChannelStateVar = leftChannel.mHighpass.applyFilter(processedLeftSample);         // apply 1-pole highpass
+    leftChannel.mChannelStateVar = leftChannel.mHighpass.applyFilter(processedLeftSample) + DNC_CONST;         // apply 1-pole highpass
 
     //Right Channel
     float processedRightSample = _rawRightSample + (rightChannel.mChannelStateVar * mLocalFeedback) + (leftChannel.mChannelStateVar * mCrossFeedback);
@@ -282,7 +363,7 @@ void Echo::applyEcho(float _rawLeftSample, float _rawRightSample)
 
     processedRightSample = rightChannel.mLowpass.applyFilter(processedRightSample);                 // apply 1-pole lowpass
 
-    rightChannel.mChannelStateVar = rightChannel.mHighpass.applyFilter(processedRightSample);         // apply 1-pole highpass
+    rightChannel.mChannelStateVar = rightChannel.mHighpass.applyFilter(processedRightSample) + DNC_CONST;         // apply 1-pole highpass
 
     // Crossfade
     mDelayOutL = NlToolbox::Crossfades::crossFade(_rawLeftSample, processedLeftSample, mDry, mWet);
@@ -298,13 +379,107 @@ void Echo::applyEcho(float _rawLeftSample, float _rawRightSample)
  *  @return   processed sample
 ******************************************************************************/
 
-float Echo::applyEcho(float _currSample, unsigned int _chInd)
+float Echo::applyEcho(float _currSample, uint32_t _chInd)
 {
-    mDry = mDrySmoother.smooth();                 //apply Smoothers
+#ifdef SMOOTHEROBJ
+    // apply Smoothers
+    mDry = mDrySmoother.smooth();
     mWet = mWetSmoother.smooth();
     mLocalFeedback = mLocalFeedbackSmoother.smooth();
     mCrossFeedback = mCrossFeedbackSmoother.smooth();
+#else
+    if (mEchoSmoother)
+    {
+        // Dry Smoother
+        if (mDry_ramp < 1.0)
+        {
+            mDry_ramp += mInc;
 
+            if (mDry_ramp > 1.0)
+            {
+                mDry = mDry_target;
+                mEchoSmoother &= 0xFFFE;
+            }
+            else
+            {
+                mDry = mDry_base + mDry_diff * mDry_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mDry = mDry_target;
+            mEchoSmoother &= 0xFFFE;
+        }
+#endif
+        // Wet Smoother
+        if (mWet_ramp < 1.0)
+        {
+            mWet_ramp += mInc;
+
+            if (mWet_ramp > 1.0)
+            {
+                mWet = mWet_target;
+                mEchoSmoother &= 0xFFFD;
+            }
+            else
+            {
+                mWet = mWet_base + mWet_diff * mWet_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mWet = mWet_target;
+            mEchoSmoother &= 0xFFFD;
+        }
+#endif
+        // Local Feedback Smoother
+        if (mLFeedback_ramp < 1.0)
+        {
+            mLFeedback_ramp += mInc;
+
+            if (mLFeedback_ramp > 1.0)
+            {
+                mLocalFeedback = mLFeedback_target;
+                mEchoSmoother &= 0xFFF7;
+            }
+            else
+            {
+                mLocalFeedback = mLFeedback_base + mLFeedback_diff * mLFeedback_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mLocalFeedback = mLFeedback_target;
+            mEchoSmoother &= 0xFFF7;
+        }
+#endif
+        // Cross Feedback Smoother
+        if (mCFeedback_ramp < 1.0)
+        {
+            mCFeedback_ramp += mInc;
+
+            if (mCFeedback_ramp > 1.0)
+            {
+                mCrossFeedback = mCFeedback_target;
+                mEchoSmoother &= 0xFFEF;
+            }
+            else
+            {
+                mCrossFeedback = mCFeedback_base + mCFeedback_diff * mCFeedback_ramp;
+            }
+        }
+#if 0
+        else
+        {
+            mCrossFeedback = mCFeedback_target;
+            mEchoSmoother &= 0xFFEF;
+        }
+#endif
+    }
+#endif
     float output = 0.f;
 
     if (_chInd == 0)                            //Channel L
@@ -344,10 +519,8 @@ float Echo::applyEcho(float _currSample, unsigned int _chInd)
 
 
 #if 0
-float Echo::delay(float _inputSample, float _delayTime, std::array<float,131072> &_sampleBuffer, unsigned int &_sampleBufferIndx)
+float Echo::delay(float _inputSample, float _delayTime, std::array<float,131072> &_sampleBuffer, uint32_t &_sampleBufferIndx)
 {
-    float outputSample = 0.f;
-
     //  DelayTime wird übergeebn, somit muss der 2Hz Lowpass vorher schon durchrechnen!
     float delaySamples = _delayTime * mSampleRate;
 
@@ -356,14 +529,14 @@ float Echo::delay(float _inputSample, float _delayTime, std::array<float,131072>
 
     _sampleBuffer[_sampleBufferIndx] = _inputSample;                              //Write
 
-    int ind_tm1 = delaySamples_int - 1;
+    uint32_t ind_tm1 = delaySamples_int - 1;
     if (ind_tm1 < 0)
     {
         ind_tm1 = 0;
     }
-    int ind_t0  = delaySamples_int;
-    int ind_tp1 = delaySamples_int + 1;
-    int ind_tp2 = delaySamples_int + 2;
+    int32_t ind_t0  = delaySamples_int;
+    int32_t ind_tp1 = delaySamples_int + 1;
+    int32_t ind_tp2 = delaySamples_int + 2;
 
     ind_tm1 = _sampleBufferIndx - ind_tm1;
     ind_t0  = _sampleBufferIndx - ind_t0;
@@ -382,11 +555,11 @@ float Echo::delay(float _inputSample, float _delayTime, std::array<float,131072>
     if (ind_tp2 < 0.f)  {ind_tp2 += _sampleBuffer.size();}
 #endif
 
-    outputSample = NlToolbox::Math::interpolRT(delaySamples_fract,
-                                               _sampleBuffer[ind_tm1],
-                                               _sampleBuffer[ind_t0],
-                                               _sampleBuffer[ind_tp1],
-                                               _sampleBuffer[ind_tp2]);
+    float outputSample = NlToolbox::Math::interpolRT(delaySamples_fract,
+                                                     _sampleBuffer[ind_tm1],
+                                                     _sampleBuffer[ind_t0],
+                                                     _sampleBuffer[ind_tp1],
+                                                     _sampleBuffer[ind_tp2]);
 
     ++_sampleBufferIndx;
     if (_sampleBufferIndx >= _sampleBuffer.size())
@@ -408,15 +581,13 @@ float Echo::delay(float _inputSample, float _delayTime, std::array<float,131072>
  *  @return	  processed sample
 ******************************************************************************/
 
-float Echo::delay(float _inputSample, float _delayTime, unsigned int _chInd)
+float Echo::delay(float _inputSample, float _delayTime, uint32_t _chInd)
 {
-    float outputSample = 0.f;
-
     std::array<float,131072> &sampleBuffer = (_chInd == 0)
             ? leftChannel.mSampleBuffer
             : rightChannel.mSampleBuffer;
 
-    unsigned int &sampleBufferIndx = (_chInd == 0)
+    uint32_t &sampleBufferIndx = (_chInd == 0)
             ? leftChannel.mSampleBufferIndx
             : rightChannel.mSampleBufferIndx;
 
@@ -427,14 +598,14 @@ float Echo::delay(float _inputSample, float _delayTime, unsigned int _chInd)
 
     sampleBuffer[sampleBufferIndx] = _inputSample;                              //Write
 
-    int ind_tm1 = delaySamples_int - 1;
+    int32_t ind_tm1 = delaySamples_int - 1;
     if (ind_tm1 < 0)
     {
         ind_tm1 = 0;
     }
-    int ind_t0  = delaySamples_int;
-    int ind_tp1 = delaySamples_int + 1;
-    int ind_tp2 = delaySamples_int + 2;
+    int32_t ind_t0  = delaySamples_int;
+    int32_t ind_tp1 = delaySamples_int + 1;
+    int32_t ind_tp2 = delaySamples_int + 2;
 
     ind_tm1 = sampleBufferIndx - ind_tm1;
     ind_t0  = sampleBufferIndx - ind_t0;
@@ -453,11 +624,11 @@ float Echo::delay(float _inputSample, float _delayTime, unsigned int _chInd)
     if (ind_tp2 < 0.f)  {ind_tp2 += sampleBuffer.size();}
 #endif
 
-    outputSample = NlToolbox::Math::interpolRT(delaySamples_fract,
-                                               sampleBuffer[ind_tm1],
-                                               sampleBuffer[ind_t0],
-                                               sampleBuffer[ind_tp1],
-                                               sampleBuffer[ind_tp2]);
+    float outputSample = NlToolbox::Math::interpolRT(delaySamples_fract,
+                                                     sampleBuffer[ind_tm1],
+                                                     sampleBuffer[ind_t0],
+                                                     sampleBuffer[ind_tp1],
+                                                     sampleBuffer[ind_tp2]);
 
     ++sampleBufferIndx;
     if (sampleBufferIndx >= sampleBuffer.size())
@@ -476,10 +647,31 @@ float Echo::delay(float _inputSample, float _delayTime, unsigned int _chInd)
 
 void Echo::calcFeedback()
 {
+#ifdef SMOOTHEROBJ
     mLocalFeedback = mFeedbackAmnt * (1.f - mCrossFeedbackAmnt);
     mCrossFeedback = mFeedbackAmnt * mCrossFeedbackAmnt;
 
     mLocalFeedbackSmoother.initSmoother(mLocalFeedback);
     mCrossFeedbackSmoother.initSmoother(mCrossFeedback);
+#else
+    // Local Feedback
+    mLFeedback_target = mFeedbackAmnt * (1.f - mCrossFeedbackAmnt);
+
+    mLFeedback_base = mLocalFeedback;
+    mLFeedback_diff = mLFeedback_target - mLFeedback_base;
+
+    mEchoSmoother |= 0x0004; //4;
+    mLFeedback_ramp = 0.0;
+
+    // Cross Feedback
+    mCFeedback_target = mFeedbackAmnt * mCrossFeedbackAmnt;
+
+    mCFeedback_base = mCrossFeedback;
+    mCFeedback_diff = mCFeedback_target - mCFeedback_base;
+
+    mEchoSmoother |= 0x0008; //8;
+    mCFeedback_ramp = 0.0;
+
+#endif
 }
 

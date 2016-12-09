@@ -41,7 +41,7 @@ TiltFilters::TiltFilters()
  *           parameters
 *******************************************************************************/
 
-TiltFilters::TiltFilters(int _sampleRate,
+TiltFilters::TiltFilters(uint32_t _sampleRate,
                          float _cutFreq,
                          float _tilt,
                          float _slopeWidth,
@@ -163,20 +163,20 @@ void TiltFilters::setFilterType(TiltFilterType _filterType)
 
 float TiltFilters::applyFilter(float _currSample)
 {
-    float output = 0.f;
+    float output;
 
-    output += mB0 * _currSample;
+    output  = mB0 * _currSample;
     output += mB1 * mInStateVar1;
     output += mB2 * mInStateVar2;
 
     output += mA1 * mOutStateVar1;
     output += mA2 * mOutStateVar2;
 
-    mInStateVar2 = mInStateVar1;
-    mInStateVar1 = _currSample;
+    mInStateVar2 = mInStateVar1 + DNC_CONST;
+    mInStateVar1 = _currSample + DNC_CONST;
 
-    mOutStateVar2 = mOutStateVar1;
-    mOutStateVar1 = output;
+    mOutStateVar2 = mOutStateVar1 + DNC_CONST;
+    mOutStateVar1 = output + DNC_CONST;
 
     return output;
 }
@@ -191,7 +191,7 @@ float TiltFilters::applyFilter(float _currSample)
  *  @param    midi control ID -> enum CtrlID (tiltfilters.h)
 ******************************************************************************/
 
-void TiltFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlID)
+void TiltFilters::setFilterParams(unsigned char _ctrlID, float _ctrlVal)
 {
     switch (_ctrlID)
     {
@@ -218,7 +218,7 @@ void TiltFilters::setFilterParams(float _ctrlVal, unsigned char _ctrlID)
         case CtrlId::FILTERTYPE:
         {
 
-            if (static_cast<int>(_ctrlVal) > 0)
+            if (static_cast<uint32_t>(_ctrlVal) > 0)
             {
 
                 ++mFilterCounter;

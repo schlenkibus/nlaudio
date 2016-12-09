@@ -43,7 +43,7 @@ StopBlockTime::~StopBlockTime()
 */
 StopWatch::StopWatch(const std::string &name) :
 	m_mutex(),
-	m_timestamps(),
+    m_timestamps(),
 	m_currentTimeStamp(),
 	m_waitingForStop(false),
 	m_name(name)
@@ -73,7 +73,6 @@ void StopWatch::start(const std::string &name)
 
 	m_waitingForStop = true;
 }
-
 /** \ingroup Tools
  *
  * \brief Set stop timestamp to now.

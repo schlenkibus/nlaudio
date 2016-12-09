@@ -1,33 +1,47 @@
 /******************************************************************************/
 /** @file		soundgenerator.cpp
-    @date		2016-07-20
-    @version	0.2
-    @author		Anton Schmied[2016-07-20]
-    @brief		Soundgenerator Class member and method definitions
+    @date		2016-12-01
+    @version	0.1
+    @author		Anton Schmied[2016-12-01]
+    @brief		OneSoundgenerator Class member and method definitions
 *******************************************************************************/
 
-#include "soundgenerator.h"
+#include "onesoundgenerator.h"
 
 /******************************************************************************/
 /** Soundgenerator Default Constructor
  * @brief    initialization of the modules local variabels with default values
  *           SampleRate:            48 kHz
  *           Phase:                 0.f
-// *           Gain:                  0.5f
  *           Pitch Offset:          60.f ct
  *           Key Tracking:          1.f
  *           Main Mix Amount:       0.f
 *******************************************************************************/
 
-Soundgenerator::Soundgenerator()
+OneSoundgenerator::OneSoundgenerator()
     : mSampleRate(48000.f)
 {
-//    moduleA.mGain = 0.5f;
-    moduleA.mOsc = Oscillator();
+    /*erst mal 12 Oscillatoren*/
+    for(unsigned int i = 0; i < 12; i++)
+    {
+        moduleA.mOsc[i] = Oscillator();
+        moduleB.mOsc[i] = Oscillator();
+
+        //State Variables
+        moduleA.mSelfMix[i] = 0.f;
+        moduleA.mCrossMix[i] = 0.f;
+
+        moduleB.mSelfMix[i] = 0.f;
+        moduleB.mCrossMix[i] = 0.f;
+
+        mSampleA[i] = 0.f;
+        mSampleB[i] = 0.f;
+    }
+
     moduleA.mShaper = Shaper();
+    moduleB.mShaper = Shaper();
 
-    moduleA.mShaperMixAmount = 0.f;
-
+    // Osc Controls
     moduleA.mPhase = 0.f;
     moduleA.mPitchOffset = 60.f;
     moduleA.mKeyTracking = 1.f;
@@ -37,51 +51,32 @@ Soundgenerator::Soundgenerator()
     moduleA.mPmSelfShaper = 0.f;
     moduleA.mPmCrossShaper = 0.f;
 
-    moduleA.mSelfMix = 0.f;
-    moduleA.mCrossMix = 0.f;
+    moduleB.mPhase = 0.f;
+    moduleB.mPitchOffset = 60.f;
+    moduleB.mKeyTracking = 1.f;
 
+    moduleB.mPmSelf = 0.f;
+    moduleB.mPmCross = 0.f;
+    moduleB.mPmSelfShaper = 0.f;
+    moduleB.mPmCrossShaper = 0.f;
+
+    // Shaper Controls
+    /*drive, asym and fold are passed directly to the shaper*/
+    moduleA.mShaperMixAmount = 0.f;
     moduleA.mRingMod = 0.f;
 
-    moduleB = moduleA;
-}
+    moduleB.mShaperMixAmount = 0.f;
+    moduleB.mRingMod = 0.f;
+
+//    moduleB = moduleA;
 
 
-
-/******************************************************************************/
-/** Soundgenerator Parameterized Constructor
- * @brief    initialization of the modules local variabels with custom
- *           parameters
-*******************************************************************************/
-
-Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized Constructor
-                 float _phase,
-//                 float _gain,
-                 float _pitchOffset,
-                 float _keyTracking,
-                 float _mainMixAmount)
-    : mSampleRate(static_cast<float>(_sampleRate))
-{
-//    moduleA.mGain = _gain;
-    moduleA.mShaperMixAmount = _mainMixAmount;
-
-    moduleA.mOsc = Oscillator();
-    moduleA.mShaper = Shaper();
-
-    moduleA.mPhase = _phase;
-    moduleA.mPitchOffset = _pitchOffset;
-    moduleA.mKeyTracking = _keyTracking;
-
-    moduleA.mPmSelf = 0.f;
-    moduleA.mPmCross = 0.f;
-    moduleA.mPmSelfShaper = 0.f;
-    moduleA.mPmCrossShaper = 0.f;
-
-    moduleA.mSelfMix = 0.f;
-    moduleA.mCrossMix = 0.f;
-
-    moduleA.mRingMod = 0.f;
-
-    moduleB = moduleA;
+    // Set Seed of each Oscillator
+    for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+    {
+        moduleA.mOsc[voiceNumber].setSeed(voiceNumber + 1);
+        moduleB.mOsc[voiceNumber].setSeed(voiceNumber + 1 + 111);
+    }
 }
 
 
@@ -92,35 +87,38 @@ Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized C
  *            calculates the samples of the 2 oscillators and 2 shapers
 *******************************************************************************/
 
-void Soundgenerator::generateSound()
+void OneSoundgenerator::generateSound()
 {
-    float modedPhaseA = (moduleA.mSelfMix * moduleA.mPmSelf) + (moduleB.mCrossMix * moduleA.mPmCross);
-    float modedPhaseB = (moduleB.mSelfMix * moduleB.mPmSelf) + (moduleA.mCrossMix * moduleB.mPmCross);
+    // calculate for all voices
+    for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+    {
+        float modedPhaseA = (moduleA.mSelfMix[voiceNumber] * moduleA.mPmSelf) + (moduleB.mCrossMix[voiceNumber] * moduleA.mPmCross);
+        float modedPhaseB = (moduleB.mSelfMix[voiceNumber] * moduleB.mPmSelf) + (moduleA.mCrossMix[voiceNumber] * moduleB.mPmCross);
 
-    moduleA.mOsc.setModPhase(modedPhaseA);
-    moduleB.mOsc.setModPhase(modedPhaseB);
+        moduleA.mOsc[voiceNumber].setModPhase(modedPhaseA);
+        moduleB.mOsc[voiceNumber].setModPhase(modedPhaseB);
 
-    float oscSampleA = moduleA.mOsc.applyOscillator();
-    float oscSampleB = moduleB.mOsc.applyOscillator();
+        float oscSampleA = moduleA.mOsc[voiceNumber].applyOscillator();
+        float oscSampleB = moduleB.mOsc[voiceNumber].applyOscillator();
 
-    float shaperSampleA = moduleA.mShaper.applyShaper(oscSampleA);
-    float shaperSampleB = moduleB.mShaper.applyShaper(oscSampleB);
+        float shaperSampleA = moduleA.mShaper.applyShaper(oscSampleA);
+        float shaperSampleB = moduleB.mShaper.applyShaper(oscSampleB);
 
-    moduleA.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mPmSelfShaper);
-    moduleA.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleB.mPmCrossShaper);
+        moduleA.mSelfMix[voiceNumber] = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mPmSelfShaper);
+        moduleA.mCrossMix[voiceNumber] = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleB.mPmCrossShaper);
 
-    moduleB.mSelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mPmSelfShaper);
-    moduleB.mCrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleA.mPmCrossShaper);
+        moduleB.mSelfMix[voiceNumber] = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mPmSelfShaper);
+        moduleB.mCrossMix[voiceNumber] = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleA.mPmCrossShaper);
 
-    mSampleA = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mShaperMixAmount);
-    mSampleB = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mShaperMixAmount);
+        mSampleA[voiceNumber] = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, moduleA.mShaperMixAmount);
+        mSampleB[voiceNumber] = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, moduleB.mShaperMixAmount);
 
-    // Ring Modulation
-    float crossSample = mSampleA * mSampleB;
-    mSampleA = NlToolbox::Crossfades::bipolarCrossFade(mSampleA, crossSample, moduleA.mRingMod);
-    mSampleB = NlToolbox::Crossfades::bipolarCrossFade(mSampleB, crossSample, moduleB.mRingMod);
+        // Ring Modulation
+        float crossSample = mSampleA[voiceNumber] * mSampleB[voiceNumber];
 
-//    mMainOut = NlToolbox::Crossfades::crossFade(mSampleA, mSampleB, moduleA.mGain, moduleB.mGain);
+        mSampleA[voiceNumber] = NlToolbox::Crossfades::bipolarCrossFade(mSampleA[voiceNumber], crossSample, moduleA.mRingMod);
+        mSampleB[voiceNumber] = NlToolbox::Crossfades::bipolarCrossFade(mSampleB[voiceNumber], crossSample, moduleB.mRingMod);
+    }
 }
 
 
@@ -129,32 +127,19 @@ void Soundgenerator::generateSound()
 /** @brief    pitch set function, which calls the function for calculating the
  *            individual oscialltor frequencies. Dependant on previously
  *            Key Tracking Amount and Pitch Offset
- *  @param    incoming pitch
+ *  @param    incoming pitch of the pressed key
+ *  @param    voice number for the correct oscillator initialization
 *******************************************************************************/
 
-void Soundgenerator::setPitch(float _pitch)
+void OneSoundgenerator::setPitch(float _pitch, unsigned int _voiceNumber)
 {
-    mPitch = _pitch - 60.f;
+    mPitch[_voiceNumber] = _pitch - 60.f;
 
-    moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
-    moduleA.mOsc.calcInc();
+    moduleA.mOsc[_voiceNumber].setOscFreq(calcOscFrequency(mPitch[_voiceNumber], moduleA.mKeyTracking, moduleA.mPitchOffset));
+    moduleA.mOsc[_voiceNumber].calcInc();
 
-    moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
-    moduleB.mOsc.calcInc();
-}
-
-
-
-/******************************************************************************/
-/** @brief    depending on the voice number, the seed in the oscillators is set
- *            for fluctuation/ randomization purposes
- *  @param    voice number 0 - 11
-*******************************************************************************/
-
-void Soundgenerator::setVoiceNumber(unsigned int _voiceNumber)
-{
-    moduleA.mOsc.setSeed(_voiceNumber + 1);
-    moduleB.mOsc.setSeed(_voiceNumber + 1 + 111);
+    moduleB.mOsc[_voiceNumber].setOscFreq(calcOscFrequency(mPitch[_voiceNumber], moduleB.mKeyTracking, moduleB.mPitchOffset));
+    moduleB.mOsc[_voiceNumber].calcInc();
 }
 
 
@@ -164,10 +149,10 @@ void Soundgenerator::setVoiceNumber(unsigned int _voiceNumber)
  *            event
 *******************************************************************************/
 
-void Soundgenerator::resetPhase()
+void OneSoundgenerator::resetPhase(unsigned int _voiceNumber)
 {
-    moduleA.mOsc.resetPhase(moduleA.mPhase);
-    moduleB.mOsc.resetPhase(moduleB.mPhase);
+        moduleA.mOsc[_voiceNumber].resetPhase(moduleA.mPhase);
+        moduleB.mOsc[_voiceNumber].resetPhase(moduleB.mPhase);
 }
 
 
@@ -180,7 +165,7 @@ void Soundgenerator::resetPhase()
  *  @param    midi control value [0 ... 127]
 ******************************************************************************/
 
-void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
+void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
 {
     switch (_instrID)
     {
@@ -197,8 +182,11 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 moduleA.mPitchOffset = _ctrlVal;
 
-                moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
-                moduleA.mOsc.calcInc();
+                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                {
+                    moduleA.mOsc[voiceNumber].setOscFreq(calcOscFrequency(mPitch[voiceNumber], moduleA.mKeyTracking, moduleA.mPitchOffset));
+                    moduleA.mOsc[voiceNumber].calcInc();
+                }
                 break;
 
             case CtrlID::KEYTRACKING:
@@ -211,8 +199,11 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 moduleA.mKeyTracking = _ctrlVal / 100.f;
 
-                moduleA.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleA.mKeyTracking, moduleA.mPitchOffset));
-                moduleA.mOsc.calcInc();
+                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                {
+                    moduleA.mOsc[voiceNumber].setOscFreq(calcOscFrequency(mPitch[voiceNumber], moduleA.mKeyTracking, moduleA.mPitchOffset));
+                    moduleA.mOsc[voiceNumber].calcInc();
+                }
                 break;
 
             case CtrlID::FLUCT:
@@ -227,7 +218,10 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
 
-                moduleA.mOsc.setFluctuation(_ctrlVal);
+                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                {
+                    moduleA.mOsc[voiceNumber].setFluctuation(_ctrlVal);
+                }
                 break;
 
             case CtrlID::PHASE:
@@ -255,7 +249,10 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 
-                moduleA.mOsc.setChirpFreq(_ctrlVal);
+                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                {
+                    moduleA.mOsc[voiceNumber].setChirpFreq(_ctrlVal);
+                }
                 break;
 
             case CtrlID::PMSELF:
@@ -385,23 +382,6 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 moduleA.mRingMod = _ctrlVal;
             break;
-
-
-
-            /*********************** Temporal Controls ***********************/
-
-//            case CtrlID::GAIN:
-//                _ctrlVal = (_ctrlVal / 126.f);
-
-//                if (_ctrlVal > 1.f)
-//                {
-//                    _ctrlVal = 1.f;
-//                }
-
-//                printf("A: Gain: %f\n", _ctrlVal);
-
-//                moduleA.mGain = _ctrlVal;
-//                break;
         }
         break;
 
@@ -418,8 +398,11 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 moduleB.mPitchOffset = _ctrlVal;
 
-                moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
-                moduleB.mOsc.calcInc();
+                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                {
+                    moduleB.mOsc[voiceNumber].setOscFreq(calcOscFrequency(mPitch[voiceNumber], moduleB.mKeyTracking, moduleB.mPitchOffset));
+                    moduleB.mOsc[voiceNumber].calcInc();
+                }
                 break;
 
             case CtrlID::KEYTRACKING:
@@ -432,8 +415,11 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 moduleB.mKeyTracking = _ctrlVal / 100.f;
 
-                moduleB.mOsc.setOscFreq(calcOscFrequency(mPitch, moduleB.mKeyTracking, moduleB.mPitchOffset));
-                moduleB.mOsc.calcInc();
+                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                {
+                    moduleB.mOsc[voiceNumber].setOscFreq(calcOscFrequency(mPitch[voiceNumber], moduleB.mKeyTracking, moduleB.mPitchOffset));
+                    moduleB.mOsc[voiceNumber].calcInc();
+                }
                 break;
 
             case CtrlID::PHASE:
@@ -461,7 +447,10 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 
-                moduleB.mOsc.setChirpFreq(_ctrlVal);
+                for(unsigned  int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                {
+                    moduleB.mOsc[voiceNumber].setChirpFreq(_ctrlVal);
+                }
                 break;
 
             case CtrlID::PMSELF:
@@ -591,7 +580,10 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
 
-                moduleB.mOsc.setFluctuation(_ctrlVal);
+                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                {
+                    moduleB.mOsc[voiceNumber].setFluctuation(_ctrlVal);
+                }
                 break;
 
             case CtrlID::RING:
@@ -606,29 +598,10 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 moduleB.mRingMod = _ctrlVal;
                 break;
-
-
-            /*********************** Temporal Controls ***********************/
-
-//            case CtrlID::GAIN:
-//                _ctrlVal = (_ctrlVal / 126.f);
-
-//                if (_ctrlVal > 1.f)
-//                {
-//                    _ctrlVal = 1.f;
-//                }
-
-//                printf("B: Gain: %f\n", _ctrlVal);
-
-//                moduleB.mGain = _ctrlVal;
-//                break;
         }
         break;
     }
 }
-
-
-
 
 /******************************************************************************/
 /** @brief    frequency calculation depending on the incoming pitch,
@@ -639,7 +612,7 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
  *  @return   frequency in Hz
 *******************************************************************************/
 
-inline float Soundgenerator::calcOscFrequency(float _pitch, float _keyTracking, float _pitchOffset)
+inline float OneSoundgenerator::calcOscFrequency(float _pitch, float _keyTracking, float _pitchOffset)
 {
     _pitch = _pitch * _keyTracking + _pitchOffset;
 

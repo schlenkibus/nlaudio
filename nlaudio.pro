@@ -44,7 +44,9 @@ SOURCES += main.cpp \
     soundgenerator.cpp \
     shaper.cpp \
     outputmixer.cpp \
-    voicemanager.cpp
+    voicemanager.cpp \
+    cpu_stopwatch.cpp \
+    onesoundgenerator.cpp
 
 include(deployment.pri)
 qtcAddDeployment()
@@ -87,7 +89,9 @@ HEADERS += \
     shaper.h \
     outputmixer.h \
     voicemanager.h \
-    sharedoutputs.h
+    sharedoutputs.h \
+    cpu_stopwatch.h \
+    onesoundgenerator.h
 
 OTHER_FILES += \
     Todo.txt

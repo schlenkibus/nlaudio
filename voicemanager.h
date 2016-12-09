@@ -8,10 +8,14 @@
 
 #pragma once
 
+//#define MANYGENS
+#define ONEGEN
+
 #include "sharedoutputs.h"
 
 #include "nltoolbox.h"
 #include "soundgenerator.h"
+#include "onesoundgenerator.h"
 #include "outputmixer.h"
 #include "echo.h"
 #include "cabinet.h"
@@ -30,7 +34,13 @@ public:
 
 private:
 
+#ifdef MANYGENS
     Soundgenerator mSoundGenerator[NUM_VOICES];             // 12 Generatoren ... naja ...
+#endif
+#ifdef ONEGEN
+    OneSoundgenerator mSoundGenerator;
+#endif
+
     Outputmixer mOutputMixer;
 
     // Effects
