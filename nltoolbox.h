@@ -3,9 +3,28 @@
 #include <cmath>
 #include "tools.h"
 
+// Controller define
+#define REMOTE61
+//#define NANOKONTROL_I
+
+
+// Smoother Objects on/off
+//#define SMOOTHEROBJ
+
+// define number of voices and channels
+#define NUM_VOICES 12
+#define NUM_CHANNELS 2
+
+// DNC constant define
 #ifndef DNC_CONST
 #define DNC_CONST 1e-18
 #endif
+
+// globale arrays und variablen ... ja nciht cool hier ...
+// Frage on man die überhaupt braucht später ...
+extern float gKeyPitch[NUM_VOICES];
+extern float gVoiceVelocity[NUM_VOICES];
+
 
 
 namespace NlToolbox {
@@ -196,7 +215,7 @@ struct Highpass30Hz
 
 
 
-    Highpass30Hz(int _sampleRate)      // Parameterized Constructor
+    Highpass30Hz(uint32_t _sampleRate)      // Parameterized Constructor
         : mSampleRate(static_cast<float>(_sampleRate))
         , mInStateVar(0.f)
     {
@@ -247,7 +266,7 @@ struct Lowpass2Hz
     }
 
 
-    Lowpass2Hz(int _sampleRate)         // Parameterized Constructor
+    Lowpass2Hz(uint32_t _sampleRate)         // Parameterized Constructor
         : mSampleRate(static_cast<float>(_sampleRate))
         , mStateVar(0.f)
     {
@@ -303,7 +322,7 @@ struct ChirpFilter
 
 
 
-    ChirpFilter(int _sampleRate, float _cutFrequency)       // Parameterized Constructor
+    ChirpFilter(uint32_t _sampleRate, float _cutFrequency)       // Parameterized Constructor
         : mSampleRate(static_cast<float>(_sampleRate))
         , mStateVar(0.f)
     {

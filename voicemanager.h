@@ -8,10 +8,8 @@
 
 #pragma once
 
-//#define MANYGENS
-#define ONEGEN
-
-#include "sharedoutputs.h"
+#define MANYGENS
+//#define ONEGEN
 
 #include "nltoolbox.h"
 #include "soundgenerator.h"
@@ -35,10 +33,10 @@ public:
 private:
 
 #ifdef MANYGENS
-    Soundgenerator mSoundGenerator[NUM_VOICES];             // 12 Generatoren ... naja ...
+    Soundgenerator mSoundGenerator[NUM_VOICES];             // 12 Generatoren für je 1 Stimme
 #endif
 #ifdef ONEGEN
-    OneSoundgenerator mSoundGenerator;
+    OneSoundgenerator mSoundGenerator;                      // 1 Generator für Num_VOICE stimmen
 #endif
 
     Outputmixer mOutputMixer;
@@ -52,22 +50,23 @@ private:
     void vallocProcess(unsigned char _keyDirection, float _pitch, float _velocity);
 
     //--------------- Voice Allocation global variables
-    int vVoiceState[NUM_VOICES] = {};                               // which voices are active? 1 - on, 0 - off
+    uint32_t vVoiceState[NUM_VOICES] = {};                      // which voices are active? 1 - on, 0 - off
 
-    int vOldestAssigned;
-    int vYoungestAssigned;
-    int vNextAssigned[NUM_VOICES] = {};                             // array with the next elements per voice
-    int vPreviousAssigned[NUM_VOICES] = {};
+    uint32_t vOldestAssigned;
+    uint32_t vYoungestAssigned;
+    uint32_t vNextAssigned[NUM_VOICES] = {};                    // array with the next elements per voice
+    uint32_t vPreviousAssigned[NUM_VOICES] = {};
 
-    int vNumAssigned;
+    uint32_t vNumAssigned;
 
-    int vOldestReleased;                                           // index of the earliest disabled voice (full use: earliest turned on)
-    int vYoungestReleased;                                         // index of the last disabled voice (full use: last turned on)
-    int vNextReleased[NUM_VOICES] = {};
+    uint32_t vOldestReleased;                                   // index of the earliest disabled voice (full use: earliest turned on)
+    uint32_t vYoungestReleased;                                 // index of the last disabled voice (full use: last turned on)
+    uint32_t vNextReleased[NUM_VOICES] = {};
 #endif
 
-    enum InstrID: unsigned char  // enums for Instrument IDs novation ReMOTE61
+    enum InstrID: unsigned char         // enums for Instrument IDs
     {
+#ifdef REMOTE61                         // novation ReMOTE61
         KEYUP_0             = 0x80,
         KEYUP_1             = 0x81,
         KEYUP_2             = 0x82,
@@ -86,8 +85,8 @@ private:
         CABINET_PARAM       = 0xB2,
         OUTPUTMIXER_PARAM   = 0xB3,
         ECHO_PARAM          = 0xB4
+#endif
     };
-
 };
 
 

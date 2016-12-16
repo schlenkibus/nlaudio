@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "sharedoutputs.h"
-
 #include "nltoolbox.h"
-#include "smoother.h"
 #include "onepolefilters.h"
+#ifdef SMOOTHEROBJ
+#include "smoother.h"
+#endif
 
 class Outputmixer
 {
@@ -21,17 +21,15 @@ class Outputmixer
 public:
     Outputmixer();                  // Default Constructor
 
-//    Outputmixer();                // Parametrized Constructor - fehlt!
+//    Outputmixer();                /// Parametrized Constructor - fehlt!
 
     ~Outputmixer(){}                // Destructor
 
     float mSample_L, mSample_R;       // Resulting Samples for left and right channel
 
-    void applyOutputmixer();
+    void applyMixer(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter);
+    inline void applySmoothers();
 
-    /// das ist neu!!! ersetz die obere Funktion hoffentlich bald!
-    void applyOutputMixer(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter);
-    void applySmoothers();
     void calcKeyPan();
 
     void setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal);
@@ -53,7 +51,6 @@ public:
     void setKeyPan(float _keypan);
 
 private:
-    /// safe!
     float mALevel;
     float mAPan;
     float mBLevel;
@@ -94,78 +91,91 @@ private:
     Smoother mMainLevelSmoother;
     Smoother mKeypanSmoother;
 #else
-    uint32_t mOMSmootherMask;
-    float mInc;
+    uint32_t mOMSmootherMask;           // Smoother Mask
+    float mInc;                         // Smoother Increment
 
+    // Mask ID: 0
     float mALevel_base;
     float mALevel_target;
     float mALevel_diff;
     float mALevel_ramp;
 
+    // Mask ID: 1
     float mAPan_base;
     float mAPan_target;
     float mAPan_diff;
     float mAPan_ramp;
 
+    // Mask ID: 2
     float mBLevel_base;
     float mBLevel_target;
     float mBLevel_diff;
     float mBLevel_ramp;
 
+    // Mask ID: 3
     float mBPan_base;
     float mBPan_target;
     float mBPan_diff;
     float mBPan_ramp;
 
+    // Mask ID: 4
     float mCombLevel_base;
     float mCombLevel_target;
     float mCombLevel_diff;
     float mCombLevel_ramp;
 
+    // Mask ID: 5
     float mCombPan_base;
     float mCombPan_target;
     float mCombPan_diff;
     float mCombPan_ramp;
 
+    // Mask ID: 6
     float mSVFilterLevel_base;
     float mSVFilterLevel_target;
     float mSVFilterLevel_diff;
     float mSVFilterLevel_ramp;
 
+    // Mask ID: 7
     float mSVFilterPan_base;
     float mSVFilterPan_target;
     float mSVFilterPan_diff;
     float mSVFilterPan_ramp;
 
+    // Mask ID: 8
     float mDrive_base;
     float mDrive_target;
     float mDrive_diff;
     float mDrive_ramp;
 
+    // Mask ID: 9
     float mFold_base;
     float mFold_target;
     float mFold_diff;
     float mFold_ramp;
 
+    // Mask ID: 10
     float mAsym_base;
     float mAsym_target;
     float mAsym_diff;
     float mAsym_ramp;
 
+    // Mask ID: 11
     float mMainLevel_base;
     float mMainLevel_target;
     float mMainLevel_diff;
     float mMainLevel_ramp;
 
+    // Mask ID: 12
     float mKeypan_base;
     float mKeypan_target;
     float mKeypan_diff;
     float mKeypan_ramp;
 #endif
 
-    enum CtrlID: unsigned char
+    enum CtrlID: unsigned char      // enum for controm IDs
     {
-        // enum for controm IDs novation ReMOTE61
+#ifdef REMOTE61                     // novation ReMOTE61
         A_LEVEL             = 0x15,
         A_PAN               = 0x1F,
         B_LEVEL             = 0x16,
@@ -181,6 +191,6 @@ private:
 
         MAIN_LEVEL          = 0x1C,
         KEYPAN              = 0x26
+#endif
     };
-
 };

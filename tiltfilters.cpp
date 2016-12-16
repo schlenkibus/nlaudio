@@ -9,7 +9,6 @@
 #include "tiltfilters.h"
 
 
-
 /******************************************************************************/
 /** TiltFilters Default Constructor
  * @brief    initialization of the modules local variabels with default values

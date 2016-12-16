@@ -29,7 +29,5 @@ private:
     float mDrive;               // Drive Amount
     float mFold;                // Fold Amount
     float mAsym;                // Drive Amount
-
-
 };
 

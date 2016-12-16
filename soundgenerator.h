@@ -22,9 +22,8 @@ class Soundgenerator
 public:
     Soundgenerator();                      // Default Constructor
 
-    Soundgenerator(int _sampleRate,        // Parameterized Constructor
+    Soundgenerator(uint32_t _sampleRate,        // Parameterized Constructor
                     float _phase,
-//                    float _gain,
                     float _pitchOffset,
                     float _keyTracking,
                     float _mainMixAmount);
@@ -34,14 +33,10 @@ public:
     float mPitch;                          // Pitch of the played note/ key
     float mSampleA, mSampleB;              // Generated Samples
 
-
-//    float mMainOut;                        // mal testweise ...
-
-
     void generateSound();
 
     void setPitch(float _pitch);
-    void setVoiceNumber(unsigned int _voiceNumber);
+    void setVoiceNumber(uint32_t _voiceNumber);
     void resetPhase();
     void setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
 
@@ -51,7 +46,6 @@ private:
 
     struct Generatormodules         // Struct for shared Parameters of both Oscillators and Shapers
     {
-//        float mGain;                // Module gain
         float mShaperMixAmount;       // Mix Amount between Oscillator and Shaper
 
         Oscillator mOsc;            // Osciallator
@@ -74,10 +68,9 @@ private:
     } moduleA, moduleB;
 
 
-    enum CtrlID: unsigned char
+    enum CtrlID: unsigned char      // enums for control IDs
     {
-        // enums for control IDs novation ReMOTE61
-
+#ifdef REMOTE61                     // novation ReMOTE61
         OFFSETPITCH  = 0x15,
         KEYTRACKING  = 0x16,
         PHASE        = 0x17,
@@ -95,8 +88,7 @@ private:
         RING         = 0x2C,
         FOLD         = 0x2D,
         ASYM         = 0x2E,
-
-//        GAIN         = 0x2F          //Gain
+#endif
     };
 
     enum InstrID: unsigned char

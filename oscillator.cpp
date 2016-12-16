@@ -8,8 +8,6 @@
 
 #include "oscillator.h"
 
-
-
 /******************************************************************************/
 /** Oscillator Default Constructor
  * @brief    initialization of the modules local variabels with default values
@@ -18,7 +16,7 @@
 *******************************************************************************/
 
 Oscillator::Oscillator()
-    : mSampleRate(48000)
+    : mSampleRate(48000.f)
     , mOscFreq(0.f)
     , mOscPhase(0.f)
     , mModPhase(0.f)
@@ -37,7 +35,12 @@ Oscillator::Oscillator()
  *
 *******************************************************************************/
 
-Oscillator::Oscillator(int _samplerate, float _oscFreq, float _oscPhase, float _modPhase, float _fluctAmnt, float _chirpFreq)
+Oscillator::Oscillator(uint32_t _samplerate,
+                       float _oscFreq,
+                       float _oscPhase,
+                       float _modPhase,
+                       float _fluctAmnt,
+                       float _chirpFreq)
     : mSampleRate(static_cast<float>(_samplerate))
     , mOscFreq(_oscFreq)
     , mOscPhase(_oscPhase)
@@ -148,7 +151,7 @@ void Oscillator::setFluctuation(float _oscFluctAmnt)
  *  @param  any integer
 *******************************************************************************/
 
-void Oscillator::setSeed(unsigned int _randVal)
+void Oscillator::setSeed(uint32_t _randVal)
 {
     mRandValStateVar = _randVal;
 }

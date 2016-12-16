@@ -2,7 +2,7 @@
 
 #define SYNTH           // turn synth on and off by define
 //#define PASCALSW
-#define CPU_STOPWATCH
+//#define CPU_STOPWATCH
 
 #include "stopwatch.h"
 #include "cpu_stopwatch.h"

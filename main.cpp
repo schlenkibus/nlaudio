@@ -37,6 +37,8 @@
 #include "examples.h"
 #include "minisynth.h"
 #include "effects.h"
+/// TESTEWEISE!!!
+#include "chrono"
 
 #include "tools.h"
 
@@ -73,6 +75,34 @@ int main()
 #endif
 
     Nl::requestRealtime();                                  // Realtime Request
+#if 0
+    /// zum testen der Anton-DSP
+
+    VoiceManager voiceManager = VoiceManager();
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
+    std::chrono::time_point<std::chrono::high_resolution_clock> stop;
+
+    // start the timer
+    printf("Starting  the timer \n");
+
+    start = std::chrono::high_resolution_clock::now();
+
+    // DSP Loop
+    for (uint32_t counter = 0; counter < 480000; counter++)
+    {
+        voiceManager.voiceLoop();
+        float sampleLeft = voiceManager.mainOut_L;
+        float sampleRight = voiceManager.mainOut_R;
+    }
+
+    stop = std::chrono::high_resolution_clock::now();
+    int duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count();
+
+    std::cout << "Loop duraion: " << duration << " milliseconds" << std::endl;
+
+    return 0;
+#else
 
     try
     {
@@ -151,6 +181,8 @@ int main()
 
 #ifdef OSCGUI
     return a.exec();
+#endif
+
 #endif
 }
 

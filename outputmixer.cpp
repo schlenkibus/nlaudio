@@ -32,7 +32,7 @@ Outputmixer::Outputmixer()
     , mMainLevelSmoother(48000.f, 0.032f)
     , mKeypanSmoother(48000.f, 0.032f)
 #else
-    , mOMSmootherMask(0)
+    , mOMSmootherMask(0x0000)
     , mInc(5.f / (static_cast<float>(48000.f) * 0.032))
 #endif
 {
@@ -58,7 +58,7 @@ Outputmixer::Outputmixer()
 /** @brief    calls the smoothing functions fpr each sample
 *******************************************************************************/
 
-void Outputmixer::applySmoothers()
+inline void Outputmixer::applySmoothers()
 {
 #ifdef SMOOTHEROBJ
     mALevel = mALevelSmoother.smooth();
@@ -74,298 +74,213 @@ void Outputmixer::applySmoothers()
 
     mKeypan = mKeypanSmoother.smooth();
 #else
-    if (mOMSmootherMask)
+    // 0: A Level Smoother
+    if (mALevel_ramp < 1.0)
     {
-        // A Level Smoother
-        if (mALevel_ramp < 1.0)
-        {
-            mALevel_ramp += mInc;
+        mALevel_ramp += mInc;
 
-            if (mALevel_ramp > 1.0)
-            {
-                mALevel = mALevel_target;
-                mOMSmootherMask &= 0xFFFE;
-            }
-            else
-            {
-                mALevel = mALevel_base + mALevel_diff * mALevel_ramp;
-            }
-        }
-#if 0
-        else
+        if (mALevel_ramp > 1.0)
         {
             mALevel = mALevel_target;
-            mOMSmootherMask &= 0xFFFE;
+            mOMSmootherMask &= 0xFFFE;      // switch first bit to 0
         }
-#endif
-        // A Pan Smoother
-        if (mAPan_ramp < 1.0)
-        {
-            mAPan_ramp += mInc;
-
-            if (mAPan_ramp > 1.0)
-            {
-                mAPan = mAPan_target;
-                mOMSmootherMask &= 0xFFFD;
-            }
-            else
-            {
-                mAPan = mAPan_base + mAPan_diff * mAPan_ramp;
-            }
-        }
-#if 0
         else
         {
-            mAPan = mAPan_target;
-            mOMSmootherMask &= 0xFFFD;
+            mALevel = mALevel_base + mALevel_diff * mALevel_ramp;
         }
-#endif
-        // B Level Smoother
-        if (mBLevel_ramp < 1.0)
-        {
-            mBLevel_ramp += mInc;
-
-            if (mBLevel_ramp > 1.0)
-            {
-                mBLevel = mBLevel_target;
-                mOMSmootherMask &= 0xFFFB;
-            }
-            else
-            {
-                mBLevel = mBLevel_base + mBLevel_diff * mBLevel_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mBLevel = mBLevel_target;
-            mOMSmootherMask &= 0xFFFB;
-        }
-#endif
-        // B Pan Smoother
-        if (mBPan_ramp < 1.0)
-        {
-            mBPan_ramp += mInc;
-
-            if (mBPan_ramp > 1.0)
-            {
-                mBPan = mBPan_target;
-                mOMSmootherMask &= 0xFFF7;
-            }
-            else
-            {
-                mBPan = mBPan_base + mBPan_diff * mBPan_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mBPan = mBPan_target;
-            mOMSmootherMask &= 0xFFF7;
-        }
-#endif
-        // Comb Level Smoother
-        if (mCombLevel_ramp < 1.0)
-        {
-            mCombLevel_ramp += mInc;
-
-            if (mCombLevel_ramp > 1.0)
-            {
-                mCombLevel = mCombLevel_target;
-                mOMSmootherMask &= 0xFFEF;
-            }
-            else
-            {
-                mCombLevel = mCombLevel_base + mCombLevel_diff * mCombLevel_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mCombLevel = mCombLevel_target;
-            mOMSmootherMask &= 0xFFEF;
-        }
-#endif
-        // Comb Pan Smoother
-        if (mCombPan_ramp < 1.0)
-        {
-            mCombPan_ramp += mInc;
-
-            if (mCombPan_ramp > 1.0)
-            {
-                mCombPan = mCombPan_target;
-                mOMSmootherMask &= 0xFFDF;
-            }
-            else
-            {
-                mCombPan = mCombPan_base + mCombPan_diff * mCombPan_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mCombPan = mCombPan_target;
-            mOMSmootherMask &= 0xFFDF;
-        }
-#endif
-        // SV Filter Level Smoother
-        if (mSVFilterLevel_ramp < 1.0)
-        {
-            mSVFilterLevel_ramp += mInc;
-
-            if (mSVFilterLevel_ramp > 1.0)
-            {
-                mSVFilterLevel = mSVFilterLevel_target;
-                mOMSmootherMask &= 0xFFBF;
-            }
-            else
-            {
-                mSVFilterLevel = mSVFilterLevel_base + mSVFilterLevel_diff * mSVFilterLevel_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mSVFilterLevel = mSVFilterLevel_target;
-            mOMSmootherMask &= 0xFFBF;
-        }
-#endif
-        // SV Filter Pan Smoother
-        if (mSVFilterPan_ramp < 1.0)
-        {
-            mSVFilterPan_ramp += mInc;
-
-            if (mSVFilterPan_ramp > 1.0)
-            {
-                mSVFilterPan = mSVFilterPan_target;
-                mOMSmootherMask &= 0xFF7F;
-            }
-            else
-            {
-                mSVFilterPan = mSVFilterPan_base + mSVFilterPan_diff * mSVFilterPan_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mSVFilterPan = mSVFilterPan_target;
-            mOMSmootherMask &= 0xFF7F;
-        }
-#endif
-        /// new
-        // Drive Smoother
-        if (mDrive_ramp < 1.0)
-        {
-            mDrive_ramp += mInc;
-
-            if (mDrive_ramp > 1.0)
-            {
-                mDrive = mDrive_target;
-                mOMSmootherMask &= 0xFEFF;
-            }
-            else
-            {
-                mDrive = mDrive_base + mDrive_diff * mDrive_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mDrive = mDrive_target;
-            mOMSmootherMask &= 0xFEFF;
-        }
-#endif
-        // Fold Smoother
-        if (mFold_ramp < 1.0)
-        {
-            mFold_ramp += mInc;
-
-            if (mFold_ramp > 1.0)
-            {
-                mFold = mFold_target;
-                mOMSmootherMask &= 0xFDFF;
-            }
-            else
-            {
-                mFold = mFold_base + mFold_diff * mFold_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mFold = mFold_target;
-            mOMSmootherMask &= 0xFDFF;
-        }
-#endif
-
-        // Asym Smoother
-        if (mAsym_ramp < 1.0)
-        {
-            mAsym_ramp += mInc;
-
-            if (mAsym_ramp > 1.0)
-            {
-                mAsym = mAsym_target;
-                mOMSmootherMask &= 0xFBFF;
-            }
-            else
-            {
-                mAsym = mAsym_base + mAsym_diff * mAsym_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mAsym = mAsym_target;
-            mOMSmootherMask &= 0xFBFF;
-        }
-#endif
-        // Main Level Smoother
-        if (mMainLevel_ramp < 1.0)
-        {
-            mMainLevel_ramp += mInc;
-
-            if (mMainLevel_ramp > 1.0)
-            {
-                mMainLevel = mMainLevel_target;
-                mOMSmootherMask &= 0xF7FF;
-            }
-            else
-            {
-                mMainLevel = mMainLevel_base + mMainLevel_diff * mMainLevel_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mMainLevel = mMainLevel_target;
-            mOMSmootherMask &= 0xF7FF;
-        }
-#endif
-        // Key Pan Smoother
-        if (mKeypan_ramp < 1.0)
-        {
-            mKeypan_ramp += mInc;
-
-            if (mKeypan_ramp > 1.0)
-            {
-                mKeypan = mKeypan_target;
-                mOMSmootherMask &= 0xFFF;
-            }
-            else
-            {
-                mKeypan = mKeypan_base + mKeypan_diff * mKeypan_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mKeypan = mKeypan_target;
-            mOMSmootherMask &= 0xEFFF;
-        }
-#endif
     }
 
+    // 1: A Pan Smoother
+    if (mAPan_ramp < 1.0)
+    {
+        mAPan_ramp += mInc;
+
+        if (mAPan_ramp > 1.0)
+        {
+            mAPan = mAPan_target;
+            mOMSmootherMask &= 0xFFFD;      // switch second bit to 0
+        }
+        else
+        {
+            mAPan = mAPan_base + mAPan_diff * mAPan_ramp;
+        }
+    }
+
+    // 2: B Level Smoother
+    if (mBLevel_ramp < 1.0)
+    {
+        mBLevel_ramp += mInc;
+
+        if (mBLevel_ramp > 1.0)
+        {
+            mBLevel = mBLevel_target;
+            mOMSmootherMask &= 0xFFFB;      // switch third bit to 0
+        }
+        else
+        {
+            mBLevel = mBLevel_base + mBLevel_diff * mBLevel_ramp;
+        }
+    }
+
+    // 3: B Pan Smoother
+    if (mBPan_ramp < 1.0)
+    {
+        mBPan_ramp += mInc;
+
+        if (mBPan_ramp > 1.0)
+        {
+            mBPan = mBPan_target;
+            mOMSmootherMask &= 0xFFF7;      // switch fourth bit to 0
+        }
+        else
+        {
+            mBPan = mBPan_base + mBPan_diff * mBPan_ramp;
+        }
+    }
+
+    // 4: Comb Level Smoother
+    if (mCombLevel_ramp < 1.0)
+    {
+        mCombLevel_ramp += mInc;
+
+        if (mCombLevel_ramp > 1.0)
+        {
+            mCombLevel = mCombLevel_target;
+            mOMSmootherMask &= 0xFFEF;      // switch fifth bit to 0
+        }
+        else
+        {
+            mCombLevel = mCombLevel_base + mCombLevel_diff * mCombLevel_ramp;
+        }
+    }
+
+    // 5: Comb Pan Smoother
+    if (mCombPan_ramp < 1.0)
+    {
+        mCombPan_ramp += mInc;
+
+        if (mCombPan_ramp > 1.0)
+        {
+            mCombPan = mCombPan_target;
+            mOMSmootherMask &= 0xFFDF;      // switch sixth bit to 0
+        }
+        else
+        {
+            mCombPan = mCombPan_base + mCombPan_diff * mCombPan_ramp;
+        }
+    }
+
+    // 6: SV Filter Level Smoother
+    if (mSVFilterLevel_ramp < 1.0)
+    {
+        mSVFilterLevel_ramp += mInc;
+
+        if (mSVFilterLevel_ramp > 1.0)
+        {
+            mSVFilterLevel = mSVFilterLevel_target;
+            mOMSmootherMask &= 0xFFBF;      // switch seventh bit to 0
+        }
+        else
+        {
+            mSVFilterLevel = mSVFilterLevel_base + mSVFilterLevel_diff * mSVFilterLevel_ramp;
+        }
+    }
+
+    // 7: SV Filter Pan Smoother
+    if (mSVFilterPan_ramp < 1.0)
+    {
+        mSVFilterPan_ramp += mInc;
+
+        if (mSVFilterPan_ramp > 1.0)
+        {
+            mSVFilterPan = mSVFilterPan_target;
+            mOMSmootherMask &= 0xFF7F;      // switch eighth bit to 0
+        }
+        else
+        {
+            mSVFilterPan = mSVFilterPan_base + mSVFilterPan_diff * mSVFilterPan_ramp;
+        }
+    }
+
+    // 8: Drive Smoother
+    if (mDrive_ramp < 1.0)
+    {
+        mDrive_ramp += mInc;
+
+        if (mDrive_ramp > 1.0)
+        {
+            mDrive = mDrive_target;
+            mOMSmootherMask &= 0xFEFF;      // switch ninth bit to 0
+        }
+        else
+        {
+            mDrive = mDrive_base + mDrive_diff * mDrive_ramp;
+        }
+    }
+
+    // 9: Fold Smoother
+    if (mFold_ramp < 1.0)
+    {
+        mFold_ramp += mInc;
+
+        if (mFold_ramp > 1.0)
+        {
+            mFold = mFold_target;
+            mOMSmootherMask &= 0xFDFF;      // switch tenth bit to 0
+        }
+        else
+        {
+            mFold = mFold_base + mFold_diff * mFold_ramp;
+        }
+    }
+
+    // 10: Asym Smoother
+    if (mAsym_ramp < 1.0)
+    {
+        mAsym_ramp += mInc;
+
+        if (mAsym_ramp > 1.0)
+        {
+            mAsym = mAsym_target;
+            mOMSmootherMask &= 0xFBFF;      // switch 11th bit to 0
+        }
+        else
+        {
+            mAsym = mAsym_base + mAsym_diff * mAsym_ramp;
+        }
+    }
+
+    // 11: Main Level Smoother
+    if (mMainLevel_ramp < 1.0)
+    {
+        mMainLevel_ramp += mInc;
+
+        if (mMainLevel_ramp > 1.0)
+        {
+            mMainLevel = mMainLevel_target;
+            mOMSmootherMask &= 0xF7FF;      // switch 12th bit to 0
+        }
+        else
+        {
+            mMainLevel = mMainLevel_base + mMainLevel_diff * mMainLevel_ramp;
+        }
+    }
+
+    // 13: Key Pan Smoother
+    if (mKeypan_ramp < 1.0)
+    {
+        mKeypan_ramp += mInc;
+
+        if (mKeypan_ramp > 1.0)
+        {
+            mKeypan = mKeypan_target;
+            mOMSmootherMask &= 0xFFF;       // switch 13th bit to 0
+        }
+        else
+        {
+            mKeypan = mKeypan_base + mKeypan_diff * mKeypan_ramp;
+        }
+    }
 #endif
 }
 
@@ -374,9 +289,24 @@ void Outputmixer::applySmoothers()
  *            depending ...
 *******************************************************************************/
 
-void Outputmixer::applyOutputMixer(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter)
+void Outputmixer::applyMixer(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter)
 {
-    static unsigned int voiceNumber = 0;
+    static uint32_t voiceNumber = 0;
+
+    if (voiceNumber == 0)
+    {
+        mSample_L = 0.f;
+        mSample_R = 0.f;
+
+        calcKeyPan();
+
+#ifndef SMOOTHEROBJ
+        if(mOMSmootherMask)
+        {
+            applySmoothers();
+        }
+#endif
+    }
 
     // panning
     /// soll das wirklich jedes mal berechnet werden ... :/
@@ -424,12 +354,6 @@ void Outputmixer::applyOutputMixer(float _sampleA, float _sampleB, float _sample
     main_R = NlToolbox::Others::parAsym(main_R, squareSample, mAsym);
 
     // Combine the voices
-    if (voiceNumber == 0)
-    {
-        mSample_L = 0.f;
-        mSample_R = 0.f;
-    }
-
     /// die velocity hier ist temporär, da wir noch keine envelopes haben ...
     mSample_L += (main_L * gVoiceVelocity[voiceNumber]);
     mSample_R += (main_R * gVoiceVelocity[voiceNumber]);
@@ -449,97 +373,6 @@ void Outputmixer::applyOutputMixer(float _sampleA, float _sampleB, float _sample
         voiceNumber = 0;
     }
 }
-
-#if 0
-/******************************************************************************/
-/** @brief    main function which calculates the mix of the A and B samples
- *            depending ...
-*******************************************************************************/
-
-void Outputmixer::applyOutputmixer()
-{
-    mALevel = mALevelSmoother.smooth();
-    mAPan = mAPanSmoother.smooth();
-    mBLevel = mBLevelSmoother.smooth();
-    mBPan = mBPanSmoother.smooth();
-    mCombLevel = mCombLevelSmoother.smooth();
-    mCombPan = mCombPanSmoother.smooth();
-    mSVFilterLevel = mSVFilterLevelSmoother.smooth();
-    mSVFilterPan = mSVFilterPanSmoother.smooth();
-
-    mMainLevel = mMainLevelSmoother.smooth();
-
-    mKeypan = mKeypanSmoother.smooth();
-    calcKeyPan();
-
-    /// Die folgenden Variablen und Schleifen müssen nicht jedes Mal neu erschaffen werden!!!
-    float a_R[NUM_VOICES] = {};
-    float a_L[NUM_VOICES] = {};
-
-    float b_R[NUM_VOICES] = {};
-    float b_L[NUM_VOICES] = {};
-
-    float main_L[NUM_VOICES] = {};
-    float main_R[NUM_VOICES] = {};
-
-    float ctrlSample = 0.f;
-    float squareSample = 0.f;
-
-    // Pan + Sine Sat for all voices
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        // Pan + Smooth .. .naja ... eher nur Pan!
-        a_R[i] = (mPitchPanArray[i] + mAPan) * mALevel;
-        a_L[i] = (1.f - (mPitchPanArray[i] + mAPan)) * mALevel;
-
-
-        b_R[i] = (mPitchPanArray[i] + mBPan) * mBLevel;
-        b_L[i] = (1.f - (mPitchPanArray[i] + mBPan)) * mBLevel;
-
-        // apply pan to samples for each voice
-        main_L[i] = (a_L[i] * gSoundGenOut_A[i]) + (b_L[i] * gSoundGenOut_B[i]);
-        main_R[i] = (a_R[i] * gSoundGenOut_A[i]) + (b_R[i] * gSoundGenOut_B[i]);
-
-        // Sine Sat L
-        main_L[i] = mDrive * main_L[i];
-        ctrlSample = main_L[i];
-
-        main_L[i] = NlToolbox::Math::sinP3(main_L[i]);
-        main_L[i] = NlToolbox::Others::threeRanges(main_L[i], ctrlSample, mFold);
-
-        squareSample = main_L[i] * main_L[i];
-        main_L[i] = NlToolbox::Others::parAsym(main_L[i], squareSample, mAsym);
-
-        // Sine Sat R
-        main_R[i] = mDrive * main_R[i];
-        ctrlSample = main_R[i];
-
-        main_R[i] = NlToolbox::Math::sinP3(main_R[i]);
-        main_R[i] = NlToolbox::Others::threeRanges(main_R[i], ctrlSample, mFold);
-
-        squareSample = main_R[i] * main_R[i];
-        main_R[i] = NlToolbox::Others::parAsym(main_R[i], squareSample, mAsym);
-    }
-
-    mSample_L = 0.f;
-    mSample_R = 0.f;
-
-    // Voice combiner - Alle Stimmen "stumpf" addieren!!
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        mSample_L += (main_L[i] * gVoiceVelocity[i]);
-        mSample_R += (main_R[i] * gVoiceVelocity[i]);
-    }
-
-    /// Hier kommt ein 1-Pole HP hin, Frage ob das wirklich der richtige ist!!
-    mSample_L = mLeftHighpass.applyFilter(mSample_L);
-    mSample_R = mRightHighpass.applyFilter(mSample_R);
-
-    // Level adustment
-    mSample_L *= mMainLevel;
-    mSample_R *= mMainLevel;
-}
-#endif
 
 
 
@@ -1001,7 +834,7 @@ void Outputmixer::setKeyPan(float _keypan)
 
 void Outputmixer::calcKeyPan()
 {
-    for(int i = 0; i < NUM_VOICES; i++)
+    for(uint32_t i = 0; i < NUM_VOICES; i++)
     {
         mPitchPanArray[i] = ((gKeyPitch[i] - 66.f) * mKeypan) + 0.f;       // hier fehl noch unison pan
     }

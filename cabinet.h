@@ -9,13 +9,14 @@
 
 #pragma once
 
-#define REMOTE61        // controller define
-
 #include "math.h"
 #include "nltoolbox.h"
 #include "biquadfilters.h"
 #include "tiltfilters.h"
+
+#ifdef SMOOTHEROBJ
 #include "smoother.h"
+#endif
 
 class Cabinet                               // Cabinet Class
 {
@@ -23,7 +24,7 @@ public:
 
     Cabinet();                              // Default Constructor
 
-    Cabinet(uint32_t _sampleRate,                // Parameterized Constructor
+    Cabinet(uint32_t _sampleRate,           // Parameterized Constructor
             float _drive,
             float _tilt,
             float _hiCut,
@@ -48,14 +49,12 @@ public:
     void setHiCut(float _hiCut);
     void setLoCut(float _loCut);
 
-    void setCabinetParams(unsigned char _ctrlTag, float _ctrlVal);
+    void setCabinetParams(unsigned char _ctrlId, float _ctrlVal);
 
     void applyCab(float _rawSample);
-#if 0
-    float applyCab(float _currSample);
-#endif
-    float sineShaper(float _currSample);
+    inline void applyCabSmoother();
 
+    float sineShaper(float _currSample);
 
 private:
 
@@ -83,29 +82,31 @@ private:
     Smoother mWetSmoother;         // wet level smoother
     Smoother mDriveSmoother;       // drive level smoother
 #else
-    uint32_t mCSmootherMask;      // Smoother Maske
+    uint32_t mCSmootherMask;        // Smoother Mask
     float mInc;                     // Smoother Increment
 
+    // Mask ID: 0
     float mDry_base;
     float mDry_target;
     float mDry_diff;
     float mDry_ramp;
 
+    // Mask ID: 1
     float mWet_base;
     float mWet_target;
     float mWet_diff;
     float mWet_ramp;
 
+    // Mask ID: 2
     float mDrive_base;
     float mDrive_target;
     float mDrive_diff;
     float mDrive_ramp;
 #endif
 
-    enum CtrlId: unsigned char    // Enum class for control IDs (Korg Nano Kontrol I)
+    enum CtrlId: unsigned char    // Enum class for control IDs
     {
-#ifdef NANOKONTROL_I
-        // Enum class for control IDs (Korg Nano Kontrol I)
+#ifdef NANOKONTROL_I              // Korg Nano Kontrol I
         HICUT    = 0x3D,
         LOCUT    = 0x3E,
         MIX      = 0x32,
@@ -115,8 +116,7 @@ private:
         FOLD     = 0x33,
         ASYM     = 0x34
 #endif
-#ifdef REMOTE61
-        // Enum class for control IDs (ReMote 61)
+#ifdef REMOTE61                   // ReMote 61
         DRIVE    = 0x29,
         FOLD     = 0x2A,
         ASYM     = 0x2B,

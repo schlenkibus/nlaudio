@@ -13,16 +13,14 @@
  * @brief    initialization of the modules local variabels with default values
  *           SampleRate:            48 kHz
  *           Phase:                 0.f
-// *           Gain:                  0.5f
  *           Pitch Offset:          60.f ct
  *           Key Tracking:          1.f
  *           Main Mix Amount:       0.f
 *******************************************************************************/
 
-Soundgenerator::Soundgenerator()
+Soundgenerator::Soundgenerator()                            // Default Constructor
     : mSampleRate(48000.f)
 {
-//    moduleA.mGain = 0.5f;
     moduleA.mOsc = Oscillator();
     moduleA.mShaper = Shaper();
 
@@ -53,15 +51,13 @@ Soundgenerator::Soundgenerator()
  *           parameters
 *******************************************************************************/
 
-Soundgenerator::Soundgenerator(int _sampleRate,               // Parameterized Constructor
+Soundgenerator::Soundgenerator(uint32_t _sampleRate,        // Default Constructor
                  float _phase,
-//                 float _gain,
                  float _pitchOffset,
                  float _keyTracking,
                  float _mainMixAmount)
     : mSampleRate(static_cast<float>(_sampleRate))
 {
-//    moduleA.mGain = _gain;
     moduleA.mShaperMixAmount = _mainMixAmount;
 
     moduleA.mOsc = Oscillator();
@@ -117,10 +113,9 @@ void Soundgenerator::generateSound()
 
     // Ring Modulation
     float crossSample = mSampleA * mSampleB;
+
     mSampleA = NlToolbox::Crossfades::bipolarCrossFade(mSampleA, crossSample, moduleA.mRingMod);
     mSampleB = NlToolbox::Crossfades::bipolarCrossFade(mSampleB, crossSample, moduleB.mRingMod);
-
-//    mMainOut = NlToolbox::Crossfades::crossFade(mSampleA, mSampleB, moduleA.mGain, moduleB.mGain);
 }
 
 
@@ -151,7 +146,7 @@ void Soundgenerator::setPitch(float _pitch)
  *  @param    voice number 0 - 11
 *******************************************************************************/
 
-void Soundgenerator::setVoiceNumber(unsigned int _voiceNumber)
+void Soundgenerator::setVoiceNumber(uint32_t _voiceNumber)
 {
     moduleA.mOsc.setSeed(_voiceNumber + 1);
     moduleB.mOsc.setSeed(_voiceNumber + 1 + 111);
@@ -215,6 +210,19 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 moduleA.mOsc.calcInc();
                 break;
 
+            case CtrlID::PHASE:
+                _ctrlVal = (_ctrlVal / 126.f) - 0.5f;
+
+                if (_ctrlVal > 0.5f)
+                {
+                    _ctrlVal = 0.5f;
+                }
+
+                printf("A: Phase: %f\n", _ctrlVal);
+
+                moduleA.mPhase = _ctrlVal;
+                break;
+
             case CtrlID::FLUCT:
                 _ctrlVal /= 126.f;
 
@@ -228,19 +236,6 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
 
                 moduleA.mOsc.setFluctuation(_ctrlVal);
-                break;
-
-            case CtrlID::PHASE:
-                _ctrlVal = (_ctrlVal / 126.f) - 0.5f;
-
-                if (_ctrlVal > 0.5f)
-                {
-                    _ctrlVal = 0.5f;
-                }
-
-                printf("A: Phase: %f\n", _ctrlVal);
-
-                moduleA.mPhase = _ctrlVal;
                 break;
 
             case CtrlID::CHIRPFREQ:
@@ -314,18 +309,6 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             /*********************** Shaper Controls ***********************/
 
-            case CtrlID::MAINMIX:
-                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("A: Main Mix: %f\n", _ctrlVal);
-
-                moduleA.mShaperMixAmount = _ctrlVal;
-                break;
 
             case CtrlID::DRIVE:
                 _ctrlVal = _ctrlVal / 2.f;
@@ -345,6 +328,32 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 printf("A: Drive: %f\n", _ctrlVal);
 
                 moduleA.mShaper.setDrive(_ctrlVal + 0.18f);
+                break;
+
+            case CtrlID::MAINMIX:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Main Mix: %f\n", _ctrlVal);
+
+                moduleA.mShaperMixAmount = _ctrlVal;
+                break;
+
+            case CtrlID::RING:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Ring Modulation: %f\n", _ctrlVal);
+
+                moduleA.mRingMod = _ctrlVal;
                 break;
 
             case CtrlID::FOLD:
@@ -372,36 +381,6 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 moduleA.mShaper.setAsym(_ctrlVal);
                 break;
-
-            case CtrlID::RING:
-                _ctrlVal /= 126.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("A: Ring Modulation: %f\n", _ctrlVal);
-
-                moduleA.mRingMod = _ctrlVal;
-            break;
-
-
-
-            /*********************** Temporal Controls ***********************/
-
-//            case CtrlID::GAIN:
-//                _ctrlVal = (_ctrlVal / 126.f);
-
-//                if (_ctrlVal > 1.f)
-//                {
-//                    _ctrlVal = 1.f;
-//                }
-
-//                printf("A: Gain: %f\n", _ctrlVal);
-
-//                moduleA.mGain = _ctrlVal;
-//                break;
         }
         break;
 
@@ -447,6 +426,21 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 printf("B: Phase: %f\n", _ctrlVal);
 
                 moduleB.mPhase = _ctrlVal;
+                break;
+
+            case CtrlID::FLUCT:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Fluct: %f\n", _ctrlVal);
+
+                _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
+
+                moduleB.mOsc.setFluctuation(_ctrlVal);
                 break;
 
             case CtrlID::CHIRPFREQ:
@@ -520,18 +514,6 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             /*********************** Shaper Controls ***********************/
 
-            case CtrlID::MAINMIX:
-                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("B: Main Mix: %f\n", _ctrlVal);
-
-                moduleB.mShaperMixAmount = _ctrlVal;
-                break;
 
             case CtrlID::DRIVE:
                 _ctrlVal = _ctrlVal / 2.f;
@@ -551,6 +533,32 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 printf("B: Drive: %f\n", _ctrlVal);
 
                 moduleB.mShaper.setDrive(_ctrlVal + 0.18f);
+                break;
+
+            case CtrlID::MAINMIX:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Main Mix: %f\n", _ctrlVal);
+
+                moduleB.mShaperMixAmount = _ctrlVal;
+                break;
+
+            case CtrlID::RING:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Ring Modulation: %f\n", _ctrlVal);
+
+                moduleB.mRingMod = _ctrlVal;
                 break;
 
             case CtrlID::FOLD:
@@ -578,50 +586,6 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
                 moduleB.mShaper.setAsym(_ctrlVal);
                 break;
-
-            case CtrlID::FLUCT:
-                _ctrlVal /= 126.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("B: Fluct: %f\n", _ctrlVal);
-
-                _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
-
-                moduleB.mOsc.setFluctuation(_ctrlVal);
-                break;
-
-            case CtrlID::RING:
-                _ctrlVal /= 126.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("B: Ring Modulation: %f\n", _ctrlVal);
-
-                moduleB.mRingMod = _ctrlVal;
-                break;
-
-
-            /*********************** Temporal Controls ***********************/
-
-//            case CtrlID::GAIN:
-//                _ctrlVal = (_ctrlVal / 126.f);
-
-//                if (_ctrlVal > 1.f)
-//                {
-//                    _ctrlVal = 1.f;
-//                }
-
-//                printf("B: Gain: %f\n", _ctrlVal);
-
-//                moduleB.mGain = _ctrlVal;
-//                break;
         }
         break;
     }

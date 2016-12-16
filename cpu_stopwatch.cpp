@@ -77,4 +77,5 @@ void CPU_Stopwatch::calcCPU()
     }
 }
 
+
 //} // namespace Nl

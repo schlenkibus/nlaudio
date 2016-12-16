@@ -146,20 +146,20 @@ void Cabinet::setMix(float _mix)
 #else
     mMix = _mix;
 
-    // dry amount
+    // 0: dry amount
     mDry_target = 1.f - mMix;
     mDry_base = mDry;
     mDry_diff = mDry_target - mDry_base;
 
-    mCSmootherMask |= 0x0001; //1;
+    mCSmootherMask |= 0x0001;               // switch first bit to 1
     mDry_ramp = 0.f;
 
-    // wet amount
+    // 1: wet amount
     mWet_target = mMix * mCabLvl;
     mWet_base = mWet;
     mWet_diff = mWet_target - mWet_base;
 
-    mCSmootherMask |= 0x0002; // 2;
+    mCSmootherMask |= 0x0002;               // switch second bit to 1
     mWet_ramp = 0.f;
 #endif
 }
@@ -180,12 +180,13 @@ inline void Cabinet::setCabLvl(float _cabLvl)
 
     mWetSmoother.initSmoother(mWet);
 #else
+    // 1: wet amount
     mWet_target = mMix * mCabLvl;
 
     mWet_base = mWet;
     mWet_diff = mWet_target - mWet_base;
 
-    mCSmootherMask |= 0x0002; // 2;
+    mCSmootherMask |= 0x0002;               // switch second bit to 1
     mWet_ramp = 0.0;
 #endif
 }
@@ -204,12 +205,13 @@ void Cabinet::setDrive(float _drive)
 
     mDriveSmoother.initSmoother(mDrive);
 #else
+    // 2: drive amount
     mDrive_target = NlToolbox::Conversion::db2af(_drive);
 
     mDrive_base = mDrive;
     mDrive_diff = mDrive_target - mDrive_base;
 
-    mCSmootherMask |= 0x0004; //4;
+    mCSmootherMask |= 0x0004;               // switch third bit to 1
     mDrive_ramp = 0.0;
 #endif
 }
@@ -263,9 +265,9 @@ void Cabinet::setTilt(float _tilt)
  *  @param    midi control ID -> enum CtrlID (cabinet.h)
 ******************************************************************************/
 
-void Cabinet::setCabinetParams(unsigned char _ctrlTag,float _ctrlVal)
+void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
 {
-    switch(_ctrlTag)
+    switch(_ctrlId)
     {
         case CtrlId::HICUT:
             _ctrlVal = (_ctrlVal * 80.f) / 127.f + 60.f;            //Midi to Pitch [60 .. 140]
@@ -344,69 +346,7 @@ void Cabinet::applyCab(float _rawSample)
 #else
     if (mCSmootherMask)
     {
-        // Dry Smoother
-        if (mDry_ramp < 1.0)
-        {
-            mDry_ramp += mInc;
-
-            if (mDry_ramp > 1.0)
-            {
-                mDry = mDry_target;
-                mCSmootherMask &= 0xFFFE;            }
-            else
-            {
-                mDry = mDry_base + mDry_diff * mDry_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mDry = mDry_target;
-            mCSmootherMask &= 0xFFFE;
-        }
-#endif
-        // Wet Smoother
-        if (mWet_ramp < 1.0)
-        {
-            mWet_ramp += mInc;
-
-            if (mWet_ramp > 1.0)
-            {
-                mWet = mWet_target;
-                mCSmootherMask &= 0xFFFD;            }
-            else
-            {
-                mWet = mWet_base + mWet_diff * mWet_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mWet = mWet_target;
-            mCSmootherMask &= 0xFFFD;
-        }
-#endif
-        // Drive Smoother
-        if (mDrive_ramp < 1.0)
-        {
-            mDrive_ramp += mInc;
-
-            if (mDrive_ramp > 1.0)
-            {
-                mDrive = mDrive_target;
-                mCSmootherMask &= 0xFFFB;            }
-            else
-            {
-                mDrive = mDrive_base + mDrive_diff * mDrive_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mDrive = mDrive_target;
-            mCSmootherMask &= 0xFFFB;
-        }
-#endif
+        applyCabSmoother();
     }
 #endif
 
@@ -427,40 +367,63 @@ void Cabinet::applyCab(float _rawSample)
 }
 
 
-#if 0
+#ifndef SMOOTHEROBJ
 /*****************************************************************************/
-/** @brief    applies the cabinet effect to the incoming sample depending on the channel
- *  @param    raw Sample
- *  @return   processed sample
+/** @brief    applies the smoothers of the cabinet module, depending if the
+ *            corresponding bit of the mask is set to 1
 ******************************************************************************/
 
-float Cabinet::applyCab(float _currSample)
+inline void Cabinet::applyCabSmoother()
 {
-    mDry = mDrySmoother.smooth();                         //apply smoothers
-    mWet = mWetSmoother.smooth();
-    mDrive = mDriveSmoother.smooth();
+    // 0: Dry Smoother
+    if (mDry_ramp < 1.0)
+    {
+        mDry_ramp += mInc;
 
-    float output = 0.f;
+        if (mDry_ramp > 1.0)
+        {
+            mDry = mDry_target;
+            mCSmootherMask &= 0xFFFE;       // switch first bit to 0
+        }
+        else
+        {
+            mDry = mDry_base + mDry_diff * mDry_ramp;
+        }
+    }
 
-    output = _currSample * mDrive;                    // apply drive
+    // 1: Wet Smoother
+    if (mWet_ramp < 1.0)
+    {
+        mWet_ramp += mInc;
 
-    output = mHighpass.applyFilter(output);           // apply biquad highpass filter
+        if (mWet_ramp > 1.0)
+        {
+            mWet = mWet_target;
+            mCSmootherMask &= 0xFFFD;       // switch second bit to 0
+        }
+        else
+        {
+            mWet = mWet_base + mWet_diff * mWet_ramp;
+        }
+    }
 
-    output = mLowshelf1.applyFilter(output);          // apply first biquad tilt lowshelf filters
+    // 2: Drive Smoother
+    if (mDrive_ramp < 1.0)
+    {
+        mDrive_ramp += mInc;
 
-    output = sineShaper(output);
-
-    output = mLowshelf2.applyFilter(output);           // apply second biquad tilt lowshelf filters
-
-    output = mLowpass1.applyFilter(output);            // apply biquad lowpass filters
-    output = mLowpass2.applyFilter(output);
-
-    output = NlToolbox::Crossfades::crossFade(_currSample, output, mDry, mWet);       // apply crossfade between the incoming and the processed sample
-
-    return output;
+        if (mDrive_ramp > 1.0)
+        {
+            mDrive = mDrive_target;
+            mCSmootherMask &= 0xFFFB;       // switch third bit to 0
+        }
+        else
+        {
+            mDrive = mDrive_base + mDrive_diff * mDrive_ramp;
+        }
+    }
 }
 #endif
-
 
 
 /*****************************************************************************/

@@ -16,7 +16,7 @@ public:
 
     Smoother();                             // Default Constructor
 
-    Smoother(int _sRate, float _smTime);    // Parameterized Constructor
+    Smoother(uint32_t _sRate, float _smTime);    // Parameterized Constructor
 
     ~Smoother(){}                           // Class Destructor
 
@@ -34,6 +34,6 @@ private:
     float mHeldValue;           // incremented value with every step
     float mInc;                 // increment value, which is constant once set
 
-    inline void setInc(int _sRate, float _smTime);
+    inline void setInc(uint32_t _sRate, float _smTime);
     inline void setInc();
 };

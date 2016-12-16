@@ -25,7 +25,7 @@ public:
 
     TiltFilters();                                  // Deafult Constructor
 
-    TiltFilters(uint32_t _sampleRate,                    // Parameterized Constructor
+    TiltFilters(uint32_t _sampleRate,               // Parameterized Constructor
                 float _cutFreq,
                 float _tilt,
                 float _slopeWidth,
@@ -70,14 +70,23 @@ private:
     float mB0, mB1, mB2, mA0, mA1, mA2;  // Filter Coefficients
 
     TiltFilterType mFilterType;          // FilterType
-    uint32_t mFilterCounter;              // counter variable if the module is used with all filterTypes (0 = lowpass, 1 = highpass, 2 = lowshelf, 3 = highshelf)
+    uint32_t mFilterCounter;             // counter variable if the module is used with all filterTypes (0 = lowpass, 1 = highpass, 2 = lowshelf, 3 = highshelf)
 
-    enum CtrlId: unsigned char           // enum class for control IDs (KORG Nano Kontrol I)
+    enum CtrlId: unsigned char           // enum class for control IDs
     {
+#ifdef NANOKONTROL_I              // Korg Nano Kontrol I
         CUTFREQ    = 0x12,
         TILT       = 0x06,
         RESONANCE  = 0x13,
         SLOPEWIDTH = 0x08,
         FILTERTYPE = 0x1B
+#endif
+#ifdef REMOTE61                   // ReMote 61
+        CUTFREQ,
+        TILT,
+        RESONANCE,
+        SLOPEWIDTH,
+        FILTERTYPE
+#endif
     };
 };

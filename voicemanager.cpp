@@ -39,7 +39,7 @@ VoiceManager::VoiceManager()
     mEcho = Echo();
 
 #ifdef MANYGENS
-    for (int i = 0; i < NUM_VOICES; i++)
+    for (uint32_t i = 0; i < NUM_VOICES; i++)
     {
         mSoundGenerator[i].setVoiceNumber(i);
     }
@@ -61,7 +61,7 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
         case InstrID::SG_A_PARAM:
         case InstrID::SG_B_PARAM:
 #ifdef MANYGENS
-            for(int i = 0; i < NUM_VOICES; i++)
+            for(uint32_t i = 0; i < NUM_VOICES; i++)
             {
                 mSoundGenerator[i].setGenParams(_instrID, _ctrlID, _ctrlVal);
             }
@@ -116,24 +116,20 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 
 void VoiceManager::voiceLoop()
 {
-    // non voice related processes
-    mOutputMixer.applySmoothers();
-    mOutputMixer.calcKeyPan();
-
 #ifdef MANYGENS
     // main dsp loop
-    for(unsigned int i = 0; i < NUM_VOICES; i++)
+    for(uint32_t i = 0; i < NUM_VOICES; i++)
     {
         mSoundGenerator[i].generateSound();
-        mOutputMixer.applyOutputMixer(mSoundGenerator[i].mSampleA, mSoundGenerator[i].mSampleB, 0.f, 0.f);
+        mOutputMixer.applyMixer(mSoundGenerator[i].mSampleA, mSoundGenerator[i].mSampleB, 0.f, 0.f);
     }
 #endif
 #ifdef ONEGEN
     mSoundGenerator.generateSound();
 
-    for(unsigned int i = 0; i < NUM_VOICES; i++)
+    for(uint32_t i = 0; i < NUM_VOICES; i++)
     {
-        mOutputMixer.applyOutputMixer(mSoundGenerator.mSampleA[i], mSoundGenerator.mSampleB[i], 0.f, 0.f);
+        mOutputMixer.applyMixer(mSoundGenerator.mSampleA[i], mSoundGenerator.mSampleB[i], 0.f, 0.f);
     }
 #endif
 
@@ -158,7 +154,7 @@ void VoiceManager::voiceLoop()
 
 void VoiceManager::vallocInit()
 {
-    for (int i = 0; i < NUM_VOICES; i++)
+    for (uint32_t i = 0; i < NUM_VOICES; i++)
     {
         vVoiceState[i] = -1;
         vNextAssigned[i] = 0;
@@ -171,7 +167,7 @@ void VoiceManager::vallocInit()
     vYoungestAssigned = 0;
     vYoungestReleased = NUM_VOICES - 1;
 
-    for (int i = 0; i < NUM_VOICES - 1; i++)
+    for (uint32_t i = 0; i < NUM_VOICES - 1; i++)
     {
         vNextReleased[i] = i + 1;
     }
@@ -188,7 +184,7 @@ void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, floa
             || _keyDirection == InstrID::KEYDOWN_2 || _keyDirection == InstrID::KEYDOWN_3
             || _keyDirection == InstrID::KEYDOWN_4)
     {
-        int v;
+        uint32_t v;
 
         if (vNumAssigned < NUM_VOICES)
         {
@@ -232,7 +228,7 @@ void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, floa
              || _keyDirection == InstrID::KEYUP_2 || _keyDirection == InstrID::KEYUP_3
              || _keyDirection == InstrID::KEYUP_4)
     {
-        int v;
+        uint32_t v;
 
         for (v = 0; v < NUM_VOICES; v++)
         {

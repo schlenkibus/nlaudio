@@ -9,8 +9,6 @@
 
 #pragma once
 
-#define REMOTE61        // controller define
-
 #include "nltoolbox.h"
 #include "smoother.h"
 #include "onepolefilters.h"
@@ -37,6 +35,7 @@ public:
 
     float applyEcho(float _currSample, uint32_t _chInd);
     void applyEcho(float _rawLeftSample, float _rawRightSample);
+    inline void applyEchoSmoother();
 
     void setMix(float _mix);
     void setHiCut(float _hiCut);
@@ -47,7 +46,7 @@ public:
     void setFeedbackAmount(float _feedback);
     void setCrossFeedbackAmount(float _crossFeedback);
 
-    void setEchoParams(unsigned char _ctrlTag, float _ctrlVal);
+    void setEchoParams(unsigned char _ctrlId, float _ctrlVal);
 
 private:
     float mSampleRate;              // samplerate
@@ -68,8 +67,8 @@ private:
     Smoother mLocalFeedbackSmoother;            // local feedback smoother
     Smoother mCrossFeedbackSmoother;            // cross feedback smoother
 #else
-    uint32_t mEchoSmoother;                     // Smoother Mask
-    float mInc;
+    uint32_t mESmootherMask;                     // Smoother Mask (0: dry, 1: wet, 2: local feedback, 3: cross feedback)
+    float mInc;                                 // Smoothing Increment
 
     float mDry_base;                            // Dry Smoothing values
     float mDry_target;
@@ -108,10 +107,9 @@ private:
     }leftChannel, rightChannel;
 
 
-    enum CtrlId: unsigned char
+    enum CtrlId: unsigned char          // Enum class for control IDs
     {
-#ifdef NANOKONTROL_I
-        // Enum class for control IDs (Korg Nano Kontrol I)
+#ifdef NANOKONTROL_I                    // Korg Nano Kontrol I
         HICUT             = 0x12,
         MIX               = 0x04,
         DELAYTIME         = 0x05,
@@ -119,8 +117,7 @@ private:
         FEEDBACKAMNT      = 0x08,
         CROSSFEEDBACKAMNT = 0x09
 #endif
-#ifdef REMOTE61
-        // Enum class for control IDs (ReMote 61)
+#ifdef REMOTE61                         // ReMote 61
         DELAYTIME         = 0x29,
         STEREOAMNT        = 0x2A,
         FEEDBACKAMNT      = 0x2B,

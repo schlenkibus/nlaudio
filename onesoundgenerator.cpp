@@ -22,7 +22,7 @@ OneSoundgenerator::OneSoundgenerator()
     : mSampleRate(48000.f)
 {
     /*erst mal 12 Oscillatoren*/
-    for(unsigned int i = 0; i < 12; i++)
+    for(uint32_t i = 0; i < NUM_VOICES; i++)
     {
         moduleA.mOsc[i] = Oscillator();
         moduleB.mOsc[i] = Oscillator();
@@ -36,6 +36,10 @@ OneSoundgenerator::OneSoundgenerator()
 
         mSampleA[i] = 0.f;
         mSampleB[i] = 0.f;
+
+        // Set Seed of each Oscillator
+        moduleA.mOsc[i].setSeed(i + 1);
+        moduleB.mOsc[i].setSeed(i + 1 + 111);
     }
 
     moduleA.mShaper = Shaper();
@@ -67,16 +71,6 @@ OneSoundgenerator::OneSoundgenerator()
 
     moduleB.mShaperMixAmount = 0.f;
     moduleB.mRingMod = 0.f;
-
-//    moduleB = moduleA;
-
-
-    // Set Seed of each Oscillator
-    for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
-    {
-        moduleA.mOsc[voiceNumber].setSeed(voiceNumber + 1);
-        moduleB.mOsc[voiceNumber].setSeed(voiceNumber + 1 + 111);
-    }
 }
 
 
@@ -90,7 +84,7 @@ OneSoundgenerator::OneSoundgenerator()
 void OneSoundgenerator::generateSound()
 {
     // calculate for all voices
-    for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+    for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
     {
         float modedPhaseA = (moduleA.mSelfMix[voiceNumber] * moduleA.mPmSelf) + (moduleB.mCrossMix[voiceNumber] * moduleA.mPmCross);
         float modedPhaseB = (moduleB.mSelfMix[voiceNumber] * moduleB.mPmSelf) + (moduleA.mCrossMix[voiceNumber] * moduleB.mPmCross);
@@ -131,7 +125,7 @@ void OneSoundgenerator::generateSound()
  *  @param    voice number for the correct oscillator initialization
 *******************************************************************************/
 
-void OneSoundgenerator::setPitch(float _pitch, unsigned int _voiceNumber)
+void OneSoundgenerator::setPitch(float _pitch, uint32_t _voiceNumber)
 {
     mPitch[_voiceNumber] = _pitch - 60.f;
 
@@ -149,7 +143,7 @@ void OneSoundgenerator::setPitch(float _pitch, unsigned int _voiceNumber)
  *            event
 *******************************************************************************/
 
-void OneSoundgenerator::resetPhase(unsigned int _voiceNumber)
+void OneSoundgenerator::resetPhase(uint32_t _voiceNumber)
 {
         moduleA.mOsc[_voiceNumber].resetPhase(moduleA.mPhase);
         moduleB.mOsc[_voiceNumber].resetPhase(moduleB.mPhase);
@@ -182,7 +176,7 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
 
                 moduleA.mPitchOffset = _ctrlVal;
 
-                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
                 {
                     moduleA.mOsc[voiceNumber].setOscFreq(calcOscFrequency(mPitch[voiceNumber], moduleA.mKeyTracking, moduleA.mPitchOffset));
                     moduleA.mOsc[voiceNumber].calcInc();
@@ -199,28 +193,10 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
 
                 moduleA.mKeyTracking = _ctrlVal / 100.f;
 
-                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
                 {
                     moduleA.mOsc[voiceNumber].setOscFreq(calcOscFrequency(mPitch[voiceNumber], moduleA.mKeyTracking, moduleA.mPitchOffset));
                     moduleA.mOsc[voiceNumber].calcInc();
-                }
-                break;
-
-            case CtrlID::FLUCT:
-                _ctrlVal /= 126.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("A: Fluct: %f\n", _ctrlVal);
-
-                _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
-
-                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
-                {
-                    moduleA.mOsc[voiceNumber].setFluctuation(_ctrlVal);
                 }
                 break;
 
@@ -237,6 +213,24 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
                 moduleA.mPhase = _ctrlVal;
                 break;
 
+            case CtrlID::FLUCT:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Fluct: %f\n", _ctrlVal);
+
+                _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
+
+                for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
+                {
+                    moduleA.mOsc[voiceNumber].setFluctuation(_ctrlVal);
+                }
+                break;
+
             case CtrlID::CHIRPFREQ:
                 _ctrlVal = (_ctrlVal + 160.f) / 2.f;
 
@@ -249,7 +243,7 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
 
                 _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 
-                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
                 {
                     moduleA.mOsc[voiceNumber].setChirpFreq(_ctrlVal);
                 }
@@ -311,19 +305,6 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
 
             /*********************** Shaper Controls ***********************/
 
-            case CtrlID::MAINMIX:
-                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("A: Main Mix: %f\n", _ctrlVal);
-
-                moduleA.mShaperMixAmount = _ctrlVal;
-                break;
-
             case CtrlID::DRIVE:
                 _ctrlVal = _ctrlVal / 2.f;
 
@@ -342,6 +323,32 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
                 printf("A: Drive: %f\n", _ctrlVal);
 
                 moduleA.mShaper.setDrive(_ctrlVal + 0.18f);
+                break;
+
+            case CtrlID::MAINMIX:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Main Mix: %f\n", _ctrlVal);
+
+                moduleA.mShaperMixAmount = _ctrlVal;
+                break;
+
+            case CtrlID::RING:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("A: Ring Modulation: %f\n", _ctrlVal);
+
+                moduleA.mRingMod = _ctrlVal;
                 break;
 
             case CtrlID::FOLD:
@@ -370,18 +377,6 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
                 moduleA.mShaper.setAsym(_ctrlVal);
                 break;
 
-            case CtrlID::RING:
-                _ctrlVal /= 126.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("A: Ring Modulation: %f\n", _ctrlVal);
-
-                moduleA.mRingMod = _ctrlVal;
-            break;
         }
         break;
 
@@ -398,7 +393,7 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
 
                 moduleB.mPitchOffset = _ctrlVal;
 
-                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
                 {
                     moduleB.mOsc[voiceNumber].setOscFreq(calcOscFrequency(mPitch[voiceNumber], moduleB.mKeyTracking, moduleB.mPitchOffset));
                     moduleB.mOsc[voiceNumber].calcInc();
@@ -415,7 +410,7 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
 
                 moduleB.mKeyTracking = _ctrlVal / 100.f;
 
-                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
                 {
                     moduleB.mOsc[voiceNumber].setOscFreq(calcOscFrequency(mPitch[voiceNumber], moduleB.mKeyTracking, moduleB.mPitchOffset));
                     moduleB.mOsc[voiceNumber].calcInc();
@@ -435,6 +430,24 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
                 moduleB.mPhase = _ctrlVal;
                 break;
 
+            case CtrlID::FLUCT:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Fluct: %f\n", _ctrlVal);
+
+                _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
+
+                for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
+                {
+                    moduleB.mOsc[voiceNumber].setFluctuation(_ctrlVal);
+                }
+                break;
+
             case CtrlID::CHIRPFREQ:
                 _ctrlVal = (_ctrlVal + 160.f) / 2.f;
 
@@ -447,7 +460,7 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
 
                 _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 
-                for(unsigned  int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
+                for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
                 {
                     moduleB.mOsc[voiceNumber].setChirpFreq(_ctrlVal);
                 }
@@ -509,19 +522,6 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
 
             /*********************** Shaper Controls ***********************/
 
-            case CtrlID::MAINMIX:
-                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("B: Main Mix: %f\n", _ctrlVal);
-
-                moduleB.mShaperMixAmount = _ctrlVal;
-                break;
-
             case CtrlID::DRIVE:
                 _ctrlVal = _ctrlVal / 2.f;
 
@@ -540,6 +540,32 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
                 printf("B: Drive: %f\n", _ctrlVal);
 
                 moduleB.mShaper.setDrive(_ctrlVal + 0.18f);
+                break;
+
+            case CtrlID::MAINMIX:
+                _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Main Mix: %f\n", _ctrlVal);
+
+                moduleB.mShaperMixAmount = _ctrlVal;
+                break;
+
+            case CtrlID::RING:
+                _ctrlVal /= 126.f;
+
+                if (_ctrlVal > 1.f)
+                {
+                    _ctrlVal = 1.f;
+                }
+
+                printf("B: Ring Modulation: %f\n", _ctrlVal);
+
+                moduleB.mRingMod = _ctrlVal;
                 break;
 
             case CtrlID::FOLD:
@@ -568,36 +594,6 @@ void OneSoundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrl
                 moduleB.mShaper.setAsym(_ctrlVal);
                 break;
 
-            case CtrlID::FLUCT:
-                _ctrlVal /= 126.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("B: Fluct: %f\n", _ctrlVal);
-
-                _ctrlVal = (_ctrlVal * _ctrlVal * 0.95f);
-
-                for(unsigned int voiceNumber = 0; voiceNumber < 12; voiceNumber++)
-                {
-                    moduleB.mOsc[voiceNumber].setFluctuation(_ctrlVal);
-                }
-                break;
-
-            case CtrlID::RING:
-                _ctrlVal /= 126.f;
-
-                if (_ctrlVal > 1.f)
-                {
-                    _ctrlVal = 1.f;
-                }
-
-                printf("B: Ring Modulation: %f\n", _ctrlVal);
-
-                moduleB.mRingMod = _ctrlVal;
-                break;
         }
         break;
     }

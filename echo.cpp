@@ -32,7 +32,7 @@ Echo::Echo()
     , mLocalFeedbackSmoother(48000.f, 0.032f)
     , mCrossFeedbackSmoother(48000.f, 0.032f)
 #else
-    , mEchoSmoother(0x0000)
+    , mESmootherMask(0x0000)
     , mInc(5.f / (48000.f * 0.032f))
 #endif
 {
@@ -76,7 +76,7 @@ Echo::Echo(uint32_t _sampleRate,
     , mLocalFeedbackSmoother(_sampleRate, 0.032f)
     , mCrossFeedbackSmoother(_sampleRate, 0.032f)
 #else
-    , mEchoSmoother(0x0000)
+    , mESmootherMask(0x0000)
     , mInc(5.f / (48000.f * 0.032f))
 #endif
 {
@@ -115,21 +115,22 @@ void Echo::setMix(float _mix)
 #else
     float mix_square = _mix * _mix;
 
-    // wet amount
-    mWet_target = (mix_square + mix_square) - mix_square * mix_square;
-    mWet_base = mWet;
-    mWet_diff = mWet_target - mWet_base;
-
-    mEchoSmoother |= 0x0001; //1
-    mWet_ramp = 0.f;
-
-    // dry amount
+    // 0: dry amount
     mDry_target = (1.f - mix_square + 1.f - mix_square) - (1.f - mix_square) * (1.f - mix_square);
     mDry_base = mDry;
     mDry_diff = mDry_target - mDry_base;
 
-    mEchoSmoother |= 0x0002; //2;
+    mESmootherMask |= 0x0001;            // switch first bit to 1
     mDry_ramp = 0.f;
+
+    // 1: wet amount
+    mWet_target = (mix_square + mix_square) - mix_square * mix_square;
+    mWet_base = mWet;
+    mWet_diff = mWet_target - mWet_base;
+
+    mESmootherMask |= 0x0002;            // switch second bit to 1
+    mWet_ramp = 0.f;
+
 #endif
 }
 
@@ -292,57 +293,12 @@ void Echo::applyEcho(float _rawLeftSample, float _rawRightSample)
     mLocalFeedback = mLocalFeedbackSmoother.smooth();
     mCrossFeedback = mCrossFeedbackSmoother.smooth();
 #else
-    if (mEchoSmoother)
+    if (mESmootherMask)
     {
-        // Dry Smoother
-        if (mDry_ramp < 1.0)
-        {
-            mDry_ramp += mInc;
-            mDry = mDry_base + mDry_diff * mDry_ramp;
-        }
-        else
-        {
-            mDry = mDry_target;
-            mEchoSmoother &= 0xFFFE;
-        }
-
-        // Wet Smoother
-        if (mWet_ramp < 1.0)
-        {
-            mWet_ramp += mInc;
-            mWet = mWet_base + mWet_diff * mWet_ramp;
-        }
-        else
-        {
-            mWet = mWet_target;
-            mEchoSmoother &= 0xFFFD;
-        }
-
-        // Local Feedback Smoother
-        if (mLFeedback_ramp < 1.0)
-        {
-            mLFeedback_ramp += mInc;
-            mLocalFeedback = mLFeedback_base + mLFeedback_diff * mLFeedback_ramp;
-        }
-        else
-        {
-            mLocalFeedback = mLFeedback_target;
-            mEchoSmoother &= 0xFFFB;
-        }
-
-        // Cross Feedback Smoother
-        if (mCFeedback_ramp < 1.0)
-        {
-            mCFeedback_ramp += mInc;
-            mCrossFeedback = mCFeedback_base + mCFeedback_diff * mCFeedback_ramp;
-        }
-        else
-        {
-            mCrossFeedback = mCFeedback_target;
-            mEchoSmoother &= 0xFFF7;
-        }
+        applyEchoSmoother();
     }
 #endif
+
     // Left Channel
     float processedLeftSample = _rawLeftSample + (leftChannel.mChannelStateVar * mLocalFeedback) + (rightChannel.mChannelStateVar * mCrossFeedback);
 
@@ -388,98 +344,12 @@ float Echo::applyEcho(float _currSample, uint32_t _chInd)
     mLocalFeedback = mLocalFeedbackSmoother.smooth();
     mCrossFeedback = mCrossFeedbackSmoother.smooth();
 #else
-    if (mEchoSmoother)
+    if (mESmootherMask)
     {
-        // Dry Smoother
-        if (mDry_ramp < 1.0)
-        {
-            mDry_ramp += mInc;
-
-            if (mDry_ramp > 1.0)
-            {
-                mDry = mDry_target;
-                mEchoSmoother &= 0xFFFE;
-            }
-            else
-            {
-                mDry = mDry_base + mDry_diff * mDry_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mDry = mDry_target;
-            mEchoSmoother &= 0xFFFE;
-        }
-#endif
-        // Wet Smoother
-        if (mWet_ramp < 1.0)
-        {
-            mWet_ramp += mInc;
-
-            if (mWet_ramp > 1.0)
-            {
-                mWet = mWet_target;
-                mEchoSmoother &= 0xFFFD;
-            }
-            else
-            {
-                mWet = mWet_base + mWet_diff * mWet_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mWet = mWet_target;
-            mEchoSmoother &= 0xFFFD;
-        }
-#endif
-        // Local Feedback Smoother
-        if (mLFeedback_ramp < 1.0)
-        {
-            mLFeedback_ramp += mInc;
-
-            if (mLFeedback_ramp > 1.0)
-            {
-                mLocalFeedback = mLFeedback_target;
-                mEchoSmoother &= 0xFFF7;
-            }
-            else
-            {
-                mLocalFeedback = mLFeedback_base + mLFeedback_diff * mLFeedback_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mLocalFeedback = mLFeedback_target;
-            mEchoSmoother &= 0xFFF7;
-        }
-#endif
-        // Cross Feedback Smoother
-        if (mCFeedback_ramp < 1.0)
-        {
-            mCFeedback_ramp += mInc;
-
-            if (mCFeedback_ramp > 1.0)
-            {
-                mCrossFeedback = mCFeedback_target;
-                mEchoSmoother &= 0xFFEF;
-            }
-            else
-            {
-                mCrossFeedback = mCFeedback_base + mCFeedback_diff * mCFeedback_ramp;
-            }
-        }
-#if 0
-        else
-        {
-            mCrossFeedback = mCFeedback_target;
-            mEchoSmoother &= 0xFFEF;
-        }
-#endif
+        applyEchoSmoother();
     }
 #endif
+
     float output = 0.f;
 
     if (_chInd == 0)                            //Channel L
@@ -518,7 +388,92 @@ float Echo::applyEcho(float _currSample, uint32_t _chInd)
 }
 
 
+#ifndef SMOOTHEROBJ
+/*****************************************************************************/
+/** @brief    applies the smoothers of the cabinet module, depending if the
+ *            corresponding bit of the mask is set to 1
+******************************************************************************/
+
+inline void Echo::applyEchoSmoother()
+{
+    // 0: Dry Smoother
+    if (mDry_ramp < 1.0)
+    {
+        mDry_ramp += mInc;
+
+        if (mDry_ramp > 1.0)
+        {
+            mDry = mDry_target;
+            mESmootherMask &= 0xFFFE;       // switch first bit to 0
+        }
+        else
+        {
+            mDry = mDry_base + mDry_diff * mDry_ramp;
+        }
+    }
+
+    // 1: Wet Smoother
+    if (mWet_ramp < 1.0)
+    {
+        mWet_ramp += mInc;
+
+        if (mWet_ramp > 1.0)
+        {
+            mWet = mWet_target;
+            mESmootherMask &= 0xFFFD;       // switch second bit to 0
+        }
+        else
+        {
+            mWet = mWet_base + mWet_diff * mWet_ramp;
+        }
+    }
+
+    // 2: Local Feedback Smoother
+    if (mLFeedback_ramp < 1.0)
+    {
+        mLFeedback_ramp += mInc;
+
+        if (mLFeedback_ramp > 1.0)
+        {
+            mLocalFeedback = mLFeedback_target;
+            mESmootherMask &= 0xFFFB;        // switch third bit to 0
+        }
+        else
+        {
+            mLocalFeedback = mLFeedback_base + mLFeedback_diff * mLFeedback_ramp;
+        }
+    }
+
+    // 3: Cross Feedback Smoother
+    if (mCFeedback_ramp < 1.0)
+    {
+        mCFeedback_ramp += mInc;
+
+        if (mCFeedback_ramp > 1.0)
+        {
+            mCrossFeedback = mCFeedback_target;
+            mESmootherMask &= 0xFFF7;        // switch fourth bit to 0
+        }
+        else
+        {
+            mCrossFeedback = mCFeedback_base + mCFeedback_diff * mCFeedback_ramp;
+        }
+    }
+}
+#endif
+
+
 #if 0
+/*****************************************************************************/
+/** @brief    main delay function, writes to delay buffer, reads from delay buffer,
+ *  		  interpolates 4 neighbouring values, all dependant on the channel index
+ *  @param    raw sample
+ *  @param 	  delay time, depending on the channel
+ *  @param    pointer to the sampleBuffer
+ *  @param    pointer to the sampleBuffer index
+ *  @return	  processed sample
+******************************************************************************/
+
 float Echo::delay(float _inputSample, float _delayTime, std::array<float,131072> &_sampleBuffer, uint32_t &_sampleBufferIndx)
 {
     //  DelayTime wird übergeebn, somit muss der 2Hz Lowpass vorher schon durchrechnen!
@@ -654,22 +609,22 @@ void Echo::calcFeedback()
     mLocalFeedbackSmoother.initSmoother(mLocalFeedback);
     mCrossFeedbackSmoother.initSmoother(mCrossFeedback);
 #else
-    // Local Feedback
+    // 2: Local Feedback
     mLFeedback_target = mFeedbackAmnt * (1.f - mCrossFeedbackAmnt);
 
     mLFeedback_base = mLocalFeedback;
     mLFeedback_diff = mLFeedback_target - mLFeedback_base;
 
-    mEchoSmoother |= 0x0004; //4;
+    mESmootherMask |= 0x0004;                // set third bit to 1
     mLFeedback_ramp = 0.0;
 
-    // Cross Feedback
+    // 3: Cross Feedback
     mCFeedback_target = mFeedbackAmnt * mCrossFeedbackAmnt;
 
     mCFeedback_base = mCrossFeedback;
     mCFeedback_diff = mCFeedback_target - mCFeedback_base;
 
-    mEchoSmoother |= 0x0008; //8;
+    mESmootherMask |= 0x0008;                // set fourth bit to 1
     mCFeedback_ramp = 0.0;
 
 #endif

@@ -25,7 +25,7 @@ public:
 
     BiquadFilters();                                // Deafult Constructor
 
-    BiquadFilters(uint32_t _sampleRate,              	// Parameterized Constructor
+    BiquadFilters(uint32_t _sampleRate,             // Parameterized Constructor
                   float _cutFreq,
                   float _shelfAmp,
                   float _resonance,
@@ -67,14 +67,22 @@ private:
     float mB0, mB1, mB2, mA0, mA1, mA2;		// Filter Coefficients
 
     BiquadFilterType mFilterType;        	// Filtertype
-    uint32_t mFilterCounter;                 // counter variable if the module is used with all filtertypes
+    uint32_t mFilterCounter;                // counter variable if the module is used with all filtertypes
 											// (0 = lowpass, 1 = highpass, 2 = lowshelf, 3 = highshelf)
 
-    enum CtrlId: unsigned char          	// Enum class for control IDs (Korg Nano Kontrol I)
+    enum CtrlId: unsigned char          	// Enum class for control IDs
     {
+#ifdef NANOKONTROL_I              // Korg Nano Kontrol I
         CUTFREQ    = 0x12,
         SHELFAMP   = 0x06,
         RESONANCE  = 0x13,
         FILTERTYPE = 0x1B
+#endif
+#ifdef REMOTE61                   // ReMote 61
+        CUTFREQ,
+        SHELFAMP,
+        RESONANCE,
+        FILTERTYPE
+#endif
     };
 };

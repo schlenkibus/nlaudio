@@ -16,7 +16,7 @@ class Oscillator
 public:
     Oscillator();                   // Default Constructor
 
-    Oscillator(int _samplerate,     // Parameterized Contructor
+    Oscillator(uint32_t _samplerate,     // Parameterized Contructor
                float _oscFreq,
                float _oscPhase,
                float _modPhase,
@@ -35,7 +35,7 @@ public:
     void calcInc();
 
     void setFluctuation(float _oscFluctAmnt);
-    void setSeed(unsigned int _voiceNumber);
+    void setSeed(uint32_t _voiceNumber);
     float calcRandVal();
 
     void setChirpFreq(float _chirpFrequency);
@@ -53,7 +53,7 @@ private:
     float mPhaseInc;                // Phase increment
 
     float mFluctAmnt;               // Fluctuation Amount
-    signed int mRandValStateVar;    // Random value state variable
+    int32_t mRandValStateVar;       // Random value state variable
 
     NlToolbox::Filters::ChirpFilter mChirpFilter;   // Chirp Filter instance
 

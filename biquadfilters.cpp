@@ -9,7 +9,6 @@
 #include "biquadfilters.h"
 
 
-
 /******************************************************************************/
 /** BiquadFilters Default Constructor
  * @brief    initialization of the modules local variabels with default values

@@ -17,9 +17,7 @@
 *******************************************************************************/
 
 Smoother::Smoother()
-//    : mSampleRate(48000.f)          /// new
-//    , mSmoothingTime(0.032f)        /// new
-    : mTarget(0.f)                  /// new
+    : mTarget(0.f)
     , mBase(0.f)
     , mDiff(0.f)
     , mRamp(1.f)
@@ -36,10 +34,8 @@ Smoother::Smoother()
  *           parameters
 *******************************************************************************/
 
-Smoother::Smoother(int _sRate, float _smTime)
-//    : mSampleRate(static_cast<float>(_sRate))          /// new
-//    , mSmoothingTime(_smTime)        /// new
-    : mTarget(0.f)                  /// new
+Smoother::Smoother(uint32_t _sRate, float _smTime)
+    : mTarget(0.f)
     , mBase(0.f)
     , mDiff(0.f)
     , mRamp(1.f)
@@ -61,12 +57,6 @@ void Smoother::initSmoother(float _currValue)
     mBase = mHeldValue;
     mDiff = mTarget - mBase;
     mRamp = 0.f;
-
-//    setInc();
-
-//    mBase = mHeldValue;
-//    mDiff = _currValue - mHeldValue;
-//    mRamp = 0.f;
 }
 
 
@@ -89,19 +79,6 @@ float Smoother::smooth()
     }
 
     return mHeldValue;
-
-//    if (mRamp < 1.f)
-//    {
-//        mRamp += mInc;
-//    }
-//    else
-//    {
-//        mRamp = 1.f;
-//    }
-
-
-//    mHeldValue = mBase + mDiff * mRamp;
-//    return mHeldValue;
 }
 
 
@@ -112,7 +89,7 @@ float Smoother::smooth()
  *  @param    length of the smoothing curve in ms
 *******************************************************************************/
 
-inline void Smoother::setInc(int _sRate, float _smTime)
+inline void Smoother::setInc(uint32_t _sRate, float _smTime)
 {
     mInc = 5.f / (static_cast<float>(_sRate) * _smTime);
 }
