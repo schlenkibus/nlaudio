@@ -143,7 +143,7 @@ inline float tan(float x)
  *  @return   arctangent value
 ******************************************************************************/
 
-inline floa arctan(float x)
+inline float arctan(float x)
 {
     if(x > 1.f)
     {
