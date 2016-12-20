@@ -138,6 +138,55 @@ inline float tan(float x)
 
 
 /*****************************************************************************/
+/** @brief    arctangent calculation of an incoming value
+ *  @param    value
+ *  @return   arctangent value
+******************************************************************************/
+
+inline floa arctan(float x)
+{
+    if(x > 1.f)
+    {
+        x = 1.f / x;
+        float x_square = x * x;
+
+        x = (((((((( x_square * 0.00286623f - 0.0161857f) * x_square + 0.0429096f)
+                  * x_square - 0.0752896f)  * x_square + 0.106563f)
+                * x_square - 0.142089f) * x_square + 0.199936f)
+              * x_square - 0.333331f) * x_square + 1.f) * x;
+
+        x  = 1.5708f - x;
+    }
+    else if(x < -1.f)
+    {
+        x = 1.f / x;
+        float x_square = x * x;
+
+        x = (((((((( x_square * 0.00286623f - 0.0161857f) * x_square + 0.0429096f)
+                  * x_square - 0.0752896f)  * x_square + 0.106563f)
+                * x_square - 0.142089f) * x_square + 0.199936f)
+              * x_square - 0.333331f) * x_square + 1.f) * x;
+
+        x  = -1.5708f - x;
+
+    }
+    else
+    {
+        float x_square = x * x;
+
+        x = (((((((( x_square * 0.00286623f - 0.0161857f) * x_square + 0.0429096f)
+                  * x_square - 0.0752896f)  * x_square + 0.106563f)
+                * x_square - 0.142089f) * x_square + 0.199936f)
+              * x_square - 0.333331f) * x_square + 1.f) * x;
+    }
+
+
+
+}
+
+
+
+/*****************************************************************************/
 /** @brief    sine calculation of an incoming value - 3rd degree polynomial
  *  @param    value
  *  @return   sine value
@@ -458,5 +507,71 @@ inline float parAsym(float sample, float sample_square, float asymAmnt)
 }
 
 } // namespace Others
+
+
+
+/*****************************************************************************/
+/** @brief  Curve tools
+******************************************************************************/
+
+namespace Curves {
+
+/*****************************************************************************/
+/** @brief    Control shaper for the range from -1 to +1. It increases the
+ *            resolution near to the range limits
+ *  @param    value
+ *  @return   resulting value
+******************************************************************************/
+
+inline float applySineCurve(float _in)
+{
+    float term = (_in * 2.f) + (-1.f);
+
+    return term * term * term * (-0.25f) + (term * 0.75f) + 0.5;
+}
+
+
+
+/*****************************************************************************/
+/** @brief    Shaper for control signals. One breakpoint.
+ *            [0], [50] and [100] adjust the levels for [in] = 0,
+ *            [in] = 0.5(breakpoint) and [in] = 1.
+******************************************************************************/
+
+struct LinearCurve
+{
+    float mFactor1;
+    float mFactor2;
+
+    float mStartpoint, mBreakpoint, mEndpoint;
+
+    void setCurve(float _startpoint, float _breakpoint, float _endpoint)
+    {
+        mFactor1 = (_breakpoint - _startpoint) / (0.5f - 0.f);
+        mFactor2 = (_endpoint - _breakpoint) / (1.f - 0.5f);
+
+        mStartpoint = _startpoint;
+        mBreakpoint = _breakpoint;
+        mEndpoint   = _endpoint;
+    }
+
+    float applyLinearCurve(float _in)
+    {
+        float out;
+
+        if (_in < 0.5f)
+        {
+            out = _in * mFactor1 + mStartpoint;
+        }
+        else if (_in > 0.5)
+        {
+            out = _in * mFactor2 + mBreakpoint;
+        }
+
+        return out;
+    }
+};
+
+} // Namespace Curves
 
 } // Namespace NlToolbox
