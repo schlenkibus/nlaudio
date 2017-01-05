@@ -1,5 +1,5 @@
 /******************************************************************************/
-/** @file		cabinet.h
+/** @file		echo.h
     @date		2016-07-01
     @version	0.2
     @author		Anton Schmied[2016-03-18]
@@ -67,7 +67,7 @@ private:
     Smoother mLocalFeedbackSmoother;            // local feedback smoother
     Smoother mCrossFeedbackSmoother;            // cross feedback smoother
 #else
-    uint32_t mESmootherMask;                     // Smoother Mask (0: dry, 1: wet, 2: local feedback, 3: cross feedback)
+    uint32_t mESmootherMask;                    // Smoother Mask (0: dry, 1: wet, 2: local feedback, 3: cross feedback)
     float mInc;                                 // Smoothing Increment
 
     float mDry_base;                            // Dry Smoothing values
