@@ -8,12 +8,6 @@
 
 #include "voicemanager.h"
 
-float gSoundGenOut_A[NUM_VOICES] = {};
-float gSoundGenOut_B[NUM_VOICES] = {};
-
-float gKeyPitch[NUM_VOICES] = {};
-float gVoiceVelocity[NUM_VOICES] = {};
-
 /******************************************************************************/
 /** Voice Manager Default Constructor
  * @brief    initialization of the modules local variabels with default values
@@ -25,7 +19,10 @@ VoiceManager::VoiceManager()
 {
 #ifdef MANYGENS
     for(int i = 0; i < NUM_VOICES; i++)
+    {
         mSoundGenerator[i] = Soundgenerator();          // Soundgenerator for each Voice
+        mCombFilter[i] = CombFilter();                  // Comb Filter for each voice
+    }
 #endif
 #ifdef ONEGEN
     mSoundGenerator = OneSoundgenerator();
@@ -69,6 +66,14 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 #ifdef ONEGEN
             mSoundGenerator.setGenParams(_instrID, _ctrlID, _ctrlVal);
 #endif
+            break;
+
+        case InstrID::COMBFILTER_PARAM:
+
+            for(uint32_t i = 0; i < NUM_VOICES; i++)
+            {
+                mCombFilter[i].setCombFilterParams(_ctrlID, _ctrlVal);
+            }
             break;
 
         case InstrID::CABINET_PARAM:
@@ -120,12 +125,13 @@ void VoiceManager::voiceLoop()
     // main dsp loop
     for(uint32_t i = 0; i < NUM_VOICES; i++)
     {
-        mSoundGenerator[i].generateSound();
-        mOutputMixer.applyMixer(mSoundGenerator[i].mSampleA, mSoundGenerator[i].mSampleB, 0.f, 0.f);
+        mSoundGenerator[i].generateSound();         // hier ist für jede Stimme ein Generator!! -> soundgenerator.cpp/.h
+        mCombFilter[i].applyCombFilter(mSoundGenerator[i].mSampleA, mSoundGenerator[i].mSampleB);
+        mOutputMixer.applyMixer(mSoundGenerator[i].mSampleA, mSoundGenerator[i].mSampleB, mCombFilter[i].mCombFilterOut, 0.f);
     }
 #endif
 #ifdef ONEGEN
-    mSoundGenerator.generateSound();
+    mSoundGenerator.generateSound();            // hier ist ein Generator für alle Stimmen!! -> onesoundgenerator.cpp/.h
 
     for(uint32_t i = 0; i < NUM_VOICES; i++)
     {
@@ -211,17 +217,23 @@ void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, floa
         vYoungestAssigned = v;
 
         vVoiceState[v] = _pitch;
+
+        ////////// Passing the Pitch and Velocity values to all Modules for calculation //////
+
 #ifdef MANYGENS
         mSoundGenerator[v].setPitch(_pitch);
         mSoundGenerator[v].resetPhase();
+
+        mCombFilter[v].setMainFreq(_pitch);
 #endif
 #ifdef ONEGEN
         mSoundGenerator.setPitch(_pitch, v);
         mSoundGenerator.resetPhase(v);
 #endif
+        mOutputMixer.setKeyPitch(v, _pitch);
+        mOutputMixer.setVelocity(v, _velocity/127.f);
 
-        gKeyPitch[v] = _pitch;
-        gVoiceVelocity[v] = _velocity/127.f;
+        ///////////////////////////////////////////////////////////////////////////////////////
     }
 
     else if (_keyDirection == InstrID::KEYUP_0 || _keyDirection == InstrID::KEYUP_1         // key up
@@ -260,9 +272,12 @@ void VoiceManager::vallocProcess(unsigned char _keyDirection, float _pitch, floa
                 }
 
                 vVoiceState[v] = -1;
-                gKeyPitch[v] = -1;
-                gVoiceVelocity[v] = 0.f;
 
+                ///////////////// Reseting Pitch and Velocity Values in all modules ///////////////////
+
+                mOutputMixer.setVelocity(v, 0.f);
+
+                ///////////////////////////////////////////////////////////////////////////////////////
                 break;
             }
         }

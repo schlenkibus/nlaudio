@@ -15,11 +15,59 @@
 
 CombFilter::CombFilter()
     : mSampleRate(48000.f)
+    , mCombFilterOut(0.f)
+    , mCFSmootherMask(0x000)
+    , mInc(5.f / (static_cast<float>(48000.f) * 0.032))
     , mCBLowpass()
 {
 
 }
 
+
+/******************************************************************************/
+/** @brief    checks the mask, if any bit is 1, the smoother is applied fo the
+ * corrsponding value
+*******************************************************************************/
+
+void CombFilter::applySmoothers()
+{
+    // 0: AB Select Amount
+    if (mABSelectAmnt_ramp < 1.0)
+    {
+        mABSelectAmnt_ramp += mInc;
+
+        if (mABSelectAmnt_ramp > 1.0)
+        {
+            mABSelectAmnt = mABSelectAmnt_target;
+            mCFSmootherMask &= 0xFFFE;                  // switch first bit to 0
+        }
+        else
+        {
+            mABSelectAmnt = mABSelectAmnt_base + mABSelectAmnt_diff * mABSelectAmnt_ramp;
+        }
+    }
+
+    // 1:
+    if (mABPhasemodAmnt_ramp < 1.0)
+    {
+        mABPhasemodAmnt_ramp += mInc;
+
+        if (mABPhasemodAmnt_ramp > 1.0)
+        {
+            mABPhasemodAmnt = mABPhasemodAmnt_target;
+            mCFSmootherMask &= 0xFFFD;                  // switch second bit to 0
+        }
+        else
+        {
+            mABPhasemodAmnt = mABPhasemodAmnt_base + mABPhasemodAmnt_diff * mABPhasemodAmnt_ramp;
+        }
+    }
+
+    // 2:
+
+    // 3:
+
+}
 
 
 /******************************************************************************/
@@ -29,14 +77,43 @@ CombFilter::CombFilter()
 
 void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
 {
-    float mixSample;
+    float outputSample;
+
+    applySmoothers();           // Smoothing
+
+//    mABPhasemod = _sampleA * (1.f - mABPhasemodAmnt) + _sampleB * mABPhasemodAmnt;
+    outputSample = _sampleA * (1.f - mABSelectAmnt) + _sampleB * mABSelectAmnt;       // mix of both incoming samples
 
     /// 1-Pole Lowpass
-    mixSmaple = mCBLowpass.applyFilter(mixSample);
+//    outputSample = mCBLowpass.applyFilter(outputSample);
 
     /// Allpass
 
-    /// Delay
+    /////////////////////////// Delay /////////////////////////////////////////////////////////////////
+    mSampleBuffer[mSampleBufferIndex] = outputSample;               // write into the SampleBuffer
+
+    mInd_tm1 = mSampleBufferIndex - mInd_tm1;
+    mInd_t0  = mSampleBufferIndex - mInd_t0;
+    mInd_tp1 = mSampleBufferIndex - mInd_tp1;
+    mInd_tp2 = mSampleBufferIndex - mInd_tp2;
+
+    mInd_tm1 &= (mSampleBuffer.size() - 1);                         // Wrap with a mask sampleBuffer.size()-1
+    mInd_t0  &= (mSampleBuffer.size() - 1);
+    mInd_tp1 &= (mSampleBuffer.size() - 1);
+    mInd_tp2 &= (mSampleBuffer.size() - 1);
+
+    outputSample = NlToolbox::Math::interpolRT(mDelaySamples_fract,          // Interpolate
+                                               mSampleBuffer[mInd_tm1],
+                                               mSampleBuffer[mInd_t0],
+                                               mSampleBuffer[mInd_tp1],
+                                               mSampleBuffer[mInd_tp2]);
+
+//    outputSample * envC;                                                  /// Hier wird am ende och mal mit EnvC multiplieziert
+
+    mSampleBufferIndex = (mSampleBufferIndex + 1) & (mSampleBuffer.size() - 1);     // increase index and chck boundaries
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    mCombFilterOut = outputSample;
 }
 
 
@@ -56,18 +133,26 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             _ctrlVal = _ctrlVal / 127.f;
 
             printf("AB Crossfade: %f\n", _ctrlVal);
-//            setABCrossfadeamount(_ctrlVal);
+            setABSelectAmnt(_ctrlVal);
             break;
 
         case CtrlId::PITCHEDIT:
+            _ctrlVal = (_ctrlVal / 126.f) * 120.f;
 
+            if (_ctrlVal > 120.f)
+            {
+                _ctrlVal = 199.99f;
+            }
+
+            printf("Pitch Edit: %f\n", _ctrlVal);
+//            setPitchEdit(_ctrlVal);
             break;
 
         case CtrlId::PITCH_KEYTRACKING:
             _ctrlVal = (_ctrlVal / 127.f) * 1.05f;
 
             printf("Pitch Key Trk: %f\n", _ctrlVal);
-//            setPitchKeytrackingAmnt(_ctrlVal);
+            setPitchKeytrackingAmnt(_ctrlVal);
             break;
 
         case CtrlId::PITCH_ENVCAMOUNT:
@@ -79,7 +164,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             }
 
             printf("Pitch EnvC: %f\n", _ctrlVal);
-//            setPitchEnvCAmnt(_ctrlVal);
+            setPitchEnvCAmnt(_ctrlVal);
             break;
 
         case CtrlId::DECAYTIME:
@@ -142,7 +227,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             break;
 
         case CtrlId::LOWPASSFREQ:
-            _ctrlVal = (_ctrVal / 1.26f) + 40.f;
+            _ctrlVal = (_ctrlVal / 1.26f) + 40.f;
 
             printf("Lowpass Frequency: %f/n", _ctrlVal);
 
@@ -182,7 +267,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             }
 
             printf("Phasemod Amount %f\n", _ctrlVal);
-//            setPhasemodAmnt(_ctrlVal);
+            setPhasemodAmnt(_ctrlVal);
             break;
 
         case CtrlId::AB_PHASEMOD:
@@ -194,12 +279,141 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             }
 
             printf("AB Phasemod Amount %f\n", _ctrlVal);
-    //            setABPhasemodAmnt(_ctrlVal);
+            setABPhasemodAmnt(_ctrlVal);
             break;
     }
 }
 
 
+
+/*****************************************************************************/
+/** @brief
+******************************************************************************/
+
+void CombFilter::setMainFreq(float _keyPitch)
+{
+    /// hier die Reihenfolge beachten... oder auch nicht!?!
+    /// Tune Controls
+    mMainFreq = NlToolbox::Conversion::pitch2freq(_keyPitch - 60.f);       /// hier fehlt PitchEdit und KeyTtracking
+
+    /// DelaySample calculation
+    float minClipVal = mSampleRate / (mSampleBuffer.size() - 2);
+
+    if (mMainFreq < minClipVal) {mDelaySamples = mSampleRate / minClipVal;}
+    else {mDelaySamples = mSampleRate / mMainFreq;}
+
+
+    /// Delay Setup - eigene Funktion!?
+    mDelaySamples -= 1.f;
+
+    if (mDelaySamples > (mSampleBuffer.size() - 3))          // Clip 1, size-3
+        {mDelaySamples = mSampleBuffer.size() - 3;}
+    else if (mDelaySamples < 1.f)
+        {mDelaySamples = 1.f;}
+
+    mDelaySamples_int = round(mDelaySamples - 0.5f);          // integer and fraction speration
+    mDelaySamples_fract = mDelaySamples - mDelaySamples_int;
+
+    mInd_tm1 = mDelaySamples_int - 1;
+    mInd_t0  = mDelaySamples_int;
+    mInd_tp1 = mDelaySamples_int + 1;
+    mInd_tp2 = mDelaySamples_int + 2;
+
+    /// Allpass Controls
+
+    /// LowPass Controls
+
+    /// Feedback Controls
+
+}
+
+/*****************************************************************************/
+/** @brief  Select Amount between the 2 Main Samples coming from the Soundgenerator
+ *          the incoming value [0 ..1] is converted from a linear to a sine shape
+ *          befor becoming a member of the Com Filter class
+******************************************************************************/
+
+void CombFilter::setABSelectAmnt(float _ctrlVal)
+{
+    mABSelectAmnt_target = NlToolbox::Curves::applySineCurve(_ctrlVal);
+
+    mABSelectAmnt_base = mABSelectAmnt;
+    mABSelectAmnt_diff = mABSelectAmnt_target - mABSelectAmnt_base;
+
+    mCFSmootherMask |= 0x0001;      // ID: 0
+    mABSelectAmnt_ramp = 0.f;
+}
+
+
+
+/*****************************************************************************/
+/** @brief
+******************************************************************************/
+
+void CombFilter::setPitchEdit(float _ctrlVal)
+{
+
+}
+
+
+
+/*****************************************************************************/
+/** @brief
+******************************************************************************/
+
+void CombFilter::setPitchKeytrackingAmnt(float _ctrlVal)
+{
+
+
+}
+
+
+
+/*****************************************************************************/
+/** @brief
+******************************************************************************/
+
+void CombFilter::setPitchEnvCAmnt(float _ctrlVal)
+{
+
+
+}
+
+
+
+
+/*****************************************************************************/
+/** @brief
+******************************************************************************/
+
+void CombFilter::setPhasemodAmnt(float _ctrlVal)
+{
+    mPhasemodAmount = _ctrlVal;
+}
+
+
+
+/*****************************************************************************/
+/** @brief
+******************************************************************************/
+
+void CombFilter::setABPhasemodAmnt(float _ctrlVal)
+{
+    mABPhasemodAmnt_target = _ctrlVal;
+
+    mABPhasemodAmnt_base = mABPhasemodAmnt;
+    mABPhasemodAmnt_diff = mABPhasemodAmnt_target - mABPhasemodAmnt_base;
+
+    mCFSmootherMask |= 0x0002;      // ID: 1
+    mABPhasemodAmnt_ramp = 0.f;
+
+}
+
+
+
+/*****************************************************************************/
+/** &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+******************************************************************************/
 
 /*****************************************************************************/
 /** @brief  setter function for highcut frequency of the internal lowpass filter.
@@ -209,12 +423,25 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
 
 void CombFilter::setLowpassFreq()
 {
-    float cutFrequency;
+//    float cutFrequency;
 
-    cutFrequency = ((mPitch * mLowpassKeyTrk) + mLowpassPitch) + (mEnv * mLowpassEnvC);
+//    cutFrequency = ((mPitch * mLowpassKeyTrk) + mLowpassPitch) + (mEnv * mLowpassEnvC);
 
-    cutFrequency = NlToolbox::Conversion::pitch2freq(cutFrequency);
+//    cutFrequency = NlToolbox::Conversion::pitch2freq(cutFrequency);
 
-    mCBLowpass.setCoefficient(cutFrequency);
+//    mCBLowpass.setCoefficient(cutFrequency);
+}
+
+
+
+
+
+/*****************************************************************************/
+/** @brief
+******************************************************************************/
+
+void CombFilter::setMainFreq()
+{
+
 }
 

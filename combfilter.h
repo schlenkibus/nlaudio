@@ -26,32 +26,71 @@ public:
     float mCombFilterOut;       // public processed output
 
     void applyCombFilter(float _sampleA, float _sampleB);
+    void applySmoothers();
 
     void setCombFilterParams(unsigned char _ctrlID, float _ctrlVal);
 
+    void setMainFreq(float _keyPitch);
+    void setABSelectAmnt(float _ctrlVal);
+    void setPitchEdit(float _ctrlVal);
+    void setPitchKeytrackingAmnt(float _ctrlVal);
+    void setPitchEnvCAmnt(float _ctrlVal);
+
+    void setPhasemodAmnt(float _ctrlVal);
+    void setABPhasemodAmnt(float _ctrlVal);
+
     void setLowpassFreq();
+    void setMainFreq();
 
 private:
     float mSampleRate;
-    float mPitch;               // cutrrent pitch of the voice
+    float mMainFreq;            // Frequency after Pitch Edit
     float mEnv;                 // current vallue of the Envelope C
+
+    float mABSelectAmnt;        // Select Amount between Sample A and B
 
     float mLowpassPitch;
     float mLowpassKeyTrk;
     float mLowpassEnvC;
 
+    float mPhasemodAmount;      /// Phase Modulation Amount
 
-    /// SMOOTHING
-    uint32_t mCFSmootherMask;
-    float inc;
+    float mABPhasemodAmnt;      /// Phase Modulation amount for th incoming samples
+    float mABPhasemod;          /// Resulting mix between the two incoming samples
 
+    uint32_t mCFSmootherMask;   // Smoother Mask
+    float mInc;                 // Smoother Increment
+
+    // Mask ID: 0
+    float mABSelectAmnt_base;
+    float mABSelectAmnt_target;
+    float mABSelectAmnt_diff;
+    float mABSelectAmnt_ramp;
+
+    // Mask ID: 1
+    float mABPhasemodAmnt_base;
+    float mABPhasemodAmnt_target;
+    float mABPhasemodAmnt_diff;
+    float mABPhasemodAmnt_ramp;
+
+    //////////////////// Delay Module ////////////////////////
     float mDecayTime;
 
     std::array<float,8192> mSampleBuffer;
     uint32_t mSampleBufferIndex;
 
+    float mDelaySamples;
+    float mDelaySamples_int;
+    float mDelaySamples_fract;
+
+    int32_t mInd_tm1;                       // indices for intorpolation
+    int32_t mInd_t0;
+    int32_t mInd_tp1;
+    int32_t mInd_tp2;
+    //////////////////////////////////////////////////////////
+
     /// 1-Pole Lowpass
-    CombFilterLowpass mCBLowpass;
+//    CombFilterLowpass mCBLowpass;
 
     struct CombFilterLowpass
     {
@@ -94,7 +133,7 @@ private:
                 _cutFrequency = mClipConstMin;
             }
 
-            _cutFrequency =* (3.14159f / mSampleRate);
+            _cutFrequency = _cutFrequency* (3.14159f / mSampleRate);
 
             _cutFrequency = NlToolbox::Math::tan(_cutFrequency);
 
@@ -104,7 +143,7 @@ private:
 
         float applyFilter(float _sample)                    // apply the Lowpass to the incoming sample
         {
-            _sample =* (1.f - mA1);
+            _sample =_sample * (1.f - mA1);
             _sample =+ (mA1 * mStateVar);
 
             _sample =+ DNC_CONST;
@@ -113,7 +152,7 @@ private:
             return _sample;
         }
 
-    };
+    }mCBLowpass;
 
     enum CtrlId: unsigned char          // Enum class for control IDs
     {

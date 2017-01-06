@@ -51,11 +51,13 @@ Outputmixer::Outputmixer()
 
     setMainLevel(0.f);
     setKeyPan(0.f);
+
+    setEnvRamp(1.5);
 }
 
 
 /******************************************************************************/
-/** @brief    calls the smoothing functions fpr each sample
+/** @brief    calls the smoothing functions f0r each sample
 *******************************************************************************/
 
 inline void Outputmixer::applySmoothers()
@@ -284,6 +286,8 @@ inline void Outputmixer::applySmoothers()
 #endif
 }
 
+
+
 /******************************************************************************/
 /** @brief    main function which calculates the mix of the A and B samples
  *            depending ...
@@ -293,7 +297,7 @@ void Outputmixer::applyMixer(float _sampleA, float _sampleB, float _sampleComb, 
 {
     static uint32_t voiceNumber = 0;
 
-    if (voiceNumber == 0)
+    if (voiceNumber == 0)           // do once for all voices
     {
         mSample_L = 0.f;
         mSample_R = 0.f;
@@ -310,24 +314,29 @@ void Outputmixer::applyMixer(float _sampleA, float _sampleB, float _sampleComb, 
 
     // panning
     /// soll das wirklich jedes mal berechnet werden ... :/
+    /// eigentlich ja nur, wenn der Pitch der Voice sich ändert!
     float pan_AR = (mPitchPanArray[voiceNumber] + mAPan) * mALevel;
     float pan_AL = (1.f - (mPitchPanArray[voiceNumber] + mAPan)) * mALevel;
 
     float pan_BR = (mPitchPanArray[voiceNumber] + mBPan) * mBLevel;
     float pan_BL = (1.f - (mPitchPanArray[voiceNumber] + mBPan)) * mBLevel;
 
-    float main_R = (pan_AR * _sampleA) + (pan_BR * _sampleB);
-    float main_L = (pan_AL * _sampleA) + (pan_BL * _sampleB);
+//    float main_R = (pan_AR * _sampleA) + (pan_BR * _sampleB);
+//    float main_L = (pan_AL * _sampleA) + (pan_BL * _sampleB);
 
-    /*
+
     float pan_CombR = (mPitchPanArray[voiceNumber] + mCombPan) * mCombLevel;
     float pan_CombL = (1.f - (mPitchPanArray[voiceNumber] + mCombPan)) * mCombLevel;
 
+    float main_L = (pan_AL * _sampleA) + (pan_BL * _sampleB) + (pan_CombL * _sampleComb);
+    float main_R = (pan_AR * _sampleA) + (pan_BR * _sampleB) + (pan_CombR * _sampleComb);
+
+    /*
     float pan_SVFilterR = (mPitchPanArray[voiceNumber] + mSVFilterPan) * mSVFilterLevel;
     float pan_SVFilterL = (1.f - (mPitchPanArray[voiceNumber] + mSVFilterPan)) * mSVFilterLevel;
 
-    main_L = (pan_AL * _sampleA) + (pan_BL * _sampleB) + (pan_CombL * _sampleComb) + (pan_SVFilterL * _sampleSVFilter);
-    main_R = (pan_AR * _sampleA) + (pan_BR * _sampleB) + (pan_CombR * _sampleComb) + (pan_SVFilterR * _sampleSVFilter);
+    float main_L = (pan_AL * _sampleA) + (pan_BL * _sampleB) + (pan_CombL * _sampleComb) + (pan_SVFilterL * _sampleSVFilter);
+    float main_R = (pan_AR * _sampleA) + (pan_BR * _sampleB) + (pan_CombR * _sampleComb) + (pan_SVFilterR * _sampleSVFilter);
     */
 
     float ctrlSample;
@@ -354,9 +363,15 @@ void Outputmixer::applyMixer(float _sampleA, float _sampleB, float _sampleComb, 
     main_R = NlToolbox::Others::parAsym(main_R, squareSample, mAsym);
 
     // Combine the voices
-    /// die velocity hier ist temporär, da wir noch keine envelopes haben ...
-    mSample_L += (main_L * gVoiceVelocity[voiceNumber]);
-    mSample_R += (main_R * gVoiceVelocity[voiceNumber]);
+    /// die velocity und das Envelope sind hier temporär, da wir noch keine envelopes haben ...
+    mSample_L += (main_L * mVelocity[voiceNumber] * mEnvRamp[voiceNumber]);
+    mSample_R += (main_R * mVelocity[voiceNumber] * mEnvRamp[voiceNumber]);
+
+    mEnvRamp[voiceNumber] -= mEnvInc;
+//    if (mEnvRamp > 1.0)
+//        mEnvRamp = 1.0;
+    if (mEnvRamp[voiceNumber] < 0.0f)
+        mEnvRamp[voiceNumber] = 0.0f;
 
     voiceNumber++;
 
@@ -522,6 +537,23 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Output Mixer: Key Pan: %f\n", _ctrlVal);
             setKeyPan(_ctrlVal);
             break;
+
+        /// Temporäres Envelope
+        case CtrlID::ENV_ATTACK:
+            _ctrlVal = _ctrlVal / 127.f;
+            _ctrlVal = _ctrlVal * _ctrlVal * 1.5f; /// hier die Attack time einstellen
+            printf("ENV Attack Time: %f\n", _ctrlVal * 1000.f);
+
+
+            break;
+
+        case CtrlID::ENV_RELEASE:
+            _ctrlVal = _ctrlVal / 127.f;
+            _ctrlVal = _ctrlVal * _ctrlVal * 1.5f; /// hier die Release time einstellen
+            printf("ENV Release Time: %f\n", _ctrlVal * 1000.f);
+
+            setEnvRamp(_ctrlVal);
+            break;
     }
 }
 
@@ -543,7 +575,7 @@ void Outputmixer::setALevel(float _level)
     mALevel_base = mALevel;
     mALevel_diff = mALevel_target - mALevel_base;
 
-    mOMSmootherMask |= 0x0001; //ID 1;
+    mOMSmootherMask |= 0x0001; //ID 0;
     mALevel_ramp = 0.0;
 #endif
 }
@@ -566,7 +598,7 @@ void Outputmixer::setAPan(float _pan)
     mAPan_base = mAPan;
     mAPan_diff = mAPan_target - mAPan_base;
 
-    mOMSmootherMask|= 0x0002; //ID 2;
+    mOMSmootherMask|= 0x0002; //ID 1;
 
     mAPan_ramp = 0.0;
 #endif
@@ -590,7 +622,7 @@ void Outputmixer::setBLevel(float _level)
     mBLevel_base = mBLevel;
     mBLevel_diff = mBLevel_target - mBLevel_base;
 
-    mOMSmootherMask|= 0x0004; //ID 3;
+    mOMSmootherMask|= 0x0004; //ID 2;
     mBLevel_ramp = 0.0;
 #endif
 }
@@ -613,7 +645,7 @@ void Outputmixer::setBPan(float _pan)
     mBPan_base = mBPan;
     mBPan_diff = mBPan_target - mBPan_base;
 
-    mOMSmootherMask|= 0x0008; //ID 4;
+    mOMSmootherMask|= 0x0008; //ID 3;
     mBPan_ramp = 0.0;
 #endif
 }
@@ -636,7 +668,7 @@ void Outputmixer::setCombLevel(float _level)
     mCombLevel_base = mCombLevel;
     mCombLevel_diff = mCombLevel_target - mCombLevel_base;
 
-    mOMSmootherMask|= 0x0010; //ID 5;
+    mOMSmootherMask|= 0x0010; //ID 4;
     mCombLevel_ramp = 0.0;
 
 #endif
@@ -660,7 +692,7 @@ void Outputmixer::setCombPan(float _pan)
     mCombPan_base = mCombPan;
     mCombPan_diff = mCombPan_target - mCombPan_base;
 
-    mOMSmootherMask|= 0x0020; //ID 6;
+    mOMSmootherMask|= 0x0020; //ID 5;
     mCombPan_ramp = 0.0;
 #endif
 }
@@ -683,7 +715,7 @@ void Outputmixer::setSVFilterLevel(float _level)
     mSVFilterLevel_base = mSVFilterLevel;
     mSVFilterLevel_diff = mSVFilterLevel_target - mSVFilterLevel_base;
 
-    mOMSmootherMask|= 0x0040; //ID 7;
+    mOMSmootherMask|= 0x0040; //ID 6;
     mSVFilterLevel_ramp = 0.0;
 #endif
 }
@@ -706,7 +738,7 @@ void Outputmixer::setSVFilterPan(float _pan)
     mSVFilterPan_base = mSVFilterPan;
     mSVFilterPan_diff = mSVFilterPan_target - mSVFilterPan_base;
 
-    mOMSmootherMask|= 0x0080; //ID 8;
+    mOMSmootherMask|= 0x0080; //ID 7;
     mSVFilterPan_ramp = 0.0;
 #endif
 }
@@ -729,7 +761,7 @@ void Outputmixer::setDrive(float _drive)
     mDrive_base = mDrive;
     mDrive_diff = mDrive_target - mDrive_base;
 
-    mOMSmootherMask|= 0x0100; //ID 9;
+    mOMSmootherMask|= 0x0100; //ID 8;
     mDrive_ramp = 0.0;
 #endif
 }
@@ -752,7 +784,7 @@ void Outputmixer::setFold(float _fold)
     mFold_base = mFold;
     mFold_diff = mFold_target - mFold_base;
 
-    mOMSmootherMask|= 0x0200; //ID 10;
+    mOMSmootherMask|= 0x0200; //ID 9;
     mFold_ramp = 0.0;
 #endif
 }
@@ -775,7 +807,7 @@ void Outputmixer::setAsym(float _asym)
     mAsym_base = mAsym;
     mAsym_diff = mAsym_target - mAsym_base;
 
-    mOMSmootherMask|= 0x0400; //ID 11;
+    mOMSmootherMask|= 0x0400; //ID 10;
     mAsym_ramp = 0.0;
 #endif
 }
@@ -798,7 +830,7 @@ void Outputmixer::setMainLevel(float _level)
     mMainLevel_base = mMainLevel;
     mMainLevel_diff = mMainLevel_target - mMainLevel_base;
 
-    mOMSmootherMask|= 0x0800; //ID 12;
+    mOMSmootherMask|= 0x0800; //ID 11;
     mMainLevel_ramp = 0.0;
 #endif
 }
@@ -821,7 +853,7 @@ void Outputmixer::setKeyPan(float _keypan)
     mKeypan_base = mKeypan;
     mKeypan_diff = mKeypan_target - mKeypan_base;
 
-    mOMSmootherMask|= 0x1000; //ID 13;
+    mOMSmootherMask|= 0x1000; //ID 12;
     mKeypan_ramp = 0.0;
 #endif
 }
@@ -834,8 +866,37 @@ void Outputmixer::setKeyPan(float _keypan)
 
 void Outputmixer::calcKeyPan()
 {
-    for(uint32_t i = 0; i < NUM_VOICES; i++)
+    for(uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
     {
-        mPitchPanArray[i] = ((gKeyPitch[i] - 66.f) * mKeypan) + 0.f;       // hier fehl noch unison pan
+        mPitchPanArray[voiceNumber] = ((mKeyPitch[voiceNumber] - 66.f) * mKeypan) + 0.f;       /// hier fehl noch unison pan
     }
+}
+
+
+
+/*****************************************************************************/
+/** @brief    sets the local value of the pitch once a key is pressed
+ *            and calculates the corresponding pitch pan
+******************************************************************************/
+
+void Outputmixer::setKeyPitch(uint32_t _voiceNumber, float _keyPitch)
+{
+    mKeyPitch[_voiceNumber] = _keyPitch;
+    mPitchPanArray[_voiceNumber] = (_keyPitch - 66.f) * mKeypan + 0.f;       /// hier fehl noch unison pan
+}
+
+
+
+
+
+////TEMPORÄR FÜR VELOCITY UND ENVELOPE//////
+void Outputmixer::setVelocity(uint32_t _voiceNumber, float _vel)
+{
+    mVelocity[_voiceNumber] = _vel;
+    mEnvRamp[_voiceNumber] = 1.f;
+}
+
+void Outputmixer::setEnvRamp(float _relTime)
+{
+    mEnvInc = 1.f / (_relTime * 48000.f);
 }

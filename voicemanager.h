@@ -14,6 +14,8 @@
 #include "nltoolbox.h"
 #include "soundgenerator.h"
 #include "onesoundgenerator.h"
+#include "combfilter.h"
+// #include "onecombfilter.h"           // geplant zum Vergleich!
 #include "outputmixer.h"
 #include "echo.h"
 #include "cabinet.h"
@@ -33,10 +35,12 @@ public:
 private:
 
 #ifdef MANYGENS
-    Soundgenerator mSoundGenerator[NUM_VOICES];             // 12 Generatoren für je 1 Stimme
+    Soundgenerator mSoundGenerator[NUM_VOICES];             // 12 Generatoren, für jede Stimme 1
+    CombFilter mCombFilter[NUM_VOICES];                     // 12 CombFilter, für jeden Stimme 1
 #endif
 #ifdef ONEGEN
-    OneSoundgenerator mSoundGenerator;                      // 1 Generator für Num_VOICE stimmen
+    OneSoundgenerator mSoundGenerator;                      // 1 Generator für Num_VOICE Stimmen
+    OneCombFilter mCombFilter;                              // 1 CombFilter für NUM_VOICE Stimmen
 #endif
 
     Outputmixer mOutputMixer;
@@ -72,19 +76,23 @@ private:
         KEYUP_2             = 0x82,
         KEYUP_3             = 0x83,
         KEYUP_4             = 0x84,
+        KEYUP_5             = 0x85,
 
         KEYDOWN_0           = 0x90,
         KEYDOWN_1           = 0x91,
         KEYDOWN_2           = 0x92,
         KEYDOWN_3           = 0x93,
         KEYDOWN_4           = 0x94,
+        KEYDOWN_5           = 0x95,
 
         SG_A_PARAM          = 0xB0,
         SG_B_PARAM          = 0xB1,
 
         CABINET_PARAM       = 0xB2,
         OUTPUTMIXER_PARAM   = 0xB3,
-        ECHO_PARAM          = 0xB4
+        ECHO_PARAM          = 0xB4,
+
+        COMBFILTER_PARAM    = 0xB5
 #endif
     };
 };

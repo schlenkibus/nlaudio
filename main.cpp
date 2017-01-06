@@ -74,8 +74,8 @@ int main()
 {
 #endif
 
-    Nl::requestRealtime();                                  // Realtime Request
 #if 0
+    Nl::requestRealtime();                                  // Realtime Request
     /// zum testen der Anton-DSP
 
     VoiceManager voiceManager = VoiceManager();

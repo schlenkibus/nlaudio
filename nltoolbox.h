@@ -20,12 +20,6 @@
 #define DNC_CONST 1e-18
 #endif
 
-// globale arrays und variablen ... ja nciht cool hier ...
-// Frage on man die überhaupt braucht später ...
-extern float gKeyPitch[NUM_VOICES];
-extern float gVoiceVelocity[NUM_VOICES];
-
-
 
 namespace NlToolbox {
 
@@ -180,8 +174,7 @@ inline float arctan(float x)
               * x_square - 0.333331f) * x_square + 1.f) * x;
     }
 
-
-
+    return x;
 }
 
 

@@ -546,18 +546,22 @@ float Echo::delay(float _inputSample, float _delayTime, uint32_t _chInd)
             ? leftChannel.mSampleBufferIndx
             : rightChannel.mSampleBufferIndx;
 
+    sampleBuffer[sampleBufferIndx] = _inputSample;                  // Write sample to Buffer
+
     float delaySamples = _delayTime * mSampleRate;
 
     float delaySamples_int = round(delaySamples - 0.5f);
     float delaySamples_fract = delaySamples - delaySamples_int;
 
-    sampleBuffer[sampleBufferIndx] = _inputSample;                              //Write
 
     int32_t ind_tm1 = delaySamples_int - 1;
+#if 0
+    /// das brauch ich wohl nicht mehr, denn gerwapt wird nun mit einem AND
     if (ind_tm1 < 0)
     {
         ind_tm1 = 0;
     }
+#endif
     int32_t ind_t0  = delaySamples_int;
     int32_t ind_tp1 = delaySamples_int + 1;
     int32_t ind_tp2 = delaySamples_int + 2;
@@ -585,12 +589,15 @@ float Echo::delay(float _inputSample, float _delayTime, uint32_t _chInd)
                                                      sampleBuffer[ind_tp1],
                                                      sampleBuffer[ind_tp2]);
 
+
+    sampleBufferIndx = (sampleBufferIndx + 1) & (sampleBuffer.size() - 1);      // check index boundaries
+#if 0
     ++sampleBufferIndx;
     if (sampleBufferIndx >= sampleBuffer.size())
     {
         sampleBufferIndx = 0;
     }
-
+#endif
     return outputSample;
 }
 

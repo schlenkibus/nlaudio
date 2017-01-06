@@ -49,6 +49,11 @@ public:
 
     void setMainLevel(float _level);
     void setKeyPan(float _keypan);
+    void setKeyPitch(uint32_t _voiceNumber, float _keyPitch);
+
+    ///Temporär für Envelope und Velocity
+    void setVelocity(uint32_t _voiceNumber, float _vel);
+    void setEnvRamp(float _relTime);
 
 private:
     float mALevel;
@@ -69,7 +74,13 @@ private:
     float mMainLevel;
     float mKeypan;
 
+    ///Temporäres Envelope und Velocity!!!!
+    float mVelocity[NUM_VOICES];
+    float mEnvRamp[NUM_VOICES];
+    float mEnvInc;
+
     float mPitchPanArray[NUM_VOICES];
+    float mKeyPitch[NUM_VOICES];
 
     OnePoleFilters mLeftHighpass;
     OnePoleFilters mRightHighpass;
@@ -190,7 +201,11 @@ private:
         ASYM                = 0x1B,
 
         MAIN_LEVEL          = 0x1C,
-        KEYPAN              = 0x26
+        KEYPAN              = 0x26,
+
+        /// Temporär
+        ENV_ATTACK          = 0x2F,
+        ENV_RELEASE         = 0x30
 #endif
     };
 };
