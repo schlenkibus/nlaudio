@@ -16,15 +16,6 @@ struct ExamplesHandle {
 	SharedBufferHandle inMidiBuffer;
 };
 
-void vampPluginCallback(uint8_t *in, const SampleSpecs &sampleSpecs, SharedUserPtr ptr);
-ExamplesHandle vampPlugin(const AlsaCardIdentifier &inCard, unsigned int channels,
-						 unsigned int buffersize,
-						 unsigned int samplerate);
-
-
-void onsetDetectionCallback(u_int8_t *in, const SampleSpecs &sampleSpecs, SharedUserPtr ptr);
-ExamplesHandle onsetDetection(const AlsaCardIdentifier &inCard, unsigned int buffersize, unsigned int samplerate);
-
 ExamplesHandle inputToOutput(const AlsaCardIdentifier &audioInCard,
 							   const AlsaCardIdentifier &audioOutCard,
 							   unsigned int buffersize,

@@ -7,7 +7,7 @@ set(NLAUDIO_VERSION_MINOR 0)
 set(NLAUDIO_VERSION_PATCH 0)
 set(NLAUDIO_VERSION_STRING ${NLAUDIO_VERSION_MAJOR}.${NLAUDIO_VERSION_MINOR}.${NLAUDIO_VERSION_PATCH})
 
-
+option(BUILD_VAMP "Enable vamp experiments" OFF)
 
 
 
@@ -15,14 +15,24 @@ set(NLAUDIO_VERSION_STRING ${NLAUDIO_VERSION_MAJOR}.${NLAUDIO_VERSION_MINOR}.${N
 include(FindPkgConfig)
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib64/pkgconfig")
 
-set(LIBS
-	alsa
-	vamp-sdk
-	vamp-hostsdk
-	vamp
-	aubio
-	jack
-)
+
+if (${BUILD_VAMP})
+	set(LIBS
+		alsa
+		vamp-sdk
+		vamp-hostsdk
+		vamp
+		aubio
+		jack
+	)
+else()
+	set(LIBS
+		alsa
+		jack
+	)
+endif()
+
+
 
 ####################
 
@@ -42,8 +52,16 @@ include_directories(include)
 include_directories(anton)
 
 
-file(GLOB_RECURSE LIBRARY_SOURCES src/*.cpp)
-file(GLOB_RECURSE BINARY_SOURCES examples/*.cpp)
+file(GLOB_RECURSE LIBRARY_SOURCES src/audio/*.cpp)
+file(GLOB_RECURSE LIBRARY_SOURCES src/common/*.cpp)
+file(GLOB_RECURSE LIBRARY_SOURCES src/midi/*.cpp)
+#if (${BUILD_VAMP})
+file(GLOB_RECURSE LIBRARY_SOURCES src/vamp/*.cpp)
+#endif()
+
+
+file(GLOB_RECURSE EXAMPLE_SOURCES examples/*.cpp)
+file(GLOB_RECURSE ANTON_SOURCES anton/*.cpp)
 
 
 add_library(nlaudio SHARED ${LIBRARY_SOURCES})
@@ -51,8 +69,13 @@ target_link_libraries(nlaudio pthread)
 set_target_properties(nlaudio PROPERTIES VERSION ${NLAUDIO_VERSION_STRING} SOVERSION ${NLAUDIO_VERSION_MAJOR})
 
 
-add_executable(nlaudio_example ${BINARY_SOURCES})
+add_executable(nlaudio_example ${EXAMPLE_SOURCES})
 target_link_libraries(nlaudio_example nlaudio)
+
+add_executable(nlaudio_anton ${ANTON_SOURCES})
+target_link_libraries(nlaudio_anton nlaudio)
+
+
 
 foreach(lib ${LIBS})
   addLib(${lib})

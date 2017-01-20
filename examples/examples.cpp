@@ -4,130 +4,13 @@
 #include "audio/audioalsainput.h"
 #include "audio/audioalsaoutput.h"
 #include "midi/rawmididevice.h"
-#include "vamp/vamphostaubiotempo.h"
 #include "common/tools.h"
-
-#include <aubio/aubio.h>
-
-#include "vamp-hostsdk/PluginHostAdapter.h"
-#include "vamp-hostsdk/PluginInputDomainAdapter.h"
-#include "vamp-hostsdk/PluginLoader.h"
 
 extern Nl::StopWatch sw;
 
 namespace Nl {
 namespace Examples {
 
-using Vamp::Plugin;
-using Vamp::PluginHostAdapter;
-using Vamp::RealTime;
-using Vamp::HostExt::PluginLoader;
-using Vamp::HostExt::PluginWrapper;
-using Vamp::HostExt::PluginInputDomainAdapter;// Vamp plugins
-
-
-PluginLoader *loader = nullptr;
-Plugin *plugin = nullptr;
-
-
-ExamplesHandle vampPlugin(const AlsaCardIdentifier &inCard,
-						  unsigned int channels,
-						  unsigned int buffersize,
-						  unsigned int samplerate)
-{
-
-	//Remider: This leaks
-	VampHostAubioTempo *bpmDetect = new VampHostAubioTempo("vamp-aubio", "beatroot", samplerate, 0);
-	bpmDetect->initialize(channels, 480, buffersize);
-
-	ExamplesHandle ret;
-	ret.inBuffer = createBuffer("InputBuffer");
-	ret.audioInput = createAlsaInputDevice(inCard, ret.inBuffer, buffersize);
-	ret.audioInput->setSamplerate(samplerate);
-	ret.audioInput->setChannelCount(channels);
-
-	SharedUserPtr ptr(new UserPtr("VampHostAubioTemp", static_cast<void*>(bpmDetect)));
-
-	ret.audioInput->init();
-	ret.workingThreadHandle = registerInputCallbackOnBuffer(ret.inBuffer, vampPluginCallback, ptr);
-	ret.audioInput->start();
-
-	return ret;
-}
-
-void vampPluginCallback(uint8_t *in, const SampleSpecs &sampleSpecs, SharedUserPtr ptr)
-{
-	if (ptr->info != "VampHostAubioTemp") {
-		std::cerr << __func__ << ": UserPtr seems to be wrong type!" << std::endl;
-	}
-
-	VampHostAubioTempo* handle = static_cast<VampHostAubioTempo*>(ptr->ptr);
-	handle->process(in, sampleSpecs);
-
-}
-
-//Onset Detection
-aubio_onset_t *o;
-fvec_t *onset;
-fvec_t *input;
-smpl_t is_onset;
-
-void onsetDetectionCallback(u_int8_t *in, const SampleSpecs &sampleSpecs, SharedUserPtr ptr)
-{
-	static int counterA = 0;
-	static int counter = 0;
-	StopBlockTime sft(&sw, "val" + std::to_string(counterA++));
-
-	//printf("size=%i\n", size);
-
-	for (unsigned int frameIndex=0; frameIndex<sampleSpecs.buffersizeInFramesPerPeriode; frameIndex=frameIndex+sampleSpecs.channels) {
-
-		//double sum = 0.f;
-		//for (unsigned int channelIndex=0; channelIndex<sampleSpecs.channels; ++channelIndex) {
-		//	sum += getSample(in, frameIndex, channelIndex, sampleSpecs);
-		//}
-
-		//sum /= sampleSpecs.channels;
-
-
-
-		fvec_set_sample(input, getSample(in, frameIndex, 0, sampleSpecs), frameIndex);
-	}
-
-	aubio_onset_do(o, input, onset);
-	is_onset = fvec_get_sample(onset, 0);
-
-	if (is_onset > 0.8) {
-		printf("%i\n", counter++);
-
-	}
-}
-
-ExamplesHandle onsetDetection(const AlsaCardIdentifier &inCard, unsigned int buffersize, unsigned int samplerate)
-{
-	ExamplesHandle ret;
-
-	ret.inBuffer = createBuffer("InputBuffer");
-	ret.audioInput = createAlsaInputDevice(inCard, ret.inBuffer, buffersize);
-	ret.audioInput->setSamplerate(samplerate);
-
-	ret.audioInput->start();
-	ret.workingThreadHandle = registerInputCallbackOnBuffer(ret.inBuffer, onsetDetectionCallback, nullptr);
-
-	o = new_aubio_onset("default", buffersize, buffersize/2, samplerate);
-	input = new_fvec(buffersize);
-	onset = new_fvec(1);
-
-	//aubio_onset_set_threshold(o, 1.1);
-	//aubio_onset_set_silence(o, 0.001);
-
-	// Set this to about 400
-	// 60000/400 ~= 150 BPM or slower
-	aubio_onset_set_minioi_ms(o,400);
-	std::cout << "min interval between onsets=" << aubio_onset_get_minioi_ms(o) << std::endl;
-
-	return ret;
-}
 
 // In to out example
 void inToOutCallback(u_int8_t *in,
