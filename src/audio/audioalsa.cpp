@@ -296,7 +296,7 @@ SampleSpecs AudioAlsa::getSpecs()
  * \brief Returns current buffer statistics on interface
  *
  * This function returns a \ref BufferStatistics object. This can be used to print
- * infromation on buffer access and Ober-/Underruns:
+ * infromation on buffer access and Over-/Underruns:
  * \code{.cpp}
  *  std::cout << "Statistics: " << std::endl << handle->getStats() << std::endl;
  * \endcode

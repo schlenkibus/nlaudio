@@ -19,4 +19,6 @@ public:
 	static void worker(SampleSpecs specs, AudioAlsaOutput *ptr);
 };
 
+typedef std::shared_ptr<AudioAlsaOutput> SharedAudioAlsaOutputHandle;
+
 } // Namespace Nl

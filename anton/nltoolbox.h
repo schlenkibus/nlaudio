@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-#include "tools.h"
+#include "common/tools.h"
 
 // Controller define
 #define REMOTE61

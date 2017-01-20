@@ -13,7 +13,7 @@
 #include "echo.h"
 #include "smoother.h"
 
-#include "audiofactory.h"
+#include "audio/audiofactory.h"
 
 namespace Nl {
 namespace EFFECTS {

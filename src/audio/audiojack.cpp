@@ -138,6 +138,11 @@ channelcount_t AudioJack::getChannelCount()
 	std::cout << __func__ << ": implement me!" << std::endl;
 }
 
+BufferStatistics AudioJack::getStats()
+{
+	//TODO: Implement me!!
+}
+
 //static
 int AudioJack::worker(jack_nframes_t nframes, void *arg)
 {

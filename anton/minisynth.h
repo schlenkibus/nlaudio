@@ -6,7 +6,7 @@
     @author     Anton Schmied [2016-02-04]
 **/
 
-#include "audiofactory.h"
+#include "audio/audiofactory.h"
 #include "voicemanager.h"
 
 namespace Nl {

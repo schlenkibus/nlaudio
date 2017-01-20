@@ -18,92 +18,38 @@
  *
  */
 
-//#define OSCGUI
-#include <QApplication>     //for the gui
-#include "oscshapeui.h"
-
 #include <iostream>
 #include <ostream>
-
-#include "audioalsainput.h"
-#include "audioalsaoutput.h"
-
-#include "midi.h"
-#include "rawmididevice.h"
-
+#include <chrono>
 #include <stdio.h>
 
-#include "audiofactory.h"
+#include "audio/audioalsainput.h"
+#include "audio/audioalsaoutput.h"
+
+#include "midi/midi.h"
+#include "midi/rawmididevice.h"
+
+
+#include "audio/audiofactory.h"
 #include "examples.h"
 #include "minisynth.h"
 #include "effects.h"
-/// TESTEWEISE!!!
-#include "chrono"
+#include "common/tools.h"
+#include "common/stopwatch.h"
+#include "audio/alsa/alsacardidentifier.h"
+#include "common/blockingcircularbuffer.h"
+#include "audio/audioalsaexception.h"
 
-#include "tools.h"
-
-#include "audioalsa.h" //AlsaCardIdentifier -> TODO: Put this in extra file
-
-#include "stopwatch.h"
-
-#include "alsacardidentifier.h"
-
-#include "blockingcircularbuffer.h"
-
-#include "audioalsaexception.h"
-
-#include "alsacardidentifier.h"
+#include "soundgenerator.h"
 
 using namespace std;
 
 //TODO: Glbal Variables are bad (even in a namespace)
 Nl::StopWatch sw("AudioCallback");
 
-//
-#include "soundgenerator.h"
 
-#if OSCGUI
-int main(int argc, char *argv[])
-{
-
-    QApplication a(argc, argv);
-    OscShapeUI w;
-    w.show();
-#else
 int main()
 {
-#endif
-
-#if 0
-    Nl::requestRealtime();                                  // Realtime Request
-    /// zum testen der Anton-DSP
-
-    VoiceManager voiceManager = VoiceManager();
-
-    std::chrono::time_point<std::chrono::high_resolution_clock> start;
-    std::chrono::time_point<std::chrono::high_resolution_clock> stop;
-
-    // start the timer
-    printf("Starting  the timer \n");
-
-    start = std::chrono::high_resolution_clock::now();
-
-    // DSP Loop
-    for (uint32_t counter = 0; counter < 480000; counter++)
-    {
-        voiceManager.voiceLoop();
-        float sampleLeft = voiceManager.mainOut_L;
-        float sampleRight = voiceManager.mainOut_R;
-    }
-
-    stop = std::chrono::high_resolution_clock::now();
-    int duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count();
-
-    std::cout << "Loop duraion: " << duration << " milliseconds" << std::endl;
-
-    return 0;
-#else
-
     try
     {
         auto availableDevices = Nl::getDetailedCardInfos();
@@ -121,14 +67,14 @@ int main()
         const int buffersize = 256;
         const int samplerate = 48000;
 
-        //auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
+        auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
         //auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
         //auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
         //auto handle = Nl::Examples::midiSineWithMidi(audioOut, midiIn, buffersize, samplerate);
         //auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
 
         //this is for the MiniSynth
-        auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
+	//auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
 
         //this is for the Effects
         //        auto handle = Nl::EFFECTS::effectsMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
@@ -143,7 +89,6 @@ int main()
         //		 a deadlock with the audio callback.
 
 		//while(true) {
-#if 1
         while(getchar() != 'q')
         {
             std::cout << sw << std::endl;
@@ -164,7 +109,6 @@ int main()
 
             //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
-#endif
 
         // Tell worker thread to cleanup and quit
         Nl::terminateWorkingThread(handle.workingThreadHandle);
@@ -179,10 +123,6 @@ int main()
         std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
     }
 
-#ifdef OSCGUI
-    return a.exec();
-#endif
-
-#endif
+    return 0;
 }
 

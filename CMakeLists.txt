@@ -39,6 +39,9 @@ endfunction(linkLib)
 
 ##################
 include_directories(include)
+include_directories(anton)
+
+
 file(GLOB_RECURSE LIBRARY_SOURCES src/*.cpp)
 file(GLOB_RECURSE BINARY_SOURCES examples/*.cpp)
 

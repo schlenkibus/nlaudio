@@ -8,7 +8,7 @@
 *******************************************************************************/
 
 #pragma once
-#include "tools.h"
+#include "common/tools.h"
 #include "nltoolbox.h"
 
 class Oscillator

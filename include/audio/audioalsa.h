@@ -47,7 +47,7 @@ public:
 	virtual void setChannelCount(channelcount_t n);
 	virtual channelcount_t getChannelCount();
 
-	BufferStatistics getStats();
+	virtual BufferStatistics getStats();
 
 protected:
 	void openCommon();
