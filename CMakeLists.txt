@@ -1,38 +1,25 @@
 cmake_minimum_required(VERSION 3.2)
-project(nlaudio VERSION 1.0)
 
 
 set(NLAUDIO_VERSION_MAJOR 1)
 set(NLAUDIO_VERSION_MINOR 0)
 set(NLAUDIO_VERSION_PATCH 0)
 set(NLAUDIO_VERSION_STRING ${NLAUDIO_VERSION_MAJOR}.${NLAUDIO_VERSION_MINOR}.${NLAUDIO_VERSION_PATCH})
+project(nlaudio VERSION ${NLAUDIO_VERSION_STRING})
 
+
+option(BUILD_EXAMPLES "Build Examples" OFF)
+option(BUILD_DSPTOOLBOX "Build DSP Toolbox" ON)
 option(BUILD_VAMP "Enable vamp experiments" OFF)
-
-
-
 
 include(FindPkgConfig)
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib64/pkgconfig")
 
-
+set(LIBS alsa jack pthread)
+# This should probably be a setting on the examples
 if (${BUILD_VAMP})
-	set(LIBS
-		alsa
-		vamp-sdk
-		vamp-hostsdk
-		vamp
-		aubio
-		jack
-	)
-else()
-	set(LIBS
-		alsa
-		jack
-	)
+	set(LIBS ${LIBS} vamp-sdk vamp-hostsdk vamp aubio)
 endif()
-
-
 
 ####################
 
@@ -42,12 +29,13 @@ function(addLib name)
   link_directories(${${name}_LIBRARY_DIRS})
 endfunction(addLib)
 
-function(linkLib name)
+function(linkLib name target)
   pkg_check_modules(${name} REQUIRED ${name})
-  target_link_libraries(nlaudio ${${name}_LIBRARIES})
+  target_link_libraries(${target} ${${name}_LIBRARIES})
 endfunction(linkLib)
 
-##################
+################## libnlaudio
+
 include_directories(include)
 include_directories(anton)
 include_directories(examples)
@@ -60,40 +48,32 @@ if (${BUILD_VAMP})
 	file(GLOB_RECURSE LIBRARY_SOURCES_VAMP src/vamp/*.cpp)
 endif()
 
-
-file(GLOB_RECURSE EXAMPLE_SOURCES examples/*.cpp)
-file(GLOB_RECURSE ANTON_SOURCES anton/*.cpp)
-
-
-
-
 add_library(nlaudio SHARED ${LIBRARY_SOURCES_COMMON})
 target_sources(nlaudio PUBLIC ${LIBRARY_SOURCES_AUDIO})
 target_sources(nlaudio PUBLIC ${LIBRARY_SOURCES_MIDI})
 
-
-target_link_libraries(nlaudio pthread)
 set_target_properties(nlaudio PROPERTIES VERSION ${NLAUDIO_VERSION_STRING} SOVERSION ${NLAUDIO_VERSION_MAJOR})
-
-
-#add_executable(nlaudio_example ${EXAMPLE_SOURCES})
-#target_link_libraries(nlaudio_example nlaudio)
-
-add_executable(nlaudio_anton ${ANTON_SOURCES})
-target_link_libraries(nlaudio_anton nlaudio)
-
-
 
 foreach(lib ${LIBS})
   addLib(${lib})
 endforeach(lib)
 
 foreach(lib ${LIBS})
-  linkLib(${lib})
+  linkLib(${lib} nlaudio)
 endforeach(lib)
 
 add_compile_options(-Wall)
 add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)
+
+#######################
+
+if (${BUILD_EXAMPLES})
+	add_subdirectory(./examples)
+endif()
+
+if (${BUILD_DSPTOOLBOX})
+	add_subdirectory(./dsptoolbox)
+endif()
 
 ###################
 # Doxygen

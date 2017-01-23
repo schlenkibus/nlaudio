@@ -16,11 +16,6 @@ struct ExamplesHandle {
 	SharedBufferHandle inMidiBuffer;
 };
 
-ExamplesHandle inputToOutput(const AlsaCardIdentifier &audioInCard,
-							   const AlsaCardIdentifier &audioOutCard,
-							   unsigned int buffersize,
-							   unsigned int samplerate);
-
 ExamplesHandle jackInputToOutput(const AlsaCardIdentifier &inCard,
 								 const AlsaCardIdentifier &outCard,
 								 unsigned int buffersize,

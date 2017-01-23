@@ -32,6 +32,12 @@
 
 #include "audio/audiofactory.h"
 #include "examples.h"
+
+#include "inputtooutput.h"
+
+
+
+
 #include "minisynth.h"
 #include "effects.h"
 #include "common/tools.h"

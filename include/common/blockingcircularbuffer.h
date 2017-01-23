@@ -188,8 +188,10 @@ public:
     inline unsigned int availableToWrite() const
     {
         //TODO: This is not really bullet proove, check again!!!
-        int distance = std::abs(m_readIndex - m_writeIndex - 1);
-        return m_writeIndex < m_readIndex ? distance : m_size - distance;
+		int tmp = m_readIndex - m_writeIndex - 1;
+		int distance = tmp < 0 ? -tmp : tmp;
+
+		return m_writeIndex < m_readIndex ? distance : m_size - distance;
     }
 
 	/** \ingroup Audio
