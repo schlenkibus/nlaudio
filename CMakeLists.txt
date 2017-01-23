@@ -50,27 +50,34 @@ endfunction(linkLib)
 ##################
 include_directories(include)
 include_directories(anton)
+include_directories(examples)
 
 
-file(GLOB_RECURSE LIBRARY_SOURCES src/audio/*.cpp)
-file(GLOB_RECURSE LIBRARY_SOURCES src/common/*.cpp)
-file(GLOB_RECURSE LIBRARY_SOURCES src/midi/*.cpp)
-#if (${BUILD_VAMP})
-file(GLOB_RECURSE LIBRARY_SOURCES src/vamp/*.cpp)
-#endif()
+file(GLOB_RECURSE LIBRARY_SOURCES_AUDIO src/audio/*.cpp)
+file(GLOB_RECURSE LIBRARY_SOURCES_COMMON src/common/*.cpp)
+file(GLOB_RECURSE LIBRARY_SOURCES_MIDI src/midi/*.cpp)
+if (${BUILD_VAMP})
+	file(GLOB_RECURSE LIBRARY_SOURCES_VAMP src/vamp/*.cpp)
+endif()
 
 
 file(GLOB_RECURSE EXAMPLE_SOURCES examples/*.cpp)
 file(GLOB_RECURSE ANTON_SOURCES anton/*.cpp)
 
 
-add_library(nlaudio SHARED ${LIBRARY_SOURCES})
+
+
+add_library(nlaudio SHARED ${LIBRARY_SOURCES_COMMON})
+target_sources(nlaudio PUBLIC ${LIBRARY_SOURCES_AUDIO})
+target_sources(nlaudio PUBLIC ${LIBRARY_SOURCES_MIDI})
+
+
 target_link_libraries(nlaudio pthread)
 set_target_properties(nlaudio PROPERTIES VERSION ${NLAUDIO_VERSION_STRING} SOVERSION ${NLAUDIO_VERSION_MAJOR})
 
 
-add_executable(nlaudio_example ${EXAMPLE_SOURCES})
-target_link_libraries(nlaudio_example nlaudio)
+#add_executable(nlaudio_example ${EXAMPLE_SOURCES})
+#target_link_libraries(nlaudio_example nlaudio)
 
 add_executable(nlaudio_anton ${ANTON_SOURCES})
 target_link_libraries(nlaudio_anton nlaudio)

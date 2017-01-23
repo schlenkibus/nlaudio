@@ -15,8 +15,8 @@ namespace MINISYNTH {
 
     struct miniSynthHandle {
         WorkingThreadHandle workingThreadHandle;
-        SharedAudioAlsaInputHandle audioInput;
-        SharedAudioAlsaOutputHandle audioOutput;
+        SharedAudioHandle audioInput;
+        SharedAudioHandle audioOutput;
         SharedRawMidiDeviceHandle midiInput;
         SharedRawMidiDeviceHandle midiOutput;
         SharedBufferHandle inBuffer;

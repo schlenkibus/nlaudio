@@ -3,6 +3,7 @@
 #include "midi/rawmididevice.h"
 #include "audio/audioalsainput.h"
 #include "audio/audioalsaoutput.h"
+#include "audio/audiojack.h"
 #include "common/blockingcircularbuffer.h"
 #include "audio/samplespecs.h"
 #include "midi/rawmididevice.h"

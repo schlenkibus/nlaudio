@@ -1,3 +1,5 @@
+#if 0
+
 #include "oscshapeui.h"
 #include "ui_oscshapeui.h"
 
@@ -22,3 +24,5 @@ void OscShapeUI::on_pushButton_clicked()
 {
         close();
 }
+
+#endif

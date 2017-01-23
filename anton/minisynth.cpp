@@ -4,12 +4,12 @@
 //#define PASCALSW
 //#define CPU_STOPWATCH
 
-#include "stopwatch.h"
+#include "common/stopwatch.h"
 #include "cpu_stopwatch.h"
 
-#include "audioalsainput.h"
-#include "audioalsaoutput.h"
-#include "rawmididevice.h"
+#include "audio/audioalsainput.h"
+#include "audio/audioalsaoutput.h"
+#include "midi/rawmididevice.h"
 
 //------------- activate applications here
 extern Nl::StopWatch sw;
@@ -28,7 +28,7 @@ CPU_Stopwatch cpu_sw;
         @param    buffer size
         @param    Sample Specs
     */
-    void miniSynthCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
+    void miniSynthCallback(u_int8_t *in, u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr __attribute__ ((unused)))
     {
 #ifdef PASCALSW
         static int counter = 0;
@@ -127,10 +127,10 @@ CPU_Stopwatch cpu_sw;
         ret.inBuffer = createBuffer("InputBuffer");
         ret.outBuffer = createBuffer("OutputBuffer");
 
-        ret.audioInput = createInputDevice(audioInCard, ret.inBuffer, buffersize);
+        ret.audioInput = createAlsaInputDevice(audioInCard, ret.inBuffer, buffersize);
         ret.audioInput->setSamplerate(samplerate);
 
-        ret.audioOutput = createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
+        ret.audioOutput = createAlsaOutputDevice(audioOutCard, ret.outBuffer, buffersize);
         ret.audioOutput->setSamplerate(samplerate);
 
         ret.inMidiBuffer = createBuffer("MidiBuffer");
@@ -140,7 +140,8 @@ CPU_Stopwatch cpu_sw;
         ret.audioInput->start();
         ret.midiInput->start();
 
-        ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, miniSynthCallback);
+	SharedUserPtr ptr(new UserPtr("unused", nullptr));
+        ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, miniSynthCallback, ptr);
 
         return ret;
     }

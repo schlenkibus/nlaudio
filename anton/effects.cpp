@@ -1,10 +1,10 @@
 #include "effects.h"
 
-#include "stopwatch.h"
-#include "audioalsainput.h"
-#include "audioalsaoutput.h"
-#include "rawmididevice.h"
-#include "tools.h"
+#include "common/stopwatch.h"
+#include "audio/audioalsainput.h"
+#include "audio/audioalsaoutput.h"
+#include "midi/rawmididevice.h"
+#include "common/tools.h"
 #include <atomic>
 
 // ------------- activate applications here
@@ -122,7 +122,7 @@ void initializeEffects(int samplerate)
         @param    buffer size
         @param    Sample Specs
     */
-    void effectsCallback(u_int8_t *in, u_int8_t *out, size_t size, const SampleSpecs &sampleSpecs __attribute__ ((unused)))
+    void effectsCallback(u_int8_t *in, u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr __attribute__ ((unused)))
     {
         static int counter = 0;
         //StopBlockTime sft(&sw, "val" + std::to_string(counter++));
@@ -375,10 +375,10 @@ void initializeEffects(int samplerate)
         ret.inBuffer = createBuffer("InputBuffer");
         ret.outBuffer = createBuffer("OutputBuffer");
 
-        ret.audioInput = createInputDevice(audioInCard, ret.inBuffer, buffersize);
+        ret.audioInput = createAlsaInputDevice(audioInCard, ret.inBuffer, buffersize);
         ret.audioInput->setSamplerate(samplerate);
 
-        ret.audioOutput = createOutputDevice(audioOutCard, ret.outBuffer, buffersize);
+        ret.audioOutput = createAlsaOutputDevice(audioOutCard, ret.outBuffer, buffersize);
         ret.audioOutput->setSamplerate(samplerate);
 
         ret.inMidiBuffer = createBuffer("MidiBuffer");
@@ -388,7 +388,8 @@ void initializeEffects(int samplerate)
         ret.audioInput->start();
         ret.midiInput->start();
 
-        ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, effectsCallback);
+	SharedUserPtr ptr(new UserPtr("unused", nullptr));
+        ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, effectsCallback, ptr);
 
         return ret;
     }
