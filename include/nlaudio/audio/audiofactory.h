@@ -168,7 +168,7 @@ SharedTerminateFlag terminateRequest, SharedUserPtr ptr) {
 
 		while(!terminateRequest->load()) {
 			audioInBuffer->get(inBuffer, inBuffersize);
-			//callback(inBuffer, outBuffer, sampleSpecsIn, ptr);
+			callback(inBuffer, outBuffer, sampleSpecsIn, ptr);
 			audioOutBuffer->set(outBuffer, inBuffersize);
 		}
 
