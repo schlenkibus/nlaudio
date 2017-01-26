@@ -50,9 +50,9 @@ int main()
 		if (handle.audioInput) handle.audioInput->stop();
 
 	} catch (AudioAlsaException e) {
-		std::cout << "### Exception A ### " << e.what() << std::endl;
+		std::cout << "### Exception A ### " << std::endl << e.what() << std::endl;
 	} catch (std::exception& e) {
-		std::cout << "### Exception B ###" << std::endl << "  " << e.what() << std::endl;
+		std::cout << "### Exception B ###" << std::endl <<  e.what() << std::endl;
 	} catch(...) {
 		std::cout << "### Exception C ###" << std::endl << "  default" << std::endl;
 	}
