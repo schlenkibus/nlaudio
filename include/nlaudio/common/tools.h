@@ -20,6 +20,8 @@
 namespace Nl {
 
 int requestRealtime(void);
+void signalHandler(int signo);
+void initSignalHandler();
 
 /** \ingroup Tools
  *
