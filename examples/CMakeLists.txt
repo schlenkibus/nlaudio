@@ -5,16 +5,29 @@
 cmake_minimum_required(VERSION 3.2)
 project(nlaudio_examples)
 
+### libnlaudio
+set(NLAUDIO_LIBRARY_PATH /usr/local/lib64)
+set(NLAUDIO_LIBRARY ${NLAUDIO_LIBRARY_PATH}/libnlaudio.so)
+set(NLAUDIO_INCLUDE_DIR /usr/local/include/nlaudio)
+
+if (NOT EXISTS "${NLAUDIO_LIBRARY}" OR NOT EXISTS "${NLAUDIO_INCLUDE_DIR}")
+	set(NLAUDIO_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR}/../lib)
+	set(NLAUDIO_LIBRARY ${NLAUDIO_LIBRARY_PATH}/libnlaudio.so)
+	set(NLAUDIO_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include/nlaudio)
+endif()
+
+message(INFO  "  ${NLAUDIO_LIBRARY_PATH}")
+message(INFO  "  ${NLAUDIO_LIBRARY}")
+message(INFO  "  ${NLAUDIO_INCLUDE_DIR}")
+
+
 
 ## inputtooutput
-
-link_directories(${LIBRARY_OUTPUT_PATH})
-include_directories(${LIBRARY_INCLUDE_DIRECTORY})
-
-set(INPUTTOOUTPUT_EXAMPLE_SOURCES inputtooutput.cpp)
-add_executable(inputtooutput_example ${INPUTTOOUTPUT_EXAMPLE_SOURCES})
+include_directories(${NLAUDIO_INCLUDE_DIR})
+link_directories(${NLAUDIO_LIBRARY_PATH})
+add_executable(inputtooutput_example inputtooutput.cpp)
 target_link_libraries(inputtooutput_example nlaudio)
-target_link_libraries(inputtooutput_example pthread)
+#target_link_libraries(inputtooutput_example pthread)
 
 ### silence
 #set(SILENCE_EXAMPLE_SOURCES silence.cpp)

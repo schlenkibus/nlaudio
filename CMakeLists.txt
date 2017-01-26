@@ -7,20 +7,12 @@ set(NLAUDIO_VERSION_STRING ${NLAUDIO_VERSION_MAJOR}.${NLAUDIO_VERSION_MINOR}.${N
 project(nlaudio VERSION ${NLAUDIO_VERSION_STRING})
 
 
-option(BUILD_EXAMPLES "Build Examples" OFF)
-option(BUILD_DSPTOOLBOX "Build DSP Toolbox" OFF)
-option(BUILD_VAMP "Enable vamp experiments" OFF)
+option(BUILD_EXAMPLES "Build Examples" ON)
 
 include(FindPkgConfig)
 
 set(LIBS alsa jack)
 find_package(Threads) # pthread
-
-# This should probably be a setting on the examples
-if (${BUILD_VAMP})
-	set(LIBS ${LIBS} vamp-sdk vamp-hostsdk vamp aubio)
-	set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib64/pkgconfig")
-endif()
 
 ####################
 
@@ -39,20 +31,11 @@ endfunction(linkLib)
 
 set(LIBRARY_INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/nlaudio)
 include_directories(${LIBRARY_INCLUDE_DIRECTORY})
-# Why must this be here, see below... thats where id like it
-#include_directories(./dsptoolbox)
 
-file(GLOB_RECURSE LIBRARY_SOURCES_AUDIO src/audio/*.cpp)
-file(GLOB_RECURSE LIBRARY_SOURCES_COMMON src/common/*.cpp)
-file(GLOB_RECURSE LIBRARY_SOURCES_MIDI src/midi/*.cpp)
-if (${BUILD_VAMP})
-	file(GLOB_RECURSE LIBRARY_SOURCES_VAMP src/vamp/*.cpp)
-endif()
+file(GLOB_RECURSE LIBRARY_SOURCES src/*.cpp)
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-add_library(nlaudio SHARED ${LIBRARY_SOURCES_COMMON})
-target_sources(nlaudio PUBLIC ${LIBRARY_SOURCES_AUDIO})
-target_sources(nlaudio PUBLIC ${LIBRARY_SOURCES_MIDI})
+add_library(nlaudio SHARED ${LIBRARY_SOURCES})
 set_target_properties(nlaudio PROPERTIES VERSION ${NLAUDIO_VERSION_STRING} SOVERSION ${NLAUDIO_VERSION_MAJOR})
 
 foreach(lib ${LIBS})
@@ -69,13 +52,7 @@ add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)
 ######################
 
 if (${BUILD_EXAMPLES})
-	include_directories(./examples)
-	add_subdirectory(./examples)
-endif()
-
-if (${BUILD_DSPTOOLBOX})
-	include_directories(./dsptoolbox)
-	add_subdirectory(./dsptoolbox)
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples)
 endif()
 
 ###################
