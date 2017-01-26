@@ -12,7 +12,7 @@ namespace Nl {
  * Calls StopWatch::start() in a RAII fashion.
  *
 */
-StopBlockTime::StopBlockTime(StopWatch *sw, std::string name = "noname") :
+StopBlockTime::StopBlockTime(std::shared_ptr<StopWatch> sw, std::string name = "noname") :
 	m_currentStopWatch(sw)
 {
 	if (m_currentStopWatch)
