@@ -16,18 +16,15 @@ if (NOT EXISTS "${NLAUDIO_LIBRARY}" OR NOT EXISTS "${NLAUDIO_INCLUDE_DIR}")
 	set(NLAUDIO_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include/nlaudio)
 endif()
 
-message(INFO  "  ${NLAUDIO_LIBRARY_PATH}")
-message(INFO  "  ${NLAUDIO_LIBRARY}")
-message(INFO  "  ${NLAUDIO_INCLUDE_DIR}")
-
-
+message("Found nlaudio:  ${NLAUDIO_LIBRARY_PATH}")
+message("                ${NLAUDIO_LIBRARY}")
+message("                ${NLAUDIO_INCLUDE_DIR}")
 
 ## inputtooutput
 include_directories(${NLAUDIO_INCLUDE_DIR})
 link_directories(${NLAUDIO_LIBRARY_PATH})
-add_executable(inputtooutput_example inputtooutput.cpp)
-target_link_libraries(inputtooutput_example nlaudio)
-#target_link_libraries(inputtooutput_example pthread)
+add_executable(nlaudio_inputtooutput inputtooutput.cpp)
+target_link_libraries(nlaudio_inputtooutput nlaudio)
 
 ### silence
 #set(SILENCE_EXAMPLE_SOURCES silence.cpp)

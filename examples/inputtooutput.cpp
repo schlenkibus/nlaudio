@@ -10,10 +10,15 @@
 
 using namespace Nl;
 
-StopWatch sw("AudioCallback");
+std::shared_ptr<StopWatch> sw(new StopWatch("AudioCallback"));
+
+
 
 int main()
 {
+
+	initSignalHandler();
+
 	try
 	{
 
@@ -66,8 +71,8 @@ void inToOutCallback(u_int8_t *in,
 					 const SampleSpecs &sampleSpecs __attribute__ ((unused)),
 					 SharedUserPtr ptr __attribute__ ((unused)))
 {
-	static int counter = 0;
-	StopBlockTime sft(&sw, "val" + std::to_string(counter++));
+	//static int counter = 0;
+	//StopBlockTime sft(sw, "val" + std::to_string(counter++));
 
 	memcpy(out, in, sampleSpecs.buffersizeInBytes);
 }
