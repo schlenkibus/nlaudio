@@ -2,8 +2,7 @@
 
 #include "examples.h"
 
-namespace Nl {
-namespace Examples {
+using namespace Nl;
 
 void inToOutCallback(u_int8_t *in,
 					 u_int8_t *out,
@@ -14,6 +13,3 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &audioInCard,
 							 const AlsaCardIdentifier &audioOutCard,
 							 unsigned int buffersize,
 							 unsigned int samplerate);
-
-}
-}

@@ -8,27 +8,22 @@
 #include <common/stopwatch.h>
 #include <common/tools.h>
 
-Nl::StopWatch sw("AudioCallback");
+using namespace Nl;
+
+StopWatch sw("AudioCallback");
 
 int main()
 {
 	try
 	{
-		auto availableDevices = Nl::getDetailedCardInfos();
-		for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it)
-			std::cout << *it << std::endl;
 
-		auto availableDevs = Nl::AlsaCardIdentifier::getCardIdentifiers();
-		for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
-			std::cout << *it << std::endl;
+		AlsaCardIdentifier audioIn(1,0,0, "USB Device");
+		AlsaCardIdentifier audioOut(1,0,0, "USB Device");
 
-		Nl::AlsaCardIdentifier audioIn(0,0,0, "USB Device");
-		Nl::AlsaCardIdentifier audioOut(0,0,0, "USB Device");
-
-		const int buffersize = 256;
+		const int buffersize = 512;
 		const int samplerate = 48000;
 
-		auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
+		auto handle = inputToOutput(audioIn, audioOut, buffersize, samplerate);
 
 		while(getchar() != 'q')
 		{
@@ -50,23 +45,20 @@ int main()
 		}
 
 		// Tell worker thread to cleanup and quit
-		Nl::terminateWorkingThread(handle.workingThreadHandle);
+		terminateWorkingThread(handle.workingThreadHandle);
 		if (handle.audioOutput) handle.audioOutput->stop();
 		if (handle.audioInput) handle.audioInput->stop();
 
-	} catch (Nl::AudioAlsaException& e) {
-		std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
+	} catch (AudioAlsaException e) {
+		std::cout << "### Exception A ### " << e.what() << std::endl;
 	} catch (std::exception& e) {
-		std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
+		std::cout << "### Exception B ###" << std::endl << "  " << e.what() << std::endl;
 	} catch(...) {
-		std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
+		std::cout << "### Exception C ###" << std::endl << "  default" << std::endl;
 	}
 
 	return 0;
 }
-
-namespace Nl {
-namespace Examples {
 
 // In to out example
 void inToOutCallback(u_int8_t *in,
@@ -86,7 +78,7 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIde
 	// Samplerate and buffersize can be set. A handle to stop the
 	// working threads is returned
 	// To terminate this example, call:
-	// Nl::terminateWorkingThread(handle)
+	// terminateWorkingThread(handle)
 	ExamplesHandle ret;
 
 	ret.inBuffer = createBuffer("InputBuffer");
@@ -102,6 +94,7 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIde
 	//		 input/output->start(), we seem to have a deadlock!
 	// TODO: Consider implementing something like autostart for the threads in the
 	//		 audio chain. Eg. Reading/Writing threads on BlockingCircularBuffer !!!
+
 	ret.audioOutput->start();
 	ret.audioInput->start();
 
@@ -111,5 +104,3 @@ ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIde
 	return ret;
 }
 
-} // namespace Nl
-} // namespace Examples

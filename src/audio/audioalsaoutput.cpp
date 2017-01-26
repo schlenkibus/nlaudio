@@ -18,6 +18,8 @@ void AudioAlsaOutput::start()
 	resetTerminateRequest();
 	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params(m_handle, m_hwParams));
 
+	init();
+
 	SampleSpecs specs = basetype::getSpecs();
 	std::cout << "NlAudioAlsaOutput Specs: " << std::endl << specs;
 
@@ -36,6 +38,9 @@ void AudioAlsaOutput::stop()
 
 void AudioAlsaOutput::init()
 {
+	throwOnDeviceClosed(__FILE__, __func__, __LINE__);
+	throwOnAlsaError(__FILE__, __func__, __LINE__, snd_pcm_hw_params(m_handle, m_hwParams));
+
 	basetype::m_audioBuffer->init(basetype::getSpecs());
 }
 

@@ -40,8 +40,8 @@ SharedTerminateFlag createTerminateFlag()
 */
 void terminateWorkingThread(WorkingThreadHandle handle)
 {
-    handle.terminateRequest->store(true);
-    handle.thread->join();
+	handle.terminateRequest->store(true);
+	handle.thread->join();
 }
 
 /** \ingroup Factory
@@ -57,8 +57,8 @@ SharedBufferHandle createBuffer(const std::string& name)
 {
 	SharedBufferHandle newBuffer = SharedBufferHandle(new BlockingCircularBuffer<u_int8_t>(name));
 
-    BuffersDictionary.insert(std::make_pair(name, newBuffer));
-    return newBuffer;
+	BuffersDictionary.insert(std::make_pair(name, newBuffer));
+	return newBuffer;
 }
 
 //TODO: Make this operation O(1)! Using a hash.
@@ -73,13 +73,13 @@ SharedBufferHandle createBuffer(const std::string& name)
 */
 SharedBufferHandle getBufferForName(const std::string& name)
 {
-    auto it = BuffersDictionary.find(name);
+	auto it = BuffersDictionary.find(name);
 
-    if (it == BuffersDictionary.end())
-        //TODO: proper errorhandling
-        return nullptr;
+	if (it == BuffersDictionary.end())
+		//TODO: proper errorhandling
+		return nullptr;
 
-    return it->second;
+	return it->second;
 }
 
 /** \ingroup Factory
@@ -96,8 +96,8 @@ SharedBufferHandle getBufferForName(const std::string& name)
 SharedRawMidiDeviceHandle createRawMidiDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
 {
 	SharedRawMidiDeviceHandle midi(new RawMidiDevice(card, buffer));
-    midi->open();
-    return midi;
+	midi->open();
+	return midi;
 }
 
 /** \ingroup Factory
@@ -164,12 +164,12 @@ SharedAudioHandle createJackOutputDevice(const AlsaCardIdentifier& card, SharedB
 SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
 {
 	SharedAudioHandle input(new AudioAlsaInput(card, buffer));
-    input->open();
-    input->setBufferCount(2);
+	input->open();
+	input->setBufferCount(2);
 	// We want buffersize to be the latency defining parameter. Therefore we have to multiply with buffercount
 	input->setBuffersize(buffersize*input->getBufferCount());
 
-    return input;
+	return input;
 }
 
 /** \ingroup Factory
@@ -224,12 +224,12 @@ SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier &card, SharedBu
 SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize)
 {
 	SharedAudioHandle output(new AudioAlsaOutput(card, buffer));
-    output->open();
-    output->setBufferCount(2);
+	output->open();
+	output->setBufferCount(2);
 	// We want buffersize to be the latency defining parameter. Therefore we have to multiply with buffercount
 	output->setBuffersize(buffersize*output->getBufferCount());
 
-    return output;
+	return output;
 }
 
 /** \ingroup Factory
@@ -281,17 +281,17 @@ SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedB
  *
 */
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
-													AudioCallbackIn callback,
-													SharedUserPtr ptr)
+												  AudioCallbackIn callback,
+												  SharedUserPtr ptr)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();
-    handle.thread = std::shared_ptr<std::thread>(new std::thread(readAudioFunction,
-                                                                 inBuffer,
-                                                                 callback,
+	handle.thread = std::shared_ptr<std::thread>(new std::thread(readAudioFunction,
+																 inBuffer,
+																 callback,
 																 handle.terminateRequest,
 																 ptr));
-    return handle;
+	return handle;
 }
 
 /** \ingroup Factory
@@ -312,12 +312,12 @@ WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();
-    handle.thread = std::shared_ptr<std::thread>(new std::thread(writeAudioFunction,
-                                                                 outBuffer,
-                                                                 callback,
+	handle.thread = std::shared_ptr<std::thread>(new std::thread(writeAudioFunction,
+																 outBuffer,
+																 callback,
 																 handle.terminateRequest,
 																 ptr));
-    return handle;
+	return handle;
 }
 
 /** \ingroup Factory
@@ -334,19 +334,19 @@ WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
  *
 */
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
-													SharedBufferHandle outBuffer,
-													AudioCallbackInOut callback,
-													SharedUserPtr ptr)
+												  SharedBufferHandle outBuffer,
+												  AudioCallbackInOut callback,
+												  SharedUserPtr ptr)
 {
 	WorkingThreadHandle handle;
 	handle.terminateRequest = createTerminateFlag();
-    handle.thread = std::shared_ptr<std::thread>(new std::thread(readWriteAudioFunction,
-                                                                 inBuffer,
-                                                                 outBuffer,
-                                                                 callback,
+	handle.thread = std::shared_ptr<std::thread>(new std::thread(readWriteAudioFunction,
+																 inBuffer,
+																 outBuffer,
+																 callback,
 																 handle.terminateRequest,
 																 ptr));
-    return handle;
+	return handle;
 }
 
 /** \ingroup Factory

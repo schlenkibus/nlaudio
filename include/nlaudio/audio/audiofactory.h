@@ -16,6 +16,7 @@
 #include "audio/audioalsainput.h"
 #include "audio/audioalsaoutput.h"
 #include "midi/rawmididevice.h"
+#include "audio/audioalsaexception.h"
 
 #include "audio/audiojack.h"
 
@@ -89,15 +90,15 @@ SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedB
 SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize);
 
 WorkingThreadHandle registerInputCallbackOnBuffer(SharedBufferHandle inBuffer,
-						  AudioCallbackIn callback,
-						  SharedUserPtr ptr);
+												  AudioCallbackIn callback,
+												  SharedUserPtr ptr);
 WorkingThreadHandle registerOutputCallbackOnBuffer(SharedBufferHandle outBuffer,
-						   AudioCallbackOut callback,
-						   SharedUserPtr ptr);
+												   AudioCallbackOut callback,
+												   SharedUserPtr ptr);
 WorkingThreadHandle registerInOutCallbackOnBuffer(SharedBufferHandle inBuffer,
-						  SharedBufferHandle outBuffer,
-						  AudioCallbackInOut callback,
-						  SharedUserPtr ptr);
+												  SharedBufferHandle outBuffer,
+												  AudioCallbackInOut callback,
+												  SharedUserPtr ptr);
 WorkingThreadHandle registerAutoDrainOnBuffer(SharedBufferHandle inBuffer);
 
 // Thread function, that handles blocking io calls on the buffers
@@ -151,21 +152,32 @@ SharedTerminateFlag terminateRequest, SharedUserPtr ptr) {
 	const int inBuffersize = sampleSpecsIn.buffersizeInBytesPerPeriode;
 	const int outBuffersize = sampleSpecsOut.buffersizeInBytesPerPeriode;
 
-	if (inBuffersize != outBuffersize)
-		std::cout << "#### Error, in and out buffer are not the same size!! " << __FILE__ << ":" << __func__ << ":" << __LINE__ << std::endl;
-
 	u_int8_t *inBuffer = new u_int8_t[inBuffersize];
 	u_int8_t *outBuffer = new u_int8_t[outBuffersize];
 
-	memset(outBuffer, 0, outBuffersize);
-	memset(inBuffer, 0, inBuffersize);
+	try {
 
-	audioOutBuffer->set(outBuffer, outBuffersize);
+		if (inBuffersize != outBuffersize)
+			std::cout << "#### Error, in and out buffer are not the same size!! " << __FILE__ << ":" << __func__ << ":" << __LINE__ << std::endl;
 
-	while(!terminateRequest->load()) {
-		audioInBuffer->get(inBuffer, inBuffersize);
-		callback(inBuffer, outBuffer, sampleSpecsIn, ptr);
-		audioOutBuffer->set(outBuffer, inBuffersize);
+
+		memset(outBuffer, 0, outBuffersize);
+		memset(inBuffer, 0, inBuffersize);
+
+		audioOutBuffer->set(outBuffer, outBuffersize);
+
+		while(!terminateRequest->load()) {
+			audioInBuffer->get(inBuffer, inBuffersize);
+			//callback(inBuffer, outBuffer, sampleSpecsIn, ptr);
+			audioOutBuffer->set(outBuffer, inBuffersize);
+		}
+
+	} catch (AudioAlsaException& e) {
+		std::cout << "### Exception from " << __func__ <<  " ###" << std::endl << "  " << e.what() << std::endl;
+	} catch (std::exception& e) {
+		std::cout << "### Exception from " << __func__ << " ###" << std::endl << "  " << e.what() << std::endl;
+	} catch(...) {
+		std::cout << "### Exception from " << __func__ << " ###" << std::endl << "  default" << std::endl;
 	}
 
 	delete[] inBuffer;

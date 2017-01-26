@@ -19,7 +19,7 @@ void AudioAlsaInput::start()
 
 	SampleSpecs specs = basetype::getSpecs();
 
-	//m_audioBuffer->init(specs.buffersizeInBytes);
+	init();
 
 	std::cout << "NlAudioAlsaInput Specs: " << std::endl << specs;
 

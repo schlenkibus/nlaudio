@@ -322,13 +322,7 @@ BufferStatistics AudioAlsa::getStats()
  */
 int AudioAlsa::xrunRecovery(AudioAlsa *ptr, int err)
 {
-
-
-	//Atomic
-	ptr->m_xrunRecoveryCounter++;
-
 	if (err == -EPIPE) {    /* under-run */
-		std::cout << "Underrun: " << ptr->m_xrunRecoveryCounter << std::endl;
 		err = snd_pcm_prepare(ptr->m_handle);
 		if (err < 0)
 			printf("Can't recovery from underrun, prepare failed: %s\n", snd_strerror(err));

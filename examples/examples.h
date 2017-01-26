@@ -2,8 +2,7 @@
 
 #include <audio/audiofactory.h>
 
-namespace Nl {
-namespace Examples {
+using namespace Nl;
 
 struct ExamplesHandle {
 	WorkingThreadHandle workingThreadHandle;
@@ -15,6 +14,3 @@ struct ExamplesHandle {
 	SharedBufferHandle outBuffer;
 	SharedBufferHandle inMidiBuffer;
 };
-
-}
-}
