@@ -1,6 +1,6 @@
 #pragma once
 
-#include "examples.h"
+#include <audio/audiofactory.h>
 
 using namespace Nl;
 
@@ -9,7 +9,7 @@ void inToOutCallback(u_int8_t *in,
 					 const SampleSpecs &sampleSpecs __attribute__ ((unused)),
 					 SharedUserPtr ptr __attribute__ ((unused)));
 
-ExamplesHandle inputToOutput(const AlsaCardIdentifier &audioInCard,
+JobHandle inputToOutput(const AlsaCardIdentifier &audioInCard,
 							 const AlsaCardIdentifier &audioOutCard,
 							 unsigned int buffersize,
 							 unsigned int samplerate);

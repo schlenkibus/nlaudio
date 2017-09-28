@@ -10,6 +10,9 @@ set(NLAUDIO_LIBRARY_PATH /usr/local/lib64)
 set(NLAUDIO_LIBRARY ${NLAUDIO_LIBRARY_PATH}/libnlaudio.so)
 set(NLAUDIO_INCLUDE_DIR /usr/local/include/nlaudio)
 
+add_compile_options(-Wall)
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=gnu++17>)
+
 if (NOT EXISTS "${NLAUDIO_LIBRARY}" OR NOT EXISTS "${NLAUDIO_INCLUDE_DIR}")
 	set(NLAUDIO_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR}/../lib)
 	set(NLAUDIO_LIBRARY ${NLAUDIO_LIBRARY_PATH}/libnlaudio.so)
@@ -36,3 +39,7 @@ target_link_libraries(nlaudio_inputtooutput nlaudio)
 #add_executable(midisine_example ${MIDISINE_EXAMPLE_SOURCES})
 #target_link_libraries(midisine_example nlaudio)
 
+### recorder
+set(RECORDER_EXAMPLE_SOURCES recorder.cpp)
+add_executable(nlaudio_recorder ${RECORDER_EXAMPLE_SOURCES})
+target_link_libraries(nlaudio_recorder nlaudio)

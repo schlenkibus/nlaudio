@@ -25,7 +25,7 @@ int main()
 		AlsaCardIdentifier audioIn(1,0,0, "USB Device");
 		AlsaCardIdentifier audioOut(1,0,0, "USB Device");
 
-		const int buffersize = 512;
+        const int buffersize = 16768;
 		const int samplerate = 48000;
 
 		auto handle = inputToOutput(audioIn, audioOut, buffersize, samplerate);
@@ -77,14 +77,14 @@ void inToOutCallback(u_int8_t *in,
 	memcpy(out, in, sampleSpecs.buffersizeInBytes);
 }
 
-ExamplesHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate)
+JobHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate)
 {
 	// In this example, we just copy data from input to output
 	// Samplerate and buffersize can be set. A handle to stop the
 	// working threads is returned
 	// To terminate this example, call:
 	// terminateWorkingThread(handle)
-	ExamplesHandle ret;
+	JobHandle ret;
 
 	ret.inBuffer = createBuffer("InputBuffer");
 	ret.audioInput = createAlsaInputDevice(inCard, ret.inBuffer, buffersize);

@@ -51,7 +51,7 @@ foreach(lib ${LIBS})
 endforeach(lib)
 
 add_compile_options(-Wall)
-add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++11>)
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=gnu++17>)
 
 ######################
 

@@ -29,14 +29,14 @@ namespace Nl {
  *
  */
 struct UserPtr {
-	UserPtr() :
-		info("unused"),
-		ptr(nullptr) {}
-	UserPtr(const std::string info, void* ptr) :
-		info(info),
-		ptr(ptr) {}
-	std::string info; /**< A description of the type passed */
-	void *ptr;	/**< The actual user pointer */
+    UserPtr() :
+        info("unused"),
+        ptr(nullptr) {}
+    UserPtr(const std::string info, void* ptr) :
+        info(info),
+        ptr(ptr) {}
+    std::string info; /**< A description of the type passed */
+    void *ptr;	/**< The actual user pointer */
 };
 
 typedef std::shared_ptr<UserPtr> SharedUserPtr;
@@ -67,6 +67,18 @@ struct WorkingThreadHandle {
 	SharedThreadHandle thread;	/**< A thread handle */
 	SharedTerminateFlag terminateRequest; /**< A terminate request handle */
 };
+
+struct JobHandle {
+    WorkingThreadHandle workingThreadHandle;
+    SharedAudioHandle audioInput;
+    SharedAudioHandle audioOutput;
+    SharedRawMidiDeviceHandle midiInput;
+    SharedRawMidiDeviceHandle midiOutput;
+    SharedBufferHandle inBuffer;
+    SharedBufferHandle outBuffer;
+    SharedBufferHandle inMidiBuffer;
+};
+
 
 // Factory Functions
 SharedRawMidiDeviceHandle createRawMidiDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer);
