@@ -6,12 +6,12 @@
 #include <vector>
 #include <algorithm>
 #include <iterator>
+#include <sstream>
 
 #include <sys/types.h>
 #include <sys/socket.h> /* For accept */
 #include <unistd.h> /* For read, errno, STDIN_FILENO */
 #include <limits.h> /* For PIPE_BUF */
-
 
 #include<arpa/inet.h>
 #include <sys/un.h>
@@ -47,6 +47,11 @@ const char* ControlInterfaceException::what() const noexcept
     return ss.str().c_str();
 }
 
+std::ostream& operator<<(std::ostream& lhs, CommandDescriptor const& rhs)
+{
+    lhs << rhs.cmd;
+    return lhs;
+}
 
 ControlInterface::ControlInterface(JobHandle jobHandle) :
     m_isRunning(false),
@@ -54,9 +59,12 @@ ControlInterface::ControlInterface(JobHandle jobHandle) :
     m_thread(nullptr),
     m_jobHandle(jobHandle)
 {
-
+    // Add default commands
+    Nl::CommandDescriptor cmdHelp;
+    cmdHelp.cmd = "help";
+    cmdHelp.func = ControlInterface::help;
+    addCommand(cmdHelp);
 }
-
 
 void ControlInterface::start()
 {
@@ -66,7 +74,6 @@ void ControlInterface::start()
         m_isRunning = true;
     }
 }
-
 
 void ControlInterface::stop()
 {
@@ -84,6 +91,17 @@ void ControlInterface::addCommand(const CommandDescriptor &cd)
     m_commands.push_back(CommandDescriptor(cd));
 }
 
+
+//static
+void ControlInterface::help(std::vector<std::string> args, JobHandle jobHandle, int sockfd, ControlInterface *ptr)
+{
+    std::string msg = "Available Commands:\n\n";
+    write(sockfd, msg.c_str(), msg.size());
+
+    std::stringstream s;
+    std::copy(ptr->m_commands.begin(), ptr->m_commands.end(), std::ostream_iterator<CommandDescriptor>(s, "\n"));
+    write(sockfd, s.str().c_str(), s.str().length());
+}
 
 // Static
 void ControlInterface::run(ControlInterface *ptr)
@@ -184,7 +202,7 @@ void ControlInterface::handleRequest(int fd, ControlInterface *ptr)
     // Todo: access over ptr must be mutexed!
     for (auto i = ptr->m_commands.begin(); i != ptr->m_commands.end(); ++i) {
         if (i->cmd == cmd) {
-            i->func(tokens, ptr->m_jobHandle, fd);
+            i->func(tokens, ptr->m_jobHandle, fd, ptr);
             return;
         }
     }

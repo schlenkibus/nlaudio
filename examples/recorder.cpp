@@ -40,34 +40,31 @@ int main()
         for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
             std::cout << *it << std::endl;
 
-        Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
+        Nl::AlsaCardIdentifier audioIn(0,0,0, "USB Device");
 
         const int buffersize = 1024;
         const int samplerate = 48000;
-        bool stop = false;
 
         auto handle = Nl::Examples::recorder(audioIn, buffersize, samplerate, fd);
 
         Nl::ControlInterface ci(handle);
         Nl::CommandDescriptor cd1;
         cd1.cmd = "size";
-        cd1.func = [](std::vector<std::string> args, Nl::JobHandle jobHandle, int sockfd){ std::stringstream s; s << jobHandle.audioInput->getStats(); write(sockfd, s.str().c_str(), s.str().size()); };
+        cd1.func = [](std::vector<std::string> args, Nl::JobHandle jobHandle, int sockfd, Nl::ControlInterface *ptr) { std::stringstream s; s << jobHandle.audioInput->getStats(); write(sockfd, s.str().c_str(), s.str().size()); };
         ci.addCommand(cd1);
-
         Nl::CommandDescriptor cd2;
         cd2.cmd = "stat";
-        cd2.func = [](std::vector<std::string> args, Nl::JobHandle jobHandle, int sockfd){ std::stringstream s; s << jobHandle.audioInput->getStats(); write(sockfd, s.str().c_str(), s.str().size());  };
+        cd2.func = [](std::vector<std::string> args, Nl::JobHandle jobHandle, int sockfd, Nl::ControlInterface *ptr) { std::stringstream s; s << jobHandle.audioInput->getStats(); write(sockfd, s.str().c_str(), s.str().size());  };
         ci.addCommand(cd2);
-
-
         ci.start();
 
-        while(::getchar() != 'q' && !stop)
+        while(::getchar() != 'q')
         {
-            if (handle.audioInput) std::cout << "Audio: Input Statistics:" << std::endl
-                                             << handle.audioInput->getStats() << std::endl;
-
-            std::cout << "BufferCount: " << handle.audioInput->getBufferCount() << std::endl;
+            if (handle.audioInput) {
+                std::cout << "Audio: Input Statistics:" << std::endl
+                          << handle.audioInput->getStats() << std::endl;
+                std::cout << "BufferCount: " << handle.audioInput->getBufferCount() << std::endl;
+            }
         }
 
         ci.stop();
@@ -119,23 +116,22 @@ void recorderCallback(u_int8_t *out,
 }
 
 JobHandle recorder(const AlsaCardIdentifier &audioInCard,
-                        unsigned int buffersize,
-                        unsigned int samplerate,
-                        int fd)
+                   unsigned int buffersize,
+                   unsigned int samplerate,
+                   int fd)
 {
     JobHandle ret;
 
     ret.inBuffer = createBuffer("InputBuffer");
     ret.audioInput = createAlsaInputDevice(audioInCard, ret.inBuffer, buffersize);
     ret.audioInput->setSamplerate(samplerate);
+    ret.audioInput->setChannelCount(2);
+    ret.audioInput->setSampleFormat("S16_LE");
 
     // Start audio Thread
     ret.audioInput->start();
 
-    //printf("fd1=%d\n", fd);
-
     // Register a Callback
-    //SharedUserPtr ptr(new UserPtr("fd", &fd));
     ret.workingThreadHandle = registerInputCallbackOnBuffer(ret.inBuffer, recorderCallback, nullptr);
 
     return ret;
