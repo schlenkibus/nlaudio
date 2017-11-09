@@ -40,6 +40,8 @@ CPU_Stopwatch cpu_sw;
         static int counter = 0;
         cpu_sw.start();
 #endif
+        // Global Parameter Buffer
+        static float paramBuffer[NUM_VOICES][5] = {0,0};
 
         auto midiBuffer = getBufferForName("MidiBuffer");
 
