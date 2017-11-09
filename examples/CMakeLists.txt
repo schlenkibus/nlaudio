@@ -43,3 +43,13 @@ target_link_libraries(nlaudio_inputtooutput nlaudio)
 set(RECORDER_EXAMPLE_SOURCES recorder.cpp)
 add_executable(nlaudio_recorder ${RECORDER_EXAMPLE_SOURCES})
 target_link_libraries(nlaudio_recorder nlaudio)
+
+### c15_audio_engine
+
+FILE(GLOB_RECURSE C15_AUDIO_ENGINE_SOURCES "c15_audio_engine/*")
+
+add_executable(c15_audio_engine ${C15_AUDIO_ENGINE_SOURCES} c15_audio_engine.cpp)
+target_link_libraries(c15_audio_engine nlaudio)
+
+
+

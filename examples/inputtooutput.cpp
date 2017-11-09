@@ -1,5 +1,4 @@
 #include "inputtooutput.h"
-#include "examples.h"
 
 #include <audio/audioalsainput.h>
 #include <audio/audioalsaoutput.h>

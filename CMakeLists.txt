@@ -32,11 +32,11 @@ endfunction(linkLib)
 set(LIBRARY_INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/nlaudio)
 include_directories(${LIBRARY_INCLUDE_DIRECTORY})
 
-# target headers is for qt creator, so we get headers in project
-FILE(GLOB_RECURSE NLAUDIO_HEADERS "${LIBRARY_INCLUDE_DIRECTORY}/*")
-add_custom_target(headers SOURCES ${NLAUDIO_HEADERS})
+## target headers is for qt creator, so we get headers in project
+#FILE(GLOB_RECURSE NLAUDIO_HEADERS "${LIBRARY_INCLUDE_DIRECTORY}/*")
+#add_custom_target(headers SOURCES ${NLAUDIO_HEADERS})
 
-file(GLOB_RECURSE LIBRARY_SOURCES src/*.cpp)
+file(GLOB_RECURSE LIBRARY_SOURCES src/*)
 
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 add_library(nlaudio SHARED ${LIBRARY_SOURCES})

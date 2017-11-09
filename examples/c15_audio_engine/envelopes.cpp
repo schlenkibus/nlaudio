@@ -1,0 +1,226 @@
+/******************************************************************************/
+/** @file		envelopes.cpp
+    @date		2017-07-11
+    @version	1.0
+    @author		Anton Schmied[2017-07-11]
+    @brief		Envelope Class member and method definitions
+*******************************************************************************/
+
+#include "envelopes.h"
+
+/******************************************************************************/
+/** Soundgenerator Default Constructor
+ * @brief    initialization of the modules local variabels with default values
+*******************************************************************************/
+
+Envelopes::Envelopes()
+{
+    mEnvRamp_A = 0.f;
+    mEnvRamp_B = 0.f;
+    mEnvRamp_C = 0.f;
+    mGateRamp = 0.f;
+
+    mEnvState_A = env_off;
+    mEnvState_B = env_off;
+    mEnvState_C = env_off;
+    mGateState = gate_off;
+
+    mInternalRamp_A = 0.f;
+    mInternalRamp_B = 0.f;
+    mInternalRamp_C = 0.f;
+
+    mDecayDx_A = 1.f - (1.f / ((800.f/ 1000.f) * SAMPLERATE + 1.f));
+    mDecayDx_B = 1.f - (1.f / ((800.f/ 1000.f) * SAMPLERATE + 1.f));
+    mDecayDx_C = 1.f - (1.f / ((800.f/ 1000.f) * SAMPLERATE + 1.f));
+    mReleaseDx = 1.f - (1.f / ((10.f/ 1000.f) * SAMPLERATE + 1.f));
+}
+
+
+
+/*****************************************************************************/
+/** @brief    interface method which converts and scales the incoming midi
+ *            values and passes these to the respective methods
+ *  @param    midi control value [0 ... 127]
+ *  @param    midi control ID -> enum CtrlID (envelope.h)
+******************************************************************************/
+
+void Envelopes::setEnvelopePramas(unsigned char _ctrlID, float _ctrlVal)
+{
+    switch (_ctrlID)
+    {
+        case CtrlID::DECAYAMOUNT_A:
+            _ctrlVal = (_ctrlVal / 127.f) * 1000.f;
+            _ctrlVal = (_ctrlVal * 0.208165f * 0.5f) - 20.f;
+            _ctrlVal = NlToolbox::Conversion::db2af(_ctrlVal);
+
+            printf("Envelope - A Decay: %f\n", _ctrlVal);
+
+            _ctrlVal = 1.f / ((_ctrlVal/ 1000.f) * SAMPLERATE + 1.f);
+            mDecayDx_A = 1.f - _ctrlVal;
+            break;
+
+        case CtrlID::DECAYAMOUNT_B:
+            _ctrlVal = (_ctrlVal / 127.f) * 1000.f;
+            _ctrlVal = (_ctrlVal * 0.208165f * 0.5f) - 20.f;
+            _ctrlVal = NlToolbox::Conversion::db2af(_ctrlVal);
+
+            printf("Envelope - B Decay: %f\n", _ctrlVal);
+
+            _ctrlVal = 1.f / ((_ctrlVal/ 1000.f) * SAMPLERATE + 1.f);
+            mDecayDx_B = 1.f - _ctrlVal;
+            break;
+
+        case CtrlID::DECAYAMOUNT_C:
+            _ctrlVal = (_ctrlVal / 127.f) * 1000.f;
+            _ctrlVal = (_ctrlVal * 0.208165f * 0.5f) - 20.f;
+            _ctrlVal = NlToolbox::Conversion::db2af(_ctrlVal);
+
+            printf("Envelope - C Decay: %f\n", _ctrlVal);
+
+            _ctrlVal = 1.f / ((_ctrlVal/ 1000.f) * SAMPLERATE + 1.f);
+            mDecayDx_C = 1.f - _ctrlVal;
+            break;
+    }
+
+}
+
+/******************************************************************************/
+/** @brief    main function which calculates the vlaues of all envelopes
+ *            if the ramp has not yet reached 0.0 and the note is still
+ *            active by a Note-On Event
+*******************************************************************************/
+
+void Envelopes::applyEnvelope()
+{
+    //**************************** Envelope A ********************************//
+
+    if (mEnvState_A == env_decay)
+    {
+        mEnvRamp_A = mVelocity + mVelocity_diff * (1.f - mInternalRamp_A);
+        mInternalRamp_A = mInternalRamp_A * mDecayDx_A;
+
+        if (mInternalRamp_A < 1.e-9f)
+        {
+            mEnvRamp_A = 0.f;
+            mEnvState_A = env_off;
+        }
+    }
+    else if (mEnvState_A == env_release)
+    {
+        mEnvRamp_A = mVelocity + mVelocity_diff * (1.f - mInternalRamp_A);
+        mInternalRamp_A = mInternalRamp_A * mReleaseDx;
+
+        if (mInternalRamp_A < 1.e-9f)
+        {
+            mEnvRamp_A = 0.f;
+            mEnvState_A = env_off;
+        }
+    }
+
+
+    //**************************** Envelope B ********************************//
+
+    if (mEnvState_B == env_decay)
+    {
+        mEnvRamp_B = mVelocity + mVelocity_diff * (1.f - mInternalRamp_B);
+        mInternalRamp_B = mInternalRamp_B * mDecayDx_B;
+
+        if (mInternalRamp_B < 1.e-9f)
+        {
+            mEnvRamp_B = 0.f;
+            mEnvState_B = env_off;
+        }
+    }
+    else if (mEnvState_B == env_release)
+    {
+        mEnvRamp_B = mVelocity + mVelocity_diff * (1.f - mInternalRamp_B);
+        mInternalRamp_B = mInternalRamp_B * mReleaseDx;
+
+        if (mInternalRamp_B < 1.e-9f)
+        {
+            mEnvRamp_B = 0.f;
+            mEnvState_B = env_off;
+        }
+    }
+
+
+    //**************************** Envelope C ********************************//
+
+    if (mEnvState_C == env_decay)
+    {
+        mEnvRamp_C = mVelocity + mVelocity_diff * (1.f - mInternalRamp_C);
+        mInternalRamp_C = mInternalRamp_C * mDecayDx_C;
+
+        if (mInternalRamp_C < 1.e-9f)
+        {
+            mEnvRamp_C = 0.f;
+            mEnvState_C = env_off;
+        }
+    }
+    else if (mEnvState_C == env_release)
+    {
+        mEnvRamp_C = mVelocity + mVelocity_diff * (1.f - mInternalRamp_C);
+        mInternalRamp_C = mInternalRamp_C * mReleaseDx;
+
+        if (mInternalRamp_C < 1.e-9f)
+        {
+            mEnvRamp_C = 0.f;
+            mEnvState_C = env_off;
+        }
+
+    }
+
+
+    //******************************* Gate ***********************************//
+
+    if (mGateState == gate_on)
+    {
+        mGateRamp = mInternalRamp_Gate;
+        mInternalRamp_Gate = mInternalRamp_Gate * mReleaseDx;
+
+        if (mInternalRamp_Gate < 1.e-9f)
+        {
+            mGateRamp = 0.f;
+            mGateState = gate_off;
+        }
+    }
+}
+
+
+
+/******************************************************************************/
+/** @brief    sets the envelope ramps to the value of the incoming velocity
+*******************************************************************************/
+
+void Envelopes::setEnvelope(float _velocity)
+{
+    mVelocity = _velocity;
+    mVelocity_diff = 0.f - _velocity;
+
+    mEnvState_A = env_decay;
+    mEnvState_B = env_decay;
+    mEnvState_C = env_decay;
+
+    mInternalRamp_A = 1.f;
+    mInternalRamp_B = 1.f;
+    mInternalRamp_C = 1.f;
+}
+
+
+
+/******************************************************************************/
+/** @brief    sets the envelope ramps to 0.f -> instant off
+*******************************************************************************/
+
+void Envelopes::killEnvelope()
+{
+    mEnvState_A = env_release;
+    mEnvState_B = env_release;
+    mEnvState_C = env_release;
+
+    mGateState = gate_on;
+
+    mInternalRamp_Gate = 1.f;
+}
+
+

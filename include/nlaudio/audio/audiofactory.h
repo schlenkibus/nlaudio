@@ -48,9 +48,9 @@ class RawMidiDevice;
 /*! A shared handle to a \ref std::atomic<bool> */
 typedef std::shared_ptr<std::atomic<bool>> SharedTerminateFlag;
 
-typedef void (*AudioCallbackIn)(u_int8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
-typedef void (*AudioCallbackOut)(u_int8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
-typedef void (*AudioCallbackInOut)(u_int8_t*, uint8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
+typedef void (*AudioCallbackIn)(uint8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
+typedef void (*AudioCallbackOut)(uint8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
+typedef void (*AudioCallbackInOut)(uint8_t*, uint8_t*, const SampleSpecs &specs, SharedUserPtr ptr);
 
 /*! A shared handle to a \ref std::thread */
 typedef std::shared_ptr<std::thread> SharedThreadHandle;
