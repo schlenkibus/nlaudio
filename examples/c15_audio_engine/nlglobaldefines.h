@@ -37,7 +37,7 @@
 #endif
 
 const float SMOOTHER_INC  = 5.f / (SAMPLERATE * 0.032f);
-const float PDELAY_SMOOTHER_INC = 1.f / (SAMPLERATE * 0.001f * 50.f);
+const float REVERB_SMOOTHER_INC = 1.f / (SAMPLERATE * 0.001f * 50.f);
 
 const float CONST_PI = 3.14159f;
 const float CONST_HALF_PI = 1.5708;

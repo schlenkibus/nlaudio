@@ -136,6 +136,21 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
             }
             break;
 
+        case InstrID::FEEDBACKMIXER_PARAM:
+
+            /// Reverb Level should be enough for just one FB Mixer instance ...
+
+            for (uint32_t i = 0; i < NUM_VOICES; i++)
+            {
+                pFeedbackMixer[i]->setFeedbackMixerParams(_ctrlID, _ctrlVal);
+            }
+            break;
+
+        case InstrID::OUTPUTMIXER_PARAM:
+
+            pOutputMixer->setOutputmixerParams(_ctrlID, _ctrlVal);
+            break;
+
         case InstrID::FLANGER_PARAM:
 
             pFlanger->setFlangerParams(_ctrlID, _ctrlVal);
@@ -152,24 +167,15 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
             pGapFilter->setGapFilterParams(_ctrlID, _ctrlVal);
             break;
 
-        case InstrID::OUTPUTMIXER_PARAM:
-
-            pOutputMixer->setOutputmixerParams(_ctrlID, _ctrlVal);
-            break;
-
-        case InstrID::FEEDBACKMIXER_PARAM:
-
-            /// Reverb Level should be enough for just one FB Mixer instance ...
-
-            for (uint32_t i = 0; i < NUM_VOICES; i++)
-            {
-                pFeedbackMixer[i]->setFeedbackMixerParams(_ctrlID, _ctrlVal);
-            }
-            break;
 
         case InstrID::ECHO_PARAM:
 
             pEcho->setEchoParams(_ctrlID, _ctrlVal);
+            break;
+
+        case InstrID::REVERB_PARAM:
+
+            pReverb->setReverbParams(_ctrlID, _ctrlVal);
             break;
 
         case InstrID::KEYUP_0:

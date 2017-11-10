@@ -68,19 +68,26 @@ public:
 
 private:
     //******************************** Control Variables ********************************//
-    float mDry;
-    float mWet;
-    float mFeed;
     float mBalance;
-    float mDepth;
-    float mAbAmnt;
-    float mFBAmnt;
-    float mHpOmega, mLpOmega;
+    float mBalance_half;
+    float mBalance_full;
 
     float mSize;
-    float mColor;
+
+    float mFeed;
+    float mFeedWetness;
+    float mFeedColor;
+
+    float mDepth;
+    float mDepthSize;
+    float mDepthChorus;
+
+    float mDry;
+    float mWet;
+    float mAbAmnt;
+    float mFBAmnt;
+
     float mPreDelayTime_L, mPreDelayTime_R;
-    float mChorus;
 
     //************************* Channel Variables and Filters ***************************//
     uint32_t mSampleBufferIndx;                       // sample buffer index
@@ -130,6 +137,8 @@ private:
 
 
     //****************************** Reverb Modulation **********************************//
+    float mHPOmega, mLPOmega;
+
     float mLFOStateVar_1, mLFOStateVar_2;
     float mLFOWarpedFreq_1, mLFOWarpedFreq_2;
 
@@ -144,28 +153,32 @@ private:
 
     //******************************* Smoothing Variabels *******************************//
 
-    uint32_t mSmootherMask;                    // Smoother Mask (ID 1: dry, ID 2: wet, ID 3: , ID 4: )
+    uint32_t mSmootherMask;                    // Smoother Mask (ID 1: , ID 2: , ID 3: , ID 4: )
 
     // Mask ID: 1
-    float mDry_base;
-    float mDry_target;
-    float mDry_diff;
-    float mDry_ramp;
+    float mBalance_base;
+    float mBalance_target;
+    float mBalance_diff;
+    float mBalance_ramp;
 
     // Mask ID: 2
-    float mWet_base;
-    float mWet_target;
-    float mWet_diff;
-    float mWet_ramp;
+    float mSize_base;
+    float mSize_target;
+    float mSize_diff;
+    float mSize_ramp;
 
     // Mask ID: 3
-    float mFeed_base;
-    float mFeed_target;
-    float mFeed_diff;
-    float mFeed_ramp;
+    float mLpFltr_ramp;
+
+    float mLPOmega_base;
+    float mLPOmega_target;
+    float mLPOmega_diff;
+
+    float mHPOmega_base;
+    float mHPOmega_target;
+    float mHPOmega_diff;
 
     // Mask ID: 4
-    uint32_t mPrSmCounter;
     float mPreDelayTime_ramp;
 
     float mPreDelayTime_L_base;
@@ -176,15 +189,29 @@ private:
     float mPreDelayTime_R_target;
     float mPreDelayTime_R_diff;
 
-    // MAsk ID: 5
-    uint32_t mDepthSmCounter;
-
+    // Mask ID: 5
     float mDepth_ramp;
     float mDepth_base;
     float mDepth_target;
     float mDepth_diff;
 
     // Mask ID: 6
+    float mFeed_base;
+    float mFeed_target;
+    float mFeed_diff;
+    float mFeed_ramp;
+
+    // Mask ID: 7
+    float mMix_ramp;
+
+    float mDry_base;
+    float mDry_target;
+    float mDry_diff;
+
+    float mWet_base;
+    float mWet_target;
+    float mWet_diff;
+
 
 
     //*********************************** Controls IDs **********************************//
@@ -208,6 +235,6 @@ private:
     };
 
     //**************************** Helper Functions ***************************//
-    void calcFeedAndBalance();
-    void calcLpAndHpCutFreq();
+    void initFeedSmoother();
+    void initDepthSmoother();
 };

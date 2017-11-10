@@ -15,6 +15,47 @@ Reverb::Reverb()
 
     mFeedbackOut = 0.f;
 
+    mSize =  (2.f - fabs(0.5f)) * 0.5f;
+
+    mFeedWetness = mSize * (0.6f - fabs(mSize) * -0.4f);
+    mFeedWetness *= -3.32f;
+    mFeedWetness += 4.32f;
+
+    mDepthSize = 311.f + mSize * -200.f;
+
+    mBalance = (mSize * (1.3f - 0.3f * fabs(mSize))) * 0.9f;
+    mBalance_half = 1.f - mBalance * mBalance;
+    mBalance_full = mBalance * (2.f - mBalance);
+
+    mSize = mSize * (0.5f - fabs(mSize) * -0.5f);
+    mAbAmnt = mSize * 0.334f + 0.666f;
+    mFBAmnt = mSize * 0.667f + 0.333f;
+
+    mFeedColor = 1.f;
+    mFeed = mFeedColor * mFeedWetness;
+
+    mDepthChorus = 0.0625f;
+    mDepth = mDepthSize * mDepthChorus;
+
+    mLPOmega = 0.838423f;
+    mLPCoeff_1 = 1.f / (mLPOmega + 1.f);
+    mLPCoeff_2 = mLPOmega - 1.f;
+
+    mHPOmega = 0.0031101f;
+    mHPCoeff_1 = 1.f / (mHPOmega + 1.f);
+    mHPCoeff_2 = mHPOmega - 1.f;
+
+    mLPStateVar_L = 0.f;
+    mLPStateVar_R = 0.f;
+    mHPStateVar_L = 0.f;
+    mHPStateVar_R = 0.f;
+
+    mDry = 1.f;
+    mWet = 0.f;
+
+    mPreDelayTime_L = 138;
+    mPreDelayTime_R = 164;
+
     mSampleBufferIndx = 0;
 
     mAsymBuffer_L = {0.f};
@@ -65,24 +106,15 @@ Reverb::Reverb()
     mLFOWarpedFreq_1 = 0.86306 * (2 / SAMPLERATE);
     mLFOWarpedFreq_2 = 0.6666 * (2 / SAMPLERATE);
 
-    mLPStateVar_L = 0.f;
-    mLPStateVar_R = 0.f;
-    mHPStateVar_L = 0.f;
-    mHPStateVar_R = 0.f;
-
-//    float mLPCoeff_1, mLPCoeff_2;
-//    float mHPCoeff_1, mHPCoeff_2;
-
-
     mSmootherMask = 0x0000;
-    mPrSmCounter = 0;
-    mDepthSmCounter = 0;
 
-    mWet_ramp = 1.f;
-    mDry_ramp = 1.f;
-    mFeed_ramp = 1.f;
-    mPreDelayTime_ramp =1.f;
+    mBalance_ramp = 1.f;
+    mSize_ramp = 1.f;
+    mLpFltr_ramp = 1.f;
+    mPreDelayTime_ramp = 1.f;
     mDepth_ramp = 1.f;
+    mFeed_ramp = 1.f;
+    mMix_ramp = 1.f;
 }
 
 
@@ -114,25 +146,38 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     //************************* Reverb Modulation **************************//
     //// Check Controlrate -> Reaktor does it with half of the SR
 
-    float phase = mLFOStateVar_1 + mLFOWarpedFreq_1;        // phase 1
-    phase = phase - round(phase);
-    mLFOStateVar_1 = phase;
+    if (mDepth > 0.f)
+    {
+        float phase = mLFOStateVar_1 + mLFOWarpedFreq_1;        // phase 1
+        phase = phase - round(phase);
+        mLFOStateVar_1 = phase;
 
-    phase = (8.f - fabs(phase) * 16.f) * phase;             // par
+        phase = (8.f - fabs(phase) * 16.f) * phase;             // par
 
-    phase += 1.f;
-    modCoeff_1a = phase * mDepth;
-    modCoeff_2a = (1.f - phase) * mDepth;
+        phase += 1.f;
+        modCoeff_1a = phase * mDepth;
+        modCoeff_2a = (1.f - phase) * mDepth;
 
-    phase = mLFOStateVar_2 + mLFOWarpedFreq_2;              // phase 2
-    phase = phase - round(phase);
-    mLFOStateVar_2 = phase;
+        phase = mLFOStateVar_2 + mLFOWarpedFreq_2;              // phase 2
+        phase = phase - round(phase);
+        mLFOStateVar_2 = phase;
 
-    phase = (8.f - fabs(phase) * 16.f) * phase;             // par
+        phase = (8.f - fabs(phase) * 16.f) * phase;             // par
 
-    phase += 1.f;
-    modCoeff_1b = phase * mDepth;
-    modCoeff_2b = (1.f - phase) * mDepth;
+        phase += 1.f;
+        modCoeff_1b = phase * mDepth;
+        modCoeff_2b = (1.f - phase) * mDepth;
+    }
+    else
+    {
+        mLFOStateVar_1 = 0.f;
+        mLFOStateVar_2 = 0.f;
+
+        modCoeff_1a = 0.f;
+        modCoeff_2a = 0.f;
+        modCoeff_1b = 0.f;
+        modCoeff_2b = 0.f;
+    }
 
 
     //**********************************************************************//
@@ -164,7 +209,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     ind_t0 &= BUFFERSIZE_M1;
     ind_tm1 &= BUFFERSIZE_M1;
 
-    wetSample_L = mAsymBuffer_L[ind_t0] + delaySamples_fract * (mAsymBuffer_L[ind_t0] - mAsymBuffer_L[ind_tm1]);
+    wetSample_L = mAsymBuffer_L[ind_t0] + delaySamples_fract * (mAsymBuffer_L[ind_tm1] - mAsymBuffer_L[ind_t0]);
 
 
     wetSample_L = wetSample_L + mDelayStateVar_L9 * mFBAmnt;
@@ -174,7 +219,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     holdSample = mLPStateVar_L;
     mLPStateVar_L = wetSample_L;
 
-    wetSample_L = (wetSample_L + holdSample) * mLpOmega;                            // LP FIR
+    wetSample_L = (wetSample_L + holdSample) * mLPOmega;                            // LP FIR
 
     wetSample_L = (wetSample_L - mHPStateVar_L * mHPCoeff_2) * mHPCoeff_1;          // HP IIR
     holdSample = mHPStateVar_L;
@@ -213,6 +258,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     }
 
     ind_tm1 = mSampleBufferIndx - delaySamples_int;
+    ind_tm1 += 1;
 
     ind_tm1 &= BUFFERSIZE_M1;
     ind_t0  &= BUFFERSIZE_M1;
@@ -395,7 +441,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     ind_t0 &= BUFFERSIZE_M1;
     ind_tm1 &= BUFFERSIZE_M1;
 
-    wetSample_R = mAsymBuffer_R[ind_t0] + delaySamples_fract * (mAsymBuffer_R[ind_t0] - mAsymBuffer_R[ind_tm1]);
+    wetSample_R = mAsymBuffer_R[ind_t0] + delaySamples_fract * (mAsymBuffer_R[ind_tm1] - mAsymBuffer_R[ind_t0]);
 
     wetSample_R = wetSample_R + mDelayStateVar_R9 * mFBAmnt;
 
@@ -406,7 +452,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     holdSample = mLPStateVar_R;
     mLPStateVar_R = wetSample_R;
 
-    wetSample_R = (wetSample_R + holdSample) * mLpOmega;                            // LP FIR
+    wetSample_R = (wetSample_R + holdSample) * mLPOmega;                            // LP FIR
 
     wetSample_R = (wetSample_R - mHPStateVar_R * mHPCoeff_2) * mHPCoeff_1;          // HP IIR
     holdSample = mHPStateVar_R;
@@ -445,6 +491,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     }
 
     ind_tm1 = mSampleBufferIndx - delaySamples_int;
+    ind_tm1 += 1;
 
     ind_tm1 &= BUFFERSIZE_M1;
     ind_t0  &= BUFFERSIZE_M1;
@@ -597,15 +644,11 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
                                                     mDelayBuffer_R9[ind_tp1],
                                                     mDelayBuffer_R9[ind_tp2]);
 
+    mSampleBufferIndx = (mSampleBufferIndx + 1) & BUFFERSIZE_M1;
 
     //**************************** Delay Mixer *****************************//
-    /// This should not be calculated with every sample, yoar!
-    float  balance = mBalance * (2.f - mBalance);
-    float balance_1m = 1.f - mBalance;
-    balance_1m = balance_1m * (2.f  - balance_1m);
-
-    wetSample_L = wetSample_L * balance + wetSample_L2 * balance_1m;
-    wetSample_R = wetSample_R * balance + wetSample_R2 * balance_1m;
+    wetSample_L = wetSample_L * mBalance_full + wetSample_L2 * mBalance_half;
+    wetSample_R = wetSample_R * mBalance_full + wetSample_R2 * mBalance_half;
 
 
     //**********************************************************************//
@@ -615,6 +658,9 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mReverbOut_R = _EchosSample_R * mDry + wetSample_R * mWet;
 
 #else
+
+    float wetSample_L = 0.f;
+    float wetSample_R = 0.f;
 
     mReverbOut_L = _EchosSample_L;
     mReverbOut_R = _EchosSample_R;
@@ -643,23 +689,96 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
             _ctrlVal = _ctrlVal / 127.f;
             printf("Reverb - Size: %f\n", _ctrlVal);
 
-            mSize = (2.f - fabs(_ctrlVal)) * _ctrlVal;
-            calcFeedAndBalance();
+            _ctrlVal = (2.f - fabs(_ctrlVal)) * _ctrlVal;
+
+            // Size for Feed
+            mFeedWetness = _ctrlVal * (0.6f - fabs(_ctrlVal) * -0.4f);
+            mFeedWetness *= -3.32f;
+            mFeedWetness += 4.32f;
+            initFeedSmoother();
+
+            // Size for Depth
+            mDepthSize = 311.f + _ctrlVal * -200.f;
+            initDepthSmoother();
+
+            // Size for Balance
+            // Initialize Smoother ID: 1 Balance
+            mBalance_target = (_ctrlVal * (1.3f - 0.3f * fabs(_ctrlVal))) * 0.9f;
+            mBalance_base = mBalance;
+            mBalance_diff = mBalance_target - mBalance_base;
+
+            mSmootherMask |= 0x0001;
+            mBalance_ramp = 0.f;
+
+            // Size for Absorb and Feedback Amounts
+            // Initialize Smoother ID: 2 Size
+            mSize_target = _ctrlVal * (0.5f - fabs(_ctrlVal) * -0.5f);
+            mSize_base = mSize;
+            mSize_diff = mSize_target - mSize_base;
+
+            mSmootherMask |= 0x0002;
+            mSize_ramp = 0.f;
             break;
 
         case CtrlID::COLOR:
             _ctrlVal = _ctrlVal / 127.f;
             printf("Reverb - Color: %f\n", _ctrlVal);
 
-            mColor = _ctrlVal;
-            calcFeedAndBalance();
+            // Color for Feed
+            mFeedColor = _ctrlVal;
+
+            if (mFeedColor < 0.66f)               // Norm Latch
+            {
+                mFeedColor = 0.66f;
+            }
+            else if (mFeedColor > 1.f)
+            {
+                mFeedColor = 1.f;
+            }
+
+            mFeedColor -= 0.66f;
+            mFeedColor *= 2.94118f;
+
+            mFeedColor = mFeedColor * mFeedColor;
+
+            mFeedColor *= 0.46f;                  // Val Crossfade
+            mFeedColor += 1.f;
+            initFeedSmoother();
+
+            // Color for Loop Filter
+            _ctrlVal = _ctrlVal + _ctrlVal;
+
+            if (_ctrlVal > 1.f)
+            {
+                _ctrlVal -= 1.f;
+                mLPOmega_target = NlToolbox::Conversion::pitch2freq(_ctrlVal * -7.f + 137.f);
+                mHPOmega_target = NlToolbox::Conversion::pitch2freq(_ctrlVal * 56.f + 29.f);
+            }
+            else
+            {
+                mLPOmega_target = NlToolbox::Conversion::pitch2freq(_ctrlVal * 71.f + 66.f);
+                mHPOmega_target = NlToolbox::Conversion::pitch2freq(29.f);
+            }
+
+            mLPOmega_target = NlToolbox::Math::tan(mLPOmega_target * WARPCONST_PI);
+            mHPOmega_target = NlToolbox::Math::tan(mHPOmega_target * WARPCONST_PI);
+
+            mLPOmega_base = mLPOmega;
+            mHPOmega_base = mHPOmega;
+
+            mLPOmega_diff = mLPOmega_target - mLPOmega_base;
+            mHPOmega_diff = mHPOmega_target - mHPOmega_base;
+
+            mSmootherMask |= 0x0004;
+            mLpFltr_ramp = 0.f;
             break;
 
         case CtrlID::CHORUS:
             _ctrlVal = _ctrlVal / 127.f;
             printf("Reverb - Chorus: %f\n", _ctrlVal);
 
-            mChorus = _ctrlVal;
+            mDepthChorus = _ctrlVal * _ctrlVal;
+            initDepthSmoother();
             break;
 
         case CtrlID::PRE_DELAY:
@@ -691,22 +810,18 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
 
             _ctrlVal = _ctrlVal * _ctrlVal;
 
-            // Initialize Smoother ID 1: Dry
+            // Initialize Smoother ID 7: Dry and Wet
             mDry_target = 1.f - _ctrlVal;
             mDry_target = (2.f - mDry_target) * mDry_target;
             mDry_base = mDry;
             mDry_diff = mDry_target - mDry_base;
 
-            mSmootherMask |= 0x0001;            // switch first bit to 1
-            mDry_ramp = 0.f;
-
-            // Initialize Smoother ID 2: Wet
             mWet_target = (2.f - _ctrlVal) * _ctrlVal;
             mWet_base = mWet;
             mWet_diff = mWet_target - mWet_base;
 
-            mSmootherMask |= 0x0002;            // switch second bit to 1
-            mWet_ramp = 0.f;
+            mSmootherMask |= 0x0040;            // switch seventh bit to 1
+            mMix_ramp = 0.f;
             break;
     }
 }
@@ -720,61 +835,75 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
 
 inline void Reverb::applySmoother()
 {
-    //************************ ID 1: Dry Smoother ***************************//
-    if (mDry_ramp < 1.f)
+    //********************** ID 1: Balance Smoother *************************//
+    if (mBalance_ramp < 1.f)
     {
-        mDry_ramp += SMOOTHER_INC;
+        mBalance_ramp += REVERB_SMOOTHER_INC;
 
-        if (mDry_ramp > 1.f)
+        if (mBalance_ramp > 1.f)
         {
-            mDry = mDry_target;
-            mSmootherMask &= 0xFFFE;       // switch first bit to 0
+            mBalance = mBalance_target;
+            mSmootherMask &= 0xFFFE;            // switch first bit to 0
         }
         else
         {
-            mDry = mDry_base + mDry_diff * mDry_ramp;
+            mBalance = mBalance_base + mBalance_diff * mBalance_ramp;
         }
+
+        mBalance_half = 1.f - mBalance * mBalance;
+        mBalance_full = mBalance * (2.f - mBalance);
     }
 
-    //************************ ID 2: Wet Smoother ***************************//
-    if (mWet_ramp < 1.f)
-    {
-        mWet_ramp += SMOOTHER_INC;
 
-        if (mWet_ramp > 1.f)
+    //********************** ID 2: Balance Smoother *************************//
+    if (mSize_ramp < 1.f)
+    {
+        mSize_ramp += REVERB_SMOOTHER_INC;
+
+        if (mSize_ramp > 1.f)
         {
-            mWet = mWet_target;
-            mSmootherMask &= 0xFFFD;       // switch second bit to 0
+            mSize = mSize_target;
+            mSmootherMask &= 0xFFFD;            // switch second bit to 0
         }
         else
         {
-            mWet = mWet_base + mWet_diff * mWet_ramp;
+            mSize = mSize_base + mSize_diff * mSize_ramp;
         }
+
+        mAbAmnt = mSize * 0.334f + 0.666f;
+        mFBAmnt = mSize * 0.667f + 0.333f;
     }
 
-    //*********************** ID 3: Feed Smoother ***************************//
-    if (mFeed_ramp < 1.f)
-    {
-        mFeed_ramp += SMOOTHER_INC;
 
-        if (mFeed_ramp > 1.f)
+    //******************* ID 3: Loop Filter Smoother ************************//
+    if (mLpFltr_ramp < 1.f)
+    {
+        mLpFltr_ramp += REVERB_SMOOTHER_INC;
+
+        if (mLpFltr_ramp > 1.f)
         {
-            mFeed = mFeed_target;
-            mSmootherMask &= 0xFFFB;       // switch third bit to 0
+            mLPOmega = mLPOmega_target;
+            mHPOmega = mHPOmega_target;
+            mSmootherMask &= 0xFFFB;            // switch third bit to 0
         }
         else
         {
-            mFeed = mFeed_base + mFeed_diff * mFeed_ramp;
+            mLPOmega = mLPOmega_base + mLPOmega_diff * mLpFltr_ramp;
+            mHPOmega = mHPOmega_base + mHPOmega_diff * mLpFltr_ramp;
         }
+
+        mLPCoeff_1 = 1.f / (mLPOmega + 1.f);
+        mLPCoeff_2 = mLPOmega - 1.f;
+
+        mHPCoeff_1 = 1.f / (mHPOmega + 1.f);
+        mHPCoeff_2 = mHPOmega - 1.f;
     }
+
 
     //******************** ID 4: Pre-Delay Smoother *************************//
     if (mPreDelayTime_ramp < 1.f)
     {
-        mPrSmCounter &= 1;
-        if (mPrSmCounter == 0)
-        {
-            mPreDelayTime_ramp += PDELAY_SMOOTHER_INC;
+            mPreDelayTime_ramp += REVERB_SMOOTHER_INC;
 
             if (mPreDelayTime_ramp > 1.f)
             {
@@ -787,29 +916,59 @@ inline void Reverb::applySmoother()
                 mPreDelayTime_L = mPreDelayTime_L_base + mPreDelayTime_L_diff * mPreDelayTime_ramp;
                 mPreDelayTime_R = mPreDelayTime_R_base + mPreDelayTime_R_diff * mPreDelayTime_ramp;
             }
-        }
-        mPrSmCounter += 1;
     }
+
 
     //********************** ID 5: Depth Smoother ***************************//
     if (mDepth_ramp < 1.f)
     {
-        mDepthSmCounter &= 1;
-        if (mDepthSmCounter == 0)
-        {
-            mDepth_ramp += PDELAY_SMOOTHER_INC;
+        mDepth_ramp += REVERB_SMOOTHER_INC;
 
-            if (mDepth_ramp > 1.f)
-            {
-                mDepth = mDepth_target;
-                mSmootherMask &= 0xFFEF;
-            }
-            else
-            {
-                mDepth = mDepth_base + mDepth_diff * mDepth_ramp;
-            }
+        if (mDepth_ramp > 1.f)
+        {
+            mDepth = mDepth_target;
+            mSmootherMask &= 0xFFEF;       // switch fifth bit to 0
         }
-        mDepthSmCounter += 1;
+        else
+        {
+            mDepth = mDepth_base + mDepth_diff * mDepth_ramp;
+        }
+    }
+
+
+    //*********************** ID 6: Feed Smoother ***************************//
+    if (mFeed_ramp < 1.f)
+    {
+        mFeed_ramp += SMOOTHER_INC;
+
+        if (mFeed_ramp > 1.f)
+        {
+            mFeed = mFeed_target;
+            mSmootherMask &= 0xFFDF;       // switch sixth bit to 0
+        }
+        else
+        {
+            mFeed = mFeed_base + mFeed_diff * mFeed_ramp;
+        }
+    }
+
+
+    //************************ ID 7: Mix Smoother ***************************//
+    if (mMix_ramp < 1.f)
+    {
+        mMix_ramp += SMOOTHER_INC;
+
+        if (mMix_ramp > 1.f)
+        {
+            mDry = mDry_target;
+            mWet = mWet_target;
+            mSmootherMask &= 0xFFBF;       // switch seventh bit to 0
+        }
+        else
+        {
+            mDry = mDry_base + mDry_diff * mMix_ramp;
+            mWet = mWet_base + mWet_diff * mMix_ramp;
+        }
     }
 }
 
@@ -819,80 +978,30 @@ inline void Reverb::applySmoother()
 /** @brief
 ******************************************************************************/
 
-void Reverb::calcFeedAndBalance()
+void Reverb::initFeedSmoother()
 {
-    float feed = mColor;
-
-    if (feed < 0.66f)               // Norm Latch
-    {
-        feed = 0.66f;
-    }
-    else if (feed > 1.f)
-    {
-        feed = 1.f;
-    }
-
-    feed -= 0.66f;
-    feed *= 2.94118f;
-
-    feed = feed * feed;
-
-    feed *= 0.46f;                  // Val Crossfade
-    feed += 1.f;
-
-    float wetFeed;
-    wetFeed = mSize * (0.6f - fabs(mSize) * -0.4f);
-    wetFeed *= -3.32f;
-    wetFeed += 4.32f;
-
-    // Initialize Smoother ID 3: Feed
-    mFeed_target = feed * wetFeed;
+    // Initialize Smoother ID 6: Feed
+    mFeed_target = mFeedColor * mFeedWetness;
     mFeed_base = mFeed;
     mFeed_diff = mFeed_target - mFeed_base;
 
-    mSmootherMask |= 0x0004;        // switch third bit to 1
+    mSmootherMask |= 0x0020;        // switch sixth bit to 1
     mFeed_ramp = 0.f;
-
-    mBalance = mSize * (1.3f - fabs(mSize) * 0.3f);
-    mBalance *= 0.9f;
-
-    float size = mSize * -200.f + 311.f;
-
-    mDepth = size * mChorus * mChorus;
-    // Initialize Smoother ID 4: Depth
-//    mDepth_target = size * mChorus * mChorus;
-//    mDepth_base = mDepth;
-//    mDepth_diff = mDepth_target - mDepth_base;
 }
+
+
 
 /*****************************************************************************/
 /** @brief
 ******************************************************************************/
 
-void Reverb::calcLpAndHpCutFreq()
+void Reverb::initDepthSmoother()
 {
-    float value = mColor + mColor;
+    // Initialize Smoother ID 5: Depth
+    mDepth_target = mDepthSize * mDepthChorus;
+    mDepth_base = mDepth;
+    mDepth_diff = mDepth_target - mDepth_base;
 
-    if (value > 1.f)
-    {
-        value -= 1.f;
-        mLpOmega = NlToolbox::Conversion::pitch2freq(value * -7.f + 137.f);
-        mHpOmega = NlToolbox::Conversion::pitch2freq(value * 56.f + 29.f);
-
-    }
-    else
-    {
-        mLpOmega = NlToolbox::Conversion::pitch2freq(value * 71.f + 66.f);
-        mHpOmega = NlToolbox::Conversion::pitch2freq(29.f);
-    }
-
-    mLpOmega = NlToolbox::Math::tan(mLpOmega * WARPCONST_PI);
-    mHpOmega = NlToolbox::Math::tan(mHpOmega * WARPCONST_PI);
-
-    mLPCoeff_1 = 1.f / (mLpOmega + 1.f);
-    mLPCoeff_2 = mLpOmega - 1.f;
-
-    mHPCoeff_1 = 1.f / (mHpOmega + 1.f);
-    mHPCoeff_2 = mHpOmega - 1.f;
-
+    mSmootherMask |= 0x00E0;
+    mDepth_ramp = 0.f;
 }
