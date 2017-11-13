@@ -8,35 +8,55 @@
 
 #include "reverb.h"
 
+/******************************************************************************/
+/** Reverb Default Constructor
+ * @brief    initialization of the modules local variabels with default values
+ *           SampleRate:            48 kHz
+ *           Size:                  0.5
+ *           Color:                 0.4
+ *           Mix:                   0
+ *           Chorus:                0.25
+ *           PreDelay:              0.25
+*******************************************************************************/
+
 Reverb::Reverb()
 {
+    //****************************** Outputs *******************************//
     mReverbOut_L = 0.f;
     mReverbOut_R = 0.f;
-
     mFeedbackOut = 0.f;
 
-    mSize =  (2.f - fabs(0.5f)) * 0.5f;
-
-    mFeedWetness = mSize * (0.6f - fabs(mSize) * -0.4f);
-    mFeedWetness *= -3.32f;
-    mFeedWetness += 4.32f;
-
-    mDepthSize = 311.f + mSize * -200.f;
-
-    mBalance = (mSize * (1.3f - 0.3f * fabs(mSize))) * 0.9f;
-    mBalance_half = 1.f - mBalance * mBalance;
-    mBalance_full = mBalance * (2.f - mBalance);
-
-    mSize = mSize * (0.5f - fabs(mSize) * -0.5f);
+    //************************* Absorb and FB Amnt *************************//
+    mSize = 0.75f * (0.5f - fabs(0.75f) * -0.5f);
     mAbAmnt = mSize * 0.334f + 0.666f;
     mFBAmnt = mSize * 0.667f + 0.333f;
 
-    mFeedColor = 1.f;
+    //****************************** Balance *******************************//
+    mBalance = (0.75f * (1.3f - 0.3f * fabs(0.75f))) * 0.9f;
+    mBalance_half = 1.f - mBalance * mBalance;
+    mBalance_full = mBalance * (2.f - mBalance);
+
+    //******************************** Feed ********************************//
+    mFeedWetness = 0.75f * (0.6f - fabs(0.75f) * -0.4f);
+    mFeedWetness *= -3.32f;
+    mFeedWetness += 4.32f;
+    mFeedColor = 0.4f;
+    if (mFeedColor < 0.66f)
+    {
+        mFeedColor = 0.66f;
+    }
+    else if (mFeedColor > 1.f)
+    {
+        mFeedColor = 1.f;
+    }
+    mFeedColor -= 0.66f;
+    mFeedColor *= 2.94118f;
+    mFeedColor = mFeedColor * mFeedColor;
+    mFeedColor *= 0.46f;
+    mFeedColor += 1.f;
     mFeed = mFeedColor * mFeedWetness;
 
-    mDepthChorus = 0.0625f;
-    mDepth = mDepthSize * mDepthChorus;
-
+    //************************* Loop Filter Omega **************************//
     mLPOmega = 0.838423f;
     mLPCoeff_1 = 1.f / (mLPOmega + 1.f);
     mLPCoeff_2 = mLPOmega - 1.f;
@@ -50,12 +70,20 @@ Reverb::Reverb()
     mHPStateVar_L = 0.f;
     mHPStateVar_R = 0.f;
 
-    mDry = 1.f;
-    mWet = 0.f;
+    //******************************* Depth ********************************//
+    mDepthSize = 311.f + 0.75f * -200.f;
+    mDepthChorus = 0.0625f;
+    mDepth = mDepthChorus * mDepthSize;
 
+    //*************************** PreDelay Time ****************************//
     mPreDelayTime_L = 138;
     mPreDelayTime_R = 164;
 
+    //******************************** Mix *********************************//
+    mDry = 1.f;
+    mWet = 0.f;
+
+    //****************************** Buffers *******************************//
     mSampleBufferIndx = 0;
 
     mAsymBuffer_L = {0.f};
@@ -101,11 +129,13 @@ Reverb::Reverb()
     mDelayStateVar_R8 = 0.f;
     mDelayStateVar_R9 = 0.f;
 
+    //******************************** LFO *********************************//
     mLFOStateVar_1 = 0.f;
     mLFOStateVar_2 = 0.f;
     mLFOWarpedFreq_1 = 0.86306 * (2 / SAMPLERATE);
     mLFOWarpedFreq_2 = 0.6666 * (2 / SAMPLERATE);
 
+    //***************************** Smoothing ******************************//
     mSmootherMask = 0x0000;
 
     mBalance_ramp = 1.f;
@@ -116,6 +146,168 @@ Reverb::Reverb()
     mFeed_ramp = 1.f;
     mMix_ramp = 1.f;
 }
+
+
+
+/******************************************************************************/
+/** Reverb Parameterized Constructor
+ * @brief    initialization of the modules local variabels with custom
+ *           parameters
+*******************************************************************************/
+
+Reverb::Reverb(float _size,
+               float _color,
+               float _chorus,
+               float _preDelayTime,
+               float _mix)
+{
+    //****************************** Outputs *******************************//
+    mReverbOut_L = 0.f;
+    mReverbOut_R = 0.f;
+    mFeedbackOut = 0.f;
+
+
+    //************************* Absorb and FB Amnt *************************//
+    _size = (2.f - fabs(_size)) * _size;
+
+    mSize = _size * (0.5f - fabs(_size) * -0.5f);
+    mAbAmnt = mSize * 0.334f + 0.666f;
+    mFBAmnt = mSize * 0.667f + 0.333f;
+
+    //****************************** Balance *******************************//
+    mBalance = (_size * (1.3f - 0.3f * fabs(_size))) * 0.9f;
+    mBalance_half = 1.f - mBalance * mBalance;
+    mBalance_full = mBalance * (2.f - mBalance);
+
+    //******************************** Feed ********************************//
+    mFeedWetness = _size * (0.6f - fabs(_size) * -0.4f);
+    mFeedWetness *= -3.32f;
+    mFeedWetness += 4.32f;
+    mFeedColor = _color;
+    if (mFeedColor < 0.66f)
+    {
+        mFeedColor = 0.66f;
+    }
+    else if (mFeedColor > 1.f)
+    {
+        mFeedColor = 1.f;
+    }
+    mFeedColor -= 0.66f;
+    mFeedColor *= 2.94118f;
+    mFeedColor = mFeedColor * mFeedColor;
+    mFeedColor *= 0.46f;
+    mFeedColor += 1.f;
+    mFeed = mFeedColor * mFeedWetness;
+
+    //************************* Loop Filter Omega **************************//
+    _color = _color + _color;
+
+    if (_color > 1.f)
+    {
+        _color -= 1.f;
+        mLPOmega = NlToolbox::Conversion::pitch2freq(_color * -7.f + 137.f);
+        mHPOmega = NlToolbox::Conversion::pitch2freq(_color * 56.f + 29.f);
+    }
+    else
+    {
+        mLPOmega = NlToolbox::Conversion::pitch2freq(_color * 71.f + 66.f);
+        mHPOmega = NlToolbox::Conversion::pitch2freq(29.f);
+    }
+    mLPOmega = NlToolbox::Math::tan(mLPOmega * WARPCONST_PI);
+    mHPOmega = NlToolbox::Math::tan(mHPOmega * WARPCONST_PI);
+
+    mLPCoeff_1 = 1.f / (mLPOmega + 1.f);
+    mLPCoeff_2 = mLPOmega - 1.f;
+    mHPCoeff_1 = 1.f / (mHPOmega + 1.f);
+    mHPCoeff_2 = mHPOmega - 1.f;
+
+    mLPStateVar_L = 0.f;
+    mLPStateVar_R = 0.f;
+    mHPStateVar_L = 0.f;
+    mHPStateVar_R = 0.f;
+
+    //******************************* Depth ********************************//
+    mDepthSize = 311.f + _size * -200.f;
+    mDepthChorus = _chorus * _chorus;
+    mDepth = mDepthChorus * mDepthSize;
+
+    //*************************** PreDelay Time ****************************//
+    _preDelayTime = _preDelayTime * _preDelayTime *_preDelayTime;
+    _preDelayTime *= 200.f;
+    _preDelayTime = _preDelayTime * (SAMPLERATE / 1000.f);
+
+    mPreDelayTime_L = round(_preDelayTime);
+    mPreDelayTime_R = round(_preDelayTime * 1.18933f);
+
+    //******************************** Mix *********************************//
+    _mix = _mix * _mix;
+    mDry = 1.f - _mix * _mix;
+    mWet = (2.f - _mix) * _mix;
+
+    //****************************** Buffers *******************************//
+    mSampleBufferIndx = 0;
+
+    mAsymBuffer_L = {0.f};
+    mAsymBuffer_R = {0.f};
+
+    mDelayBuffer_L1 = {0.f};
+    mDelayBuffer_L2 = {0.f};
+    mDelayBuffer_L3 = {0.f};
+    mDelayBuffer_L4 = {0.f};
+    mDelayBuffer_L5 = {0.f};
+    mDelayBuffer_L6 = {0.f};
+    mDelayBuffer_L7 = {0.f};
+    mDelayBuffer_L8 = {0.f};
+    mDelayBuffer_L9 = {0.f};
+
+    mDelayBuffer_R1 = {0.f};
+    mDelayBuffer_R2 = {0.f};
+    mDelayBuffer_R3 = {0.f};
+    mDelayBuffer_R4 = {0.f};
+    mDelayBuffer_R5 = {0.f};
+    mDelayBuffer_R6 = {0.f};
+    mDelayBuffer_R7 = {0.f};
+    mDelayBuffer_R8 = {0.f};
+    mDelayBuffer_R9 = {0.f};
+
+    mDelayStateVar_L1 = 0.f;
+    mDelayStateVar_L2 = 0.f;
+    mDelayStateVar_L3 = 0.f;
+    mDelayStateVar_L4 = 0.f;
+    mDelayStateVar_L5 = 0.f;
+    mDelayStateVar_L6 = 0.f;
+    mDelayStateVar_L7 = 0.f;
+    mDelayStateVar_L8 = 0.f;
+    mDelayStateVar_L9 = 0.f;
+
+    mDelayStateVar_R1 = 0.f;
+    mDelayStateVar_R2 = 0.f;
+    mDelayStateVar_R3 = 0.f;
+    mDelayStateVar_R4 = 0.f;
+    mDelayStateVar_R5 = 0.f;
+    mDelayStateVar_R6 = 0.f;
+    mDelayStateVar_R7 = 0.f;
+    mDelayStateVar_R8 = 0.f;
+    mDelayStateVar_R9 = 0.f;
+
+    //******************************** LFO *********************************//
+    mLFOStateVar_1 = 0.f;
+    mLFOStateVar_2 = 0.f;
+    mLFOWarpedFreq_1 = 0.86306 * (2 / SAMPLERATE);
+    mLFOWarpedFreq_2 = 0.6666 * (2 / SAMPLERATE);
+
+    //***************************** Smoothing ******************************//
+    mSmootherMask = 0x0000;
+
+    mBalance_ramp = 1.f;
+    mSize_ramp = 1.f;
+    mLpFltr_ramp = 1.f;
+    mPreDelayTime_ramp = 1.f;
+    mDepth_ramp = 1.f;
+    mFeed_ramp = 1.f;
+    mMix_ramp = 1.f;
+}
+
 
 
 /*****************************************************************************/
@@ -132,7 +324,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
         applySmoother();
     }
 
-#if 1
+
     //**************** Temp. Variables for both Channels *******************//
     float modCoeff_1a, modCoeff_2a, modCoeff_1b, modCoeff_2b;           // Modulation Coefficients
     int32_t ind_tm1, ind_t0, ind_tp1, ind_tp2;                          // Interpolation Points
@@ -143,9 +335,8 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     float wetSample_L, wetSample_R;                                     // Fully processed Samples
     float wetSample_L2, wetSample_R2;                                   // Processed Samples after Delays L4 and R12
 
-    //************************* Reverb Modulation **************************//
-    //// Check Controlrate -> Reaktor does it with half of the SR
 
+    //************************* Reverb Modulation **************************//
     if (mDepth > 0.f)
     {
         float phase = mLFOStateVar_1 + mLFOWarpedFreq_1;        // phase 1
@@ -186,12 +377,13 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     wetSample_L = _EchosSample_L * mFeed;
 
+
     //***************************** Asym 2 L *******************************//
     mAsymBuffer_L[mSampleBufferIndx] = wetSample_L;         // write
 
-    if (mPreDelayTime_L > BUFFERSIZE_M1)
+    if (mPreDelayTime_L > REVERB_BUFFERSIZE_M1)
     {
-        mPreDelayTime_L = BUFFERSIZE_M1;
+        mPreDelayTime_L = REVERB_BUFFERSIZE_M1;
     }
     else if (mPreDelayTime_L < 0.f)
     {
@@ -201,18 +393,17 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     delaySamples_int = round(mPreDelayTime_L - 0.5f);
     delaySamples_fract = mPreDelayTime_L - delaySamples_int;
 
-    /// LATCH MISSING (might not need it ... )
-
     ind_t0 = mSampleBufferIndx - delaySamples_int;
     ind_tm1 = ind_t0 - 1.f;
 
-    ind_t0 &= BUFFERSIZE_M1;
-    ind_tm1 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
+    ind_tm1 &= REVERB_BUFFERSIZE_M1;
 
     wetSample_L = mAsymBuffer_L[ind_t0] + delaySamples_fract * (mAsymBuffer_L[ind_tm1] - mAsymBuffer_L[ind_t0]);
 
 
     wetSample_L = wetSample_L + mDelayStateVar_L9 * mFBAmnt;
+
 
     //*************************** Loop Filter L ****************************//
     wetSample_L = (wetSample_L - mLPStateVar_L * mLPCoeff_2) * mLPCoeff_1;          // LP IIR
@@ -236,9 +427,9 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     delaySamples_fract = DELAYSAMPLES_1 + modCoeff_2a;
 
-    if (delaySamples_fract > BUFFERSIZE_M2)              // Clip
+    if (delaySamples_fract > REVERB_BUFFERSIZE_M2)              // Clip
     {
-        delaySamples_fract = BUFFERSIZE_M2;
+        delaySamples_fract = REVERB_BUFFERSIZE_M2;
     }
     else if (delaySamples_fract < 1.f)
     {
@@ -260,10 +451,10 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     ind_tm1 = mSampleBufferIndx - delaySamples_int;
     ind_tm1 += 1;
 
-    ind_tm1 &= BUFFERSIZE_M1;
-    ind_t0  &= BUFFERSIZE_M1;
-    ind_tp1 &= BUFFERSIZE_M1;
-    ind_tp2 &= BUFFERSIZE_M1;
+    ind_tm1 &= REVERB_BUFFERSIZE_M1;
+    ind_t0  &= REVERB_BUFFERSIZE_M1;
+    ind_tp1 &= REVERB_BUFFERSIZE_M1;
+    ind_tp2 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L1 = NlToolbox::Math::interpolRT(delaySamples_fract,             // 4 Point Interpolation
                                                     mDelayBuffer_L1[ind_tm1],
@@ -281,7 +472,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_L2[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_2;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L2 = mDelayBuffer_L2[ind_t0];
 
@@ -295,7 +486,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_L3[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_3;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L3 = mDelayBuffer_L3[ind_t0];
 
@@ -309,13 +500,14 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_L4[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_4;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L4 = mDelayBuffer_L4[ind_t0];
 
     wetSample_L = wetSample_L * -GAIN_4 + holdSample;
 
     wetSample_L2 = wetSample_L;
+
 
     //***************************** Del 1p L5 ******************************//
     holdSample = mDelayStateVar_L5 * mAbAmnt;
@@ -324,7 +516,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_L5[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_5;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L5 = mDelayBuffer_L5[ind_t0];
 
@@ -338,7 +530,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_L6[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_6;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L6 = mDelayBuffer_L6[ind_t0];
 
@@ -352,7 +544,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_L7[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_7;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L7 = mDelayBuffer_L7[ind_t0];
 
@@ -366,7 +558,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_L8[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_8;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L8 = mDelayBuffer_L8[ind_t0];
 
@@ -378,9 +570,9 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     delaySamples_fract = DELAYSAMPLES_L + modCoeff_1a;
 
-    if (delaySamples_fract > BUFFERSIZE_M2)              // Clip
+    if (delaySamples_fract > REVERB_BUFFERSIZE_M2)              // Clip
     {
-        delaySamples_fract = BUFFERSIZE_M2;
+        delaySamples_fract = REVERB_BUFFERSIZE_M2;
     }
     else if (delaySamples_fract < 0.f)
     {
@@ -402,10 +594,10 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     ind_tm1 = mSampleBufferIndx - delaySamples_int;
     ind_tm1 = ind_tm1 + 1;
 
-    ind_tm1 &= BUFFERSIZE_M1;
-    ind_t0  &= BUFFERSIZE_M1;
-    ind_tp1 &= BUFFERSIZE_M1;
-    ind_tp2 &= BUFFERSIZE_M1;
+    ind_tm1 &= REVERB_BUFFERSIZE_M1;
+    ind_t0  &= REVERB_BUFFERSIZE_M1;
+    ind_tp1 &= REVERB_BUFFERSIZE_M1;
+    ind_tp2 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_L9 = NlToolbox::Math::interpolRT(delaySamples_fract,             // 4 Point Interpolation
                                                     mDelayBuffer_L9[ind_tm1],
@@ -417,14 +609,16 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     //**********************************************************************//
     //************************** Right Channel *****************************//
     //**********************************************************************//
+
     wetSample_R = _EchosSample_R * mFeed;
+
 
     //***************************** Asym 2 R *******************************//
     mAsymBuffer_R[mSampleBufferIndx] = wetSample_R;
 
-    if (mPreDelayTime_R > BUFFERSIZE_M1)
+    if (mPreDelayTime_R > REVERB_BUFFERSIZE_M1)
     {
-        mPreDelayTime_R = BUFFERSIZE_M1;
+        mPreDelayTime_R = REVERB_BUFFERSIZE_M1;
     }
     else if (mPreDelayTime_R < 0.f)
     {
@@ -434,13 +628,11 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     delaySamples_int = round(mPreDelayTime_R - 0.5f);
     delaySamples_fract = mPreDelayTime_R - delaySamples_int;
 
-    /// LATCH MISSING (might not need it ...)
-
     ind_t0 = mSampleBufferIndx - delaySamples_int;
     ind_tm1 = ind_t0 - 1.f;
 
-    ind_t0 &= BUFFERSIZE_M1;
-    ind_tm1 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
+    ind_tm1 &= REVERB_BUFFERSIZE_M1;
 
     wetSample_R = mAsymBuffer_R[ind_t0] + delaySamples_fract * (mAsymBuffer_R[ind_tm1] - mAsymBuffer_R[ind_t0]);
 
@@ -469,9 +661,9 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     delaySamples_fract = DELAYSAMPLES_9 + modCoeff_2b;
 
-    if (delaySamples_fract > BUFFERSIZE_M2)              // Clip
+    if (delaySamples_fract > REVERB_BUFFERSIZE_M2)              // Clip
     {
-        delaySamples_fract = BUFFERSIZE_M2;
+        delaySamples_fract = REVERB_BUFFERSIZE_M2;
     }
     else if (delaySamples_fract < 1.f)
     {
@@ -493,10 +685,10 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     ind_tm1 = mSampleBufferIndx - delaySamples_int;
     ind_tm1 += 1;
 
-    ind_tm1 &= BUFFERSIZE_M1;
-    ind_t0  &= BUFFERSIZE_M1;
-    ind_tp1 &= BUFFERSIZE_M1;
-    ind_tp2 &= BUFFERSIZE_M1;
+    ind_tm1 &= REVERB_BUFFERSIZE_M1;
+    ind_t0  &= REVERB_BUFFERSIZE_M1;
+    ind_tp1 &= REVERB_BUFFERSIZE_M1;
+    ind_tp2 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R1 = NlToolbox::Math::interpolRT(delaySamples_fract,             // 4 Point Interpolation
                                                     mDelayBuffer_R1[ind_tm1],
@@ -506,6 +698,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     wetSample_R = wetSample_R * -GAIN_1 + holdSample;
 
+
     //***************************** Del 1p R2 ******************************//
     holdSample = mDelayStateVar_R2 * mAbAmnt;
     wetSample_R = wetSample_R + (holdSample * GAIN_2);
@@ -513,7 +706,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_R2[mSampleBufferIndx] = wetSample_R;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_10;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R2 = mDelayBuffer_R2[ind_t0];
 
@@ -527,7 +720,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_R3[mSampleBufferIndx] = wetSample_R;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_11;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R3 = mDelayBuffer_R3[ind_t0];
 
@@ -541,13 +734,14 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_R4[mSampleBufferIndx] = wetSample_R;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_12;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R4 = mDelayBuffer_R4[ind_t0];
 
     wetSample_R = wetSample_R * -GAIN_4 + holdSample;
 
     wetSample_R2 = wetSample_R;
+
 
     //***************************** Del 1p R5 ******************************//
     holdSample = mDelayStateVar_R5 * mAbAmnt;
@@ -556,7 +750,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_R5[mSampleBufferIndx] = wetSample_R;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_13;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R5 = mDelayBuffer_R5[ind_t0];
 
@@ -570,7 +764,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_R6[mSampleBufferIndx] = wetSample_R;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_14;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R6 = mDelayBuffer_R6[ind_t0];
 
@@ -584,7 +778,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_R7[mSampleBufferIndx] = wetSample_R;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_15;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R7 = mDelayBuffer_R7[ind_t0];
 
@@ -598,7 +792,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mDelayBuffer_R8[mSampleBufferIndx] = wetSample_R;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_16;
-    ind_t0 &= BUFFERSIZE_M1;
+    ind_t0 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R8 = mDelayBuffer_R8[ind_t0];
 
@@ -610,9 +804,9 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     delaySamples_fract = DELAYSAMPLES_R + modCoeff_1b;
 
-    if (delaySamples_fract > BUFFERSIZE_M2)              // Clip
+    if (delaySamples_fract > REVERB_BUFFERSIZE_M2)              // Clip
     {
-        delaySamples_fract = BUFFERSIZE_M2;
+        delaySamples_fract = REVERB_BUFFERSIZE_M2;
     }
     else if (delaySamples_fract < 0.f)
     {
@@ -634,10 +828,10 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     ind_tm1 = mSampleBufferIndx - delaySamples_int;
     ind_tm1 = ind_tm1 + 1;
 
-    ind_tm1 &= BUFFERSIZE_M1;
-    ind_t0  &= BUFFERSIZE_M1;
-    ind_tp1 &= BUFFERSIZE_M1;
-    ind_tp2 &= BUFFERSIZE_M1;
+    ind_tm1 &= REVERB_BUFFERSIZE_M1;
+    ind_t0  &= REVERB_BUFFERSIZE_M1;
+    ind_tp1 &= REVERB_BUFFERSIZE_M1;
+    ind_tp2 &= REVERB_BUFFERSIZE_M1;
 
     mDelayStateVar_R9 = NlToolbox::Math::interpolRT(delaySamples_fract,             // 4 Point Interpolation
                                                     mDelayBuffer_R9[ind_tm1],
@@ -645,7 +839,8 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
                                                     mDelayBuffer_R9[ind_tp1],
                                                     mDelayBuffer_R9[ind_tp2]);
 
-    mSampleBufferIndx = (mSampleBufferIndx + 1) & BUFFERSIZE_M1;
+    mSampleBufferIndx = (mSampleBufferIndx + 1) & REVERB_BUFFERSIZE_M1;
+
 
     //**************************** Delay Mixer *****************************//
     wetSample_L = wetSample_L * mBalance_full + wetSample_L2 * mBalance_half;
@@ -658,15 +853,6 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     mReverbOut_L = _EchosSample_L * mDry + wetSample_L * mWet;
     mReverbOut_R = _EchosSample_R * mDry + wetSample_R * mWet;
 
-#else
-
-    float wetSample_L = 0.f;
-    float wetSample_R = 0.f;
-
-    mReverbOut_L = _EchosSample_L;
-    mReverbOut_R = _EchosSample_R;
-
-#endif
 
     //************************** Feedback Mixer ****************************//
 
@@ -793,7 +979,7 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
 
             // Initialize Smoother ID 4: Predelay Time
             mPreDelayTime_L_target = round(_ctrlVal);
-            mPreDelayTime_R_target = round(_ctrlVal * 1.18933);
+            mPreDelayTime_R_target = round(_ctrlVal * 1.18933f);
 
             mPreDelayTime_L_base = mPreDelayTime_L;
             mPreDelayTime_L_diff = mPreDelayTime_L_target - mPreDelayTime_L_base;
@@ -830,7 +1016,7 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
 
 
 /*****************************************************************************/
-/** @brief    applies the smoothers of the cabinet module, depending if the
+/** @brief    applies the smoothers of the Reverb module, depending if the
  *            corresponding bit of the mask is set to 1
 ******************************************************************************/
 
@@ -856,7 +1042,7 @@ inline void Reverb::applySmoother()
     }
 
 
-    //********************** ID 2: Balance Smoother *************************//
+    //************************ ID 2: Size Smoother *************************//
     if (mSize_ramp < 1.f)
     {
         mSize_ramp += REVERB_SMOOTHER_INC;
@@ -904,19 +1090,19 @@ inline void Reverb::applySmoother()
     //******************** ID 4: Pre-Delay Smoother *************************//
     if (mPreDelayTime_ramp < 1.f)
     {
-            mPreDelayTime_ramp += REVERB_SMOOTHER_INC;
+        mPreDelayTime_ramp += REVERB_SMOOTHER_INC;
 
-            if (mPreDelayTime_ramp > 1.f)
-            {
-                mPreDelayTime_L = mPreDelayTime_L_target;
-                mPreDelayTime_R = mPreDelayTime_R_target;
-                mSmootherMask &= 0xFFF7;        // switch fourth bit to 0
-            }
-            else
-            {
-                mPreDelayTime_L = mPreDelayTime_L_base + mPreDelayTime_L_diff * mPreDelayTime_ramp;
-                mPreDelayTime_R = mPreDelayTime_R_base + mPreDelayTime_R_diff * mPreDelayTime_ramp;
-            }
+        if (mPreDelayTime_ramp > 1.f)
+        {
+            mPreDelayTime_L = mPreDelayTime_L_target;
+            mPreDelayTime_R = mPreDelayTime_R_target;
+            mSmootherMask &= 0xFFF7;        // switch fourth bit to 0
+        }
+        else
+        {
+            mPreDelayTime_L = mPreDelayTime_L_base + mPreDelayTime_L_diff * mPreDelayTime_ramp;
+            mPreDelayTime_R = mPreDelayTime_R_base + mPreDelayTime_R_diff * mPreDelayTime_ramp;
+        }
     }
 
 
@@ -976,7 +1162,9 @@ inline void Reverb::applySmoother()
 
 
 /*****************************************************************************/
-/** @brief
+/** @brief  Since Feed is dependant on Color and Wetness (Size), this
+ *          function initializes the Feed Smoother if one of the Params
+ *          has been changed
 ******************************************************************************/
 
 void Reverb::initFeedSmoother()
@@ -993,7 +1181,9 @@ void Reverb::initFeedSmoother()
 
 
 /*****************************************************************************/
-/** @brief
+/** @brief  Since Depth is dependant on Chorus and Size, this
+ *          function initializes the Depth Smoother if one of the Params
+ *          has been changed
 ******************************************************************************/
 
 void Reverb::initDepthSmoother()

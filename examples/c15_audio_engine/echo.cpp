@@ -24,9 +24,12 @@ Echo::Echo()
 {
     mFeedbackAmnt = 0.5f;
     mCrossFeedbackAmnt = 0.f;
+    mLocalFeedback = mFeedbackAmnt * (1.f - mCrossFeedbackAmnt);
+    mCrossFeedback = mFeedbackAmnt * mCrossFeedbackAmnt;
 
     mDelayTime = 0.375f;
     mStereoAmnt = 0.f;
+    calcChannelDelayTime();
 
     mDry = 1.f;
     mWet = 0.f;
@@ -37,7 +40,6 @@ Echo::Echo()
     mChannelStateVar_R = 0.f;
     mSampleBuffer_R = {0.f};
 
-    mSampleBufferSize = mSampleBuffer_L.size() - 1;
     mSampleBufferIndx = 0;
 
     pLowpass_L = new OnePoleFilters(SAMPLERATE, 4700.f, 0.f, OnePoleFilterType::LOWPASS);
@@ -52,9 +54,6 @@ Echo::Echo()
     mDry_ramp = 1.f;
     mLFeedback_ramp = 1.f;
     mCFeedback_ramp = 1.f;
-
-    calcChannelDelayTime();
-    calcFeedback();
 }
 
 
@@ -74,9 +73,13 @@ Echo::Echo(float _delayTime,
 {
     mFeedbackAmnt = _feedbackAmnt;
     mCrossFeedbackAmnt = _crossFeedbackAmnt;
+    mLocalFeedback = mFeedbackAmnt * (1.f - mCrossFeedbackAmnt);
+    mCrossFeedback = mFeedbackAmnt * mCrossFeedbackAmnt;
+
 
     mDelayTime = _delayTime;
     mStereoAmnt = _stereoAmnt;
+    calcChannelDelayTime();
 
     mDry = (2.f - _mix * _mix  - _mix * _mix) - (1.f - _mix * _mix) * (1.f - _mix * _mix);
     mWet = (_mix * _mix + _mix * _mix) - (_mix * _mix * _mix * _mix);
@@ -86,7 +89,6 @@ Echo::Echo(float _delayTime,
 
     mChannelStateVar_R = 0.f;
     mSampleBuffer_R = {0.f};
-    mSampleBufferSize = mSampleBuffer_L.size() - 1;
     mSampleBufferIndx = 0;
 
     pLowpass_L = new OnePoleFilters(SAMPLERATE, _hiCut, 0.f, OnePoleFilterType::LOWPASS);
@@ -101,9 +103,6 @@ Echo::Echo(float _delayTime,
     mDry_ramp = 1.f;
     mLFeedback_ramp = 1.f;
     mCFeedback_ramp = 1.f;
-
-    calcChannelDelayTime();
-    calcFeedback();
 }
 
 
@@ -196,7 +195,7 @@ void Echo::setEchoParams(unsigned char _ctrlTag, float _ctrlVal)
             printf("Echo - Feedback: %f\n", _ctrlVal);
 
             mFeedbackAmnt = _ctrlVal;
-            calcFeedback();
+            initFeedbackSmoother();
             break;
 
         case CtrlID::CROSSFEEDBACKAMNT:
@@ -204,7 +203,7 @@ void Echo::setEchoParams(unsigned char _ctrlTag, float _ctrlVal)
             printf("Echo - Cross Feedback: %f\n", _ctrlVal);
 
             mCrossFeedbackAmnt = _ctrlVal;
-            calcFeedback();
+            initFeedbackSmoother();
             break;
     }
 }
@@ -248,10 +247,10 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
     ind_tp1 = mSampleBufferIndx - ind_tp1;
     ind_tp2 = mSampleBufferIndx - ind_tp2;
 
-    ind_tm1 &= mSampleBufferSize;                                               // Wrap with a mask sampleBuffer.size()-1
-    ind_t0  &= mSampleBufferSize;
-    ind_tp1 &= mSampleBufferSize;
-    ind_tp2 &= mSampleBufferSize;
+    ind_tm1 &= ECHO_BUFFERSIZE_M1;                                               // Wrap with a mask sampleBuffer.size()-1
+    ind_t0  &= ECHO_BUFFERSIZE_M1;
+    ind_tp1 &= ECHO_BUFFERSIZE_M1;
+    ind_tp2 &= ECHO_BUFFERSIZE_M1;
 
 
     processedSample = NlToolbox::Math::interpolRT(delaySamples_fract,           // Interpolation
@@ -290,10 +289,10 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
     ind_tp1 = mSampleBufferIndx - ind_tp1;
     ind_tp2 = mSampleBufferIndx - ind_tp2;
 
-    ind_tm1 &= mSampleBufferSize;                                                   // Wrap with a mask sampleBuffer.size()-1
-    ind_t0  &= mSampleBufferSize;
-    ind_tp1 &= mSampleBufferSize;
-    ind_tp2 &= mSampleBufferSize;
+    ind_tm1 &= ECHO_BUFFERSIZE_M1;                                                   // Wrap with a mask sampleBuffer.size()-1
+    ind_t0  &= ECHO_BUFFERSIZE_M1;
+    ind_tp1 &= ECHO_BUFFERSIZE_M1;
+    ind_tp2 &= ECHO_BUFFERSIZE_M1;
 
     processedSample = NlToolbox::Math::interpolRT(delaySamples_fract,               // Interpolation
                                                   mSampleBuffer_R[ind_tm1],
@@ -308,7 +307,7 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
 
     mEchoOut_R = NlToolbox::Crossfades::crossFade(_rawSample_R, processedSample, mDry, mWet);    // Crossfade
 
-    mSampleBufferIndx = (mSampleBufferIndx + 1) & mSampleBufferSize;      // increase SampleBufferindx and check index boundaries
+    mSampleBufferIndx = (mSampleBufferIndx + 1) & ECHO_BUFFERSIZE_M1;      // increase SampleBufferindx and check index boundaries
 }
 
 
@@ -407,7 +406,7 @@ inline void Echo::calcChannelDelayTime()
 /** @brief    calculates (cross)feedback amount and initializes smoothers
 ******************************************************************************/
 
-void Echo::calcFeedback()
+void Echo::initFeedbackSmoother()
 {
     // Initialize Smoother ID 3: Local Feedback
     mLFeedback_target = mFeedbackAmnt * (1.f - mCrossFeedbackAmnt);

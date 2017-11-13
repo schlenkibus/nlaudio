@@ -14,6 +14,10 @@
 #include "onepolefilters.h"
 #include <array>
 
+//************************************ Buffer Arrays ************************************//
+#define ECHO_BUFFERSIZE 131072
+#define ECHO_BUFFERSIZE_M1 131071
+
 class Echo
 {
 public:
@@ -65,9 +69,8 @@ private:
     float mDelayTime_L;                             // channel delay time
     float mDelayTime_R;
 
-    std::array<float, 131072> mSampleBuffer_L;      // sample buffer for writing and reading the samples
-    std::array<float, 131072> mSampleBuffer_R;
-    uint32_t mSampleBufferSize;                     // sample buffer size - 1
+    std::array<float, ECHO_BUFFERSIZE> mSampleBuffer_L;      // sample buffer for writing and reading the samples
+    std::array<float, ECHO_BUFFERSIZE> mSampleBuffer_R;
     uint32_t mSampleBufferIndx;                     // sample buffer index
 
     OnePoleFilters* pLowpass_L;                     // lowpass filter
@@ -135,6 +138,6 @@ private:
 
     //**************************** Helper Functions ***************************//
 
-    void calcFeedback();                    // calculates cross and local feedback amounts
+    void initFeedbackSmoother();            // calculates cross and local feedback amounts
     inline void calcChannelDelayTime();     // calculates delay times for each channel
 };

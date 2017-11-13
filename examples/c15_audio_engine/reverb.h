@@ -6,8 +6,8 @@
     @brief		An implementation of the Reverb Class
                 as used in the C15 and implemented in Reaktor
 
-    @todo       All the Smoothing params
-                Loop Filter Coefficients
+    @note       all smoothers and the LFO is running at full
+                samplingrate!!!
 *******************************************************************************/
 
 #pragma once
@@ -16,31 +16,30 @@
 #include <array>
 
 //************************************ Buffer Arrays ************************************//
-#define BUFFERSIZE 16384
-#define BUFFERSIZE_M1 16383
-#define BUFFERSIZE_M2 16382
+#define REVERB_BUFFERSIZE 16384
+#define REVERB_BUFFERSIZE_M1 16383
+#define REVERB_BUFFERSIZE_M2 16382
 
 //********************************* Fixed Delay Samples *********************************//
 #define DELAYSAMPLES_1 281
-#define DELAYSAMPLES_2 1122             // 1123 - 1
-#define DELAYSAMPLES_3 862              // 863 - 1
-#define DELAYSAMPLES_4 466              // 467 - 1
-#define DELAYSAMPLES_5 718              // 719 - 1
-#define DELAYSAMPLES_6 1030             // 1031 - 1
-#define DELAYSAMPLES_7 886              // 887 - 1
-#define DELAYSAMPLES_8 1216             // 1217 - 1
+#define DELAYSAMPLES_2 1122
+#define DELAYSAMPLES_3 862
+#define DELAYSAMPLES_4 466
+#define DELAYSAMPLES_5 718
+#define DELAYSAMPLES_6 1030
+#define DELAYSAMPLES_7 886
+#define DELAYSAMPLES_8 1216
 #define DELAYSAMPLES_9 379
-#define DELAYSAMPLES_10 1102            // 1103 - 1
-#define DELAYSAMPLES_11 928             // 929 - 1
-#define DELAYSAMPLES_12 490             // 491 - 1
-#define DELAYSAMPLES_13 682             // 683 - 1
-#define DELAYSAMPLES_14 1018            // 1019 - 1
-#define DELAYSAMPLES_15 858             // 859 - 1
-#define DELAYSAMPLES_16 1366            // 1367 - 1
+#define DELAYSAMPLES_10 1102
+#define DELAYSAMPLES_11 928
+#define DELAYSAMPLES_12 490
+#define DELAYSAMPLES_13 682
+#define DELAYSAMPLES_14 1018
+#define DELAYSAMPLES_15 858
+#define DELAYSAMPLES_16 1366
 
 #define DELAYSAMPLES_L 2916
 #define DELAYSAMPLES_R 2676
-
 
 //********************************* Fixed Gain Amounts **********************************//
 #define GAIN_1 0.617748f
@@ -52,68 +51,76 @@
 class Reverb
 {
 public:
-    Reverb();               // Default Constructor
+    Reverb();                       // Default Constructor
 
-    ~Reverb(){}               // Destructor
+    Reverb(float _size,             // Paramerized Constructor
+           float _color,
+           float _chorus,
+           float _preDelayTime,
+           float _mix);
+
+    ~Reverb(){}                     // Destructor
 
     float mReverbOut_L, mReverbOut_R;
     float mFeedbackOut;
 
     void applyReverb(float _EchosSample_L, float _EchosSample_R, float _ReverbLevel);
-
     void setReverbParams(unsigned char _ctrlID, float _ctrlVal);
-
     inline void applySmoother();
-
 
 private:
     //******************************** Control Variables ********************************//
+    float mSize;
+    float mAbAmnt;
+    float mFBAmnt;
+
     float mBalance;
     float mBalance_half;
     float mBalance_full;
 
-    float mSize;
-
-    float mFeed;
     float mFeedWetness;
     float mFeedColor;
+    float mFeed;
 
-    float mDepth;
+    float mHPOmega, mLPOmega;
+    float mLPCoeff_1, mLPCoeff_2;
+    float mHPCoeff_1, mHPCoeff_2;
+    float mLPStateVar_L, mLPStateVar_R;
+    float mHPStateVar_L, mHPStateVar_R;
+
     float mDepthSize;
     float mDepthChorus;
-
-    float mDry;
-    float mWet;
-    float mAbAmnt;
-    float mFBAmnt;
+    float mDepth;
 
     float mPreDelayTime_L, mPreDelayTime_R;
 
-    //************************* Channel Variables and Filters ***************************//
-    uint32_t mSampleBufferIndx;                       // sample buffer index
+    float mDry;
+    float mWet;
 
-    std::array<float, BUFFERSIZE> mAsymBuffer_L;      // sample buffers for writing and reading the samples
-    std::array<float, BUFFERSIZE> mAsymBuffer_R;
+    uint32_t mSampleBufferIndx;
 
-    std::array<float, BUFFERSIZE> mDelayBuffer_L1;
-    std::array<float, BUFFERSIZE> mDelayBuffer_L2;
-    std::array<float, BUFFERSIZE> mDelayBuffer_L3;
-    std::array<float, BUFFERSIZE> mDelayBuffer_L4;
-    std::array<float, BUFFERSIZE> mDelayBuffer_L5;
-    std::array<float, BUFFERSIZE> mDelayBuffer_L6;
-    std::array<float, BUFFERSIZE> mDelayBuffer_L7;
-    std::array<float, BUFFERSIZE> mDelayBuffer_L8;
-    std::array<float, BUFFERSIZE> mDelayBuffer_L9;
+    std::array<float, REVERB_BUFFERSIZE> mAsymBuffer_L;
+    std::array<float, REVERB_BUFFERSIZE> mAsymBuffer_R;
 
-    std::array<float, BUFFERSIZE> mDelayBuffer_R1;
-    std::array<float, BUFFERSIZE> mDelayBuffer_R2;
-    std::array<float, BUFFERSIZE> mDelayBuffer_R3;
-    std::array<float, BUFFERSIZE> mDelayBuffer_R4;
-    std::array<float, BUFFERSIZE> mDelayBuffer_R5;
-    std::array<float, BUFFERSIZE> mDelayBuffer_R6;
-    std::array<float, BUFFERSIZE> mDelayBuffer_R7;
-    std::array<float, BUFFERSIZE> mDelayBuffer_R8;
-    std::array<float, BUFFERSIZE> mDelayBuffer_R9;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L1;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L2;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L3;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L4;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L5;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L6;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L7;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L8;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_L9;
+
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R1;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R2;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R3;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R4;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R5;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R6;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R7;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R8;
+    std::array<float, REVERB_BUFFERSIZE> mDelayBuffer_R9;
 
     float mDelayStateVar_L1;
     float mDelayStateVar_L2;
@@ -135,37 +142,22 @@ private:
     float mDelayStateVar_R8;
     float mDelayStateVar_R9;
 
-
-    //****************************** Reverb Modulation **********************************//
-    float mHPOmega, mLPOmega;
-
     float mLFOStateVar_1, mLFOStateVar_2;
     float mLFOWarpedFreq_1, mLFOWarpedFreq_2;
 
-
-    //********************************** Loop Filter ************************************//
-    float mLPStateVar_L, mLPStateVar_R;
-    float mHPStateVar_L, mHPStateVar_R;
-
-    float mLPCoeff_1, mLPCoeff_2;
-    float mHPCoeff_1, mHPCoeff_2;
-
-
-    //******************************* Smoothing Variabels *******************************//
-
-    uint32_t mSmootherMask;                    // Smoother Mask (ID 1: , ID 2: , ID 3: , ID 4: )
+    uint32_t mSmootherMask;                    // Smoother Mask (ID 1: Balance, ID 2: Size, ID 3: LoopFilter, ID 4: PreDelayTime, ID 5: Depth, ID 6: Feed, ID 7: Mix)
 
     // Mask ID: 1
+    float mBalance_ramp;
     float mBalance_base;
     float mBalance_target;
     float mBalance_diff;
-    float mBalance_ramp;
 
     // Mask ID: 2
+    float mSize_ramp;
     float mSize_base;
     float mSize_target;
     float mSize_diff;
-    float mSize_ramp;
 
     // Mask ID: 3
     float mLpFltr_ramp;
@@ -196,10 +188,10 @@ private:
     float mDepth_diff;
 
     // Mask ID: 6
+    float mFeed_ramp;
     float mFeed_base;
     float mFeed_target;
     float mFeed_diff;
-    float mFeed_ramp;
 
     // Mask ID: 7
     float mMix_ramp;
@@ -211,7 +203,6 @@ private:
     float mWet_base;
     float mWet_target;
     float mWet_diff;
-
 
 
     //*********************************** Controls IDs **********************************//
@@ -233,6 +224,7 @@ private:
         MIX                 =
 #endif
     };
+
 
     //**************************** Helper Functions ***************************//
     void initFeedSmoother();
