@@ -15,41 +15,51 @@
 
 Flanger::Flanger()
 {
+    //****************************** Outputs *******************************//
     mFlangerOut_L = 0.f;
     mFlangerOut_R = 0.f;
 
+    //******************************** Mixes *******************************//
     mMixDry = 1.f;
     mMixWet = 0.f;
 
     mEnvDry = 1.f;
     mEnvWet = 0.f;
+
+    //********************************** LFO *******************************//
     mLFRate = 1.05625f * SAMPLING_INTERVAL;
-    mLFStateVar = 0.f;
     mLFDecayWarpedRate = 0.99917f;
-    mLFDecayStateVar = 0.f;
+    mLFDepth = 0.f;
     mLFPhase = 0.25f;
 
+    mLFStateVar = 0.f;
+    mLFDecayStateVar = 0.f;
+
+    //******************************** Allpass *****************************//
     mAPMod = 0.f;
     mAPTune = 140.f;
 
-    mLFDepth = 0.f;
+    //******************************* FeedBack *****************************//
+    mFeedback = 1.07288e-6;
+    mXFeedback = 0.f;
+    mLocalFeedback = mFeedback * (1.f - fabs(mXFeedback));
+    mCrossFeedback = mFeedback * mXFeedback;
 
+    //************************ Time and Stereo Amnt ************************//
     mStereo = 0.f;
     mTime = 0.003125f;
     mFlangerTime_L = mTime * (1.f + mStereo);
     mFlangerTime_R = mTime * (1.f - mStereo);
 
-    mChannelStateVar_L = 0.f;
-    mSampleBuffer_L = {0.f};
-    mAllpass_L.setCoeffs(NlToolbox::Conversion::pitch2freq(140.f));
-
-    mChannelStateVar_R = 0.f;
-    mSampleBuffer_R = {0.f};
-    mAllpass_R.setCoeffs(NlToolbox::Conversion::pitch2freq(140.f));
-
-    mSampleBufferSize = mSampleBuffer_L.size() - 1;
+    //****************************** Buffers *******************************//
     mSampleBufferIndx = 0;
+    mChannelStateVar_L = 0.f;
+    mChannelStateVar_R = 0.f;
 
+    mSampleBuffer_L = {0.f};
+    mSampleBuffer_R = {0.f};
+
+    //****************************** Filters *******************************//
     pLowpass_L = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(120.f), 0.f, OnePoleFilterType::LOWPASS);
     pLowpass_R = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(120.f), 0.f, OnePoleFilterType::LOWPASS);
     pHighpass_L = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
@@ -58,6 +68,10 @@ Flanger::Flanger()
     pLowpass2Hz_R = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_Depth = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
 
+    mAllpass_L.setCoeffs(NlToolbox::Conversion::pitch2freq(140.f));
+    mAllpass_R.setCoeffs(NlToolbox::Conversion::pitch2freq(140.f));
+
+    //***************************** Smoothing ******************************//
     mSmootherMask = 0x0000;
     mMixWet_ramp = 1.f;
     mEnvWet_ramp = 1.f;
@@ -100,7 +114,6 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
     }
 
     //******************************** LFO **********************************//
-
     float decayOut = mLFDecayStateVar + DNC_CONST;
     decayOut = decayOut * mLFDecayWarpedRate;
     mLFDecayStateVar = decayOut;
@@ -121,14 +134,11 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
 
 
     //*************************** AP Freq Calc ******************************//
-
-    /// With Clockrate not SampleRate!!!!
     mAllpass_L.setCoeffs(NlToolbox::Conversion::pitch2freq(lfoOut_L * mAPMod + mAPTune));
     mAllpass_R.setCoeffs(NlToolbox::Conversion::pitch2freq(lfoOut_R * mAPMod + mAPTune));
 
 
     //**************************** Left Channel *****************************//
-
     float depth = pLowpass2Hz_Depth->applyFilter(mLFDepth);              // Depth for both channels
 
     float processedSample = _rawSample_L + (mChannelStateVar_L * mLocalFeedback) + (mChannelStateVar_R * mCrossFeedback);
@@ -154,10 +164,10 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
     ind_tp1 = mSampleBufferIndx - ind_tp1;
     ind_tp2 = mSampleBufferIndx - ind_tp2;
 
-    ind_tm1 &= mSampleBufferSize;                                               // Wrap with a mask sampleBuffer.size()-1
-    ind_t0  &= mSampleBufferSize;
-    ind_tp1 &= mSampleBufferSize;
-    ind_tp2 &= mSampleBufferSize;
+    ind_tm1 &= FLANGER_BUFFERSIZE_M1;                                               // Wrap with a mask sampleBuffer.size()-1
+    ind_t0  &= FLANGER_BUFFERSIZE_M1;
+    ind_tp1 &= FLANGER_BUFFERSIZE_M1;
+    ind_tp2 &= FLANGER_BUFFERSIZE_M1;
 
     processedSample = NlToolbox::Math::interpolRT(delaySamples_fract,           // Interpolation
                                                   mSampleBuffer_L[ind_tm1],
@@ -173,7 +183,6 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
 
 
     //*************************** Right Channel *****************************//
-
     processedSample = _rawSample_R + (mChannelStateVar_R * mLocalFeedback) + (mChannelStateVar_L * mCrossFeedback);
     processedSample = pLowpass_R->applyFilter(processedSample);
 
@@ -197,10 +206,10 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
     ind_tp1 = mSampleBufferIndx - ind_tp1;
     ind_tp2 = mSampleBufferIndx - ind_tp2;
 
-    ind_tm1 &= mSampleBufferSize;                                               // Wrap with a mask sampleBuffer.size()-1
-    ind_t0  &= mSampleBufferSize;
-    ind_tp1 &= mSampleBufferSize;
-    ind_tp2 &= mSampleBufferSize;
+    ind_tm1 &= FLANGER_BUFFERSIZE_M1;                                               // Wrap with a mask sampleBuffer.size()-1
+    ind_t0  &= FLANGER_BUFFERSIZE_M1;
+    ind_tp1 &= FLANGER_BUFFERSIZE_M1;
+    ind_tp2 &= FLANGER_BUFFERSIZE_M1;
 
     processedSample = NlToolbox::Math::interpolRT(delaySamples_fract,           // Interpolation
                                                   mSampleBuffer_R[ind_tm1],
@@ -214,7 +223,7 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
 
     mFlangerOut_R = NlToolbox::Crossfades::crossFade(_rawSample_R, processedSample, mMixDry, mMixWet);
 
-    mSampleBufferIndx = (mSampleBufferIndx + 1) & mSampleBufferSize;      // increase SampleBufferindx and check index boundaries
+    mSampleBufferIndx = (mSampleBufferIndx + 1) & FLANGER_BUFFERSIZE_M1;      // increase SampleBufferindx and check index boundaries
 }
 
 
@@ -232,7 +241,6 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
     {
         case CtrlID::RATE:
             _ctrlVal = (_ctrlVal / 127.f);
-
             _ctrlVal = _ctrlVal * _ctrlVal * 10.f;
 
             printf("Flanger - Rate: %f\n", _ctrlVal);

@@ -14,7 +14,7 @@
 #include "onepolefilters.h"
 #include <array>
 
-//************************************ Buffer Arrays ************************************//
+//******************************* Buffer Arrays ******************************//
 #define ECHO_BUFFERSIZE 131072
 #define ECHO_BUFFERSIZE_M1 131071
 
@@ -24,7 +24,7 @@ public:
 
     Echo ();                            // Default Constructor
 
-    Echo(float _delayTime,
+    Echo(float _delayTime,              // Parameterized Constructor
          float _stereo,
          float _feedbackAmnt,
          float _crossFeedbackAmnt,
@@ -33,45 +33,36 @@ public:
 
     ~Echo();                            // Class Destructor
 
-    float mEchoOut_L;                   // public processed samples
+    float mEchoOut_L;
     float mEchoOut_R;
 
-    void applyEcho(float _rawSample_L, float _rawSample_R);        // main audio function, which processes the incoming sample
-
-    void setEchoParams(unsigned char _ctrlId, float _ctrlVal);          // sets the effect parameters and activates smoothers
-
-    inline void applyEchoSmoother();                                    // smoothing function, which is only applied, if new target values are set
-
-#ifdef NANOKONTROL_I
-    float applyEcho(float _currSample, uint32_t _chInd);                // main audio function, which processes the incoming sample
-#endif
+    void applyEcho(float _rawSample_L, float _rawSample_R);
+    void setEchoParams(unsigned char _ctrlId, float _ctrlVal);
 
 private:
-    //******************************** Control Variabels ********************************//
+    inline void applyEchoSmoother();
 
+    //*************************** Control Variabels **************************//
     float mFeedbackAmnt;            // feedback amount - external
     float mCrossFeedbackAmnt;       // cross feedback amount - external
-
-    float mStereoAmnt;				// stereo amount
-    float mDelayTime;				// delay time
-
-    float mDry;						// dry amount, dependant on mix amount
-    float mWet;						// wet amount, dependant on mix amount
     float mLocalFeedback;           // local feedback amount - internal
     float mCrossFeedback;			// cross feedback amount - internal
 
+    float mStereoAmnt;				// stereo amount
+    float mDelayTime;				// delay time
+    float mDelayTime_L;             // channel delay time
+    float mDelayTime_R;
 
-    //************************* Channel Variables and Filters ***************************//
+    float mDry;						// dry amount, dependant on mix amount
+    float mWet;						// wet amount, dependant on mix amount
 
+    //******************** Channel Variables and Filters *********************//
     float mChannelStateVar_L;                       // channel state variable
     float mChannelStateVar_R;
 
-    float mDelayTime_L;                             // channel delay time
-    float mDelayTime_R;
-
+    uint32_t mSampleBufferIndx;                     // sample buffer index
     std::array<float, ECHO_BUFFERSIZE> mSampleBuffer_L;      // sample buffer for writing and reading the samples
     std::array<float, ECHO_BUFFERSIZE> mSampleBuffer_R;
-    uint32_t mSampleBufferIndx;                     // sample buffer index
 
     OnePoleFilters* pLowpass_L;                     // lowpass filter
     OnePoleFilters* pLowpass_R;
@@ -82,10 +73,13 @@ private:
     NlToolbox::Filters::Lowpass2Hz* pLowpass2Hz_L;  // 2Hz lowpass filter for smoothing the delay time
     NlToolbox::Filters::Lowpass2Hz* pLowpass2Hz_R;
 
-
-    //******************************* Smoothing Variabels *******************************//
-
-    uint32_t mSmootherMask;                    // Smoother Mask (ID 1: dry, ID 2: wet, ID 3: local feedback, ID 4: cross feedback)
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: Dry
+    //                  ID 2: Wet
+    //                  ID 3: Local Feedback
+    //                  ID 4: Cross Feedback
+    //************************************************************************//
+    uint32_t mSmootherMask;
 
     // Mask ID: 1
     float mDry_base;
@@ -111,10 +105,7 @@ private:
     float mCFeedback_diff;
     float mCFeedback_ramp;
 
-
-    //*********************************** Controls IDs **********************************//
-
-
+    //****************************** Controls IDs ****************************//
     enum CtrlID: unsigned char
     {
 #ifdef NANOKONTROL_I                    // Korg Nano Kontrol I
@@ -137,7 +128,6 @@ private:
 
 
     //**************************** Helper Functions ***************************//
-
-    void initFeedbackSmoother();            // calculates cross and local feedback amounts
-    inline void calcChannelDelayTime();     // calculates delay times for each channel
+    void initFeedbackSmoother();
+    inline void calcChannelDelayTime();
 };

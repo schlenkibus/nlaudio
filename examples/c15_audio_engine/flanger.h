@@ -16,26 +16,35 @@
 #include "onepolefilters.h"
 #include <array>
 
+//******************************* Buffer Arrays ******************************//
+#define FLANGER_BUFFERSIZE 8192
+#define FLANGER_BUFFERSIZE_M1 8191
+
 class Flanger
 {
 public:
 
-    Flanger();              // Default Constructor
+    Flanger();                      // Default Constructor
 
-    Flanger(float _rate);   // Parmetrized Constructor
+    Flanger(float _rate);           // Parmetrized Constructor
 
-    ~Flanger();
+    ~Flanger();                     // Destructor
 
-    float mFlangerOut_L, mFlangerOut_R;       // public processed samples
+    float mFlangerOut_L, mFlangerOut_R;
 
     void applyFlanger(float _rawSample_L, float _rawSample_R);
-
     void setFlangerParams(unsigned char _ctrlID, float _ctrlVal);
-
     void triggerLFO(float _velocity);
 
 private:
     void applySmoother();
+
+    //*************************** Control Variables **************************//
+    float mMixWet;
+    float mMixDry;
+
+    float mEnvWet;
+    float mEnvDry;
 
     float mLFRate;
     float mLFDecayWarpedRate;
@@ -45,12 +54,6 @@ private:
     float mLFStateVar;
     float mLFDecayStateVar;
 
-    float mEnvWet;
-    float mEnvDry;
-
-    float mTime;
-    float mStereo;
-
     float mAPMod;
     float mAPTune;
 
@@ -59,21 +62,18 @@ private:
     float mLocalFeedback;
     float mCrossFeedback;
 
-    float mMixWet;
-    float mMixDry;
-
-    //********************** Channel State Variables and Filters *************************//
-
-    float mChannelStateVar_L;                        // channel state variable
-    float mChannelStateVar_R;
-
+    float mStereo;
+    float mTime;
     float mFlangerTime_L;
     float mFlangerTime_R;
 
-    std::array<float, 8192> mSampleBuffer_L;        // sample buffer for writing and reading the samples
-    std::array<float, 8192> mSampleBuffer_R;
-    uint32_t mSampleBufferSize;                         // sample buffer size - 1
-    uint32_t mSampleBufferIndx;                         // sample buffer index
+    //***************** Channel State Variables and Filters ******************//
+    float mChannelStateVar_L;
+    float mChannelStateVar_R;
+
+    uint32_t mSampleBufferIndx;
+    std::array<float, FLANGER_BUFFERSIZE> mSampleBuffer_L;
+    std::array<float, FLANGER_BUFFERSIZE> mSampleBuffer_R;
 
     OnePoleFilters* pLowpass_L;
     OnePoleFilters* pLowpass_R;
@@ -86,45 +86,10 @@ private:
 
     NlToolbox::Filters::Lowpass2Hz* pLowpass2Hz_Depth;
 
-    //******************************* Smoothing Variabels *******************************//
-
-    uint32_t mSmootherMask;                    // Smoother Mask (ID 1: , ID 2: , ID 3: , ID 4:)
-
-    // Mask ID: 1
-    float mEnvWet_base;
-    float mEnvWet_target;
-    float mEnvWet_diff;
-    float mEnvWet_ramp;
-
-    // Mask ID: 2
-    float mLFeedback_base;
-    float mLFeedback_target;
-    float mLFeedback_diff;
-    float mLFeedback_ramp;
-
-    // Mask ID: 3
-    float mCFeedback_base;
-    float mCFeedback_target;
-    float mCFeedback_diff;
-    float mCFeedback_ramp;
-
-    // Mask ID: 4
-    float mMixWet_base;
-    float mMixWet_target;
-    float mMixWet_diff;
-    float mMixWet_ramp;
-
-    // Mask ID: 5
-    float mLFPhase_base;
-    float mLFPhase_target;
-    float mLFPhase_diff;
-    float mLFPhase_ramp;
-
-    //********************************** Allpass 4 Pole *********************************//
-
+    //**************************** Allpass 4 Pole ****************************//
     struct Allpass
     {
-        //******************************** Constructor **********************************//
+        //*************************** Constructor ****************************//
         Allpass()
         {
             mFirstInStateVar_1 = 0.f;
@@ -138,15 +103,12 @@ private:
             mSecondOutStateVar_2 = 0.f;
         }
 
-        //***************************** Filter Variables ********************************//
-
+        //************************ Filter Variables **************************//
         float mCoeff_1, mCoeff_2;
         float mFirstInStateVar_1, mFirstInStateVar_2, mFirstOutStateVar_1, mFirstOutStateVar_2;
         float mSecondInStateVar_1, mSecondInStateVar_2, mSecondOutStateVar_1, mSecondOutStateVar_2;
 
-
-        //************************** Coefficient Calculation ****************************//
-
+        //******************** Coefficient Calculation ***********************//
         inline void setCoeffs(float _freq)
         {
             if (_freq > FREQCLIP_22000HZ)
@@ -169,9 +131,7 @@ private:
             mCoeff_2 = (1.f - omegaSin) * normVar;
         }
 
-
-        //***************************** Filter Application ******************************//
-
+        //************************ Filter Application ************************//
         inline float applyAllpass(float _sampleIn)
         {
             float sampleOut = _sampleIn * mCoeff_2;
@@ -204,10 +164,47 @@ private:
     } mAllpass_L, mAllpass_R;
 
 
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: Envelope Wet
+    //                  ID 2: Local Feedback
+    //                  ID 3: Cross Feedback
+    //                  ID 4: Mix Wet
+    //                  ID 5: LF PHase
+    //************************************************************************//
+    uint32_t mSmootherMask;
+
+    // Mask ID: 1
+    float mEnvWet_base;
+    float mEnvWet_target;
+    float mEnvWet_diff;
+    float mEnvWet_ramp;
+
+    // Mask ID: 2
+    float mLFeedback_base;
+    float mLFeedback_target;
+    float mLFeedback_diff;
+    float mLFeedback_ramp;
+
+    // Mask ID: 3
+    float mCFeedback_base;
+    float mCFeedback_target;
+    float mCFeedback_diff;
+    float mCFeedback_ramp;
+
+    // Mask ID: 4
+    float mMixWet_base;
+    float mMixWet_target;
+    float mMixWet_diff;
+    float mMixWet_ramp;
+
+    // Mask ID: 5
+    float mLFPhase_base;
+    float mLFPhase_target;
+    float mLFPhase_diff;
+    float mLFPhase_ramp;
 
 
-    //*********************************** Controls IDs **********************************//
-
+    //****************************** Controls IDs ****************************//
     enum CtrlID: unsigned char
     {
 #ifdef REMOTE61                         // ReMote 61

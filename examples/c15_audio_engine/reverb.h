@@ -15,12 +15,12 @@
 #include "nltoolbox.h"
 #include <array>
 
-//************************************ Buffer Arrays ************************************//
+//****************************** Buffer Arrays *******************************//
 #define REVERB_BUFFERSIZE 16384
 #define REVERB_BUFFERSIZE_M1 16383
 #define REVERB_BUFFERSIZE_M2 16382
 
-//********************************* Fixed Delay Samples *********************************//
+//************************** Fixed Delay Samples ****************************//
 #define DELAYSAMPLES_1 281
 #define DELAYSAMPLES_2 1122
 #define DELAYSAMPLES_3 862
@@ -41,7 +41,7 @@
 #define DELAYSAMPLES_L 2916
 #define DELAYSAMPLES_R 2676
 
-//********************************* Fixed Gain Amounts **********************************//
+//*************************** Fixed Gain Amounts *****************************//
 #define GAIN_1 0.617748f
 #define GAIN_2 0.630809f
 #define GAIN_3 0.64093f
@@ -66,10 +66,11 @@ public:
 
     void applyReverb(float _EchosSample_L, float _EchosSample_R, float _ReverbLevel);
     void setReverbParams(unsigned char _ctrlID, float _ctrlVal);
-    inline void applySmoother();
 
 private:
-    //******************************** Control Variables ********************************//
+    inline void applySmoother();
+
+    //*************************** Control Variables **************************//
     float mSize;
     float mAbAmnt;
     float mFBAmnt;
@@ -97,6 +98,10 @@ private:
     float mDry;
     float mWet;
 
+    float mLFOStateVar_1, mLFOStateVar_2;
+    float mLFOWarpedFreq_1, mLFOWarpedFreq_2;
+
+    //***************************** Delay Buffers ****************************//
     uint32_t mSampleBufferIndx;
 
     std::array<float, REVERB_BUFFERSIZE> mAsymBuffer_L;
@@ -142,10 +147,16 @@ private:
     float mDelayStateVar_R8;
     float mDelayStateVar_R9;
 
-    float mLFOStateVar_1, mLFOStateVar_2;
-    float mLFOWarpedFreq_1, mLFOWarpedFreq_2;
-
-    uint32_t mSmootherMask;                    // Smoother Mask (ID 1: Balance, ID 2: Size, ID 3: LoopFilter, ID 4: PreDelayTime, ID 5: Depth, ID 6: Feed, ID 7: Mix)
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: Balance
+    //                  ID 2: Size
+    //                  ID 3: LoopFilter
+    //                  ID 4: PreDelayTime
+    //                  ID 5: Depth
+    //                  ID 6: Feed
+    //                  ID 7: Mix
+    //************************************************************************//
+    uint32_t mSmootherMask;
 
     // Mask ID: 1
     float mBalance_ramp;
@@ -205,8 +216,7 @@ private:
     float mWet_diff;
 
 
-    //*********************************** Controls IDs **********************************//
-
+    //****************************** Controls IDs *****************************//
     enum CtrlID: unsigned char
     {
 #ifdef REMOTE61                         // ReMote 61

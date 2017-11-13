@@ -22,26 +22,34 @@
 
 Echo::Echo()
 {
+    //******************************* Outputs ********************************//
+    mEchoOut_L = 0.f;
+    mEchoOut_R = 0.f;
+
+    //*************************** Feedback Amnts *****************************//
     mFeedbackAmnt = 0.5f;
     mCrossFeedbackAmnt = 0.f;
     mLocalFeedback = mFeedbackAmnt * (1.f - mCrossFeedbackAmnt);
     mCrossFeedback = mFeedbackAmnt * mCrossFeedbackAmnt;
 
-    mDelayTime = 0.375f;
+    //***************************** Delay Times ******************************//
     mStereoAmnt = 0.f;
+    mDelayTime = 0.375f;
     calcChannelDelayTime();
 
+    //********************************* Mix **********************************//
     mDry = 1.f;
     mWet = 0.f;
 
+    //******************************* Buffers ********************************//
     mChannelStateVar_L = 0.f;
-    mSampleBuffer_L = {0.f};
-
     mChannelStateVar_R = 0.f;
-    mSampleBuffer_R = {0.f};
 
     mSampleBufferIndx = 0;
+    mSampleBuffer_L = {0.f};
+    mSampleBuffer_R = {0.f};
 
+    //******************************* Filters ********************************//
     pLowpass_L = new OnePoleFilters(SAMPLERATE, 4700.f, 0.f, OnePoleFilterType::LOWPASS);
     pLowpass_R = new OnePoleFilters(SAMPLERATE, 4700.f, 0.f, OnePoleFilterType::LOWPASS);
     pHighpass_L = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
@@ -49,6 +57,7 @@ Echo::Echo()
     pLowpass2Hz_L = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_R = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
 
+    //***************************** Smoothing ********************************//
     mSmootherMask = 0x0000;
     mWet_ramp = 1.f;
     mDry_ramp = 1.f;
@@ -71,26 +80,34 @@ Echo::Echo(float _delayTime,
            float _hiCut,
            float _mix)
 {
+    //******************************* Outputs ********************************//
+    mEchoOut_L = 0.f;
+    mEchoOut_R = 0.f;
+
+    //*************************** Feedback Amnts *****************************//
     mFeedbackAmnt = _feedbackAmnt;
     mCrossFeedbackAmnt = _crossFeedbackAmnt;
     mLocalFeedback = mFeedbackAmnt * (1.f - mCrossFeedbackAmnt);
     mCrossFeedback = mFeedbackAmnt * mCrossFeedbackAmnt;
 
-
+    //***************************** Delay Times ******************************//
+    mStereoAmnt = _stereoAmnt * 33.f;
     mDelayTime = _delayTime;
-    mStereoAmnt = _stereoAmnt;
     calcChannelDelayTime();
 
+    //********************************* Mix **********************************//
     mDry = (2.f - _mix * _mix  - _mix * _mix) - (1.f - _mix * _mix) * (1.f - _mix * _mix);
     mWet = (_mix * _mix + _mix * _mix) - (_mix * _mix * _mix * _mix);
 
+    //******************************* Buffers ********************************//
     mChannelStateVar_L = 0.f;
-    mSampleBuffer_L = {0.f};
-
     mChannelStateVar_R = 0.f;
-    mSampleBuffer_R = {0.f};
-    mSampleBufferIndx = 0;
 
+    mSampleBufferIndx = 0;
+    mSampleBuffer_L = {0.f};
+    mSampleBuffer_R = {0.f};
+
+    //******************************* Filters ********************************//
     pLowpass_L = new OnePoleFilters(SAMPLERATE, _hiCut, 0.f, OnePoleFilterType::LOWPASS);
     pLowpass_R = new OnePoleFilters(SAMPLERATE, _hiCut, 0.f, OnePoleFilterType::LOWPASS);
     pHighpass_L = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
@@ -98,6 +115,7 @@ Echo::Echo(float _delayTime,
     pLowpass2Hz_L = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_R = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
 
+    //***************************** Smoothing ********************************//
     mSmootherMask = 0x0000;
     mWet_ramp = 1.f;
     mDry_ramp = 1.f;
@@ -225,7 +243,6 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
 
 
     //********************************** Left Channel ***********************************//
-
     float processedSample = _rawSample_L + (mChannelStateVar_L * mLocalFeedback) + (mChannelStateVar_R * mCrossFeedback);
 
     float delayTime = pLowpass2Hz_L->applyFilter(mDelayTime_L);                  // 2Hz Lowpass for delay time smoothing
@@ -267,7 +284,6 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
 
 
     //********************************* Right Channel ***********************************//
-
     processedSample = _rawSample_R + (mChannelStateVar_R * mLocalFeedback) + (mChannelStateVar_L * mCrossFeedback);
 
     delayTime = pLowpass2Hz_R->applyFilter(mDelayTime_R);                    // 2Hz Lowpass for delay time smoothing
