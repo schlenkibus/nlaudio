@@ -50,7 +50,7 @@ private:
     enum EnvState
     {
         env_off, env_decay, env_release,
-        gate_on, gate_off
+        gate_open, gate_closed, gate_release
     };
 
     EnvState mEnvState_A;

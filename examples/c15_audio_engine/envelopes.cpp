@@ -23,7 +23,7 @@ Envelopes::Envelopes()
     mEnvState_A = env_off;
     mEnvState_B = env_off;
     mEnvState_C = env_off;
-    mGateState = gate_off;
+    mGateState = gate_closed;
 
     mInternalRamp_A = 0.f;
     mInternalRamp_B = 0.f;
@@ -173,7 +173,11 @@ void Envelopes::applyEnvelope()
 
     //******************************* Gate ***********************************//
 
-    if (mGateState == gate_on)
+    if (mGateState == gate_open)
+    {
+        mGateRamp = 1.f;
+    }
+    else if (mGateState == gate_release)
     {
         mGateRamp = mInternalRamp_Gate;
         mInternalRamp_Gate = mInternalRamp_Gate * mReleaseDx;
@@ -181,8 +185,12 @@ void Envelopes::applyEnvelope()
         if (mInternalRamp_Gate < 1.e-9f)
         {
             mGateRamp = 0.f;
-            mGateState = gate_off;
+            mGateState = gate_closed;
         }
+    }
+    else if (mGateState == gate_closed)
+    {
+        mGateRamp = 0.f;
     }
 }
 
@@ -200,6 +208,7 @@ void Envelopes::setEnvelope(float _velocity)
     mEnvState_A = env_decay;
     mEnvState_B = env_decay;
     mEnvState_C = env_decay;
+    mGateState = gate_open;
 
     mInternalRamp_A = 1.f;
     mInternalRamp_B = 1.f;
@@ -218,7 +227,7 @@ void Envelopes::killEnvelope()
     mEnvState_B = env_release;
     mEnvState_C = env_release;
 
-    mGateState = gate_on;
+    mGateState = gate_release;
 
     mInternalRamp_Gate = 1.f;
 }

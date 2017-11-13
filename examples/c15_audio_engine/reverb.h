@@ -21,7 +21,7 @@
 #define BUFFERSIZE_M2 16382
 
 //********************************* Fixed Delay Samples *********************************//
-#define DELAYSAMPLES_1 280              // 281 - 1
+#define DELAYSAMPLES_1 281
 #define DELAYSAMPLES_2 1122             // 1123 - 1
 #define DELAYSAMPLES_3 862              // 863 - 1
 #define DELAYSAMPLES_4 466              // 467 - 1
@@ -29,7 +29,7 @@
 #define DELAYSAMPLES_6 1030             // 1031 - 1
 #define DELAYSAMPLES_7 886              // 887 - 1
 #define DELAYSAMPLES_8 1216             // 1217 - 1
-#define DELAYSAMPLES_9 378              // 379 - 1
+#define DELAYSAMPLES_9 379
 #define DELAYSAMPLES_10 1102            // 1103 - 1
 #define DELAYSAMPLES_11 928             // 929 - 1
 #define DELAYSAMPLES_12 490             // 491 - 1

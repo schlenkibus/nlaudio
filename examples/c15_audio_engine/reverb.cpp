@@ -246,13 +246,13 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     }
 
     delaySamples_int = round(delaySamples_fract - 0.5f);
-    delaySamples_fract = delaySamples_int - delaySamples_fract;
+    delaySamples_fract = delaySamples_fract - delaySamples_int;
 
     ind_t0 = mSampleBufferIndx - delaySamples_int;
     ind_tp1 = ind_t0 + -1;
     ind_tp2 = ind_t0 + -2;
 
-    if (delaySamples_int < 0.f)
+    if (delaySamples_int < 1.f)
     {
         delaySamples_int = 1.f;
     }
@@ -285,7 +285,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     mDelayStateVar_L2 = mDelayBuffer_L2[ind_t0];
 
-    wetSample_L = wetSample_L *-GAIN_2 + holdSample;
+    wetSample_L = wetSample_L * -GAIN_2 + holdSample;
 
 
     //***************************** Del 1p L3 ******************************//
@@ -299,21 +299,21 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     mDelayStateVar_L3 = mDelayBuffer_L3[ind_t0];
 
-    wetSample_L = wetSample_L *-GAIN_3 + holdSample;
+    wetSample_L = wetSample_L * -GAIN_3 + holdSample;
 
 
     //***************************** Del 1p L4 ******************************//
     holdSample = mDelayStateVar_L4 * mAbAmnt;
     wetSample_L = wetSample_L + (holdSample * GAIN_4);
 
-    mDelayBuffer_L3[mSampleBufferIndx] = wetSample_L;           // Write
+    mDelayBuffer_L4[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_4;
     ind_t0 &= BUFFERSIZE_M1;
 
     mDelayStateVar_L4 = mDelayBuffer_L4[ind_t0];
 
-    wetSample_L = wetSample_L *-GAIN_4 + holdSample;
+    wetSample_L = wetSample_L * -GAIN_4 + holdSample;
 
     wetSample_L2 = wetSample_L;
 
@@ -321,14 +321,14 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     holdSample = mDelayStateVar_L5 * mAbAmnt;
     wetSample_L = wetSample_L + (holdSample * GAIN_4);
 
-    mDelayBuffer_L4[mSampleBufferIndx] = wetSample_L;           // Write
+    mDelayBuffer_L5[mSampleBufferIndx] = wetSample_L;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_5;
     ind_t0 &= BUFFERSIZE_M1;
 
     mDelayStateVar_L5 = mDelayBuffer_L5[ind_t0];
 
-    wetSample_L = wetSample_L *-GAIN_4 + holdSample;
+    wetSample_L = wetSample_L * -GAIN_4 + holdSample;
 
 
     //***************************** Del 1p L6 ******************************//
@@ -342,7 +342,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     mDelayStateVar_L6 = mDelayBuffer_L6[ind_t0];
 
-    wetSample_L = wetSample_L *-GAIN_4 + holdSample;
+    wetSample_L = wetSample_L * -GAIN_4 + holdSample;
 
 
     //***************************** Del 1p L7 ******************************//
@@ -356,7 +356,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     mDelayStateVar_L7 = mDelayBuffer_L7[ind_t0];
 
-    wetSample_L = wetSample_L *-GAIN_4 + holdSample;
+    wetSample_L = wetSample_L * -GAIN_4 + holdSample;
 
 
     //***************************** Del 1p L8 ******************************//
@@ -370,7 +370,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     mDelayStateVar_L8 = mDelayBuffer_L8[ind_t0];
 
-    wetSample_L = wetSample_L *-GAIN_4 + holdSample;
+    wetSample_L = wetSample_L * -GAIN_4 + holdSample;
 
 
     //***************************** Del 4p L9 ******************************//
@@ -388,7 +388,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     }
 
     delaySamples_int = round(delaySamples_fract - 0.5f);
-    delaySamples_fract = delaySamples_int - delaySamples_fract;
+    delaySamples_fract = delaySamples_fract - delaySamples_int;
 
     ind_t0 = mSampleBufferIndx - delaySamples_int;
     ind_tp1 = ind_t0 + -1;
@@ -400,6 +400,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     }
 
     ind_tm1 = mSampleBufferIndx - delaySamples_int;
+    ind_tm1 = ind_tm1 + 1;
 
     ind_tm1 &= BUFFERSIZE_M1;
     ind_t0  &= BUFFERSIZE_M1;
@@ -447,7 +448,6 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
 
     //*************************** Loop Filter R ****************************//
-
     wetSample_R = (wetSample_R - mLPStateVar_R * mLPCoeff_2) * mLPCoeff_1;          // LP IIR
     holdSample = mLPStateVar_R;
     mLPStateVar_R = wetSample_R;
@@ -479,13 +479,13 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     }
 
     delaySamples_int = round(delaySamples_fract - 0.5f);
-    delaySamples_fract = delaySamples_int - delaySamples_fract;
+    delaySamples_fract = delaySamples_fract - delaySamples_int;
 
     ind_t0 = mSampleBufferIndx - delaySamples_int;
     ind_tp1 = ind_t0 + -1;
     ind_tp2 = ind_t0 + -2;
 
-    if (delaySamples_int < 0.f)
+    if (delaySamples_int < 1.f)
     {
         delaySamples_int = 1.f;
     }
@@ -553,14 +553,14 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     holdSample = mDelayStateVar_R5 * mAbAmnt;
     wetSample_R = wetSample_R + (holdSample * GAIN_4);
 
-    mDelayBuffer_R4[mSampleBufferIndx] = wetSample_R;           // Write
+    mDelayBuffer_R5[mSampleBufferIndx] = wetSample_R;           // Write
 
     ind_t0  = mSampleBufferIndx - DELAYSAMPLES_13;
     ind_t0 &= BUFFERSIZE_M1;
 
     mDelayStateVar_R5 = mDelayBuffer_R5[ind_t0];
 
-    wetSample_R = wetSample_R *-GAIN_4 + holdSample;
+    wetSample_R = wetSample_R * -GAIN_4 + holdSample;
 
 
     //***************************** Del 1p R6 ******************************//
@@ -574,7 +574,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     mDelayStateVar_R6 = mDelayBuffer_R6[ind_t0];
 
-    wetSample_R = wetSample_R *-GAIN_4 + holdSample;
+    wetSample_R = wetSample_R * -GAIN_4 + holdSample;
 
 
     //***************************** Del 1p R7 ******************************//
@@ -588,7 +588,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     mDelayStateVar_R7 = mDelayBuffer_R7[ind_t0];
 
-    wetSample_R = wetSample_R *-GAIN_4 + holdSample;
+    wetSample_R = wetSample_R * -GAIN_4 + holdSample;
 
 
     //***************************** Del 1p R8 ******************************//
@@ -602,7 +602,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     mDelayStateVar_R8 = mDelayBuffer_R8[ind_t0];
 
-    wetSample_R = wetSample_R *-GAIN_4 + holdSample;
+    wetSample_R = wetSample_R * -GAIN_4 + holdSample;
 
 
     //***************************** Del 4p R9 ******************************//
@@ -620,7 +620,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     }
 
     delaySamples_int = round(delaySamples_fract - 0.5f);
-    delaySamples_fract = delaySamples_int - delaySamples_fract;
+    delaySamples_fract = delaySamples_fract - delaySamples_int;
 
     ind_t0 = mSampleBufferIndx - delaySamples_int;
     ind_tp1 = ind_t0 + -1;
@@ -632,6 +632,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     }
 
     ind_tm1 = mSampleBufferIndx - delaySamples_int;
+    ind_tm1 = ind_tm1 + 1;
 
     ind_tm1 &= BUFFERSIZE_M1;
     ind_t0  &= BUFFERSIZE_M1;
