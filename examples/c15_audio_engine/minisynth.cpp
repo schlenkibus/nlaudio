@@ -1,8 +1,5 @@
 ﻿#include "minisynth.h"
 
-//#define PASCALSW
-//#define CPU_STOPWATCH
-
 #include <common/stopwatch.h>
 #include "cpu_stopwatch.h"
 
@@ -10,15 +7,11 @@
 #include <audio/audioalsaoutput.h>
 #include <midi/rawmididevice.h>
 
-//------------- activate applications here
-extern Nl::StopWatch sw;
-
 namespace Nl {
 namespace MINISYNTH {
 
 //--------------- Objects
 VoiceManager voiceManager;
-CPU_Stopwatch cpu_sw;
 
     /** @brief    Callback function for Sine Generator and Audio Input - testing with ReMote 61
         @param    Input Buffer
@@ -29,17 +22,6 @@ CPU_Stopwatch cpu_sw;
     */
     void miniSynthCallback(uint8_t *in, uint8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr)
     {
-#ifdef PASCALSW
-        static int counter = 0;
-        //StopBlockTime sft(&sw, "val" + std::to_string(counter++));
-        sw.stop();
-        sw.start("val" + std::to_string(counter++));
-#endif
-
-#ifdef CPU_STOPWATCH
-        static int counter = 0;
-        cpu_sw.start();
-#endif
         // Global Parameter Buffer
         static float paramBuffer[NUM_VOICES][5] = {0,0};
 
@@ -87,19 +69,6 @@ CPU_Stopwatch cpu_sw;
                 setSample(out, outputSample, frameIndex, channelIndex, sampleSpecs);
             }
         }
-
-#ifdef CPU_STOPWATCH
-        cpu_sw.stop();
-        counter++;
-
-        if (counter == NUMBER_OF_TS)
-        {
-            cpu_sw.calcCPU();
-
-            std::cout << "CPU Peak: " << cpu_sw.mCPU_peak << std::endl;
-            counter = 0;
-        }
-#endif
     }
 
 

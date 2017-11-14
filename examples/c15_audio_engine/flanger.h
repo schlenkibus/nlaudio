@@ -26,7 +26,18 @@ public:
 
     Flanger();                      // Default Constructor
 
-    Flanger(float _rate);           // Parmetrized Constructor
+    Flanger(float _rate,            // Parmetrized Constructor
+            float _env,
+            float _phase,
+            float _tMod,
+            float _time,
+            float _stereo,
+            float _apMod,
+            float _hiCut,
+            float _apTune,
+            float _feedback,
+            float _crossFeedback,
+            float _mix);
 
     ~Flanger();                     // Destructor
 

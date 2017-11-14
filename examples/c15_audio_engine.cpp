@@ -18,10 +18,6 @@
  *
  */
 
-//#define OSCGUI
-//#include <QApplication>     //for the gui
-//#include "oscshapeui.h"
-
 #include <iostream>
 #include <ostream>
 #include <stdio.h>
@@ -54,48 +50,8 @@ Nl::StopWatch sw("AudioCallback");
 //
 #include "c15_audio_engine/soundgenerator.h"
 
-#if OSCGUI
-int main(int argc, char *argv[])
-{
-
-    QApplication a(argc, argv);
-    OscShapeUI w;
-    w.show();
-#else
 int main()
 {
-#endif
-
-#if 0
-    Nl::requestRealtime();                                  // Realtime Request
-    /// zum testen der Anton-DSP
-
-    VoiceManager voiceManager = VoiceManager();
-
-    std::chrono::time_point<std::chrono::high_resolution_clock> start;
-    std::chrono::time_point<std::chrono::high_resolution_clock> stop;
-
-    // start the timer
-    printf("Starting  the timer \n");
-
-    start = std::chrono::high_resolution_clock::now();
-
-    // DSP Loop
-    for (uint32_t counter = 0; counter < 480000; counter++)
-    {
-        voiceManager.voiceLoop();
-        float sampleLeft = voiceManager.mainOut_L;
-        float sampleRight = voiceManager.mainOut_R;
-    }
-
-    stop = std::chrono::high_resolution_clock::now();
-    int duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop-start).count();
-
-    std::cout << "Loop duraion: " << duration << " milliseconds" << std::endl;
-
-    return 0;
-#else
-
     try
     {
         auto availableDevices = Nl::getDetailedCardInfos();
@@ -106,9 +62,7 @@ int main()
         for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
             std::cout << *it << std::endl;
 
-        Nl::AlsaCardIdentifier audioIn(1
-
-                                       ,0,0, "USB Device");
+        Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
         Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
         Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
 
@@ -173,11 +127,5 @@ int main()
     } catch(...) {
         std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
     }
-
-#ifdef OSCGUI
-    return a.exec();
-#endif
-
-#endif
 }
 

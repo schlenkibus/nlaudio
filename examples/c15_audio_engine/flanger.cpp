@@ -11,6 +11,19 @@
 /******************************************************************************/
 /** Flanger Default Constructor
  * @brief    initialization of the modules local variabels with default values
+ *           SampleRate:            48 kHz
+ *           Rate:                  1.06
+ *           Envelope:              0
+ *           Phase:                 90
+ *           Time Mod:              0
+ *           Time:                  3.13
+ *           Stereo:                0
+ *           AP Mod:                0
+ *           AP Tune:               140
+ *           HI Cut:                120
+ *           Feedback:              0
+ *           Cross Feedback:        0
+ *           Mix:                   0
 *******************************************************************************/
 
 Flanger::Flanger()
@@ -78,6 +91,115 @@ Flanger::Flanger()
     mLFeedback_ramp = 1.f;
     mCFeedback_ramp = 1.f;
     mLFPhase_ramp = 1.f;
+}
+
+
+
+/******************************************************************************/
+/** Flanger Parameterized Constructor
+ * @brief    initialization of the modules local variabels with custom
+ *           parameters
+*******************************************************************************/
+
+Flanger::Flanger(float _rate,
+                 float _env,
+                 float _phase,
+                 float _tMod,
+                 float _time,
+                 float _stereo,
+                 float _apMod,
+                 float _hiCut,
+                 float _apTune,
+                 float _feedback,
+                 float _crossFeedback,
+                 float _mix)
+{
+    //****************************** Outputs *******************************//
+    mFlangerOut_L = 0.f;
+    mFlangerOut_R = 0.f;
+
+    //******************************** Mixes *******************************//
+    mMixWet = _mix;
+    mMixDry = 1.f - fabs(mMixWet);
+
+    mEnvWet = _env;
+    mEnvDry = 1.f - _env;
+
+    //********************************** LFO *******************************//
+    _rate = _rate * _rate * 10.f;
+    mLFRate = _rate * SAMPLING_INTERVAL;
+    mLFDecayWarpedRate = _rate * 0.55f;
+    mLFDecayWarpedRate = mLFDecayWarpedRate * WARPCONST_2PI;
+    if (mLFDecayWarpedRate > 1.9f)
+    {
+        mLFDecayWarpedRate = 1.9f;
+    }
+    mLFDecayWarpedRate = 1.f - mLFDecayWarpedRate;
+
+    mLFDepth = _tMod * fabs(_tMod);
+    mLFPhase = _phase / 360.f;
+
+    mLFStateVar = 0.f;
+    mLFDecayStateVar = 0.f;
+
+    //******************************** Allpass *****************************//
+    mAPMod = _apMod * 70.f;
+    mAPTune = _apTune;
+
+    //******************************* FeedBack *****************************//
+    mFeedback = _feedback * 0.5f + 0.5f;
+    if (mFeedback < 0.33f)
+    {
+        mFeedback = 1.515151515f * mFeedback - 1.f;
+    }
+    else if (mFeedback > 0.33f && mFeedback < 0.66f)
+    {
+        mFeedback = 3.03030303f * mFeedback - 1.5f;
+    }
+    else if (mFeedback > 0.66f && mFeedback < 1.f)
+    {
+        mFeedback = 1.515151515f * mFeedback - 0.5f;
+    }
+
+    mXFeedback = _crossFeedback;
+    mLocalFeedback = mFeedback * (1.f - fabs(mXFeedback));
+    mCrossFeedback = mFeedback * mXFeedback;
+
+
+    //************************ Time and Stereo Amnt ************************//
+    mStereo = _stereo * 0.01f;
+    mTime = _time * _time * 50.f * 0.001f;
+    mFlangerTime_L = mTime * (1.f + mStereo);
+    mFlangerTime_R = mTime * (1.f - mStereo);
+
+    //****************************** Buffers *******************************//
+    mSampleBufferIndx = 0;
+    mChannelStateVar_L = 0.f;
+    mChannelStateVar_R = 0.f;
+
+    mSampleBuffer_L = {0.f};
+    mSampleBuffer_R = {0.f};
+
+    //****************************** Filters *******************************//
+    pLowpass_L = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(_hiCut), 0.f, OnePoleFilterType::LOWPASS);
+    pLowpass_R = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(_hiCut), 0.f, OnePoleFilterType::LOWPASS);
+    pHighpass_L = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_R = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pLowpass2Hz_L = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
+    pLowpass2Hz_R = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
+    pLowpass2Hz_Depth = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
+
+    mAllpass_L.setCoeffs(NlToolbox::Conversion::pitch2freq(_apTune));
+    mAllpass_R.setCoeffs(NlToolbox::Conversion::pitch2freq(_apTune));
+
+    //***************************** Smoothing ******************************//
+    mSmootherMask = 0x0000;
+    mMixWet_ramp = 1.f;
+    mEnvWet_ramp = 1.f;
+    mLFeedback_ramp = 1.f;
+    mCFeedback_ramp = 1.f;
+    mLFPhase_ramp = 1.f;
+
 }
 
 
@@ -305,7 +427,7 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
 
         case CtrlID::TIME:
             _ctrlVal = _ctrlVal / 127.f;
-            _ctrlVal = _ctrlVal *_ctrlVal * 50.f;
+            _ctrlVal = _ctrlVal * _ctrlVal * 50.f;
 
             printf("Flanger - Time: %f\n", _ctrlVal);
 
