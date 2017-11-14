@@ -336,11 +336,11 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
 inline void Echo::applyEchoSmoother()
 {
     //************************ ID 1: Dry Smoother ***************************//
-    if (mDry_ramp < 1.0)
+    if (mDry_ramp < 1.f)
     {
         mDry_ramp += SMOOTHER_INC;
 
-        if (mDry_ramp > 1.0)
+        if (mDry_ramp > 1.f)
         {
             mDry = mDry_target;
             mSmootherMask &= 0xFFFE;       // switch first bit to 0
@@ -353,11 +353,11 @@ inline void Echo::applyEchoSmoother()
 
 
     //************************ ID 2: Wet Smoother ***************************//
-    if (mWet_ramp < 1.0)
+    if (mWet_ramp < 1.f)
     {
         mWet_ramp += SMOOTHER_INC;
 
-        if (mWet_ramp > 1.0)
+        if (mWet_ramp > 1.f)
         {
             mWet = mWet_target;
             mSmootherMask &= 0xFFFD;       // switch second bit to 0
@@ -370,11 +370,11 @@ inline void Echo::applyEchoSmoother()
 
 
     //******************* ID 3: Local Feedback Smoother *********************//
-    if (mLFeedback_ramp < 1.0)
+    if (mLFeedback_ramp < 1.f)
     {
         mLFeedback_ramp += SMOOTHER_INC;
 
-        if (mLFeedback_ramp > 1.0)
+        if (mLFeedback_ramp > 1.f)
         {
             mLocalFeedback = mLFeedback_target;
             mSmootherMask &= 0xFFFB;        // switch third bit to 0
@@ -387,11 +387,11 @@ inline void Echo::applyEchoSmoother()
 
 
     //******************* ID 4: Cross Feedback Smoother *********************//
-    if (mCFeedback_ramp < 1.0)
+    if (mCFeedback_ramp < 1.f)
     {
         mCFeedback_ramp += SMOOTHER_INC;
 
-        if (mCFeedback_ramp > 1.0)
+        if (mCFeedback_ramp > 1.f)
         {
             mCrossFeedback = mCFeedback_target;
             mSmootherMask &= 0xFFF7;        // switch fourth bit to 0
@@ -431,7 +431,7 @@ void Echo::initFeedbackSmoother()
     mLFeedback_diff = mLFeedback_target - mLFeedback_base;
 
     mSmootherMask |= 0x0004;
-    mLFeedback_ramp = 0.0;
+    mLFeedback_ramp = 0.f;
 
 
     // Initialize Smoother ID 4: Cross Feedback
@@ -441,6 +441,6 @@ void Echo::initFeedbackSmoother()
     mCFeedback_diff = mCFeedback_target - mCFeedback_base;
 
     mSmootherMask |= 0x0008;
-    mCFeedback_ramp = 0.0;
+    mCFeedback_ramp = 0.f;
 }
 

@@ -236,9 +236,7 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
     }
 
     //******************************** LFO **********************************//
-    float decayOut = mLFDecayStateVar + DNC_CONST;
-    decayOut = decayOut * mLFDecayWarpedRate;
-    mLFDecayStateVar = decayOut;
+    float decayOut = mLFDecayStateVar;
     decayOut = -1.f + decayOut * 2.f;
 
     float lfoPhase = mLFRate + mLFStateVar;
@@ -253,6 +251,9 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
 
     lfoOut_L = lfoOut_L * mEnvDry + decayOut * mEnvWet;
     lfoOut_R = lfoOut_R * mEnvDry + decayOut * mEnvWet;
+
+    mLFDecayStateVar += DNC_CONST;
+    mLFDecayStateVar *= mLFDecayWarpedRate;
 
 
     //*************************** AP Freq Calc ******************************//

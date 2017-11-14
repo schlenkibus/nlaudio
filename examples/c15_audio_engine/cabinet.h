@@ -15,10 +15,9 @@
 #include "tiltfilters.h"
 
 
-class Cabinet                               // Cabinet Class
+class Cabinet
 {
 public:
-
     Cabinet();                              // Default Constructor
 
     Cabinet(float _drive,                   // Parameterized Constructor
@@ -34,14 +33,11 @@ public:
 
     float mCabinetOut;                      // public processed sample
 
-    void setCabinetParams(unsigned char _ctrlId, float _ctrlVal);       // sets the effect parameters and activates smoothers
-
-    void applyCab(float _rawSample);        // main audio function, which processes the incoming sample
+    void setCabinetParams(unsigned char _ctrlId, float _ctrlVal);
+    void applyCab(float _rawSample);
 
 private:
-
-    //******************************** Control Variabels ********************************//
-
+    //*************************** Control Variabels ***************************//
     float mDrive;                  // drive level
     float mCabLvl;                 // cabinet level
     float mWet;                    // wet amount, dependant on mix and cabinet level
@@ -53,8 +49,7 @@ private:
     float mSaturationConst;        // constant resulting from (0.1588f / mSaturation) - used in the SineShaper
 
 
-    //********************************* Cabinet Filters *********************************//
-
+    //**************************** Cabinet Filters ****************************//
     BiquadFilters* pHighpass;       // first highpass
     BiquadFilters* pLowpass_1;      // first lowpass
     BiquadFilters* pLowpass_2;      // second lowpass
@@ -63,11 +58,14 @@ private:
     NlToolbox::Filters::Highpass30Hz* pHighpass30Hz;        // 1-Pole 30Hz Highpass for Smoothing within the sineShaper function
 
 
-    //******************************** Smoothing Defines ********************************//
-
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: Dry
+    //                  ID 2: Wet
+    //                  ID 3: Drive
+    //************************************************************************//
     inline void applyCabSmoother();
 
-    uint32_t mSmootherMask;                 // Smoother Mask (ID 1: dry, ID 2: wet, ID 3: dry)
+    uint32_t mSmootherMask;
 
     // Mask ID: 1
     float mDry_base;
@@ -88,8 +86,7 @@ private:
     float mDrive_ramp;
 
 
-    //****************************** Control IDs ******************************//
-
+    //***************************** Control IDs ******************************//
     enum CtrlId: unsigned char
     {
 #ifdef NANOKONTROL_I              // Korg Nano Kontrol I

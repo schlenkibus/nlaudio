@@ -17,6 +17,9 @@
 #include <array>
 #include "onepolefilters.h"
 
+#define COMB_BUFFERSIZE 8192
+#define COMB_BUFFERSIZE_M1 8191
+#define COMB_BUFFERSIZE_M3 8189
 
 class CombFilter                        // Combfilter Class
 {
@@ -43,21 +46,16 @@ public:
     float mCombFilterOut;       // public processed output sample
 
     void applyCombFilter(float _sampleA, float _sampleB);
-    void applySmoothers();
-
+    void setPitch(float _pitch);
     void setCombFilterParams(unsigned char _ctrlID, float _ctrlVal);
 
-    void setPitch(float _pitch);
-    void setMainFreq();
-
-    void setLowpassFreq();
-    void setAllpassFreq();
-    void setDelayTime();
-
-    void setDecayGain();
+    void calcMainFreq();
+    void calcLowpassFreq();
+    void calcAllpassFreq();
+    void calcDecayGain();
+    void calcDelayTime();
 
 private:
-
     float mPitch;               // Incoming Pitch from a key
     float mMainFreq;            // Frequency after Pitch Edit
 
@@ -66,7 +64,6 @@ private:
 
 
     //**************************** Tune/ Pitch Edit ******************************//
-
     float mPitchEdit;           // Pitch Offset
     float mPitchKeyTrk;         // Key Tracking amount on Pitch
 #if 0
@@ -75,7 +72,6 @@ private:
 
 
     //**************************** Decay/ Feedback *******************************//
-
     float mDecay;               // Decay amount depending on the decay amount and key pitch
     float mDecayGain;           // Resulting decay gain aplied to the state variable
     float mDecayKeyTrk;         // Key Tracking amount on Decay
@@ -86,18 +82,15 @@ private:
 
 
     //******************************* Highpass ***********************************//
-
     OnePoleFilters* pHighpass;
 
 
     //******************************** Allpass ***********************************//
-
     float mAllpassTune;
     float mAllpassKeyTrk;
 #if 0
     float mAllpassEnvC;
 #endif
-
     float mAllpassRes;
 
     float mAllpassStateVar_1;        // Allpass State Variables
@@ -108,11 +101,10 @@ private:
     float mAllpassCoeff_1;           // Allpass Coefficients
     float mAllpassCoeff_2;
 
-    float mNormPhase;               // Normalized Phase for Delay Sample Calculation
+    float mNormPhase;                // Normalized Phase for Delay Sample Calculation
 
 
     //******************************* Lowpass ************************************//
-
     float mLowpassHiCut;
     float mLowpassKeyTrk;
 #if 0
@@ -126,30 +118,30 @@ private:
 
 
     //**************************** Phase Modulation *******************************//
-
     float mPhaseMod;                // Phase Modulation Amount
     float mPhaseModMix_0;           // A Sample Phase Modulation Mix (1 - mABMix_1);
     float mPhaseModMix_1;           // B Sample Phase Modulation Mix
 
 
-    //******************************** Delay **************************************//
-
-    std::array<float, 8192> mSampleBuffer;
-    int32_t mSampleBufferSize;
+    //***************************** Delay ************************************//
     uint32_t mSampleBufferIndex;
+    std::array<float, COMB_BUFFERSIZE> mSampleBuffer;
 
     float mDelayClipMin;
-
     float mDelaySamples;
     float mDelayStateVar;
 
-    //**************************** Envelope ***************************************//
 
-    float mEnv;                     // current vallue of the Envelope C
+    //************************* Envelope *************************************//
+//    float mEnv;                     // current vallue of the Envelope C
 
 
-    //**************************** Smoothing **************************************//
-
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: AB MIx
+    //                  ID 2: Phase MOdulation Mix
+    //                  ID 3: Pitch Key Tracking
+    //************************************************************************//
+    void applySmoothers();
     uint32_t mSmootherMask;         // Smoother Mask
 
     // Mask ID: 1
@@ -171,8 +163,7 @@ private:
     float mPitchKeyTrk_ramp;
 
 
-    //****************************** Controls IDs *****************************//
-
+    //***************************** Controls IDs *****************************//
     enum CtrlId: unsigned char
     {
 #ifdef REMOTE61                         // ReMote 61

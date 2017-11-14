@@ -9,51 +9,81 @@
 #include "combfilter.h"
 
 /******************************************************************************/
-/** Outputmixer Default Constructor
- * @brief    initialization of the modules local variabels with default values
+/** Combfilter Default Constructor
+ * @brief   initialization of the modules local variabels with default values
+ *          SampleRate:             48 kHz
+ *          AB Mix:                 0.5
+ *          Pitch Edit:             60.00
+ *          Pitch EnvC:             0
+ *          Pitch Keytracking:      1
+ *          Decay:                  0
+ *          Decay Gate:             0
+ *          Decay Key Tracking:     0.33
+ *          AP Tune:                140
+ *          AP Tune EnvC:           0
+ *          AP Tune Key Traking:    1
+ *          AP Resonance:           0.5
+ *          HI Cut:                 140
+ *          HI Cut EnvC:            0
+ *          HI Cut Key Traking:     1
+ *          Phase Modulation:       0
+ *          Phase Mod Mix:          0.5
 *******************************************************************************/
 
 CombFilter::CombFilter()
 {
+    //******************************* Outputs ********************************//
     mCombFilterOut = 0.f;
 
+    //******************************** AB Mix ********************************//
     mABMix_1 = 0.5f;
-    mABMix_0 = 0.5;
+    mABMix_0 = 0.5f;
+
+    //********************************* Pitch ********************************//
     mPitchEdit = 60.f;
     mPitchKeyTrk = 1.f;
 
+    //********************************* Decay ********************************//
     mDecay = 0.f;
     mDecayKeyTrk = 0.33f;
     mDecayStateVar = 0.f;
 
+    //***************************** Highpass *********************************//
+    pHighpass = new OnePoleFilters(SAMPLERATE, 60.f, 0.f, OnePoleFilterType::HIGHPASS);
+
+    //****************************** Allpass *********************************//
     mAllpassTune = 140.f;
     mAllpassKeyTrk = 1.f;
-    mAllpassRes = 0.33f;
+    mAllpassRes = (0.5f * 1.99f) + -1.f;
     mAllpassStateVar_1 = 0.f;
     mAllpassStateVar_2 = 0.f;
     mAllpassStateVar_3 = 0.f;
     mAllpassStateVar_4 = 0.f;
     mNormPhase = 0.f;
 
-    pHighpass = new OnePoleFilters(SAMPLERATE, 60.f, 0.f, OnePoleFilterType::HIGHPASS);
-
+    //***************************** Lowpass **********************************//
     mLowpassHiCut = 140.f;
     mLowpassKeyTrk = 1.f;
     mLowpassStateVar = 0.f;
 
     mNegPhase = 0.f;
 
+    //*************************** Phase MOd **********************************//
     mPhaseMod = 0.f;
     mPhaseModMix_1 = 0.5f;
     mPhaseModMix_0 = 0.5f;
 
-    mDelayClipMin = SAMPLERATE / (mSampleBuffer.size() - 2);
-    mDelaySamples = 0.f;
-
-    mSampleBufferSize = mSampleBuffer.size() - 1;
+    //***************************** Delay ************************************//
     mSampleBufferIndex = 0;
+    mSampleBuffer = {0.f};
 
+    mDelayClipMin = SAMPLERATE / (COMB_BUFFERSIZE - 2);
+    mDelaySamples = 0.f;
+    mDelayStateVar = 0.f;
+
+    //******************************* Smoothing ******************************//
     mSmootherMask = 0x0000;
+
     mABMix_ramp = 1.f;
     mPhaseModMix_ramp = 1.f;
     mPitchKeyTrk_ramp = 1.f;
@@ -80,45 +110,62 @@ CombFilter::CombFilter(float _ABMix,
                        float _phaseMod,
                        float _phaseModMix)
 {
+    //******************************* Outputs ********************************//
     mCombFilterOut = 0.f;
 
-    mABMix_1 = _ABMix;
-    mABMix_0 = 1.f - _ABMix;
+    //******************************** AB Mix ********************************//
+    mABMix_1 = NlToolbox::Curves::applySineCurve(_ABMix);
+    mABMix_0 = 1.f - mABMix_1;
+
+    //********************************* Pitch ********************************//
+    if (_pitchEdit > 120.f)
+    {
+        _pitchEdit = 119.99f;
+    }
     mPitchEdit = _pitchEdit;
     mPitchKeyTrk = _pitchKeyTrk;
 
+    //********************************* Decay ********************************//
     mDecay = _decay;
     mDecayKeyTrk = _decayKeyTrk;
     mDecayStateVar = 0.f;
 
+    //***************************** Highpass *********************************//
+    pHighpass = new OnePoleFilters(SAMPLERATE, 60.f, 0.f, OnePoleFilterType::HIGHPASS);
+
+    //****************************** Allpass *********************************//
     mAllpassTune = _allpassTune;
     mAllpassKeyTrk = _allpassKeyTrk;
-    mAllpassRes = _allpassRes;
+    mAllpassRes = (_allpassRes * 1.99f) + -1.f;
     mAllpassStateVar_1 = 0.f;
     mAllpassStateVar_2 = 0.f;
     mAllpassStateVar_3 = 0.f;
     mAllpassStateVar_4 = 0.f;
     mNormPhase = 0.f;
 
-    pHighpass = new OnePoleFilters(SAMPLERATE, 60.f, 0.f, OnePoleFilterType::HIGHPASS);
-
+    //***************************** Lowpass **********************************//
     mLowpassHiCut = _lowpassHiCut;
     mLowpassKeyTrk = _lowpassKeyTrk;
     mLowpassStateVar = 0.f;
 
     mNegPhase = 0.f;
 
-    mPhaseMod = _phaseMod;
+    //*************************** Phase MOd **********************************//
+    mPhaseMod = _phaseMod * fabs(_phaseMod) * 0.9f;
     mPhaseModMix_1 = _phaseModMix;
     mPhaseModMix_0 = 1.f - _phaseModMix;
 
-    mDelayClipMin = SAMPLERATE / (mSampleBuffer.size() - 2);
-    mDelaySamples = 0.f;
-
-    mSampleBufferSize = mSampleBuffer.size() - 1;
+    //***************************** Delay ************************************//
     mSampleBufferIndex = 0;
+    mSampleBuffer = {0.f};
 
+    mDelayClipMin = SAMPLERATE / (COMB_BUFFERSIZE - 2);
+    mDelaySamples = 0.f;
+    mDelayStateVar = 0.f;
+
+    //******************************* Smoothing ******************************//
     mSmootherMask = 0x0000;
+
     mABMix_ramp = 1.f;
     mPhaseModMix_ramp = 1.f;
     mPitchKeyTrk_ramp = 1.f;
@@ -145,6 +192,8 @@ CombFilter::~CombFilter()
 
 void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
 {
+    float sampleVar = 0.f;                              // for multiple Purposes
+
     //****************************** Smoothing ******************************//
     if (mSmootherMask)
     {
@@ -153,34 +202,28 @@ void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
 
 
     //**************************** AB Sample Mix ****************************//
-
     mCombFilterOut = _sampleA * mABMix_0 + _sampleB * mABMix_1;                   // mix of both incoming samples depending on select amount
     mCombFilterOut += mDecayStateVar;
 
 
     //****************** AB Ssample Phase Mdulation Mix ********************//
-
     float phaseMod = _sampleA * mPhaseModMix_0 + _sampleB * mPhaseModMix_1;       // mix of both incoming samples depending on modulation amount
     phaseMod *= mPhaseMod;
 
 
     //************************** 1-Pole Highpass ****************************//
-
     mCombFilterOut = pHighpass->applyFilter(mCombFilterOut);
 
-    //*************************** 1-Pole Lowpass ****************************//
 
+    //*************************** 1-Pole Lowpass ****************************//
     mCombFilterOut = mCombFilterOut * (1.f - mLowpassCoeff_A1);
     mCombFilterOut += (mLowpassCoeff_A1 * mLowpassStateVar);
-
     mCombFilterOut += DNC_CONST;
-
     mLowpassStateVar = mCombFilterOut;
 
 
     //****************************** Allpass ********************************//
-
-    float holdSample = mCombFilterOut;
+    sampleVar = mCombFilterOut;
 
     mCombFilterOut  = mCombFilterOut * mAllpassCoeff_2;
     mCombFilterOut += (mAllpassStateVar_1 * mAllpassCoeff_1);
@@ -192,19 +235,19 @@ void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
     mCombFilterOut += DNC_CONST;
 
     mAllpassStateVar_2 = mAllpassStateVar_1;
-    mAllpassStateVar_1 = holdSample;
+    mAllpassStateVar_1 = sampleVar;
 
     mAllpassStateVar_4 = mAllpassStateVar_3;
     mAllpassStateVar_3 = mCombFilterOut;
 
-    //****************************** Para D ********************************//
 
+    //****************************** Para D ********************************//
     if (fabs(mCombFilterOut) > 0.501187f)
     {
         if (mCombFilterOut > 0.f)
         {
             mCombFilterOut -= 0.501187f;
-            float sampleState = mCombFilterOut;
+            sampleVar = mCombFilterOut;
 
             if (mCombFilterOut > 2.98815f)
             {
@@ -214,14 +257,14 @@ void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
             mCombFilterOut = mCombFilterOut * (1.f - mCombFilterOut * 0.167328f);
 
             mCombFilterOut *= 0.7488f;
-            sampleState *= 0.2512f;
+            sampleVar *= 0.2512f;
 
-            mCombFilterOut = mCombFilterOut + sampleState + 0.501187f;
+            mCombFilterOut = mCombFilterOut + sampleVar + 0.501187f;
         }
         else
         {
             mCombFilterOut += 0.501187f;
-            float sampleState = mCombFilterOut;
+            sampleVar = mCombFilterOut;
 
             if (mCombFilterOut < -2.98815f)
             {
@@ -231,43 +274,39 @@ void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
             mCombFilterOut = mCombFilterOut * (1.f - fabs(mCombFilterOut) * 0.167328f);
 
             mCombFilterOut *= 0.7488f;
-            sampleState *= 0.2512f;
+            sampleVar *= 0.2512f;
 
-            mCombFilterOut = mCombFilterOut + sampleState - 0.501187f;
+            mCombFilterOut = mCombFilterOut + sampleVar - 0.501187f;
         }
     }
 
 
     //***************************** SmoothB ********************************//
+    sampleVar = mDelaySamples - mDelayStateVar;
+    sampleVar *= 0.00577623f;
+    sampleVar += mDelayStateVar;
 
-    mDelaySamples -= mDelayStateVar;
-    mDelaySamples *= 0.00577623f;
-    mDelaySamples += mDelayStateVar;
-
-    mDelayStateVar = mDelaySamples;
+    mDelayStateVar = sampleVar;
 
     /// Hier fehlt der Einfluss vom Envelope
 
-
     //****************************** Delay ********************************//
+    mSampleBuffer[mSampleBufferIndex] = mCombFilterOut;             // write into the SampleBuffer
 
-    mSampleBuffer[mSampleBufferIndex] = mCombFilterOut;                 // write into the SampleBuffer
+    sampleVar = sampleVar * phaseMod + sampleVar;   // phM
+    sampleVar = sampleVar - 1.f;
 
-    float modedDelaySamples = mDelaySamples * phaseMod + mDelaySamples;     // phM
-
-    modedDelaySamples = modedDelaySamples - 1.f;
-
-    if (modedDelaySamples > (mSampleBufferSize - 2))                // Clip 1, size-3
+    if (sampleVar > COMB_BUFFERSIZE_M3)                // Clip 1, size-3
     {
-        modedDelaySamples = mSampleBufferSize - 2;
+        sampleVar = COMB_BUFFERSIZE_M3;
     }
-    else if (modedDelaySamples < 1.f)
+    else if (sampleVar < 1.f)
     {
-        modedDelaySamples = 1.f;
+        sampleVar = 1.f;
     }
 
-    float delaySamples_int = round(modedDelaySamples - 0.5f);               // integer and fraction speration
-    float delaySamples_fract = modedDelaySamples - delaySamples_int;
+    float delaySamples_int = round(sampleVar - 0.5f);               // integer and fraction speration
+    float delaySamples_fract = sampleVar - delaySamples_int;
 
     int32_t ind_tm1 = delaySamples_int - 1;
     int32_t ind_t0  = delaySamples_int;
@@ -279,10 +318,10 @@ void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
     ind_tp1 = mSampleBufferIndex - ind_tp1;
     ind_tp2 = mSampleBufferIndex - ind_tp2;
 
-    ind_tm1 &= mSampleBufferSize;                             // Wrap with a mask sampleBuffer.size()-1
-    ind_t0  &= mSampleBufferSize;
-    ind_tp1 &= mSampleBufferSize;
-    ind_tp2 &= mSampleBufferSize;
+    ind_tm1 &= COMB_BUFFERSIZE_M1;                             // Wrap with a mask sampleBuffer.size()-1
+    ind_t0  &= COMB_BUFFERSIZE_M1;
+    ind_tp1 &= COMB_BUFFERSIZE_M1;
+    ind_tp2 &= COMB_BUFFERSIZE_M1;
 
     mCombFilterOut = NlToolbox::Math::interpolRT(delaySamples_fract,          // Interpolation
                                                  mSampleBuffer[ind_tm1],
@@ -293,11 +332,10 @@ void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
     /// Hier wird am ende och mal mit EnvC multiplieziert
     /// mCombFilterOut *= env;
 
-    mSampleBufferIndex = (mSampleBufferIndex + 1) & mSampleBufferSize;      // increase index and check boundaries
+    mSampleBufferIndex = (mSampleBufferIndex + 1) & COMB_BUFFERSIZE_M1;      // increase index and check boundaries
 
 
     //****************************** Decay ********************************//
-
     mDecayStateVar = mCombFilterOut * mDecayGain;
 }
 
@@ -318,14 +356,14 @@ void CombFilter::applySmoothers()
         if (mABMix_ramp > 1.0)
         {
             mABMix_1 = mABMix_target;
-            mABMix_0 = 1.f - mABMix_1;
             mSmootherMask &= 0xFFFE;                  // switch first bit to 0
         }
         else
         {
             mABMix_1 = mABMix_base + mABMix_diff * mABMix_ramp;
-            mABMix_0 = 1.f - mABMix_1;
         }
+
+        mABMix_0 = 1.f - mABMix_1;
     }
 
 
@@ -361,8 +399,8 @@ void CombFilter::applySmoothers()
         else
         {
             mPitchKeyTrk = mPitchKeyTrk_base + mPitchKeyTrk_diff * mPitchKeyTrk_ramp;
-            setMainFreq();
         }
+        calcMainFreq();
     }
 
 }
@@ -410,7 +448,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Comb Filter - Pitch Edit: %f\n", _ctrlVal);
 
             mPitchEdit = _ctrlVal;
-            setMainFreq();
+            calcMainFreq();
             break;
 
         case CtrlId::PITCH_KEYTRACKING:
@@ -453,7 +491,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Comb Filter - Decay Time: %f\n", _ctrlVal);
 
             mDecay = _ctrlVal;
-            setDecayGain();
+            calcDecayGain();
             break;
 
         case CtrlId::DECAY_KEYTRACKING:
@@ -462,7 +500,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Comb Filter - Decay Key Trk: %f\n", _ctrlVal);
 
             mDecayKeyTrk = _ctrlVal;
-            setDecayGain();
+            calcDecayGain();
             break;
 #if 0
         case CtrlId::DECAY_GATE:
@@ -471,7 +509,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Decay Gate Amnt: %f\n", _ctrlVal);
 
             mDecayGate = _ctrlVal;
-            setDecayGain();
+            calcDecayGain();
             break;
 #endif
         case CtrlId::ALLPASS_FREQ:
@@ -485,7 +523,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Comb Filter - Allpass Frequency: %f\n", _ctrlVal);
 
             mAllpassTune = _ctrlVal;
-            setAllpassFreq();
+            calcAllpassFreq();
             break;
 
         case CtrlId::ALLPASS_RES:
@@ -494,7 +532,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Comb Filter - Allpass Resonance: %f\n", _ctrlVal);
 
             mAllpassRes = (_ctrlVal * 1.99f) + -1.f;
-            setAllpassFreq();
+            calcAllpassFreq();
             break;
 
         case CtrlId::ALLPASS_KEYTRACKING:
@@ -508,7 +546,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Comb Filter - Allpass Key Trk: %f\n", _ctrlVal);
 
             mAllpassKeyTrk = _ctrlVal;
-            setAllpassFreq();
+            calcAllpassFreq();
             break;
 #if 0
         case CtrlId::ALLPASS_ENVCAMOUNT:
@@ -522,6 +560,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Allpass EnvC: %f\n", _ctrlVal);
 
             float mAllpassEnvC =  _ctrlVal;
+            calcAllpassFreq();
             break;
 #endif
         case CtrlId::LOWPASS_FREQ:
@@ -530,7 +569,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Comb Filter - Lowpass Frequency: %f\n", _ctrlVal);
 
             mLowpassHiCut = _ctrlVal;
-            setLowpassFreq();
+            calcLowpassFreq();
             break;
 
         case CtrlId::LOWPASS_KEYTRACKING:
@@ -539,7 +578,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Comb Filter - Lowpass Key Trk: %f\n", _ctrlVal);
 
             mLowpassKeyTrk = _ctrlVal;
-            setLowpassFreq();
+            calcLowpassFreq();
             break;
 #if 0
         case CtrlId::LOWPASS_ENVCAMOUNT:
@@ -552,7 +591,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             printf("Lowpass EnvC: %f\n", _ctrlVal);
 
             mLowpassEnvC = _ctrlVal;
-            setLowpassFreq();
+            calcLowpassFreq();
             break;
 #endif
 
@@ -598,30 +637,36 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
 
 
 /*****************************************************************************/
-/** @brief
+/** @brief  Once a "Note On" event occurs, the Pitch of the currently
+ *          played is updated and the calcMainFre() is called to recalculate
+ *          the main frequency.
+ *          Also the "SmootherB" is triggerd, setting the state variable
+ *          with latest calculated delaysamles number
 ******************************************************************************/
 
 void CombFilter::setPitch(float _pitch)
 {
     mPitch = _pitch;
-
-    setMainFreq();              // Calculate mMainFreq and dependant variables
+    calcMainFreq();
+    mDelayStateVar = mDelaySamples;
 }
 
 
 
 /*****************************************************************************/
-/** @brief
+/** @brief  Main frequency calculation, which is dependant on Pitch,
+ *          Pitch Key tracking and Pitch Edit. Also serves as trigger
+ *          to recalculate the fitler coefficients and decay gain anew
 ******************************************************************************/
 
-void CombFilter::setMainFreq()
+void CombFilter::calcMainFreq()
 {
     mMainFreq = NlToolbox::Conversion::pitch2freq(mPitch * mPitchKeyTrk + mPitchEdit);
 
-    setLowpassFreq();                   // calculates mNegPhase, with new mMainFreq
-    setAllpassFreq();                   // calculates mNormPhase, with new mMainFreq
+    calcLowpassFreq();                   // calculates mNegPhase, with new mMainFreq
+    calcAllpassFreq();                   // calculates mNormPhase, with new mMainFreq
 
-    setDecayGain();                     // calculates mDecayGain, with new mMainFreq
+    calcDecayGain();                     // calculates mDecayGain, with new mMainFreq
 
     pHighpass->setCutFreq(mMainFreq * 0.125f);
 }
@@ -629,12 +674,14 @@ void CombFilter::setMainFreq()
 
 
 /*****************************************************************************/
-/** @brief  setter function for highcut frequency of the internal lowpass filter.
- *          the frequency is calculated depending on set HiCut, Key Tracking
- *          and modulation amount of the Envelope C
+/** @brief  Calculation of the highcut frequency of the internal lowpass filter.
+ *          The frequency is dependant on the Note Pitch, Key Tracking amount
+ *          and the set Cut Frequncy of the filter itself
+ *          Also triggers the calculation of the new Delaytime, since
+ *          the filter coefficents affect it
 ******************************************************************************/
 
-void CombFilter::setLowpassFreq()
+void CombFilter::calcLowpassFreq()
 {
     float cutFrequency = ((mPitch * mLowpassKeyTrk) + mLowpassHiCut); /// + (mEnv * mLowpassEnvC);      // Cut Frequency Calculation
 
@@ -652,7 +699,6 @@ void CombFilter::setLowpassFreq()
 
 
     //********************* Lowpass coefficient calculation *****************//
-
     cutFrequency = cutFrequency * (WARPCONST_PI);
 
     cutFrequency *= 0.159155f;                          // 2Pi wrap
@@ -665,7 +711,6 @@ void CombFilter::setLowpassFreq()
 
 
     //********************** Negative Phase Calculation ********************//
-
     float w_norm = mMainFreq * (1.f / SAMPLERATE);
 
     float stateVar_r = NlToolbox::Math::sinP3(w_norm);
@@ -676,16 +721,20 @@ void CombFilter::setLowpassFreq()
 
     mNegPhase = NlToolbox::Math::arctan(stateVar_r / stateVar_i) * (1.f / -6.28319f);
 
-    setDelayTime();                             // Delay Samples must be calculated anew
+    calcDelayTime();
 }
 
 
 
 /*****************************************************************************/
-/** @brief
+/** @brief  Calculation of the cut frequency of the internal allpass filter.
+ *          The frequency is dependant on Note Pitch, Key Tracking amount
+ *          and the set Cut Frequncy of the filter itself
+ *          Also triggers the calculation of the new Delaytime, since
+ *          the filter coefficents affect it
 ******************************************************************************/
 
-void CombFilter::setAllpassFreq()
+void CombFilter::calcAllpassFreq()
 {
     float cutFrequency = (mPitch * mAllpassKeyTrk) + mAllpassTune; /// + (mEnv * mLowpassEnvC);     // Cut Frequency Calculation
 
@@ -703,11 +752,10 @@ void CombFilter::setAllpassFreq()
 
 
     //******************** Allpass coefficient calculation ******************//
+    cutFrequency = cutFrequency * (WARPCONST_2PI);
 
-    float omega = cutFrequency * (WARPCONST_2PI);
-
-    float omegaSin = NlToolbox::Math::sin(omega);
-    float omegaCos = NlToolbox::Math::cos(omega);
+    float omegaSin = NlToolbox::Math::sin(cutFrequency);
+    float omegaCos = NlToolbox::Math::cos(cutFrequency);
 
     float alpha = omegaSin * (1.f - mAllpassRes);
     float normVar = 1.f / (1.f + alpha);
@@ -717,7 +765,6 @@ void CombFilter::setAllpassFreq()
 
 
     //******************** Norm Phase Calculation ***************************//
-
     float w_norm = mMainFreq * (SAMPLING_INTERVAL);
 
     float stateVar1_i = NlToolbox::Math::sinP3(w_norm);
@@ -765,16 +812,17 @@ void CombFilter::setAllpassFreq()
 
     mNormPhase *= 0.159155f;
 
-    setDelayTime();                                             // Delay Samples must be calculated anew
+    calcDelayTime();
 }
 
 
 
 /*****************************************************************************/
-/** @brief
+/** @brief  Decay Gain Calculation wich is depenadant on Pitch, Key Tracking
+ *          Amount and the Main Frequency
 ******************************************************************************/
 
-void CombFilter::setDecayGain()
+void CombFilter::calcDecayGain()
 {
     float sign;
 
@@ -796,7 +844,6 @@ void CombFilter::setDecayGain()
 
 
     //********************************* g ************************************//
-
     if (decayTime < 0.f)
     {
         sign = -1.f;
@@ -834,10 +881,12 @@ void CombFilter::setDecayGain()
 
 
 /*****************************************************************************/
-/** @brief
+/** @brief  Delay Time Calculation which is dependant on the MainFrequency
+ *          (Clipping) and the previously calculated phase modulation amounts
+ *          of the Lowpass and Allpass filter.
 ******************************************************************************/
 
-void CombFilter::setDelayTime()
+void CombFilter::calcDelayTime()
 {
     if (mMainFreq < mDelayClipMin)
     {
@@ -851,6 +900,4 @@ void CombFilter::setDelayTime()
     mDelaySamples = mDelaySamples * mNegPhase + mDelaySamples;      // Lowpass influence
 
     mDelaySamples = mDelaySamples * mNormPhase + mDelaySamples;     // Allpass influence
-
-    mDelayStateVar = mDelaySamples;     // set Delay State Variable for the smoothB
 }

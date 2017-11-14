@@ -68,8 +68,6 @@ public:
     void setReverbParams(unsigned char _ctrlID, float _ctrlVal);
 
 private:
-    inline void applySmoother();
-
     //*************************** Control Variables **************************//
     float mSize;
     float mAbAmnt;
@@ -156,6 +154,7 @@ private:
     //                  ID 6: Feed
     //                  ID 7: Mix
     //************************************************************************//
+    inline void applySmoother();
     uint32_t mSmootherMask;
 
     // Mask ID: 1

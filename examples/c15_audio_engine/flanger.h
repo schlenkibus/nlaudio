@@ -48,8 +48,6 @@ public:
     void triggerLFO(float _velocity);
 
 private:
-    void applySmoother();
-
     //*************************** Control Variables **************************//
     float mMixWet;
     float mMixDry;
@@ -182,6 +180,8 @@ private:
     //                  ID 4: Mix Wet
     //                  ID 5: LF PHase
     //************************************************************************//
+    void applySmoother();
+
     uint32_t mSmootherMask;
 
     // Mask ID: 1

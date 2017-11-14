@@ -220,7 +220,6 @@ void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
 void Cabinet::applyCab(float _rawSample)
 {
     //****************************** Smoothing ******************************//
-
     if (mSmootherMask)
     {
         applyCabSmoother();
@@ -228,50 +227,40 @@ void Cabinet::applyCab(float _rawSample)
 
 
     //******************************** Drive ********************************//
-
     float processedSample = _rawSample * mDrive;
 
 
     //*************************** Biquad Highpass ***************************//
-
     processedSample = pHighpass->applyFilter(processedSample);
 
 
     //************************** 1st Tilt Lowshelf **************************//
-
     processedSample = pLowshelf_1->applyFilter(processedSample);
 
 
     //******************************* Shaper ********************************//
-
     processedSample *= mSaturationConst;
-
     float ctrlSample = processedSample;
 
     processedSample = NlToolbox::Math::sinP3(processedSample);
-
     processedSample = NlToolbox::Others::threeRanges(processedSample, ctrlSample, mFold);
 
     float processedSample_square = pHighpass30Hz->applyFilter(processedSample * processedSample);
 
     processedSample = NlToolbox::Others::parAsym(processedSample, processedSample_square, mAsym);
-
     processedSample *= mSaturation;
 
 
     //************************* 2nd Tilt Lowshelf ***************************//
-
     processedSample = pLowshelf_2->applyFilter(processedSample);
 
 
     //************************* 2 Biquad Lowpass ****************************//
-
     processedSample = pLowpass_1->applyFilter(processedSample);
     processedSample = pLowpass_2->applyFilter(processedSample);
 
 
     //**************************** Crossfade ********************************//
-
     mCabinetOut = NlToolbox::Crossfades::crossFade(_rawSample, processedSample, mDry, mWet);
 }
 

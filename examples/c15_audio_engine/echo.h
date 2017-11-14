@@ -21,7 +21,6 @@
 class Echo
 {
 public:
-
     Echo ();                            // Default Constructor
 
     Echo(float _delayTime,              // Parameterized Constructor
@@ -40,8 +39,6 @@ public:
     void setEchoParams(unsigned char _ctrlId, float _ctrlVal);
 
 private:
-    inline void applyEchoSmoother();
-
     //*************************** Control Variabels **************************//
     float mFeedbackAmnt;            // feedback amount - external
     float mCrossFeedbackAmnt;       // cross feedback amount - external
@@ -79,6 +76,8 @@ private:
     //                  ID 3: Local Feedback
     //                  ID 4: Cross Feedback
     //************************************************************************//
+    inline void applyEchoSmoother();
+
     uint32_t mSmootherMask;
 
     // Mask ID: 1
