@@ -42,13 +42,11 @@ public:
     float mSample_L, mSample_R;     // Resulting Samples for left and right channel
 
     void applyOutputMixer(uint32_t _voiceNumber, float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter);
-
     void setKeyPitch(uint32_t _voiceNumber, float _keyPitch);
     void setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal);
 
 private:
-    void applySmoothers();
-
+    //*************************** Control Variables **************************//
     float mALevel;
     float mAPan;
     float mBLevel;
@@ -70,8 +68,8 @@ private:
     float mShaperStateVar_R;
     float mShaperStateVar_L;
 
+    //********************** Param Arrays for each Voice *********************//
     std::array<float, NUM_VOICES> mKeyPitch;
-
     std::array<float, NUM_VOICES> mAMix_R;
     std::array<float, NUM_VOICES> mAMix_L;
     std::array<float, NUM_VOICES> mBMix_R;
@@ -81,15 +79,27 @@ private:
     std::array<float, NUM_VOICES> mSVFilterMix_R;
     std::array<float, NUM_VOICES> mSVFilterMix_L;
 
-
-    //***************************** Filters ***************************************//
-
+    //*************************** Filters ************************************//
     OnePoleFilters* pHighpass_L;
     OnePoleFilters* pHighpass_R;
 
 
-    //**************************** Smoothing **************************************//
-
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: A Level
+    //                  ID 2: A Pan
+    //                  ID 3: B Level
+    //                  ID 4: B Pan
+    //                  ID 5: Comb Level
+    //                  ID 6: Comb Pan
+    //                  ID 7: SV Filter Level
+    //                  ID 8: SV Filter Pan
+    //                  ID 9: Drive
+    //                  ID 10: Fold
+    //                  ID 11: Asym
+    //                  ID 12: Main Level
+    //                  ID 13: Key Pan
+    //************************************************************************//
+    void applySmoothers();
     uint32_t mSmootherMask;
 
     // Mask ID: 1
@@ -171,8 +181,7 @@ private:
     float mKeypan_ramp;
 
 
-    //****************************** Controls IDs *****************************//
-
+    //***************************** Controls IDs *****************************//
     enum CtrlID: unsigned char
     {
 #ifdef REMOTE61                     // novation ReMOTE61

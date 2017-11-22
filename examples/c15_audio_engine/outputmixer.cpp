@@ -11,29 +11,49 @@
 /******************************************************************************/
 /** Outputmixer Default Constructor
  * @brief    initialization of the modules local variabels with default values
+ *          A Level:            0.08
+ *          A Pan:              0
+ *          B Level:            0.08
+ *          B Pan:              0
+ *          Comb Level:         0.08
+ *          Comb Pan:           0
+ *          SV Filter Level:    0.08
+ *          SV Filter Pan:      0
+ *          Drive:              0
+ *          Fold:               0.5
+ *          Asym:               0
+ *          Main Level:         0.5776 (== -4.47 dB)
+ *          Key Pan:            0
 *******************************************************************************/
 
 Outputmixer::Outputmixer()
 {
-    mALevel = 0.016f;
-    mAPan = 0.5f;
-    mBLevel = 0.016f;
-    mBPan = 0.5f;
-    mCombLevel = 0.016f;
-    mCombPan = 0.5f;
-    mSVFilterLevel = 0.016f;
-    mSVFilterPan = 0.5f;
+    //******************************* Outputs ********************************//
+    mSample_L = 0.f;
+    mSample_R = 0.f;
 
-    mDrive = NlToolbox::Conversion::db2af(5.1f) * 0.25f;
+    //****************************** Controls ********************************//
+    mALevel = 0.08f * 2.f;
+    mAPan = (0.f * 0.005f) + 0.5f;
+    mBLevel = 0.08f * 2.f;
+    mBPan = (0.f * 0.005f) + 0.5f;
+    mCombLevel = 0.08f * 2.f;
+    mCombPan = (0.f * 0.005f) + 0.5f;
+    mSVFilterLevel = 0.08f * 2.f;
+    mSVFilterPan = (0.f * 0.005f) + 0.5f;
+
+    mDrive = NlToolbox::Conversion::db2af(0.f) * 0.25f;
     mFold = 0.5f;
     mAsym = 0.f;
 
-    mMainLevel = 0.650281f;
+    mMainLevel = 0.5776f * 0.64f;
     mKeypan = 0.f;
 
+    //*************************** State Variables ****************************//
     mShaperStateVar_R = 0.f;
     mShaperStateVar_L = 0.f;
 
+    //**************************** Papram Arrays *****************************//
     mKeyPitch = {0.f};
     mAMix_R = {0.f};
     mAMix_L = {0.f};
@@ -44,10 +64,13 @@ Outputmixer::Outputmixer()
     mSVFilterMix_R = {0.f};
     mSVFilterMix_L = {0.f};
 
+    //******************************* Filters ********************************//
     pHighpass_L = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
     pHighpass_R = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
 
+    //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;
+
     mALevel_ramp = 1.f;
     mAPan_ramp = 1.f;
     mBLevel_ramp = 1.f;
@@ -70,6 +93,7 @@ Outputmixer::Outputmixer()
  * @brief    initialization of the modules local variabels with custom
  *           parameters
 *******************************************************************************/
+
 Outputmixer::Outputmixer(float _ALevel,
                          float _APan,
                          float _BLevel,
@@ -83,7 +107,11 @@ Outputmixer::Outputmixer(float _ALevel,
                          float _asym,
                          float _mainLevel,
                          float _keyPan)
-{
+{    //******************************* Outputs ********************************//
+    mSample_L = 0.f;
+    mSample_R = 0.f;
+
+    //****************************** Controls ********************************//
     mALevel = _ALevel * 2.f;
     mAPan = (_APan * 0.005f) + 0.5f;
     mBLevel = _BLevel * 2.f;
@@ -100,9 +128,11 @@ Outputmixer::Outputmixer(float _ALevel,
     mMainLevel = _mainLevel * _mainLevel * 0.64f;
     mKeypan = _keyPan / 60.f;
 
+    //*************************** State Variables ****************************//
     mShaperStateVar_R = 0.f;
     mShaperStateVar_L = 0.f;
 
+    //**************************** Papram Arrays *****************************//
     mKeyPitch = {0.f};
     mAMix_R = {0.f};
     mAMix_L = {0.f};
@@ -113,10 +143,13 @@ Outputmixer::Outputmixer(float _ALevel,
     mSVFilterMix_R = {0.f};
     mSVFilterMix_L = {0.f};
 
+    //******************************* Filters ********************************//
     pHighpass_L = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
     pHighpass_R = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
 
+    //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;
+
     mALevel_ramp = 1.f;
     mAPan_ramp = 1.f;
     mBLevel_ramp = 1.f;
@@ -138,11 +171,13 @@ Outputmixer::Outputmixer(float _ALevel,
 /** Output Mixer Destructor
  * @brief
 *******************************************************************************/
+
 Outputmixer::~Outputmixer()
 {
     delete pHighpass_L;
     delete pHighpass_R;
 }
+
 
 
 /******************************************************************************/
@@ -152,7 +187,8 @@ Outputmixer::~Outputmixer()
 
 void Outputmixer::applyOutputMixer(uint32_t _voiceNumber, float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter)
 {
-    if (_voiceNumber == 0)           // do once for one voice cycle
+    //********************** Smoothing and Voice Reset ***********************//
+    if (_voiceNumber == 0)           // do once for one voice group cycle
     {
         mSample_L = 0.f;
         mSample_R = 0.f;
@@ -164,60 +200,55 @@ void Outputmixer::applyOutputMixer(uint32_t _voiceNumber, float _sampleA, float 
     }
 
 
-    //****************************** Pan Mixer *******************************//
-
-    float main_L = (mAMix_L[_voiceNumber] * _sampleA) + (mBMix_L[_voiceNumber] * _sampleB) +
+    //**************************** Left Pan Mixer ****************************//
+    float mainSample = (mAMix_L[_voiceNumber] * _sampleA) + (mBMix_L[_voiceNumber] * _sampleB) +
             (mCombMix_L[_voiceNumber] * _sampleComb) + (mSVFilterMix_L[_voiceNumber] * _sampleSVFilter);
 
-    float main_R = (mAMix_R[_voiceNumber] * _sampleA) + (mBMix_R[_voiceNumber] * _sampleB) +
+    //************************** Shape Left Sample ***************************//
+    mainSample = mDrive * mainSample;
+    float holdSample = mainSample;
+
+    mainSample = NlToolbox::Math::sinP3(mainSample);
+    mainSample = NlToolbox::Others::threeRanges(mainSample, holdSample, mFold);
+
+    holdSample = mainSample * mainSample;
+    holdSample = holdSample - mShaperStateVar_L;
+    mShaperStateVar_L = holdSample * 0.00427428f + mShaperStateVar_L + DNC_CONST;
+
+    mainSample = NlToolbox::Others::parAsym(mainSample, holdSample, mAsym);
+
+    mSample_L += mainSample;
+
+
+    //*************************** Right Pan Mixer ****************************//
+    mainSample = (mAMix_R[_voiceNumber] * _sampleA) + (mBMix_R[_voiceNumber] * _sampleB) +
             (mCombMix_R[_voiceNumber] * _sampleComb) + (mSVFilterMix_R[_voiceNumber] * _sampleSVFilter);
 
-
-    //************************** Shape Left Sample ***************************//
-
-    main_L = mDrive * main_L;
-    float ctrlSample = main_L;
-
-    main_L = NlToolbox::Math::sinP3(main_L);
-    main_L = NlToolbox::Others::threeRanges(main_L, ctrlSample, mFold);
-
-    float squareSample = main_L * main_L;
-    squareSample = squareSample - mShaperStateVar_L;
-    mShaperStateVar_L = squareSample * 0.00427428f + mShaperStateVar_L + DNC_CONST;
-
-    main_L = NlToolbox::Others::parAsym(main_L, squareSample, mAsym);
-
-
     //************************* Shape Right Sample ***************************//
+    mainSample = mDrive * mainSample;
+    holdSample = mainSample;
 
-    main_R = mDrive * main_R;
-    ctrlSample = main_R;
+    mainSample = NlToolbox::Math::sinP3(mainSample);
+    mainSample = NlToolbox::Others::threeRanges(mainSample, holdSample, mFold);
 
-    main_R = NlToolbox::Math::sinP3(main_R);
-    main_R = NlToolbox::Others::threeRanges(main_R, ctrlSample, mFold);
+    holdSample = mainSample * mainSample;
+    holdSample = holdSample - mShaperStateVar_R;
+    mShaperStateVar_R = holdSample * 0.00427428f + mShaperStateVar_R + DNC_CONST;
 
-    squareSample = main_R * main_R;
-    squareSample = squareSample - mShaperStateVar_R;
-    mShaperStateVar_R = squareSample * 0.00427428f + mShaperStateVar_R + DNC_CONST;
+    mainSample = NlToolbox::Others::parAsym(mainSample, holdSample, mAsym);
 
-    main_R = NlToolbox::Others::parAsym(main_R, squareSample, mAsym);
+    mSample_R += mainSample;
 
 
-    //********************* Combine the Voice Samples ************************//
-
-    mSample_L += main_L;
-    mSample_R += main_R;
-
+    //************************** Voice Combinder *****************************//
     if (_voiceNumber + 1 == NUM_VOICES)
     {
         //************************ 1-Pole Highpass ***************************//
-
         mSample_L = pHighpass_L->applyFilter(mSample_L);
         mSample_R = pHighpass_R->applyFilter(mSample_R);
 
 
         //************************** Main Level ******************************//
-
         mSample_L *= mMainLevel;
         mSample_R *= mMainLevel;
     }
@@ -505,7 +536,7 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
 
 
 /******************************************************************************/
-/** @brief    calls the smoothing functions f0r each sample
+/** @brief    calls the smoothing functions for each sample
 *******************************************************************************/
 
 void Outputmixer::applySmoothers()
