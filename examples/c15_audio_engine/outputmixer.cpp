@@ -181,8 +181,10 @@ Outputmixer::~Outputmixer()
 
 
 /******************************************************************************/
-/** @brief    main function which calculates the mix of the A and B samples
- *            depending ...
+/** @brief  main function which calculates a Mix of the incoming Samples from
+ *          the Soundgenerator, Comb anfd SV Filters. the Signale can then be
+ *          processed by a shaper. All the samples from all voices are combined
+ *          and filtered by a hipass filter
 *******************************************************************************/
 
 void Outputmixer::applyOutputMixer(uint32_t _voiceNumber, float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter)

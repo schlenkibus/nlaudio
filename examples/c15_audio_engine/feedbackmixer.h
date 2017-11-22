@@ -36,14 +36,12 @@ public:
     float mFeedbackOut;                     // Resulting Sample
     float mReverbLevel;                     // Parameter for the Reverb
 
-    void applyFeedbackMixer(float _CombSample, float _SVFilterSample, float _FeedbackSample);
-
+    void applyFeedbackMixer(float _CombSample, float _SVFilterSample, float _EffectsSample);
     void setPitchInfluence(float _keyPitch);
     void setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal);
 
 private:
-    void applySmoothers();
-
+    //********************* Control variables ********************************//
     float mPitch;
     float mPitchInfluence;
 
@@ -60,12 +58,20 @@ private:
 
     float mShaperStateVar;
 
-    //***************************** Filter ****************************************//
 
+    //************************** Filter **************************************//
     OnePoleFilters* pHighpass;
 
-    //**************************** Smoothing **************************************//
-
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: Comb Level
+    //                  ID 2: SV Filter Level
+    //                  ID 3: Effects Level
+    //                  ID 4: Reverb Level
+    //                  ID 5: Drive
+    //                  ID 6: Fold
+    //                  ID 7: main Level
+    //************************************************************************//
+    void applySmoothers();
     uint32_t mSmootherMask;
 
     // Mask ID: 1
@@ -118,8 +124,7 @@ private:
     float mLevel_ramp;
 
 
-    //****************************** Controls IDs *****************************//
-
+    //***************************** Controls IDs *****************************//
     enum CtrlID: unsigned char
     {
 #ifdef REMOTE61                     // novation ReMOTE61

@@ -10,28 +10,46 @@
 
 /******************************************************************************/
 /** Feedback Mixer Default Constructor
- * @brief    initialization of the modules local variabels with default values
+ * @brief   initialization of the modules local variabels with default values
+ *          Comb Level:             0
+ *          SV Filter Level:        0
+ *          Effects Level:          0
+ *          Reverb Level:           0.5
+ *          Drive:                  0
+ *          Fold:                   0.5
+ *          Asym:                   0
+ *          Main Level:             0.5776 (== -4.47 dB)
+ *          Key Tracking:           0
 *******************************************************************************/
 
 FeedbackMixer::FeedbackMixer()
 {
-    mCombLevel = 0.008f;
-    mSVFilterLevel = 0.008f;
-    mEffectsLevel = 0.000064f;
-    mReverbLevel = 0.f;
+    //******************************* Outputs ********************************//
+    mFeedbackOut = 0.f;
+    mReverbLevel = 0.5f;
 
-    mDrive = NlToolbox::Conversion::db2af(5.1f) * 0.25f;
+    //****************************** Controls ********************************//
+    mCombLevel = 0.f;
+    mSVFilterLevel = 0.f;
+    mEffectsLevel = 0.f;
+
+    mDrive = NlToolbox::Conversion::db2af(0.f) * 0.25f;
     mFold = 0.5f;
     mAsym = 0.f;
 
-    mMainLevel = 0.650281f;
+    mLevel_current = 0.5776f;
+    mMainLevel = mLevel_current;
     mKeyTracking = 0.f;
 
+    //**************************** State Variable ****************************//
     mShaperStateVar = 0.f;
 
+    //******************************** Filter ********************************//
     pHighpass = new OnePoleFilters(SAMPLERATE, 20.f, 0.f, OnePoleFilterType::HIGHPASS);
 
+    //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;
+
     mCombLevel_ramp = 1.f;
     mSVFilterLevel_ramp = 1.f;
     mEffectsLevel_ramp = 1.f;
@@ -60,23 +78,32 @@ FeedbackMixer::FeedbackMixer(float _CombLevel,
                              float _mainLevel,
                              float _keyTracking)
 {
+    //******************************* Outputs ********************************//
+    mFeedbackOut = 0.f;
+    mReverbLevel = _ReverbLevel;
+
+    //****************************** Controls ********************************//
     mCombLevel = _CombLevel;
     mSVFilterLevel = _SVFilterLevel;
     mEffectsLevel = _EffectsLevel * fabs(_EffectsLevel);
-    mReverbLevel = _ReverbLevel;
 
     mDrive = NlToolbox::Conversion::db2af(_drive) * 0.25f;
     mFold = _fold;
     mAsym = _asym;
 
-    mMainLevel = _mainLevel * _mainLevel;
+    mLevel_current = _mainLevel * _mainLevel;
+    mMainLevel = mLevel_current;
     mKeyTracking = _keyTracking;
 
+    //**************************** State Variable ****************************//
     mShaperStateVar = 0.f;
 
+    //******************************** Filter ********************************//
     pHighpass = new OnePoleFilters(SAMPLERATE, 20.f, 0.f, OnePoleFilterType::HIGHPASS);
 
+    //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;
+
     mCombLevel_ramp = 1.f;
     mSVFilterLevel_ramp = 1.f;
     mEffectsLevel_ramp = 1.f;
@@ -101,13 +128,15 @@ FeedbackMixer::~FeedbackMixer()
 
 
 /******************************************************************************/
-/** @brief    main function which ...
+/** @brief  main function which calculates the Feedback Sample from the incoming
+ *          CombFilter, SV Filter and Effects Samples, depending on the set
+ *          Levels. After the Mix, the Signal is filtered by a Highpass and
+ *          can be processed by a shaper
 *******************************************************************************/
 
-void FeedbackMixer::applyFeedbackMixer(float _CombSample, float _SVFilterSample, float _FeedbackSample)
+void FeedbackMixer::applyFeedbackMixer(float _CombSample, float _SVFilterSample, float _EffectsSample)
 {
     //****************************** Smoothing *******************************//
-
     if(mSmootherMask)
     {
         applySmoothers();
@@ -115,31 +144,27 @@ void FeedbackMixer::applyFeedbackMixer(float _CombSample, float _SVFilterSample,
 
 
     //**************************** Sample Mixer ******************************//
-
-    mFeedbackOut = _FeedbackSample * mEffectsLevel + _CombSample * mCombLevel + _SVFilterSample * mSVFilterLevel;
+    float mainSample = _EffectsSample * mEffectsLevel + _CombSample * mCombLevel + _SVFilterSample * mSVFilterLevel;
 
 
     //******************************* Filter *********************************//
-
-    mFeedbackOut = pHighpass->applyFilter(mFeedbackOut);
+    mainSample = pHighpass->applyFilter(mainSample);
 
 
     //******************************* Shaper *********************************//
+    mainSample = mDrive * mainSample;
 
-    mFeedbackOut = mDrive * mFeedbackOut;
+    float holdSample = mainSample;
+    mainSample = NlToolbox::Math::sinP3(mainSample);
+    mainSample = NlToolbox::Others::threeRanges(mainSample, holdSample, mFold);
 
-    float ctrlSample = mFeedbackOut;
+    holdSample = mainSample * mainSample;
+    holdSample = holdSample - mShaperStateVar;
+    mShaperStateVar = holdSample * 0.00427428f + mShaperStateVar + DNC_CONST;
 
-    mFeedbackOut = NlToolbox::Math::sinP3(mFeedbackOut);
-    mFeedbackOut = NlToolbox::Others::threeRanges(mFeedbackOut, ctrlSample, mFold);
+    mainSample = NlToolbox::Others::parAsym(mainSample, holdSample, mAsym);
 
-    float squareSample = mFeedbackOut * mFeedbackOut;
-    squareSample = squareSample - mShaperStateVar;
-    mShaperStateVar = squareSample * 0.00427428f + mShaperStateVar + DNC_CONST;
-
-    mFeedbackOut = NlToolbox::Others::parAsym(mFeedbackOut, squareSample, mAsym);
-
-    mFeedbackOut = mMainLevel * mFeedbackOut;
+    mFeedbackOut = mMainLevel * mainSample;
 }
 
 
@@ -255,7 +280,6 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
 
             // Set Smoothing Ramp
             mDrive_target = NlToolbox::Conversion::db2af(_ctrlVal) * 0.25f;
-
             mDrive_base = mDrive;
             mDrive_diff = mDrive_target - mDrive_base;
             mDrive_ramp = 0.0;
@@ -270,7 +294,6 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
 
             // Set Smoothing Ramp
             mFold_target = _ctrlVal;
-
             mFold_base = mFold;
             mFold_diff = mFold_target - mFold_base;
             mFold_ramp = 0.0;
@@ -285,7 +308,6 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
 
             // Set Smoothing Ramp
             mAsym_target = _ctrlVal;
-
             mAsym_base = mAsym;
             mAsym_diff = mAsym_target - mAsym_base;
             mAsym_ramp = 0.0;
@@ -305,7 +327,6 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
 
             // Set Smoothing Ramp
             mLevel_target = _ctrlVal * _ctrlVal;
-
             mLevel_base = mLevel_current;
             mLevel_diff = mLevel_target - mLevel_base;
             mLevel_ramp = 0.0;
@@ -333,7 +354,7 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
 
 
 /******************************************************************************/
-/** @brief    calls the smoothing functions f0r each sample
+/** @brief    calls the smoothing functions for each sample
 *******************************************************************************/
 
 void FeedbackMixer::applySmoothers()
