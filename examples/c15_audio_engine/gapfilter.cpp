@@ -10,20 +10,28 @@
 
 /******************************************************************************/
 /** GAp Filter Default Constructor
- * @brief    initialization of the modules local variabels with default values
+ * @brief   initialization of the modules local variabels with default values
+ *          Center:         72
+ *          Gap:            12
+ *          Balance:        0
+ *          Mix:            0
+ *          Stereo:         0
+ *          Resonance:      0.5
 *******************************************************************************/
 
 GapFilter::GapFilter()
 {
+    //******************************* Outputs ********************************//
     mGapFilterOut_L = 0.f;
     mGapFilterOut_R = 0.f;
 
+    //****************************** Controls ********************************//
     mCenter = 72.f;
     mGap = 12.f * 0.5f;
     mBalance = 0.f;
     mMix = 0.f;
     mStereo = 0.f * 0.5f;
-    mResonance = 0.45f;
+    mResonance = 0.5f * 0.9f;
 
     if (mMix > 0.f)
     {
@@ -37,6 +45,7 @@ GapFilter::GapFilter()
     calcGapFreq();
     calcFilterMix();
 
+    //******************************* Filters ********************************//
     pHighpass_L1 = new BiquadFilters(SAMPLERATE, 740.f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
     pHighpass_L2 = new BiquadFilters(SAMPLERATE, 740.f * 0.75f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
     pHighpass_R1 = new BiquadFilters(SAMPLERATE, 740.f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
@@ -47,6 +56,7 @@ GapFilter::GapFilter()
     pLowpass_R1 = new BiquadFilters(SAMPLERATE, 370.f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
     pLowpass_R2 = new BiquadFilters(SAMPLERATE, 370.f * 1.33f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
 
+    //***************************** Smoothing ********************************//
     while (mSmootherMask)
     {
         applySmoother();
@@ -72,9 +82,11 @@ GapFilter::GapFilter(float _center,
                      float _stereo,
                      float _resonance)
 {
+    //******************************* Outputs ********************************//
     mGapFilterOut_L = 0.f;
     mGapFilterOut_R = 0.f;
 
+    //****************************** Controls ********************************//
     mCenter = _center;
     mGap = _gap * 0.5f;
     mBalance = _balance;
@@ -94,6 +106,7 @@ GapFilter::GapFilter(float _center,
     calcGapFreq();
     calcFilterMix();
 
+    //******************************* Filters ********************************//
     pHighpass_L1 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
     pHighpass_L2 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
     pHighpass_R1 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
@@ -104,6 +117,7 @@ GapFilter::GapFilter(float _center,
     pLowpass_R1 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
     pLowpass_R2 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
 
+    //***************************** Smoothing ********************************//
     while (mSmootherMask)
     {
         applySmoother();
@@ -144,7 +158,6 @@ GapFilter::~GapFilter()
 void GapFilter::applyGapFilter(float _rawSample_L, float _rawSample_R)
 {
     //***************************** Smoothing *******************************//
-
     if(mSmootherMask)
     {
         applySmoother();
@@ -152,41 +165,31 @@ void GapFilter::applyGapFilter(float _rawSample_L, float _rawSample_R)
 
 
     //*************************** Left Highpass *****************************//
+    float highpassSample = pHighpass_L1->applyFilter(_rawSample_L);
+    highpassSample = pHighpass_L2->applyFilter(highpassSample);
+    highpassSample *= mHpOutMix;
 
-    float highpassOut_L = pHighpass_L1->applyFilter(_rawSample_L);
-    highpassOut_L = pHighpass_L2->applyFilter(highpassOut_L);
+    //**************************** Left Lowpass *****************************//
+    float lowpassSample = pLowpass_L1->applyFilter(highpassSample * mHpLpMix + _rawSample_L * mInLpMix);
+    lowpassSample = pLowpass_L2->applyFilter(lowpassSample);
+    lowpassSample *= mLpOutMix;
 
-    highpassOut_L *= mHpOutMix;
+    mGapFilterOut_L = highpassSample + lowpassSample + (_rawSample_L * mInOutMix);
 
 
     //*************************** Right Highpass ****************************//
+    highpassSample = pHighpass_R1->applyFilter(_rawSample_R);
+    highpassSample = pHighpass_R2->applyFilter(highpassSample);
 
-    float highpassOut_R = pHighpass_R1->applyFilter(_rawSample_R);
-    highpassOut_R = pHighpass_R2->applyFilter(highpassOut_R);
-
-    highpassOut_R *= mHpOutMix;
-
-
-    //**************************** Left Lowpass *****************************//
-
-    float lowpassOut_L = pLowpass_L1->applyFilter(highpassOut_L * mHpLpMix + _rawSample_L * mInLpMix);
-    lowpassOut_L = pLowpass_L2->applyFilter(lowpassOut_L);
-
-    lowpassOut_L *= mLpOutMix;
-
+    highpassSample *= mHpOutMix;
 
     //**************************** Right Lowpass ****************************//
+    lowpassSample = pLowpass_R1->applyFilter(highpassSample * mHpLpMix + _rawSample_R * mInLpMix);
+    lowpassSample = pLowpass_R2->applyFilter(lowpassSample);
 
-    float lowpassOut_R = pLowpass_R1->applyFilter(highpassOut_R * mHpLpMix + _rawSample_R * mInLpMix);
-    lowpassOut_R = pLowpass_R2->applyFilter(lowpassOut_R);
+    lowpassSample *= mLpOutMix;
 
-    lowpassOut_R *= mLpOutMix;
-
-
-    //***************************** Sample Mix ******************************//
-
-    mGapFilterOut_L = highpassOut_L + lowpassOut_L + (_rawSample_L * mInOutMix);
-    mGapFilterOut_R = highpassOut_R + lowpassOut_R + (_rawSample_R * mInOutMix);
+    mGapFilterOut_R = highpassSample + lowpassSample + (_rawSample_R * mInOutMix);
 }
 
 
@@ -306,7 +309,7 @@ void GapFilter::setGapFilterParams(unsigned char _ctrlID, float _ctrlVal)
 
 
 /*****************************************************************************/
-/** @brief Cut Frequency Calculation for all Filters depemding on the Mix Sign,
+/** @brief Cut Frequency Calculation for all Filters depending on the Mix Sign,
  *         Gap Amount, Center Center Position and Stereo Amount
  *         Since the Frequencies must be smoothed, the rest of the calculation
  *         is to be found on applySmoother() under ID 1

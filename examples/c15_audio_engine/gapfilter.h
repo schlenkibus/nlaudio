@@ -31,14 +31,10 @@ public:
     float mGapFilterOut_L, mGapFilterOut_R;     // public processed samples
 
     void applyGapFilter(float _rawSample_L, float _rawSample_R);
-
     void setGapFilterParams(unsigned char _ctrlID, float _ctrlVal);
 
 private:
-    void calcGapFreq();
-    void calcFilterMix();
-    void applySmoother();
-
+    //******************************* Controls *******************************//
     float mCenter;
     float mGap;
     float mBalance;
@@ -47,6 +43,7 @@ private:
     float mStereo;
     float mResonance;
 
+    //************************* Filters and Variables ************************//
     float mHighpassFreq_L;
     float mHighpassFreq_R;
     float mLowpassFreq_L;
@@ -74,8 +71,12 @@ private:
     BiquadFilters* pLowpass_R2;
 
 
-    //******************************* Smoothing Variabels *******************************//
-
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: Filter Frequency
+    //                  ID 2: Resonance
+    //                  ID 3: Filter Mix
+    //************************************************************************//
+    void applySmoother();
     uint32_t mSmootherMask;
 
     // Mask ID: 1
@@ -127,8 +128,7 @@ private:
     float mInOutMix_diff;
 
 
-    //*********************************** Controls IDs **********************************//
-
+    //****************************** Controls IDs ****************************//
     enum CtrlID: unsigned char
     {
 #ifdef REMOTE61                         // ReMote 61
@@ -148,5 +148,10 @@ private:
         RESONANCE           =
 #endif
     };
+
+
+    //*************************** Helper Functions ***************************//
+    void calcGapFreq();
+    void calcFilterMix();
 };
 
