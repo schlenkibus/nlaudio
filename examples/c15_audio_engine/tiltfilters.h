@@ -25,8 +25,7 @@ public:
 
     TiltFilters();                                  // Deafult Constructor
 
-    TiltFilters(uint32_t _sampleRate,               // Parameterized Constructor
-                float _cutFreq,
+    TiltFilters(float _cutFreq,                     // Parameterized Constructor
                 float _tilt,
                 float _slopeWidth,
                 float _resonance,
@@ -50,8 +49,6 @@ private:
     void calcCoeff();
     void setAlpha();
     void resetStateVariables();
-
-    float mSampleRate;                   // samplerate
 
     float mResonance;                    // filter resonance
     float mSlopeWidth;                   // slope width

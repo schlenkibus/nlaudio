@@ -22,7 +22,6 @@
 
 TiltFilters::TiltFilters()
 {
-    mSampleRate = 48000.f;
     mFilterCounter = 0;
 
     setCutFreq(22000.f);
@@ -41,14 +40,12 @@ TiltFilters::TiltFilters()
  *           parameters
 *******************************************************************************/
 
-TiltFilters::TiltFilters(uint32_t _sampleRate,
-                         float _cutFreq,
+TiltFilters::TiltFilters(float _cutFreq,
                          float _tilt,
                          float _slopeWidth,
                          float _resonance,
                          TiltFilterType _filterType)
 {
-    mSampleRate = static_cast<float>(_sampleRate);
     mFilterCounter = 0;
 
     setCutFreq(_cutFreq);
@@ -68,17 +65,17 @@ TiltFilters::TiltFilters(uint32_t _sampleRate,
 
 void TiltFilters::setCutFreq(float _cutFreq)
 {
-    if (_cutFreq < (mSampleRate / 24576.f))                   //Frequency clipping
+    if (_cutFreq < FREQCLIP_MIN_2)                   //Frequency clipping
     {
-        _cutFreq = mSampleRate / 24576.f;
+        _cutFreq = FREQCLIP_MIN_2;
     }
 
-    else if (_cutFreq > (mSampleRate / 2.125f))
+    else if (_cutFreq > FREQCLIP_MAX_4)
     {
-        _cutFreq = mSampleRate / 2.125f;
+        _cutFreq = FREQCLIP_MAX_4;
     }
 
-    float omega = _cutFreq * (2.f * M_PI / mSampleRate);      //Freqnecy to omega (warp)
+    float omega = _cutFreq * WARPCONST_2PI;      //Freqnecy to omega (warp)
 
     mOmegaSin = NlToolbox::Math::sin(omega);                         //alternative to sin(omega) -> tools.h
     mOmegaCos = NlToolbox::Math::cos(omega);                         //alternative to cos(omega) -> tools.h
@@ -132,9 +129,14 @@ void TiltFilters::setResonance(float _resonance)
 
 void TiltFilters::setSlopeWidth(float _slopeWidth)
 {
-    mSlopeWidth = _slopeWidth < 1.f                      //min clip check
-            ? 1.f
-            : _slopeWidth;
+    if (_slopeWidth < 1.f)
+    {
+        mSlopeWidth = 1.f;
+    }
+    else
+    {
+        mSlopeWidth = _slopeWidth;
+    }
 
     setAlpha();
     calcCoeff();

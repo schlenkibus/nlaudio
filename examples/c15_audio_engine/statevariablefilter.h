@@ -9,9 +9,7 @@
     @todo       Envelope Influence
 *******************************************************************************/
 
-
 #pragma once
-
 #include "nltoolbox.h"
 
 
@@ -41,40 +39,22 @@ public:
     void setPitch(float _pitch);
 
 private:
-    void calcCutFrequency();
-    void calcAttenuation();
-
-    void applySmoothers();
     float mPitch;
 
-
-    //******************************* Mix Variables **************************************//
-
+    //*********************** Control Variables ******************************//
     float mABMix_0;              // A Sample Mix (1 - mABMix_1);
     float mABMix_1;              // B Sample Mix
 
     float mCombMix_0;            // AB-Sample Mit (1 - (abs(mCombMix_1)))
     float mCombMix_1;            // Comb Sample Mix
 
-
-    //******************************* Cutoff Variables ***********************************//
-
     float mCutPitch;
     float mCutKeyTracking;
-
-
-    //**************************** Resonance Variables ***********************************//
 
     float mResonance;
     float mResonanceKeyTracking;
 
-
-    //******************************* Spread Variables ***********************************//
-
     float mSpread;
-
-
-    //****************** Pre- and Postfade (Parallel) Amounts ****************************//
 
     float mFirst_Prefade;
     float mSecond_Prefade;
@@ -82,15 +62,10 @@ private:
     float mFirst_Postfade;
     float mSecond_Postfade;
 
-
-    //******************************* Frequency Modulation *******************************//
-
     float mFreqMod;                 // Frequency Modulation Amount
     float mFreqModMix_0;            // A Sample Freq Modulation (1 - mFreqModMix_1)
     float mFreqModMix_1;            // B Sample Freq Modulation
 
-
-    //********************************* Filter Stages ************************************//
 
     float mFirst_Filtertype, mSecond_Filtertype;                // Filter Type for each stage;
     float mFirst_LPMix, mSecond_LPMix;
@@ -98,22 +73,25 @@ private:
     float mFirst_HPMix, mSecond_HPMix;
 
     float mFirst_CutFreq, mSecond_CutFreq;                      // Resulting Cutoff Frequency (Pitch, Cutoff, EnvC and +Spread Influence)
-
     float mFirst_FreqModConst, mSecond_FreqModConst;            // Constant which results from (mCutFreq * mFreqModAmnt)
-
     float mFirst_Attenuation, mSecond_Attenuation;              // Attentuation for both filter stages
-
     float mFirst_FirStateVar, mSecond_FirStateVar;              // FIR state variable
     float mFirst_SVSampleState;                                 // first SV sample state
-
     float mFirst_Int1StateVar, mSecond_Int1StateVar;            // first state variable
     float mFirst_Int2StateVar, mSecond_Int2StateVar;            // second state variable
-
     float mFirst_ParabSatStateVar, mSecond_ParabSatStateVar;    // Output from the  Parabol Saturator
 
 
-    //******************************* Smoothing Variabels *******************************//
-
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: AB Mix
+    //                  ID 2: Comb Filter Fix
+    //                  ID 3: Frequency Modulation Mix
+    //                  ID 4: Cut Pitch
+    //                  ID 5: First Filtertype
+    //                  ID 6: Second Filtertype
+    //                  ID 7: Fades
+    //************************************************************************//
+    void applySmoothers();
     uint32_t mSmootherMask;             // Smoother Mask
 
     // Mask ID: 1
@@ -171,8 +149,13 @@ private:
     float mSecond_Postfade_target;
     float mSecond_Postfade_diff;
 
-    //****************************** Controls IDs *****************************//
 
+    //*************************** Helper Functions ***************************//
+    void calcCutFrequency();
+    void calcAttenuation();
+
+
+    //***************************** Controls IDs *****************************//
     enum CtrlId: unsigned char
     {
 #ifdef REMOTE61                         // ReMote 61

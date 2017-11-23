@@ -21,7 +21,6 @@
 
 OnePoleFilters::OnePoleFilters()
 {
-    mSampleRate = 48000.f;
     mFilterCounter = 0;
 
     setCutFreq(22000.f);
@@ -38,12 +37,10 @@ OnePoleFilters::OnePoleFilters()
  *           parameters
 *******************************************************************************/
 
-OnePoleFilters::OnePoleFilters(uint32_t _sampleRate,
-                               float _cutFreq,
+OnePoleFilters::OnePoleFilters(float _cutFreq,
                                float _shelfAmp,
                                OnePoleFilterType _filterType)
 {
-    mSampleRate = static_cast<float>(_sampleRate);
     mFilterCounter = 0;
 
     setCutFreq(_cutFreq);
@@ -78,18 +75,18 @@ void OnePoleFilters::setCutFreq(float _cutFreq)
             break;
     }
 
-    if (_cutFreq < (mSampleRate / 24000.f))             // clipping check
+    if (_cutFreq < FREQCLIP_MIN_1)             // clipping check
     {
-        _cutFreq = mSampleRate / 24000.f;
+        _cutFreq = FREQCLIP_MIN_1;
     }
 
-    if (_cutFreq > (mSampleRate / 2.18f))
+    if (_cutFreq > FREQCLIP_MAX_3)
     {
-        _cutFreq = mSampleRate / 2.18f;
+        _cutFreq = FREQCLIP_MAX_3;
     }
 
-    _cutFreq *= (M_PI / mSampleRate);                   // Frequency warp
-    mOmegaTan = NlToolbox::Math::tan(_cutFreq);         // alternative to tan(cutFreq) -> tools.h;
+    _cutFreq *= WARPCONST_PI;                       // Frequency warp
+    mOmegaTan = NlToolbox::Math::tan(_cutFreq);     // alternative to tan(cutFreq) -> tools.h;
 
     calcCoeff();
 }

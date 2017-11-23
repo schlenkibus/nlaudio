@@ -45,7 +45,7 @@ FeedbackMixer::FeedbackMixer()
     mShaperStateVar = 0.f;
 
     //******************************** Filter ********************************//
-    pHighpass = new OnePoleFilters(SAMPLERATE, 20.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass = new OnePoleFilters(20.f, 0.f, OnePoleFilterType::HIGHPASS);
 
     //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;
@@ -99,7 +99,7 @@ FeedbackMixer::FeedbackMixer(float _CombLevel,
     mShaperStateVar = 0.f;
 
     //******************************** Filter ********************************//
-    pHighpass = new OnePoleFilters(SAMPLERATE, 20.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass = new OnePoleFilters(20.f, 0.f, OnePoleFilterType::HIGHPASS);
 
     //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;

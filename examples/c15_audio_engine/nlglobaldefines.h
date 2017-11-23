@@ -41,13 +41,16 @@ const float REVERB_SMOOTHER_INC = 1.f / (SAMPLERATE * 0.001f * 50.f);
 
 const float CONST_PI = 3.14159f;
 const float CONST_HALF_PI = 1.5708;
+const float CONST_DOUBLE_PI = 6.28318f;
 const float WARPCONST_2PI = 6.28319f / SAMPLERATE;
 const float WARPCONST_PI  = 3.14159f / SAMPLERATE;
-const float SAMPLING_INTERVAL = 1.f / SAMPLERATE;
+const float SAMPLE_INTERVAL = 1.f / SAMPLERATE;
 
-const float FREQCLIP_2HZ = SAMPLERATE / 24576.f;
-const float FREQCLIP_12000HZ = SAMPLERATE / 4.f;
-const float FREQCLIP_14700HZ = SAMPLERATE / 3.f;
-const float FREQCLIP_22000HZ = SAMPLERATE / 2.125f;
-const float FREQCLIP_22050HZ = SAMPLERATE / 2.f;
+const float FREQCLIP_MIN_1 = SAMPLERATE / 24000.f;
+const float FREQCLIP_MIN_2 = SAMPLERATE / 24576.f;
+const float FREQCLIP_MAX_1 = SAMPLERATE / 4.f;
+const float FREQCLIP_MAX_2 = SAMPLERATE / 3.f;
+const float FREQCLIP_MAX_3 = SAMPLERATE / 2.18f;
+const float FREQCLIP_MAX_4 = SAMPLERATE / 2.125f;
+const float FREQCLIP_MAX_5 = SAMPLERATE / 2.f;
 

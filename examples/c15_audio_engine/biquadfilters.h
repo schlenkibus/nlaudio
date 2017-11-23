@@ -25,8 +25,7 @@ public:
 
     BiquadFilters();                                // Deafult Constructor
 
-    BiquadFilters(uint32_t _sampleRate,             // Parameterized Constructor
-                  float _cutFreq,
+    BiquadFilters(float _cutFreq,                   // Parameterized Constructor
                   float _shelfAmp,
                   float _resonance,
                   BiquadFilterType _filterType);
@@ -47,8 +46,6 @@ private:
 
     void calcCoeff();
     void resetStateVariables();
-
-    float mSampleRate;						// samplerate
 
     float mShelfAmp;						// normalized shelf amplification
     float mResonance;						// filter resonance

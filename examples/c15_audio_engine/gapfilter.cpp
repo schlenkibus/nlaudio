@@ -46,15 +46,15 @@ GapFilter::GapFilter()
     calcFilterMix();
 
     //******************************* Filters ********************************//
-    pHighpass_L1 = new BiquadFilters(SAMPLERATE, 740.f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
-    pHighpass_L2 = new BiquadFilters(SAMPLERATE, 740.f * 0.75f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
-    pHighpass_R1 = new BiquadFilters(SAMPLERATE, 740.f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
-    pHighpass_R2 = new BiquadFilters(SAMPLERATE, 740.f * 0.75f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
+    pHighpass_L1 = new BiquadFilters(740.f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
+    pHighpass_L2 = new BiquadFilters(740.f * 0.75f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
+    pHighpass_R1 = new BiquadFilters(740.f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
+    pHighpass_R2 = new BiquadFilters(740.f * 0.75f, 0.f, 0.45f, BiquadFilterType::HIGHPASS);
 
-    pLowpass_L1 = new BiquadFilters(SAMPLERATE, 370.f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
-    pLowpass_L2 = new BiquadFilters(SAMPLERATE, 370.f * 1.33f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
-    pLowpass_R1 = new BiquadFilters(SAMPLERATE, 370.f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
-    pLowpass_R2 = new BiquadFilters(SAMPLERATE, 370.f * 1.33f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
+    pLowpass_L1 = new BiquadFilters(370.f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
+    pLowpass_L2 = new BiquadFilters(370.f * 1.33f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
+    pLowpass_R1 = new BiquadFilters(370.f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
+    pLowpass_R2 = new BiquadFilters(370.f * 1.33f, 0.f, 0.45f, BiquadFilterType::LOWPASS);
 
     //***************************** Smoothing ********************************//
     while (mSmootherMask)
@@ -107,15 +107,15 @@ GapFilter::GapFilter(float _center,
     calcFilterMix();
 
     //******************************* Filters ********************************//
-    pHighpass_L1 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
-    pHighpass_L2 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
-    pHighpass_R1 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
-    pHighpass_R2 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
+    pHighpass_L1 = new BiquadFilters(0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
+    pHighpass_L2 = new BiquadFilters(0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
+    pHighpass_R1 = new BiquadFilters(0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
+    pHighpass_R2 = new BiquadFilters(0.f, 0.f, 0.f, BiquadFilterType::HIGHPASS);
 
-    pLowpass_L1 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
-    pLowpass_L2 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
-    pLowpass_R1 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
-    pLowpass_R2 = new BiquadFilters(SAMPLERATE, 0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
+    pLowpass_L1 = new BiquadFilters(0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
+    pLowpass_L2 = new BiquadFilters(0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
+    pLowpass_R1 = new BiquadFilters(0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
+    pLowpass_R2 = new BiquadFilters(0.f, 0.f, 0.f, BiquadFilterType::LOWPASS);
 
     //***************************** Smoothing ********************************//
     while (mSmootherMask)
@@ -453,7 +453,7 @@ void GapFilter::applySmoother()
         pHighpass_L1->setCutFreq(mHighpassFreq_L);
         pHighpass_L2->setCutFreq(mHighpassFreq_L * 0.75f);
 
-        mScaledFreqHP_L = (1.f / (FREQCLIP_14700HZ - FREQCLIP_22050HZ)) * (mHighpassFreq_L - FREQCLIP_22050HZ);
+        mScaledFreqHP_L = (1.f / (FREQCLIP_MAX_2 - FREQCLIP_MAX_5)) * (mHighpassFreq_L - FREQCLIP_MAX_5);
 
         if (mScaledFreqHP_L > 1.f)
         {
@@ -472,7 +472,7 @@ void GapFilter::applySmoother()
         pHighpass_R1->setCutFreq(mHighpassFreq_R);
         pHighpass_R2->setCutFreq(mHighpassFreq_R * 0.75f);
 
-        mScaledFreqHP_R = (1.f / (FREQCLIP_14700HZ - FREQCLIP_22050HZ)) * (mHighpassFreq_R - FREQCLIP_22050HZ);
+        mScaledFreqHP_R = (1.f / (FREQCLIP_MAX_2 - FREQCLIP_MAX_5)) * (mHighpassFreq_R - FREQCLIP_MAX_5);
 
         if (mScaledFreqHP_R > 1.f)
         {
@@ -491,7 +491,7 @@ void GapFilter::applySmoother()
         pLowpass_L1->setCutFreq(mLowpassFreq_L);
         pLowpass_L2->setCutFreq(mLowpassFreq_L * 1.33f);
 
-        mScaledFreqLP_L = (1.f / (FREQCLIP_14700HZ - FREQCLIP_22050HZ)) * (mLowpassFreq_L - FREQCLIP_22050HZ);
+        mScaledFreqLP_L = (1.f / (FREQCLIP_MAX_2 - FREQCLIP_MAX_5)) * (mLowpassFreq_L - FREQCLIP_MAX_5);
 
         if (mScaledFreqLP_L > 1.f)
         {
@@ -510,7 +510,7 @@ void GapFilter::applySmoother()
         pLowpass_R1->setCutFreq(mLowpassFreq_R);
         pLowpass_R2->setCutFreq(mLowpassFreq_R * 1.33f);
 
-        mScaledFreqLP_R = (1.f / (FREQCLIP_14700HZ - FREQCLIP_22050HZ)) * (mLowpassFreq_R - FREQCLIP_22050HZ);
+        mScaledFreqLP_R = (1.f / (FREQCLIP_MAX_2 - FREQCLIP_MAX_5)) * (mLowpassFreq_R - FREQCLIP_MAX_5);
 
         if (mScaledFreqLP_R > 1.f)
         {

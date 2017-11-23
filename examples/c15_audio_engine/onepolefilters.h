@@ -11,6 +11,8 @@
 #pragma once
 #include "nltoolbox.h"
 
+
+
 enum class OnePoleFilterType            // Enum Class for filter Types
 {
     LOWPASS,
@@ -25,8 +27,7 @@ public:
 
     OnePoleFilters();                               // Default Constructor
 
-    OnePoleFilters(uint32_t _sampleRate,            // Parameterized Constructor
-                   float _cutFreq,
+    OnePoleFilters(float _cutFreq,                  // Parameterized Constructor
                    float _shelfAmp,
                    OnePoleFilterType _filterType);
 
@@ -46,9 +47,7 @@ private:
     void calcCoeff();
     void resetStateVariables();
 
-    float mSampleRate;                              // samplerate
     float mShelfAmp;                                // normalized shelf amplification
-
     float mOmegaTan;                                // tangent of the warped frequency
     float mShelfAmpSquare;                          // helper variable when the shelf amp is set
 

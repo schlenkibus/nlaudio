@@ -49,7 +49,7 @@ CombFilter::CombFilter()
     mDecayStateVar = 0.f;
 
     //***************************** Highpass *********************************//
-    pHighpass = new OnePoleFilters(SAMPLERATE, 60.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass = new OnePoleFilters(60.f, 0.f, OnePoleFilterType::HIGHPASS);
 
     //****************************** Allpass *********************************//
     mAllpassTune = 140.f;
@@ -131,7 +131,7 @@ CombFilter::CombFilter(float _ABMix,
     mDecayStateVar = 0.f;
 
     //***************************** Highpass *********************************//
-    pHighpass = new OnePoleFilters(SAMPLERATE, 60.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass = new OnePoleFilters(60.f, 0.f, OnePoleFilterType::HIGHPASS);
 
     //****************************** Allpass *********************************//
     mAllpassTune = _allpassTune;
@@ -683,43 +683,43 @@ void CombFilter::calcMainFreq()
 
 void CombFilter::calcLowpassFreq()
 {
-    float cutFrequency = ((mPitch * mLowpassKeyTrk) + mLowpassHiCut); /// + (mEnv * mLowpassEnvC);      // Cut Frequency Calculation
+    float tmpVar = ((mPitch * mLowpassKeyTrk) + mLowpassHiCut); /// + (mEnv * mLowpassEnvC);      // Cut Frequency Calculation
 
-    cutFrequency = NlToolbox::Conversion::pitch2freq(cutFrequency);
+    tmpVar = NlToolbox::Conversion::pitch2freq(tmpVar);
 
-    if (cutFrequency > FREQCLIP_12000HZ)           // Clip check Max
+    if (tmpVar > FREQCLIP_MIN_2)           // Clip check Max
     {
-        cutFrequency = FREQCLIP_12000HZ;
+        tmpVar = FREQCLIP_MIN_2;
     }
 
-    if (cutFrequency < FREQCLIP_2HZ)           // Clip check Min
+    if (tmpVar < FREQCLIP_MAX_1)           // Clip check Min
     {
-        cutFrequency = FREQCLIP_2HZ;
+        tmpVar = FREQCLIP_MAX_1;
     }
 
 
     //********************* Lowpass coefficient calculation *****************//
-    cutFrequency = cutFrequency * (WARPCONST_PI);
+    tmpVar = tmpVar * WARPCONST_PI;
 
-    cutFrequency *= 0.159155f;                          // 2Pi wrap
-    cutFrequency = cutFrequency - round(cutFrequency);
-    cutFrequency *= 6.28319f;
+    tmpVar *= 0.159155f;                          // 2Pi wrap
+    tmpVar = tmpVar - round(tmpVar);
+    tmpVar *= 6.28319f;
 
-    float omegaTan = NlToolbox::Math::sin(cutFrequency) / NlToolbox::Math::cos(cutFrequency);     // tan -pi..pi
+    tmpVar = NlToolbox::Math::sin(tmpVar) / NlToolbox::Math::cos(tmpVar);     // tan -pi..pi
 
-    mLowpassCoeff_A1 = (1.f - omegaTan) / (1.f + omegaTan);
+    mLowpassCoeff_A1 = (1.f - tmpVar) / (1.f + tmpVar);
 
 
     //********************** Negative Phase Calculation ********************//
-    float w_norm = mMainFreq * (1.f / SAMPLERATE);
+    tmpVar = mMainFreq * SAMPLE_INTERVAL;
 
-    float stateVar_r = NlToolbox::Math::sinP3(w_norm);
-    float stateVar_i = NlToolbox::Math::sinP3(w_norm + 0.25f);
+    float stateVar_r = NlToolbox::Math::sinP3(tmpVar);
+    float stateVar_i = NlToolbox::Math::sinP3(tmpVar + 0.25f);
 
     stateVar_r = stateVar_r * mLowpassCoeff_A1;
     stateVar_i = stateVar_i * -mLowpassCoeff_A1 + 1.f;
 
-    mNegPhase = NlToolbox::Math::arctan(stateVar_r / stateVar_i) * (1.f / -6.28319f);
+    mNegPhase = NlToolbox::Math::arctan(stateVar_r / stateVar_i) * (1.f / -CONST_DOUBLE_PI);
 
     calcDelayTime();
 }
@@ -736,78 +736,78 @@ void CombFilter::calcLowpassFreq()
 
 void CombFilter::calcAllpassFreq()
 {
-    float cutFrequency = (mPitch * mAllpassKeyTrk) + mAllpassTune; /// + (mEnv * mLowpassEnvC);     // Cut Frequency Calculation
+    float tmpVar = (mPitch * mAllpassKeyTrk) + mAllpassTune; /// + (mEnv * mLowpassEnvC);     // Cut Frequency Calculation
 
-    cutFrequency = NlToolbox::Conversion::pitch2freq(cutFrequency);
+    tmpVar = NlToolbox::Conversion::pitch2freq(tmpVar);
 
-    if (cutFrequency > FREQCLIP_22000HZ)           // Clip check Max
+    if (tmpVar > FREQCLIP_MIN_2)           // Clip check Max
     {
-        cutFrequency = FREQCLIP_22000HZ;
+        tmpVar = FREQCLIP_MIN_2;
     }
 
-    if (cutFrequency < FREQCLIP_2HZ)           // Clip check Min
+    if (tmpVar < FREQCLIP_MAX_1)           // Clip check Min
     {
-        cutFrequency = FREQCLIP_2HZ;
+        tmpVar = FREQCLIP_MAX_1;
     }
 
 
     //******************** Allpass coefficient calculation ******************//
-    cutFrequency = cutFrequency * (WARPCONST_2PI);
+    tmpVar = tmpVar * WARPCONST_2PI;
 
-    float omegaSin = NlToolbox::Math::sin(cutFrequency);
-    float omegaCos = NlToolbox::Math::cos(cutFrequency);
+//    float omegaSin = NlToolbox::Math::sin(tmpVar);
+//    float omegaCos = NlToolbox::Math::cos(tmpVar);
 
-    float alpha = omegaSin * (1.f - mAllpassRes);
+    float alpha = NlToolbox::Math::sin(tmpVar) * (1.f - mAllpassRes);
     float normVar = 1.f / (1.f + alpha);
 
-    mAllpassCoeff_1 = (-2.f * omegaCos) * normVar;
+    mAllpassCoeff_1 = (-2.f * NlToolbox::Math::cos(tmpVar)) * normVar;
     mAllpassCoeff_2 =  (1.f - alpha) * normVar;
 
 
     //******************** Norm Phase Calculation ***************************//
-    float w_norm = mMainFreq * (SAMPLING_INTERVAL);
+    tmpVar = mMainFreq * SAMPLE_INTERVAL;
 
-    float stateVar1_i = NlToolbox::Math::sinP3(w_norm);
-    float stateVar1_r = NlToolbox::Math::sinP3(w_norm + 0.25f);
+    float stateVar1_i = NlToolbox::Math::sinP3(tmpVar) * -1.f * mAllpassCoeff_1;
+    float stateVar2_i = NlToolbox::Math::sinP3(tmpVar + tmpVar);
+    float stateVar1_r = NlToolbox::Math::sinP3(tmpVar + 0.25f) * mAllpassCoeff_1;
+    float stateVar2_r = NlToolbox::Math::sinP3(tmpVar + tmpVar + 0.25f);
 
-    float stateVar2_i = NlToolbox::Math::sinP3(w_norm + w_norm);
-    float stateVar2_r = NlToolbox::Math::sinP3(w_norm + w_norm + 0.25f);
 
-    float var1_r = (mAllpassCoeff_1 * stateVar1_r) + stateVar2_r + mAllpassCoeff_2;
-    float var1_i = (-1.f * mAllpassCoeff_1 * stateVar1_i) - stateVar2_i;
+    float var1_i = stateVar1_i - stateVar2_i;
+    float var2_i = (stateVar1_i - (mAllpassCoeff_2 * stateVar2_i)) * -1.f;
+    float var1_r = stateVar1_r + stateVar2_r + mAllpassCoeff_2;
+    float var2_r = stateVar1_r + (stateVar2_r * mAllpassCoeff_2) + 1.f;
 
-    float var2_r = (mAllpassCoeff_1 * stateVar1_r) + (mAllpassCoeff_2 * stateVar2_r) + 1.f;
-    float var2_i = ((-1.f * mAllpassCoeff_1 * stateVar1_i) - (mAllpassCoeff_2 * stateVar2_i)) * -1.f;
 
-    float var_X = (var1_r * var2_r) - (var1_i * var2_i);        // kmplx mul
-    float var_Y = (var1_r * var2_i) + (var2_r * var1_i);
+    stateVar1_i = (var1_r * var2_r) - (var1_i * var2_i);        // kmplx mul
+    stateVar1_r = (var1_r * var2_i) + (var2_r * var1_i);
 
-    if (var_X > 0.f)                                            // safe
+    if (stateVar1_i > 0.f)                                            // safe
     {
-        var_X += 1e-12;
+        stateVar1_i += 1e-12;
     }
     else
     {
-        var_X -= 1e-12;
+        stateVar1_i -= 1e-12;
     }
 
-    mNormPhase = NlToolbox::Math::arctan(var_Y / var_X);        // arctan
+    mNormPhase = NlToolbox::Math::arctan(stateVar1_r / stateVar1_i);        // arctan
 
-    if (var_X < 0.f)
+    if (stateVar1_i < 0.f)
     {
-        if (var_Y > 0.f)
+        if (stateVar1_r > 0.f)
         {
-            mNormPhase += 3.14159f;
+            mNormPhase += CONST_PI;
         }
         else
         {
-            mNormPhase -= 3.14159f;
+            mNormPhase -= CONST_PI;
         }
     }
 
     if (mNormPhase > 0.f)                                       // forced unwrap > 0
     {
-        mNormPhase += -6.28319f;
+        mNormPhase += -CONST_DOUBLE_PI;
     }
 
     mNormPhase *= 0.159155f;
@@ -824,34 +824,38 @@ void CombFilter::calcAllpassFreq()
 
 void CombFilter::calcDecayGain()
 {
-    float sign;
+//    float sign;
 
-    if (mDecay < 0.f)
-    {
-        sign = -1.f;
-    }
-    else
-    {
-        sign = 1.f;
-    }
+//    if (mDecay < 0.f)
+//    {
+//        sign = -1.f;
+//    }
+//    else
+//    {
+//        sign = 1.f;
+//    }
 
     float decayTime = mPitch * -0.5 * mDecayKeyTrk + fabs(mDecay);  /// hier fehlt noch der Gate-Faktor
 
     decayTime = NlToolbox::Conversion::db2af(decayTime);
     decayTime *= 0.001f;
 
-    decayTime *= sign;
+//    decayTime *= sign;
+    if (mDecay < 0.f)
+    {
+        decayTime *= -1.f;
+    }
 
 
     //********************************* g ************************************//
-    if (decayTime < 0.f)
-    {
-        sign = -1.f;
-    }
-    else
-    {
-        sign = 1.f;
-    }
+//    if (decayTime < 0.f)
+//    {
+//        sign = -1.f;
+//    }
+//    else
+//    {
+//        sign = 1.f;
+//    }
 
     mDecayGain = fabs(decayTime) * mMainFreq;
 
@@ -860,7 +864,7 @@ void CombFilter::calcDecayGain()
         mDecayGain = DNC_CONST;
     }
 
-    mDecayGain = (1.f / mDecayGain) * -6.2831f;
+    mDecayGain = (1.f / mDecayGain) * -CONST_DOUBLE_PI;
 
     if (mDecayGain > 0)                 // Exp Clipped
     {
@@ -875,7 +879,11 @@ void CombFilter::calcDecayGain()
         mDecayGain = pow(2.71828f, mDecayGain);
     }
 
-    mDecayGain *= sign;
+//    mDecayGain *= sign;
+    if (decayTime < 0.f)
+    {
+        mDecayGain *= -1.f;
+    }
 }
 
 

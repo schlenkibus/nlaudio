@@ -120,14 +120,14 @@ private:
         //******************** Coefficient Calculation ***********************//
         inline void setCoeffs(float _freq)
         {
-            if (_freq > FREQCLIP_22000HZ)
+            if (_freq > FREQCLIP_MIN_2)
             {
-                _freq = FREQCLIP_22000HZ;
+                _freq = FREQCLIP_MIN_2;
             }
 
-            if (_freq < FREQCLIP_2HZ)
+            if (_freq < FREQCLIP_MAX_4)
             {
-                _freq = FREQCLIP_2HZ;
+                _freq = FREQCLIP_MAX_4;
             }
 
             _freq = _freq * WARPCONST_2PI;

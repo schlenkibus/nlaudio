@@ -34,11 +34,11 @@ Cabinet::Cabinet()
     mSaturation = NlToolbox::Conversion::db2af(0.5f * -12.f);
     mSaturationConst = (0.1588f / mSaturation);
 
-    pHighpass = new BiquadFilters(SAMPLERATE, 61.f, 0.f, 0.5, BiquadFilterType::HIGHPASS);
-    pLowpass_1 = new BiquadFilters(SAMPLERATE, 4700.f, 0.f, 0.5, BiquadFilterType::LOWPASS);
-    pLowpass_2 = new BiquadFilters(SAMPLERATE, 4700.f * 1.333f, 0.f, 0.5, BiquadFilterType::LOWPASS);
-    pLowshelf_1 = new TiltFilters(SAMPLERATE, 1200.f, -12.f, 2.f, 0.5f, TiltFilterType::LOWSHELF);
-    pLowshelf_2 = new TiltFilters(SAMPLERATE, 1200.f, -12.f * (-1.f), 2.f, 0.5f, TiltFilterType::LOWSHELF);
+    pHighpass = new BiquadFilters(61.f, 0.f, 0.5, BiquadFilterType::HIGHPASS);
+    pLowpass_1 = new BiquadFilters(4700.f, 0.f, 0.5, BiquadFilterType::LOWPASS);
+    pLowpass_2 = new BiquadFilters(4700.f * 1.333f, 0.f, 0.5, BiquadFilterType::LOWPASS);
+    pLowshelf_1 = new TiltFilters(1200.f, -12.f, 2.f, 0.5f, TiltFilterType::LOWSHELF);
+    pLowshelf_2 = new TiltFilters(1200.f, -12.f * (-1.f), 2.f, 0.5f, TiltFilterType::LOWSHELF);
     pHighpass30Hz = new NlToolbox::Filters::Highpass30Hz(SAMPLERATE);
 
     mSmootherMask = 0x0000;
@@ -71,11 +71,11 @@ Cabinet::Cabinet(float _drive,
     mSaturation = NlToolbox::Conversion::db2af(0.5f * _tilt);
     mSaturationConst = (0.1588f / mSaturation);
 
-    pHighpass = new BiquadFilters(SAMPLERATE, _loCut, 0.f, 0.5, BiquadFilterType::HIGHPASS);
-    pLowpass_1 = new BiquadFilters(SAMPLERATE, _hiCut, 0.f, 0.5, BiquadFilterType::LOWPASS);
-    pLowpass_2 = new BiquadFilters(SAMPLERATE, _hiCut * 1.333f, 0.f, 0.5, BiquadFilterType::LOWPASS);
-    pLowshelf_1 = new TiltFilters(SAMPLERATE, 1200.f, _tilt, 2.f, 0.5f, TiltFilterType::LOWSHELF);
-    pLowshelf_2 = new TiltFilters(SAMPLERATE, 1200.f, _tilt * (-1.f), 2.f, 0.5f, TiltFilterType::LOWSHELF);
+    pHighpass = new BiquadFilters(_loCut, 0.f, 0.5, BiquadFilterType::HIGHPASS);
+    pLowpass_1 = new BiquadFilters(_hiCut, 0.f, 0.5, BiquadFilterType::LOWPASS);
+    pLowpass_2 = new BiquadFilters(_hiCut * 1.333f, 0.f, 0.5, BiquadFilterType::LOWPASS);
+    pLowshelf_1 = new TiltFilters(1200.f, _tilt, 2.f, 0.5f, TiltFilterType::LOWSHELF);
+    pLowshelf_2 = new TiltFilters(1200.f, _tilt * (-1.f), 2.f, 0.5f, TiltFilterType::LOWSHELF);
     pHighpass30Hz = new NlToolbox::Filters::Highpass30Hz(SAMPLERATE);
 
     mSmootherMask = 0x0000;

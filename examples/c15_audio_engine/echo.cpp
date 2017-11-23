@@ -50,10 +50,10 @@ Echo::Echo()
     mSampleBuffer_R = {0.f};
 
     //******************************* Filters ********************************//
-    pLowpass_L = new OnePoleFilters(SAMPLERATE, 4700.f, 0.f, OnePoleFilterType::LOWPASS);
-    pLowpass_R = new OnePoleFilters(SAMPLERATE, 4700.f, 0.f, OnePoleFilterType::LOWPASS);
-    pHighpass_L = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
-    pHighpass_R = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pLowpass_L = new OnePoleFilters(4700.f, 0.f, OnePoleFilterType::LOWPASS);
+    pLowpass_R = new OnePoleFilters(4700.f, 0.f, OnePoleFilterType::LOWPASS);
+    pHighpass_L = new OnePoleFilters(50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_R = new OnePoleFilters(50.f, 0.f, OnePoleFilterType::HIGHPASS);
     pLowpass2Hz_L = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_R = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
 
@@ -108,10 +108,10 @@ Echo::Echo(float _delayTime,
     mSampleBuffer_R = {0.f};
 
     //******************************* Filters ********************************//
-    pLowpass_L = new OnePoleFilters(SAMPLERATE, _hiCut, 0.f, OnePoleFilterType::LOWPASS);
-    pLowpass_R = new OnePoleFilters(SAMPLERATE, _hiCut, 0.f, OnePoleFilterType::LOWPASS);
-    pHighpass_L = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
-    pHighpass_R = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pLowpass_L = new OnePoleFilters(_hiCut, 0.f, OnePoleFilterType::LOWPASS);
+    pLowpass_R = new OnePoleFilters(_hiCut, 0.f, OnePoleFilterType::LOWPASS);
+    pHighpass_L = new OnePoleFilters(50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_R = new OnePoleFilters(50.f, 0.f, OnePoleFilterType::HIGHPASS);
     pLowpass2Hz_L = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_R = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
 

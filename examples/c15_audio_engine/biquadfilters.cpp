@@ -21,7 +21,6 @@
 
 BiquadFilters::BiquadFilters()
 {
-    mSampleRate = 48000.f;
     mFilterCounter = 0;
 
     setCutFreq(22000.f);
@@ -39,13 +38,11 @@ BiquadFilters::BiquadFilters()
  *           parameters
 *******************************************************************************/
 
-BiquadFilters::BiquadFilters(uint32_t _sampleRate,
-                             float _cutFreq,
+BiquadFilters::BiquadFilters(float _cutFreq,
                              float _shelfAmp,
                              float _resonance,
                              BiquadFilterType _filterType)
 {
-    mSampleRate = static_cast<float>(_sampleRate);
     mFilterCounter = 0;
 
     setCutFreq(_cutFreq);
@@ -64,17 +61,17 @@ BiquadFilters::BiquadFilters(uint32_t _sampleRate,
 
 void BiquadFilters::setCutFreq(float _cutFreq)
 {
-    if (_cutFreq < (mSampleRate / 24576.f))					//clipping check
+    if (_cutFreq < FREQCLIP_MIN_2)					//clipping check
     {
-        _cutFreq = mSampleRate / 24576.f;
+        _cutFreq = FREQCLIP_MIN_2;
     }
 
-    if (_cutFreq > (mSampleRate / 2.125f))
+    if (_cutFreq > FREQCLIP_MAX_4)
     {
-        _cutFreq = mSampleRate / 2.125f;
+        _cutFreq = FREQCLIP_MAX_4;
     }
 
-    float omega = _cutFreq * (2.f * M_PI / mSampleRate);     //Frequency to Omega (Warp)
+    float omega = _cutFreq * WARPCONST_2PI;     //Frequency to Omega (Warp)
 
     mOmegaCos = NlToolbox::Math::cos(omega);                 //alternative to cos(omega) -> tools.h
     mOmegaSin = NlToolbox::Math::sin(omega);                 //alternative to sin(omega) -> tools.h

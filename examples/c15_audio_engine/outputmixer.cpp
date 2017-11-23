@@ -65,8 +65,8 @@ Outputmixer::Outputmixer()
     mSVFilterMix_L = {0.f};
 
     //******************************* Filters ********************************//
-    pHighpass_L = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
-    pHighpass_R = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_L = new OnePoleFilters(NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_R = new OnePoleFilters(NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
 
     //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;
@@ -144,8 +144,8 @@ Outputmixer::Outputmixer(float _ALevel,
     mSVFilterMix_L = {0.f};
 
     //******************************* Filters ********************************//
-    pHighpass_L = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
-    pHighpass_R = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_L = new OnePoleFilters(NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_R = new OnePoleFilters(NlToolbox::Conversion::pitch2freq(8.f), 0.f, OnePoleFilterType::HIGHPASS);
 
     //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;

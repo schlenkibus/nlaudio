@@ -15,6 +15,10 @@
 
 StateVariableFilter::StateVariableFilter()
 {
+    //******************************* Output *********************************//
+    mSVFilterOut= 0.f;
+
+
     mABMix_1 = 0.5f;
     mABMix_0 = 1.f - mABMix_1;
     mCombMix_1 = 0.f;
@@ -48,7 +52,9 @@ StateVariableFilter::StateVariableFilter()
     mSecond_BPMix = 0.f;
     mSecond_HPMix = 0.f;
 
+    //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;
+
     mABMix_ramp = 1.f;
     mCombMix_ramp = 1.f;
     mFreqModMix_ramp = 1.f;
@@ -78,6 +84,9 @@ StateVariableFilter::StateVariableFilter(float _ABMix,
                                          float _freqMod,
                                          float _freqModABMix)
 {
+    //******************************* Output *********************************//
+    mSVFilterOut= 0.f;
+
     mABMix_1 = _ABMix;
     mABMix_0 = 1.f - _ABMix;
     mCombMix_1 = _combMix;
@@ -146,7 +155,10 @@ StateVariableFilter::StateVariableFilter(float _ABMix,
         }
     }
 
+
+    //****************************** Smoothing *******************************//
     mSmootherMask = 0x0000;
+
     mABMix_ramp = 1.f;
     mCombMix_ramp = 1.f;
     mFreqModMix_ramp = 1.f;
@@ -166,7 +178,6 @@ StateVariableFilter::StateVariableFilter(float _ABMix,
 void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sampleB, float _sampleComb)
 {
     //****************************** Smoothing ******************************//
-
     if (mSmootherMask != 0x0000)
     {
         applySmoothers();
@@ -174,19 +185,17 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
 
     //***************************** Sample Mix ***************************//
-
     float firstSample = _sampleA * mABMix_0 + _sampleB * mABMix_1;                // Mix of incoming samples
     firstSample = firstSample * mCombMix_0 + _sampleComb * mCombMix_1 ;
 
     float secondSample = firstSample * mFirst_Prefade;
     secondSample += (mFirst_SVSampleState * mSecond_Prefade);
-    secondSample += (mSecond_ParabSatStateVar * 0.1f);
+    secondSample += (mSecond_ParabSatStateVar * 0.1f);                             /// for reasons this is not 0.05f!!!
 
-    firstSample = mFirst_ParabSatStateVar * 0.1f + firstSample;
+    firstSample = mFirst_ParabSatStateVar * 0.1f + firstSample;                    /// for reasons this is not 0.05f!!!
 
 
     //************************** Frequency Modulation ***********************//
-
     float firstOmega = _sampleA * mFreqModMix_0 + _sampleB * mFreqModMix_1;            // Modulation mix
 
     float secondOmega = firstOmega * mSecond_FreqModConst;
@@ -194,7 +203,6 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
 
     //************************* 1st Stage SV FILTER *************************//
-
     firstOmega = (mFirst_CutFreq + firstOmega) * WARPCONST_2PI;             // Warp F; tempVar - omega
 
     if (firstOmega > 1.9f)                                                  // Clip Max
@@ -223,7 +231,6 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
 
     //************************** 1st Stage Parabol Sat *********************//
-
     if (bandpassOut > 2.f)
     {
         mFirst_ParabSatStateVar = 2.f;
@@ -241,7 +248,6 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
 
     //************************** 2nd Stage SV FILTER ************************//
-
     secondOmega = (mSecond_CutFreq + secondOmega) * WARPCONST_2PI;         // Warp F; tempVar - omega
 
     if (secondOmega > 1.9f)                                                     // Clip Max
@@ -270,7 +276,6 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
 
     //************************** 2nd Stage Parabol Sat *********************//
-
     if (bandpassOut > 2.f)
     {
         mSecond_ParabSatStateVar = 2.f;                      // Clip Max 2.f
@@ -288,7 +293,6 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
 
     //************************** Post Crossfade *********************//
-
     mSVFilterOut = mFirst_SVSampleState * mFirst_Postfade;
     mSVFilterOut += (second_SVSample * mSecond_Postfade);
 }

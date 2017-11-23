@@ -40,7 +40,7 @@ Flanger::Flanger()
     mEnvWet = 0.f;
 
     //********************************** LFO *******************************//
-    mLFRate = 1.05625f * SAMPLING_INTERVAL;
+    mLFRate = 1.05625f * SAMPLE_INTERVAL;
     mLFDecayWarpedRate = 0.99917f;
     mLFDepth = 0.f;
     mLFPhase = 0.25f;
@@ -73,10 +73,10 @@ Flanger::Flanger()
     mSampleBuffer_R = {0.f};
 
     //****************************** Filters *******************************//
-    pLowpass_L = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(120.f), 0.f, OnePoleFilterType::LOWPASS);
-    pLowpass_R = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(120.f), 0.f, OnePoleFilterType::LOWPASS);
-    pHighpass_L = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
-    pHighpass_R = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pLowpass_L = new OnePoleFilters(NlToolbox::Conversion::pitch2freq(120.f), 0.f, OnePoleFilterType::LOWPASS);
+    pLowpass_R = new OnePoleFilters(NlToolbox::Conversion::pitch2freq(120.f), 0.f, OnePoleFilterType::LOWPASS);
+    pHighpass_L = new OnePoleFilters(50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_R = new OnePoleFilters(50.f, 0.f, OnePoleFilterType::HIGHPASS);
     pLowpass2Hz_L = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_R = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_Depth = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
@@ -127,7 +127,7 @@ Flanger::Flanger(float _rate,
 
     //********************************** LFO *******************************//
     _rate = _rate * _rate * 10.f;
-    mLFRate = _rate * SAMPLING_INTERVAL;
+    mLFRate = _rate * SAMPLE_INTERVAL;
     mLFDecayWarpedRate = _rate * 0.55f;
     mLFDecayWarpedRate = mLFDecayWarpedRate * WARPCONST_2PI;
     if (mLFDecayWarpedRate > 1.9f)
@@ -181,10 +181,10 @@ Flanger::Flanger(float _rate,
     mSampleBuffer_R = {0.f};
 
     //****************************** Filters *******************************//
-    pLowpass_L = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(_hiCut), 0.f, OnePoleFilterType::LOWPASS);
-    pLowpass_R = new OnePoleFilters(SAMPLERATE, NlToolbox::Conversion::pitch2freq(_hiCut), 0.f, OnePoleFilterType::LOWPASS);
-    pHighpass_L = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
-    pHighpass_R = new OnePoleFilters(SAMPLERATE, 50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pLowpass_L = new OnePoleFilters(NlToolbox::Conversion::pitch2freq(_hiCut), 0.f, OnePoleFilterType::LOWPASS);
+    pLowpass_R = new OnePoleFilters(NlToolbox::Conversion::pitch2freq(_hiCut), 0.f, OnePoleFilterType::LOWPASS);
+    pHighpass_L = new OnePoleFilters(50.f, 0.f, OnePoleFilterType::HIGHPASS);
+    pHighpass_R = new OnePoleFilters(50.f, 0.f, OnePoleFilterType::HIGHPASS);
     pLowpass2Hz_L = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_R = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
     pLowpass2Hz_Depth = new NlToolbox::Filters::Lowpass2Hz(SAMPLERATE);
@@ -368,7 +368,7 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
 
             printf("Flanger - Rate: %f\n", _ctrlVal);
 
-            mLFRate = _ctrlVal * SAMPLING_INTERVAL;
+            mLFRate = _ctrlVal * SAMPLE_INTERVAL;
 
             mLFDecayWarpedRate = _ctrlVal * 0.55f;
             mLFDecayWarpedRate = mLFDecayWarpedRate * WARPCONST_2PI;
