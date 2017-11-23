@@ -23,7 +23,7 @@ class Soundgenerator
 public:
     Soundgenerator();                                               // Default Constructor
 
-    Soundgenerator(float _pitchOffset_A, float _pitchOffset_B,
+    Soundgenerator(float _pitchOffset_A, float _pitchOffset_B,      // Parameterized COnstructor
                    float _keyTracking_A, float _keyTracking_B,
                    float _fluct_A, float _fluct_B,
                    float _phase_A, float _phase_B,
@@ -52,10 +52,10 @@ public:
     float mSampleA, mSampleB;              // Generated Samples
 
     void generateSound(float _feedbackSample, float _envRamp_A, float _envRamp_B, float _envRamp_C, float _gateRamp);
-    void setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
 
     void setPitch(float _pitch);
     void setVoiceNumber(uint32_t _voiceNumber);
+    void setGenParams(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
     void resetPhase();
 
 private:
@@ -63,7 +63,6 @@ private:
 
 
     //*********************** Oscillator A Variables **************************//
-
     float mModuleA_PitchOffset;             // Oscillator Pitch Offset
     float mModuleA_Fluct;                   // Fluctuation Amount
     float mModuleA_PmSelf;                  // Self Phase Modulation Amount, Oscillator Feedback
@@ -95,7 +94,6 @@ private:
 
 
     //************************* Shaper A Variables ****************************//
-
     float mModuleA_Drive;                   // Shaper Drive Control
     float mModuleA_Fold;                    // Shaper Fold Control
     float mModuleA_Asym;                    // Shaper Asymmetry Control
@@ -109,7 +107,6 @@ private:
 
 
     //*********************** Oscillator B Variables **************************//
-
     float mModuleB_PitchOffset;
     float mModuleB_Fluct;
     float mModuleB_PmSelf;
@@ -141,7 +138,6 @@ private:
 
 
     //************************* Shaper B Variables ****************************//
-
     float mModuleB_Drive;
     float mModuleB_Fold;
     float mModuleB_Asym;
@@ -150,12 +146,28 @@ private:
     float mModuleB_FeedbackMix;
     float mModuleB_RingMod;
 
-    float mModuleB_Drive_EnvB_Amnt;         // Envelope B Modulation Amount
-    float mModuleB_FeedbackMix_EnvC_Amnt;   // Envelope C Modulation Amount
+    float mModuleB_Drive_EnvB_Amnt;
+    float mModuleB_FeedbackMix_EnvC_Amnt;
 
 
-    //************************** Smoothing Variabels **************************//
-
+    //************************** Smoothing Variables *************************//
+    // Smoother Mask    ID 1: Phase Modulation - Self
+    //                  ID 2: Phase Modulation - Self Shaper
+    //                  ID 3: Phase Modulatino - Cross
+    //                  ID 4: Phase MOdulation - Cross Shaper
+    //                  ID 5: Drive
+    //                  ID 6: Fold
+    //                  ID 7: Asym
+    //                  ID 8: Shaper Mix
+    //                  ID 9: Ring Modulation
+    //                  ID 10: Feedback
+    //                  ID 11: Phase Modulation - Feedback
+    //                  ID 14: Phase Modulation - Self EnvA/ EnvB
+    //                  ID 15: Phase Modulation - Cross EnvB/ EnvA
+    //                  ID 16: Phase MOdulation - Feedback EnvC
+    //                  ID 17: Drive - EnvA / EnvB
+    //                  ID 18: Feedback MIx - EnvC
+    //************************************************************************//
     inline void applyASmoother();
     inline void applyBSmoother();
 
@@ -264,7 +276,6 @@ private:
 
 
     //******************************* Module IDs ******************************//
-
     enum InstrID: unsigned char
     {
         OSC_A       = 0xB1,
@@ -275,26 +286,25 @@ private:
 
 
     //**************************** OSC Controls IDs ***************************//
-
     enum OscCtrlID: unsigned char
     {
 #ifdef REMOTE61                     // novation ReMOTE61
         OFFSETPITCH     = 0x15,
         FLUCT           = 0x16,
-        PMSELF          = 0x17,     // PM Self
-        PMCROSS         = 0x18,     // PM B / PM A
-        PMFEEDBACK      = 0x19,     // PM FB
+        PMSELF          = 0x17,
+        PMCROSS         = 0x18,
+        PMFEEDBACK      = 0x19,
 
         PITCH_ENV       = 0x1F,
         FLUCT_ENV       = 0x20,
-        PMSELF_ENV      = 0x21,     // ENV A/B
-        PMCROSS_ENV     = 0x22,     // EBV B/A
+        PMSELF_ENV      = 0x21,
+        PMCROSS_ENV     = 0x22,
         PMFEEDBACK_ENV  = 0x23,
 
         KEYTRACKING     = 0x29,
         PHASE           = 0x2A,
-        PMSELFSHAPER    = 0x2B,     // PM Shaper Self  A/B
-        PMCROSSSHAPER   = 0x2C,     // PM Shaper Cross B/A
+        PMSELFSHAPER    = 0x2B,
+        PMCROSSSHAPER   = 0x2C,
         CHIRPFREQ       = 0x2D
 #else
         OFFSETPITCH,
@@ -319,7 +329,6 @@ private:
 
 
     //************************** Shaper Controls IDs **************************//
-
     enum ShaperCtrlID: unsigned char
     {
 #ifdef REMOTE61
@@ -330,7 +339,7 @@ private:
         FEEDBACK_MIX = 0x19,
         RING_MOD     = 0x1A,
 
-        DRIVE_ENV   = 0x1F,  //Env A/B
+        DRIVE_ENV   = 0x1F,
         FBMIX_ENV   = 0x23
 #else
         DRIVE,

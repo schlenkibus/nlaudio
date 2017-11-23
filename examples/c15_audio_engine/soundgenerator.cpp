@@ -30,15 +30,16 @@
  *           Ring Modulation:       0.f
 *******************************************************************************/
 
-Soundgenerator::Soundgenerator()                            // Default Constructor
+Soundgenerator::Soundgenerator()
 {
+    mPitch = 0.f;
+
+    //******************************* Outputs ********************************//
     mSampleA = 0.f;
     mSampleB = 0.f;
 
-    mPitch = 0.f;
 
     //**************************** Oscillator A *******************************//
-
     mModuleA_PitchOffset = 60.f;
     mModuleA_Fluct = 0.f;
     mModuleA_PmSelf = 0.f;
@@ -70,7 +71,6 @@ Soundgenerator::Soundgenerator()                            // Default Construct
 
 
     //****************************** Shaper A *********************************//
-
     mModuleA_Drive = 0.18f;
     mModuleA_Fold = 0.5f;
     mModuleA_Asym = 0.f;
@@ -87,7 +87,6 @@ Soundgenerator::Soundgenerator()                            // Default Construct
 
 
     //**************************** Oscillator B *******************************//
-
     mModuleB_PitchOffset = 60.f;
     mModuleB_Fluct = 0.f;
     mModuleB_PmSelf = 0.f;
@@ -119,7 +118,6 @@ Soundgenerator::Soundgenerator()                            // Default Construct
 
 
     //****************************** Shaper B *********************************//
-
     mModuleB_Drive = 0.18f;
     mModuleB_Fold = 0.5f;
     mModuleB_Asym = 0.f;
@@ -136,7 +134,6 @@ Soundgenerator::Soundgenerator()                            // Default Construct
 
 
     //****************************** Smoothing ********************************//
-
     mModuleA_SmootherMask = 0x00000000;
 
     mModuleA_PmSelf_ramp =  1.f;
@@ -212,13 +209,14 @@ Soundgenerator::Soundgenerator(float _pitchOffset_A, float _pitchOffset_B,
                                float _driveEnvA_A, float _driveEnvB_B,
                                float _feedbackMixEnvC_A, float _feedbackMixEnvC_B)
 {
+    mPitch = 0.f;
+
+    //******************************* Outputs ********************************//
     mSampleA = 0.f;
     mSampleB = 0.f;
 
-    mPitch = 0.f;
 
     //**************************** Oscillator A *******************************//
-
     mModuleA_PitchOffset = _pitchOffset_A;
     mModuleA_Fluct = _fluct_A;
     mModuleA_PmSelf = _pmSelf_A;
@@ -250,7 +248,6 @@ Soundgenerator::Soundgenerator(float _pitchOffset_A, float _pitchOffset_B,
 
 
     //****************************** Shaper A *********************************//
-
     mModuleA_Drive = _drive_A;
     mModuleA_Fold = _fold_A;
     mModuleA_Asym = _asym_A;
@@ -267,7 +264,6 @@ Soundgenerator::Soundgenerator(float _pitchOffset_A, float _pitchOffset_B,
 
 
     //**************************** Oscillator B *******************************//
-
     mModuleB_PitchOffset = _pitchOffset_B;
     mModuleB_Fluct = _fluct_B;
     mModuleB_PmSelf = _pmSelf_B;
@@ -299,7 +295,6 @@ Soundgenerator::Soundgenerator(float _pitchOffset_A, float _pitchOffset_B,
 
 
     //****************************** Shaper B *********************************//
-
     mModuleB_Drive = _drive_B;
     mModuleB_Fold = _fold_B;
     mModuleB_Asym = _asym_B;
@@ -316,7 +311,6 @@ Soundgenerator::Soundgenerator(float _pitchOffset_A, float _pitchOffset_B,
 
 
     //****************************** Smoothing ********************************//
-
     mModuleA_SmootherMask = 0x00000000;
 
     mModuleA_PmSelf_ramp =  1.f;
@@ -384,7 +378,6 @@ Soundgenerator::~Soundgenerator()
 void Soundgenerator::generateSound(float _feedbackSample, float _envRamp_A, float _envRamp_B, float _envRamp_C, float _gateRamp)
 {
     //*********************************** Smoothing *************************************//
-
     if (mModuleA_SmootherMask)
     {
         applyASmoother();
@@ -396,114 +389,98 @@ void Soundgenerator::generateSound(float _feedbackSample, float _envRamp_A, floa
     }
 
 
-    //********************************* Modulation A ************************************//
-
-    float pmSelfModulation = mModuleA_PmSelf * ((_envRamp_A * mModuleA_PmSelf_EnvA_Amnt) + (1.f - mModuleA_PmSelf_EnvA_Amnt));
-
-    float pmCrossModulation = mModuleA_PmCross * ((_envRamp_B * mModuleA_PmCross_EnvB_Amnt) + (1.f - mModuleA_PmCross_EnvB_Amnt));
-
-    float pmFeedbackModulation = mModuleA_PmFeedback * ((_envRamp_C * mModuleA_PmFeedback_EnvC_Amnt) + (1.f - mModuleA_PmFeedback_EnvC_Amnt));
+    //********************************* Modulation A ************************************//    
+    float tmpVar = mModuleA_SelfMix * mModuleA_PmSelf * ((_envRamp_A * mModuleA_PmSelf_EnvA_Amnt) + (1.f - mModuleA_PmSelf_EnvA_Amnt));
+    tmpVar = tmpVar + mModuleB_CrossMix * mModuleA_PmCross * ((_envRamp_B * mModuleA_PmCross_EnvB_Amnt) + (1.f - mModuleA_PmCross_EnvB_Amnt));
+    tmpVar = tmpVar + _feedbackSample * mModuleA_PmFeedback * ((_envRamp_C * mModuleA_PmFeedback_EnvC_Amnt) + (1.f - mModuleA_PmFeedback_EnvC_Amnt));
 
 
     //********************************** Oscillator A ***********************************//
+    tmpVar = pModuleA_ChirpFilter->applyFilter(tmpVar);
+    tmpVar += mModuleA_OscPhase;
 
-    float currPhase = (mModuleA_SelfMix * pmSelfModulation) + (mModuleB_CrossMix * pmCrossModulation) + (pmFeedbackModulation * _feedbackSample);
+    tmpVar += (-0.25f);
+    tmpVar -= round(tmpVar);                            // Wrap
 
-    currPhase = pModuleA_ChirpFilter->applyFilter(currPhase);
-    currPhase += mModuleA_OscPhase;
-
-    currPhase += (-0.25f);
-    currPhase -= round(currPhase);                          // Wrap
-
-    if (fabs(mModuleA_PhaseStateVar - currPhase) > 0.5f)    // Checke edge
+    if (fabs(mModuleA_PhaseStateVar - tmpVar) > 0.5f)   // Checke edge
     {
         mModuleA_PhaseInc = setPhaseInc(mModuleA_OscFreq, mModuleA_Fluct, mModuleA_RandVal);
     }
 
-    mModuleA_PhaseStateVar = currPhase;
+    mModuleA_PhaseStateVar = tmpVar;
 
     mModuleA_OscPhase += mModuleA_PhaseInc;
     mModuleA_OscPhase -= round(mModuleA_OscPhase);
 
-    currPhase += currPhase;                                 // oscSinP3
-    currPhase = fabs(currPhase);
-    currPhase = 0.5f - currPhase;
+    tmpVar += tmpVar;                                   // oscSinP3
+    tmpVar = fabs(tmpVar);
+    tmpVar = 0.5f - tmpVar;
 
-    float currPhase_square = currPhase * currPhase;
-
-    float oscSampleA = currPhase * ((2.26548f * currPhase_square - 5.13274f) * currPhase_square + 3.14159f);
+    float squareTmpVar = tmpVar * tmpVar;
+    float oscSampleA = tmpVar * ((2.26548f * squareTmpVar - 5.13274f) * squareTmpVar + 3.14159f);
 
 
     //********************************* Modulation B ************************************//
-
-    pmSelfModulation = mModuleB_PmSelf * ((_envRamp_B * mModuleB_PmSelf_EnvB_Amnt) + (1.f - mModuleB_PmSelf_EnvB_Amnt));
-
-    pmCrossModulation = mModuleB_PmCross * ((_envRamp_A * mModuleB_PmCross_EnvA_Amnt) + (1.f - mModuleB_PmCross_EnvA_Amnt));
-
-    pmFeedbackModulation = mModuleB_PmFeedback * ((_envRamp_C * mModuleB_PmFeedback_EnvC_Amnt) + (1.f - mModuleB_PmFeedback_EnvC_Amnt));
+    tmpVar = mModuleB_SelfMix * mModuleB_PmSelf * ((_envRamp_B * mModuleB_PmSelf_EnvB_Amnt) + (1.f - mModuleB_PmSelf_EnvB_Amnt));
+    tmpVar = tmpVar + mModuleA_CrossMix * mModuleB_PmCross * ((_envRamp_A * mModuleB_PmCross_EnvA_Amnt) + (1.f - mModuleB_PmCross_EnvA_Amnt));
+    tmpVar = tmpVar + _feedbackSample * mModuleB_PmFeedback * ((_envRamp_C * mModuleB_PmFeedback_EnvC_Amnt) + (1.f - mModuleB_PmFeedback_EnvC_Amnt));
 
 
     //********************************** Oscillator B ***********************************//
+    tmpVar = pModuleB_ChirpFilter->applyFilter(tmpVar);
+    tmpVar += mModuleB_OscPhase;
 
-    currPhase = (mModuleB_SelfMix * pmSelfModulation) + (mModuleA_CrossMix * pmCrossModulation) + (pmFeedbackModulation * _feedbackSample);
+    tmpVar += (-0.25f);
+    tmpVar -= round(tmpVar);                            // Wrap
 
-    currPhase = pModuleB_ChirpFilter->applyFilter(currPhase);
-    currPhase += mModuleB_OscPhase;
-
-    currPhase += (-0.25f);
-    currPhase -= round(currPhase);                          // Wrap
-
-    if (fabs(mModuleB_PhaseStateVar - currPhase) > 0.5f)    // Check edge
+    if (fabs(mModuleB_PhaseStateVar - tmpVar) > 0.5f)   // Check edge
     {
         mModuleB_PhaseInc = setPhaseInc(mModuleB_OscFreq, mModuleB_Fluct, mModuleB_RandVal);
     }
 
-    mModuleB_PhaseStateVar = currPhase;
+    mModuleB_PhaseStateVar = tmpVar;
 
     mModuleB_OscPhase += mModuleB_PhaseInc;
     mModuleB_OscPhase -= round(mModuleB_OscPhase);
 
-    currPhase += currPhase;                                 // oscSinP3
-    currPhase = fabs(currPhase);
-    currPhase = 0.5f - currPhase;
+    tmpVar += tmpVar;                                   // oscSinP3
+    tmpVar = fabs(tmpVar);
+    tmpVar = 0.5f - tmpVar;
 
-    currPhase_square = currPhase * currPhase;
+    squareTmpVar = tmpVar * tmpVar;
 
-    float oscSampleB = currPhase * ((2.26548f * currPhase_square - 5.13274f) * currPhase_square + 3.14159f);
+    float oscSampleB = tmpVar * ((2.26548f * squareTmpVar - 5.13274f) * squareTmpVar + 3.14159f);
 
 
     //************************************ Shaper A *************************************//
+    tmpVar = (_envRamp_A * mModuleA_Drive_EnvA_Amnt + (1.f - mModuleA_Drive_EnvA_Amnt)) * mModuleA_Drive + 0.18f;
 
-    float drive = (_envRamp_A * mModuleA_Drive_EnvA_Amnt + (1.f - mModuleA_Drive_EnvA_Amnt)) * mModuleA_Drive + 0.18f;
-
-    float shaperSampleA = oscSampleA * drive;
-    float ctrlSample = shaperSampleA;
+    float shaperSampleA = oscSampleA * tmpVar;
+    tmpVar = shaperSampleA;
 
     shaperSampleA = NlToolbox::Math::sinP3(shaperSampleA);
-    shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, ctrlSample, mModuleA_Fold);
+    shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, tmpVar, mModuleA_Fold);
 
-    float sample_square = shaperSampleA * shaperSampleA + (-0.5f);
+    squareTmpVar = shaperSampleA * shaperSampleA + (-0.5f);
 
-    shaperSampleA = NlToolbox::Others::parAsym(shaperSampleA, sample_square, mModuleA_Asym);
+    shaperSampleA = NlToolbox::Others::parAsym(shaperSampleA, squareTmpVar, mModuleA_Asym);
 
 
     //************************************ Shaper B *************************************//
+    tmpVar = (_envRamp_B * mModuleB_Drive_EnvB_Amnt + (1.f - mModuleB_Drive_EnvB_Amnt)) * mModuleB_Drive + 0.18f;
 
-    drive = (_envRamp_B * mModuleB_Drive_EnvB_Amnt + (1.f - mModuleB_Drive_EnvB_Amnt)) * mModuleB_Drive + 0.18f;
-
-    float shaperSampleB = oscSampleB * drive;
-    ctrlSample = shaperSampleB;
+    float shaperSampleB = oscSampleB * tmpVar;
+    tmpVar = shaperSampleB;
 
     shaperSampleB = NlToolbox::Math::sinP3(shaperSampleB);
-    shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, ctrlSample, mModuleB_Fold);
+    shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, tmpVar, mModuleB_Fold);
 
-    sample_square = shaperSampleB * shaperSampleB + (-0.5f);
+    squareTmpVar = shaperSampleB * shaperSampleB + (-0.5f);
 
-    shaperSampleB = NlToolbox::Others::parAsym(shaperSampleB, sample_square, mModuleB_Asym);
+    shaperSampleB = NlToolbox::Others::parAsym(shaperSampleB, squareTmpVar, mModuleB_Asym);
 
 
     //*********************************** Crossfades ************************************//
-
     mModuleA_SelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, mModuleA_PmSelfShaper);
     mModuleA_CrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, mModuleB_PmCrossShaper);
 
@@ -515,30 +492,25 @@ void Soundgenerator::generateSound(float _feedbackSample, float _envRamp_A, floa
 
 
     //******************************* Envelope Influence ********************************//
-
     mSampleA *= _envRamp_A;
     mSampleB *= _envRamp_B;
 
 
     //********************************** Feedback Mix ***********************************//
+    tmpVar = (1.f - mModuleA_FeedbackMix_EnvC_Amnt) * _gateRamp + mModuleA_FeedbackMix_EnvC_Amnt * _envRamp_C;
+    tmpVar *= _feedbackSample;
+    mSampleA = (mSampleA * (1.f - mModuleA_FeedbackMix)) + (tmpVar * mModuleA_FeedbackMix);
 
-    float envGateMix = (1.f - mModuleA_FeedbackMix_EnvC_Amnt) * _gateRamp + mModuleA_FeedbackMix_EnvC_Amnt * _envRamp_C;
-    envGateMix = envGateMix * _feedbackSample;
-
-    mSampleA = (mSampleA * (1.f - mModuleA_FeedbackMix)) + (envGateMix * mModuleA_FeedbackMix);
-
-    envGateMix = (1.f - mModuleB_FeedbackMix_EnvC_Amnt) * _gateRamp + mModuleB_FeedbackMix_EnvC_Amnt * _envRamp_C;
-    envGateMix = envGateMix * _feedbackSample;
-
-    mSampleB = (mSampleB * (1.f - mModuleB_FeedbackMix)) + (envGateMix * mModuleB_FeedbackMix);
+    tmpVar = (1.f - mModuleB_FeedbackMix_EnvC_Amnt) * _gateRamp + mModuleB_FeedbackMix_EnvC_Amnt * _envRamp_C;
+    tmpVar *= _feedbackSample;
+    mSampleB = (mSampleB * (1.f - mModuleB_FeedbackMix)) + (tmpVar * mModuleB_FeedbackMix);
 
 
     //******************************** Ring Modulation **********************************//
+    tmpVar = mSampleA * mSampleB;
 
-    float crossSample = mSampleA * mSampleB;
-
-    mSampleA = NlToolbox::Crossfades::bipolarCrossFade(mSampleA, crossSample, mModuleA_RingMod);
-    mSampleB = NlToolbox::Crossfades::bipolarCrossFade(mSampleB, crossSample, mModuleB_RingMod);
+    mSampleA = NlToolbox::Crossfades::bipolarCrossFade(mSampleA, tmpVar, mModuleA_RingMod);
+    mSampleB = NlToolbox::Crossfades::bipolarCrossFade(mSampleB, tmpVar, mModuleB_RingMod);
 }
 
 
@@ -1321,37 +1293,6 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
 
 
-/******************************************************************************/
-/** @brief    frequency calculation depending on the incoming pitch,
- *            key tracking amount and pitch offset
- *  @param    incoming pitch - 60ct
- *  @param    key tracking amount
- *  @param    pitch offset
- *  @return   frequency in Hz
-*******************************************************************************/
-
-inline float Soundgenerator::setOscFreq(float _pitch, float _keyTracking, float _pitchOffset)
-{
-    _pitch = _pitch * _keyTracking + _pitchOffset;
-
-    if (_pitch < 0.f)
-    {
-        if (_pitch > -20.f)
-        {
-            _pitch = ((300.f/13.f) * _pitch) / ((280.f/13.f) + _pitch);
-        }
-
-        else if (_pitch < -20.f)
-        {
-            _pitch = -300.f;
-        }
-    }
-
-    return NlToolbox::Conversion::pitch2freq(_pitch);
-}
-
-
-
 /*****************************************************************************/
 /** @brief    applies the smoothers of the Soundgenertors A module,
  *            if the corresponding bit of the mask is set to 1
@@ -1912,6 +1853,38 @@ inline void Soundgenerator::applyBSmoother()
         }
     }
 }
+
+
+
+/******************************************************************************/
+/** @brief    frequency calculation depending on the incoming pitch,
+ *            key tracking amount and pitch offset
+ *  @param    incoming pitch - 60ct
+ *  @param    key tracking amount
+ *  @param    pitch offset
+ *  @return   frequency in Hz
+*******************************************************************************/
+
+inline float Soundgenerator::setOscFreq(float _pitch, float _keyTracking, float _pitchOffset)
+{
+    _pitch = _pitch * _keyTracking + _pitchOffset;
+
+    if (_pitch < 0.f)
+    {
+        if (_pitch > -20.f)
+        {
+            _pitch = ((300.f/13.f) * _pitch) / ((280.f/13.f) + _pitch);
+        }
+
+        else if (_pitch < -20.f)
+        {
+            _pitch = -300.f;
+        }
+    }
+
+    return NlToolbox::Conversion::pitch2freq(_pitch);
+}
+
 
 
 /******************************************************************************/
