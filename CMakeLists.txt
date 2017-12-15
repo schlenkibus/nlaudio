@@ -76,9 +76,17 @@ endif(DOXYGEN_FOUND)
 #############
 # Install
 
+get_property(LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+
+if ("${LIB64}" STREQUAL "TRUE")
+    set(LIBSUFFIX 64)
+else()
+    set(LIBSUFFIX "")
+endif()
+
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/nlaudio DESTINATION include)
 
 INSTALL(TARGETS nlaudio
-	LIBRARY DESTINATION lib64
+	LIBRARY DESTINATION lib${LIBSUFFIX} COMPONENT libraries
 )
 
