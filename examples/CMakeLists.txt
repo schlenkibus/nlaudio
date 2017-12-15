@@ -51,5 +51,9 @@ FILE(GLOB_RECURSE C15_AUDIO_ENGINE_SOURCES "c15_audio_engine/*")
 add_executable(c15_audio_engine ${C15_AUDIO_ENGINE_SOURCES} c15_audio_engine.cpp)
 target_link_libraries(c15_audio_engine nlaudio)
 
+############
+# Install
 
+INSTALL(TARGETS c15_audio_engine
+	RUNTIME DESTINATION bin)
 
