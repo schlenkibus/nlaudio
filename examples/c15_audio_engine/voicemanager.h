@@ -144,7 +144,7 @@ private:
         ECHO_PARAM          = 0xBC,
         REVERB_PARAM        = 0xBD,
 
-        MASTER_PARAM        = 0xBF
+        MASTER_PARAM        = 0xBE
 
 #else
         KEYUP_0,
