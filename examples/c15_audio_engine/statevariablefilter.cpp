@@ -192,24 +192,41 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
     secondSample += (mFirst_SVSampleState * mSecond_Prefade);
     secondSample += (mSecond_ParabSatStateVar * 0.1f);                             /// for reasons this is not 0.05f!!!
 
-    firstSample = mFirst_ParabSatStateVar * 0.1f + firstSample;                    /// for reasons this is not 0.05f!!!
+    firstSample = firstSample + mFirst_ParabSatStateVar * 0.1f;                    /// for reasons this is not 0.05f!!!
 
 
     //************************** Frequency Modulation ***********************//
     float firstOmega = _sampleA * mFreqModMix_0 + _sampleB * mFreqModMix_1;            // Modulation mix
-
     float secondOmega = firstOmega * mSecond_FreqModConst;
+
     firstOmega = firstOmega * mFirst_FreqModConst;
 
 
     //************************* 1st Stage SV FILTER *************************//
-    firstOmega = (mFirst_CutFreq + firstOmega) * WARPCONST_2PI;             // Warp F; tempVar - omega
+    firstOmega = (mFirst_CutFreq + firstOmega) * WARPCONST_2PI;         // Warp F
 
-    if (firstOmega > 1.9f)                                                  // Clip Max
+    if (firstOmega > 1.9f)                                              // Clip Max
     {
         firstOmega = 1.9f;
     }
 
+#if 0
+    float filterSample = (mFirst_FirStateVar + firstSample) * 0.25f;    // FIR
+    mFirst_FirStateVar = firstSample + DNC_CONST;
+
+    filterSample = filterSample - (mFirst_Attenuation * mFirst_Int1StateVar + mFirst_Int2StateVar);
+
+    mFirst_Int1StateVar = filterSample * firstOmega + mFirst_Int1StateVar;         // Int1 Out
+    filterSample = mFirst_Int1StateVar * firstOmega + mFirst_Int2StateVar;         // Int2 Out
+
+    float lowpassOut = filterSample + mFirst_Int2StateVar;
+    float bandpassOut = mFirst_Int1StateVar + mFirst_Int1StateVar;
+    float highpassOut = firstSample - (mFirst_Int1StateVar * mFirst_Attenuation + lowpassOut);
+
+    mFirst_Int1StateVar += DNC_CONST;
+    mFirst_Int2StateVar = filterSample + DNC_CONST;
+
+#else
     float firOut = (mFirst_FirStateVar + firstSample) * 0.25f;              // FIR
     mFirst_FirStateVar = firstSample + DNC_CONST;
 
@@ -224,8 +241,9 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
     mFirst_Int1StateVar = int1Out + DNC_CONST;
     mFirst_Int2StateVar = int2Out + DNC_CONST;
+#endif
 
-    mFirst_SVSampleState = lowpassOut * mFirst_LPMix;
+    mFirst_SVSampleState = lowpassOut * mFirst_LPMix;                               // Selector
     mFirst_SVSampleState += (bandpassOut * mFirst_BPMix);
     mFirst_SVSampleState += (highpassOut * mFirst_HPMix);
 
@@ -248,13 +266,34 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
 
     //************************** 2nd Stage SV FILTER ************************//
-    secondOmega = (mSecond_CutFreq + secondOmega) * WARPCONST_2PI;         // Warp F; tempVar - omega
+    secondOmega = (mSecond_CutFreq + secondOmega) * WARPCONST_2PI;      // Warp F
 
-    if (secondOmega > 1.9f)                                                     // Clip Max
+    if (secondOmega > 1.9f)                                             // Clip Max
     {
         secondOmega = 1.9f;
     }
 
+#if 0
+    filterSample = (mSecond_FirStateVar + secondSample) * 0.25f;        // FIR
+    mSecond_FirStateVar = secondSample + DNC_CONST;
+
+    filterSample = filterSample - (mSecond_Attenuation * mSecond_Int1StateVar + mSecond_Int2StateVar);
+
+    mSecond_Int1StateVar = filterSample * secondOmega + mSecond_Int1StateVar;   // Int1 Out
+    filterSample = mSecond_Int1StateVar * secondOmega + mSecond_Int2StateVar;   // Int2 Out
+
+    lowpassOut = filterSample + mSecond_Int2StateVar;
+    bandpassOut = mSecond_Int1StateVar + mSecond_Int1StateVar;
+    highpassOut = secondSample - (mSecond_Int1StateVar * mSecond_Attenuation + lowpassOut);
+
+    mSecond_Int1StateVar += DNC_CONST;
+    mSecond_Int2StateVar = filterSample + DNC_CONST;
+
+    filterSample = lowpassOut * mSecond_LPMix;
+    filterSample += (bandpassOut * mSecond_BPMix);
+    filterSample += (highpassOut * mSecond_HPMix);
+
+#else
     firOut = (mSecond_FirStateVar + secondSample) * 0.25f;              // FIR
     mSecond_FirStateVar = secondSample + DNC_CONST;
 
@@ -273,6 +312,7 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
     second_SVSample = lowpassOut * mSecond_LPMix;
     second_SVSample += (bandpassOut * mSecond_BPMix);
     second_SVSample += (highpassOut * mSecond_HPMix);
+#endif
 
 
     //************************** 2nd Stage Parabol Sat *********************//
@@ -294,7 +334,11 @@ void StateVariableFilter::applyStateVariableFilter(float _sampleA, float _sample
 
     //************************** Post Crossfade *********************//
     mSVFilterOut = mFirst_SVSampleState * mFirst_Postfade;
+#if 0
+    mSVFilterOut += (filterSample * mSecond_Postfade);
+#else
     mSVFilterOut += (second_SVSample * mSecond_Postfade);
+#endif
 }
 
 
@@ -494,6 +538,11 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
 
         case FREQUENCYMOD:
             _ctrlVal = (_ctrlVal / 63.f) - 1.f;
+
+            if (_ctrlVal > 1.f)
+            {
+                _ctrlVal = 1.f;
+            }
 
             printf("SV Filter - FM: %f\n", _ctrlVal);
 
