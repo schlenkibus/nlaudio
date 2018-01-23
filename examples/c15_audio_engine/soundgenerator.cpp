@@ -516,6 +516,158 @@ void Soundgenerator::generateSound(float _feedbackSample, float _envRamp_A, floa
 
 
 /******************************************************************************/
+/** @brief    main function which calculates the modulated phase depending
+ *            on mix amounts (self modulation, cross modulation, feedback modulation),
+ *            calculates the samples of the 2 oscillators and 2 shapers
+ *            -> reads Envelope signals from global array PARAMSIGNALDATA
+*******************************************************************************/
+
+void Soundgenerator::generateSound(float _feedbackSample, float *polyPtr)
+{
+    float env_A = polyPtr[0];
+    float env_B = polyPtr[2];
+    float env_C = polyPtr[4];
+    float env_Gate = polyPtr[5];
+
+    //*********************************** Smoothing *************************************//
+    if (mModuleA_SmootherMask)
+    {
+        applyASmoother();
+    }
+
+    if (mModuleB_SmootherMask)
+    {
+        applyBSmoother();
+    }
+
+
+    //********************************* Modulation A ************************************//
+    float tmpVar = mModuleA_SelfMix * mModuleA_PmSelf * ((polyPtr[0] * mModuleA_PmSelf_EnvA_Amnt) + (1.f - mModuleA_PmSelf_EnvA_Amnt));
+    tmpVar = tmpVar + mModuleB_CrossMix * mModuleA_PmCross * ((polyPtr[2] * mModuleA_PmCross_EnvB_Amnt) + (1.f - mModuleA_PmCross_EnvB_Amnt));
+    tmpVar = tmpVar + _feedbackSample * mModuleA_PmFeedback * ((polyPtr[4] * mModuleA_PmFeedback_EnvC_Amnt) + (1.f - mModuleA_PmFeedback_EnvC_Amnt));
+
+
+    //********************************** Oscillator A ***********************************//
+    tmpVar = pModuleA_ChirpFilter->applyFilter(tmpVar);
+    tmpVar += mModuleA_OscPhase;
+
+    tmpVar += (-0.25f);
+    tmpVar -= round(tmpVar);                            // Wrap
+
+    if (fabs(mModuleA_PhaseStateVar - tmpVar) > 0.5f)   // Checke edge
+    {
+        mModuleA_PhaseInc = setPhaseInc(mModuleA_OscFreq, mModuleA_Fluct, mModuleA_RandVal);
+    }
+
+    mModuleA_PhaseStateVar = tmpVar;
+
+    mModuleA_OscPhase += mModuleA_PhaseInc;
+    mModuleA_OscPhase -= round(mModuleA_OscPhase);
+
+    tmpVar += tmpVar;                                   // oscSinP3
+    tmpVar = fabs(tmpVar);
+    tmpVar = 0.5f - tmpVar;
+
+    float squareTmpVar = tmpVar * tmpVar;
+    float oscSampleA = tmpVar * ((2.26548f * squareTmpVar - 5.13274f) * squareTmpVar + 3.14159f);
+
+
+    //********************************* Modulation B ************************************//
+    tmpVar = mModuleB_SelfMix * mModuleB_PmSelf * ((polyPtr[2] * mModuleB_PmSelf_EnvB_Amnt) + (1.f - mModuleB_PmSelf_EnvB_Amnt));
+    tmpVar = tmpVar + mModuleA_CrossMix * mModuleB_PmCross * ((polyPtr[0] * mModuleB_PmCross_EnvA_Amnt) + (1.f - mModuleB_PmCross_EnvA_Amnt));
+    tmpVar = tmpVar + _feedbackSample * mModuleB_PmFeedback * ((polyPtr[4] * mModuleB_PmFeedback_EnvC_Amnt) + (1.f - mModuleB_PmFeedback_EnvC_Amnt));
+
+
+    //********************************** Oscillator B ***********************************//
+    tmpVar = pModuleB_ChirpFilter->applyFilter(tmpVar);
+    tmpVar += mModuleB_OscPhase;
+
+    tmpVar += (-0.25f);
+    tmpVar -= round(tmpVar);                            // Wrap
+
+    if (fabs(mModuleB_PhaseStateVar - tmpVar) > 0.5f)   // Check edge
+    {
+        mModuleB_PhaseInc = setPhaseInc(mModuleB_OscFreq, mModuleB_Fluct, mModuleB_RandVal);
+    }
+
+    mModuleB_PhaseStateVar = tmpVar;
+
+    mModuleB_OscPhase += mModuleB_PhaseInc;
+    mModuleB_OscPhase -= round(mModuleB_OscPhase);
+
+    tmpVar += tmpVar;                                   // oscSinP3
+    tmpVar = fabs(tmpVar);
+    tmpVar = 0.5f - tmpVar;
+
+    squareTmpVar = tmpVar * tmpVar;
+
+    float oscSampleB = tmpVar * ((2.26548f * squareTmpVar - 5.13274f) * squareTmpVar + 3.14159f);
+
+
+    //************************************ Shaper A *************************************//
+    tmpVar = (polyPtr[0] * mModuleA_Drive_EnvA_Amnt + (1.f - mModuleA_Drive_EnvA_Amnt)) * mModuleA_Drive + 0.18f;
+
+    float shaperSampleA = oscSampleA * tmpVar;
+    tmpVar = shaperSampleA;
+
+    shaperSampleA = NlToolbox::Math::sinP3(shaperSampleA);
+    shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, tmpVar, mModuleA_Fold);
+
+    squareTmpVar = shaperSampleA * shaperSampleA + (-0.5f);
+
+    shaperSampleA = NlToolbox::Others::parAsym(shaperSampleA, squareTmpVar, mModuleA_Asym);
+
+
+    //************************************ Shaper B *************************************//
+    tmpVar = (polyPtr[2] * mModuleB_Drive_EnvB_Amnt + (1.f - mModuleB_Drive_EnvB_Amnt)) * mModuleB_Drive + 0.18f;
+
+    float shaperSampleB = oscSampleB * tmpVar;
+    tmpVar = shaperSampleB;
+
+    shaperSampleB = NlToolbox::Math::sinP3(shaperSampleB);
+    shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, tmpVar, mModuleB_Fold);
+
+    squareTmpVar = shaperSampleB * shaperSampleB + (-0.5f);
+
+    shaperSampleB = NlToolbox::Others::parAsym(shaperSampleB, squareTmpVar, mModuleB_Asym);
+
+
+    //*********************************** Crossfades ************************************//
+    mModuleA_SelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, mModuleA_PmSelfShaper);
+    mModuleA_CrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, mModuleB_PmCrossShaper);
+
+    mModuleB_SelfMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, mModuleB_PmSelfShaper);
+    mModuleB_CrossMix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, mModuleA_PmCrossShaper);
+
+    mSampleA = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, mModuleA_ShaperMix);
+    mSampleB = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, mModuleB_ShaperMix);
+
+
+    //******************************* Envelope Influence ********************************//
+    mSampleA *= polyPtr[0];
+    mSampleB *= polyPtr[2];
+
+
+    //********************************** Feedback Mix ***********************************//
+    tmpVar = (1.f - mModuleA_FeedbackMix_EnvC_Amnt) * polyPtr[5] + mModuleA_FeedbackMix_EnvC_Amnt * polyPtr[4];
+    tmpVar *= _feedbackSample;
+    mSampleA = (mSampleA * (1.f - mModuleA_FeedbackMix)) + (tmpVar * mModuleA_FeedbackMix);
+
+    tmpVar = (1.f - mModuleB_FeedbackMix_EnvC_Amnt) * polyPtr[5] + mModuleB_FeedbackMix_EnvC_Amnt * polyPtr[4];
+    tmpVar *= _feedbackSample;
+    mSampleB = (mSampleB * (1.f - mModuleB_FeedbackMix)) + (tmpVar * mModuleB_FeedbackMix);
+
+
+    //******************************** Ring Modulation **********************************//
+    tmpVar = mSampleA * mSampleB;
+
+    mSampleA = NlToolbox::Crossfades::bipolarCrossFade(mSampleA, tmpVar, mModuleA_RingMod);
+    mSampleB = NlToolbox::Crossfades::bipolarCrossFade(mSampleB, tmpVar, mModuleB_RingMod);
+}
+
+
+
+/******************************************************************************/
 /** @brief    pitch set function, which calls the function for calculating the
  *            individual oscialltor frequencies. Dependant on previously
  *            Key Tracking Amount and Pitch Offset

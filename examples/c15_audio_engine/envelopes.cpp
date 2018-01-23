@@ -167,7 +167,6 @@ void Envelopes::applyEnvelope()
             mEnvRamp_C = 0.f;
             mEnvState_C = env_off;
         }
-
     }
 
 
@@ -195,6 +194,112 @@ void Envelopes::applyEnvelope()
 }
 
 
+/******************************************************************************/
+/** @brief    main function which calculates the vlaues of all envelopes
+ *            if the ramp has not yet reached 0.0 and the note is still
+ *            active by a Note-On Event -> writes the values to a global array
+*******************************************************************************/
+
+void Envelopes::applyEnvelope(float *polyPtr)
+{
+    //**************************** Envelope A ********************************//
+
+    if (mEnvState_A == env_decay)
+    {
+        polyPtr[0] = mVelocity + mVelocity_diff * (1.f - mInternalRamp_A);
+        mInternalRamp_A = mInternalRamp_A * mDecayDx_A;
+
+        if (mInternalRamp_A < 1.e-9f)
+        {
+            polyPtr[0] = 0.f;
+            mEnvState_A = env_off;
+        }
+    }
+    else if (mEnvState_A == env_release)
+    {
+        polyPtr[0] = mVelocity + mVelocity_diff * (1.f - mInternalRamp_A);
+        mInternalRamp_A = mInternalRamp_A * mReleaseDx;
+
+        if (mInternalRamp_A < 1.e-9f)
+        {
+            polyPtr[0] = 0.f;
+            mEnvState_A = env_off;
+        }
+    }
+
+    //**************************** Envelope B ********************************//
+
+    if (mEnvState_B == env_decay)
+    {
+        polyPtr[2] = mVelocity + mVelocity_diff * (1.f - mInternalRamp_B);
+        mInternalRamp_B = mInternalRamp_B * mDecayDx_B;
+
+        if (mInternalRamp_B < 1.e-9f)
+        {
+            polyPtr[2] = 0.f;
+            mEnvState_B = env_off;
+        }
+    }
+    else if (mEnvState_B == env_release)
+    {
+        polyPtr[2] = mVelocity + mVelocity_diff * (1.f - mInternalRamp_B);
+        mInternalRamp_B = mInternalRamp_B * mReleaseDx;
+
+        if (mInternalRamp_B < 1.e-9f)
+        {
+            polyPtr[2] = 0.f;
+            mEnvState_B = env_off;
+        }
+    }
+
+    //**************************** Envelope C ********************************//
+
+    if (mEnvState_C == env_decay)
+    {
+        polyPtr[4] = mVelocity + mVelocity_diff * (1.f - mInternalRamp_C);
+        mInternalRamp_C = mInternalRamp_C * mDecayDx_C;
+
+        if (mInternalRamp_C < 1.e-9f)
+        {
+            polyPtr[4] = 0.f;
+            mEnvState_C = env_off;
+        }
+    }
+    else if (mEnvState_C == env_release)
+    {
+        polyPtr[4] = mVelocity + mVelocity_diff * (1.f - mInternalRamp_C);
+        mInternalRamp_C = mInternalRamp_C * mReleaseDx;
+
+        if (mInternalRamp_C < 1.e-9f)
+        {
+            polyPtr[4] = 0.f;
+            mEnvState_C = env_off;
+        }
+    }
+
+    //******************************* Gate ***********************************//
+
+    if (mGateState == gate_open)
+    {
+        polyPtr[5] = 1.f;
+    }
+    else if (mGateState == gate_release)
+    {
+        polyPtr[5] = mInternalRamp_Gate;
+        mInternalRamp_Gate = mInternalRamp_Gate * mReleaseDx;
+
+        if (mInternalRamp_Gate < 1.e-9f)
+        {
+            polyPtr[5] = 0.f;
+            mGateState = gate_closed;
+        }
+    }
+    else if (mGateState == gate_closed)
+    {
+        polyPtr[5] = 0.f;
+    }
+
+}
 
 /******************************************************************************/
 /** @brief    sets the envelope ramps to the value of the incoming velocity

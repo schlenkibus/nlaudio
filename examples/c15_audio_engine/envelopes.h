@@ -29,6 +29,7 @@ public:
 
     void setEnvelopePramas(unsigned char _ctrlID, float _ctrlVal);
     void applyEnvelope();
+    void applyEnvelope(float *polyPtr);
     void setEnvelope(float _velocity);
     void killEnvelope();
 

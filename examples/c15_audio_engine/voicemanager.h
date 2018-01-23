@@ -12,6 +12,10 @@
 #pragma once
 
 #include "nltoolbox.h"
+#include "nlglobaldefines.h"
+
+#include "paramengine.h"
+
 #include "envelopes.h"
 #include "soundgenerator.h"
 #include "combfilter.h"
@@ -23,6 +27,7 @@
 #include "flanger.h"
 #include "echo.h"
 #include "reverb.h"
+
 #include <vector>
 
 
@@ -38,6 +43,11 @@ public:
     void evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
 
 private:
+    //*************************** Param Engine ***********************************//
+
+    Paramengine* pParamengine;
+
+
     //*************************** Envelopes ***************************************//
 
     Envelopes* pEnvelopes[NUM_VOICES];
@@ -144,7 +154,9 @@ private:
         ECHO_PARAM          = 0xBC,
         REVERB_PARAM        = 0xBD,
 
-        MASTER_PARAM        = 0xBE
+        MASTER_PARAM        = 0xBE,
+
+        PARAM_ENGINE        = 0xBF
 
 #else
         KEYUP_0,

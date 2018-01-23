@@ -15,6 +15,8 @@
 
 VoiceManager::VoiceManager()
 {
+    pParamengine = new Paramengine();
+
     uint32_t i;
 
     for (i = 0; i < NUM_VOICES; i++)
@@ -67,6 +69,8 @@ VoiceManager::VoiceManager()
 
 VoiceManager::~VoiceManager()
 {
+    delete pParamengine;
+
     for (uint32_t i = 0; i < NUM_VOICES; i++)
     {
         delete pEnvelopes[i];
@@ -103,6 +107,11 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 {
     switch (_instrID)
     {
+        case InstrID::PARAM_ENGINE:
+            pParamengine->setParams(_ctrlID,_ctrlVal);
+
+            break;
+
         case InstrID::ENEVELOPES_PARAM:
             for (uint32_t i = 0; i < NUM_VOICES; i++)
             {
@@ -233,8 +242,13 @@ void VoiceManager::voiceLoop()
 
     for (uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
     {
-        pEnvelopes[voiceNumber]->applyEnvelope();
-        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pEnvelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
+        float *voiceSignal = PARAMSIGNALDATA[voiceNumber];
+//        pEnvelopes[voiceNumber]->applyEnvelope();
+//        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pEnvelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
+
+        pEnvelopes[voiceNumber]->applyEnvelope(voiceSignal);
+        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, voiceSignal);
+
         pCombFilter[voiceNumber]->applyCombFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB);
         pSVFilter[voiceNumber]->applyStateVariableFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB, pCombFilter[voiceNumber]->mCombFilterOut);
         pFeedbackMixer[voiceNumber]->applyFeedbackMixer(pCombFilter[voiceNumber]->mCombFilterOut, pSVFilter[voiceNumber]->mSVFilterOut, pReverb->mFeedbackOut);

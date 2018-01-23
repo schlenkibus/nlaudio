@@ -19,12 +19,12 @@
 
 #define NUM_VOICES 12
 #define NUM_CHANNELS 2
+#define NUM_SIGNALS 400
 
 
 //****************************** Smoother Objects ************************************//
 
 //#define SMOOTHEROBJ
-
 
 //********************************* Constants ****************************************//
 
@@ -54,3 +54,58 @@ const float FREQCLIP_MAX_3 = SAMPLERATE / 2.18f;
 const float FREQCLIP_MAX_4 = SAMPLERATE / 2.125f;
 const float FREQCLIP_MAX_5 = SAMPLERATE / 2.f;
 
+
+//*************************** Param Engine ***********************************//
+/****************************** Array Solution *********************************
+ *
+ *  float POLY_SIGNALDATA[M][N]
+ *  M -> Signal ID
+ *  N -> Voice Number
+ *
+*******************************************************************************/
+#include <array>
+
+extern float PARAMSIGNALDATA[NUM_VOICES][NUM_SIGNALS];
+//float DUAL_SIGNALDATA[NUM_CHANNELS][NUM_SIGNALS];
+
+
+/****************************** Array Solution *********************************
+ *
+ *  struct SIGNALDATA
+ *  N -> Voice Number
+ *
+*******************************************************************************/
+#if 0
+struct SIGNALDATA
+{
+    //************************ Envelope Signals ******************************//
+    float EnvA_Gain[NUM_VOICES];
+    float EnvA_Gate[NUM_VOICES];
+    float EnvB_Gain[NUM_VOICES];
+    float EnvB_Gate[NUM_VOICES];
+    float EnvC[NUM_VOICES];
+    float EnvG[NUM_VOICES];
+
+    //************************** Osc A Signals *******************************//
+    float OscA_Freq[NUM_VOICES];
+    float OscA_Fluct[NUM_VOICES];
+    float OscA_PMs[NUM_VOICES];
+    float OscA_PMs_Shp[NUM_VOICES];
+    float OscA_PMb[NUM_VOICES];
+    float OscA_PMb_Shp[NUM_VOICES];
+    float OscA_PMfb[NUM_VOICES];
+    float OscA_Phase[NUM_VOICES];
+    float OscA_Retrig[NUM_VOICES];
+    float OscA_ChirpFreq[NUM_VOICES];
+
+    //************************ Shaper A Signals ******************************//
+    float ShpA_Drive[NUM_VOICES];
+    float ShpA_Fold[NUM_VOICES];
+    float ShpA_Asym[NUM_VOICES];
+    float ShpA_Curve[NUM_VOICES];
+    float ShpA_Mix[NUM_VOICES];
+    float ShpA_FB_Mix[NUM_VOICES];
+    float ShpA_RingMod[NUM_VOICES];
+
+}renderedSignals;
+#endif
