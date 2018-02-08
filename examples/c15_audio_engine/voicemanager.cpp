@@ -8,6 +8,8 @@
 
 #include "voicemanager.h"
 
+float PARAMSIGNALDATA[NUM_VOICES][NUM_SIGNALS];
+
 /******************************************************************************/
 /** Voice Manager Default Constructor
  * @brief    initialization of the modules local variabels with default values
@@ -108,7 +110,7 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
     switch (_instrID)
     {
         case InstrID::PARAM_ENGINE:
-            pParamengine->setParams(_ctrlID,_ctrlVal);
+            pParamengine->setParams(_ctrlID, _ctrlVal);
 
             break;
 
@@ -238,16 +240,31 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 
 void VoiceManager::voiceLoop()
 {
-    //***************************** Main DSP Loop ***************************//
+    float *voiceSignal = nullptr;
 
+    //***************************** Main DSP Loop ***************************//
     for (uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
     {
-        float *voiceSignal = PARAMSIGNALDATA[voiceNumber];
-//        pEnvelopes[voiceNumber]->applyEnvelope();
-//        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pEnvelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
 
+#ifdef SINGLARRAY
+#ifdef STACKSINGLE
+        pEnvelopes[voiceNumber]->applyEnvelope(voiceNumber);
+        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, voiceNumber);
+#endif
+#ifdef HEAPSINGLE
+        pEnvelopes[voiceNumber]->applyEnvelope(voiceNumber);
+        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, voiceNumber);
+#endif
+#endif
+#ifdef GLBLARRAY
+        voiceSignal = PARAMSIGNALDATA[voiceNumber];
         pEnvelopes[voiceNumber]->applyEnvelope(voiceSignal);
         pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, voiceSignal);
+#endif
+#ifdef NOARRAY
+        pEnvelopes[voiceNumber]->applyEnvelope();
+        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pEnvelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
+#endif
 
         pCombFilter[voiceNumber]->applyCombFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB);
         pSVFilter[voiceNumber]->applyStateVariableFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB, pCombFilter[voiceNumber]->mCombFilterOut);

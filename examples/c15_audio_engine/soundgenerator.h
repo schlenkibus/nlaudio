@@ -53,6 +53,7 @@ public:
 
     void generateSound(float _feedbackSample, float _envRamp_A, float _envRamp_B, float _envRamp_C, float _gateRamp);
     void generateSound(float _feedbackSample, float *polyPtr);
+    void generateSound(float _feedbackSample, uint32_t _vn);
 
     void setPitch(float _pitch);
     void setVoiceNumber(uint32_t _voiceNumber);

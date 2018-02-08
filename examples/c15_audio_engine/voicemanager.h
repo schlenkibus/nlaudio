@@ -43,6 +43,8 @@ public:
     void evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
 
 private:
+
+
     //*************************** Param Engine ***********************************//
 
     Paramengine* pParamengine;

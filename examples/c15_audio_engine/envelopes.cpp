@@ -301,6 +301,115 @@ void Envelopes::applyEnvelope(float *polyPtr)
 
 }
 
+
+/******************************************************************************/
+/** @brief    main function which calculates the vlaues of all envelopes
+ *            if the ramp has not yet reached 0.0 and the note is still
+ *            active by a Note-On Event -> writes the values to a global array
+*******************************************************************************/
+
+void Envelopes::applyEnvelope(uint32_t _vn)
+{
+    //**************************** Envelope A ********************************//
+
+    if (mEnvState_A == env_decay)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_A, mVelocity + mVelocity_diff * (1.f - mInternalRamp_A));
+        mInternalRamp_A = mInternalRamp_A * mDecayDx_A;
+
+        if (mInternalRamp_A < 1.e-9f)
+        {
+            ParamSignalData::instance().setSignalValue(_vn, ENV_A, 0.f);
+            mEnvState_A = env_off;
+        }
+    }
+    else if (mEnvState_A == env_release)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_A, mVelocity + mVelocity_diff * (1.f - mInternalRamp_A));
+        mInternalRamp_A = mInternalRamp_A * mReleaseDx;
+
+        if (mInternalRamp_A < 1.e-9f)
+        {
+            ParamSignalData::instance().setSignalValue(_vn, ENV_A, 0.f);
+            mEnvState_A = env_off;
+        }
+    }
+
+    //**************************** Envelope B ********************************//
+
+    if (mEnvState_B == env_decay)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_B, mVelocity + mVelocity_diff * (1.f - mInternalRamp_B));
+        mInternalRamp_B = mInternalRamp_B * mDecayDx_B;
+
+        if (mInternalRamp_B < 1.e-9f)
+        {
+            ParamSignalData::instance().setSignalValue(_vn, ENV_B, 0.f);
+            mEnvState_B = env_off;
+        }
+    }
+    else if (mEnvState_B == env_release)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_B, mVelocity + mVelocity_diff * (1.f - mInternalRamp_B));
+        mInternalRamp_B = mInternalRamp_B * mReleaseDx;
+
+        if (mInternalRamp_B < 1.e-9f)
+        {
+            ParamSignalData::instance().setSignalValue(_vn, ENV_B, 0.f);
+            mEnvState_B = env_off;
+        }
+    }
+
+    //**************************** Envelope C ********************************//
+
+    if (mEnvState_C == env_decay)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_C, mVelocity + mVelocity_diff * (1.f - mInternalRamp_C));
+        mInternalRamp_C = mInternalRamp_C * mDecayDx_C;
+
+        if (mInternalRamp_C < 1.e-9f)
+        {
+            ParamSignalData::instance().setSignalValue(_vn, ENV_C, 0.f);
+            mEnvState_C = env_off;
+        }
+    }
+    else if (mEnvState_C == env_release)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_C, mVelocity + mVelocity_diff * (1.f - mInternalRamp_C));
+        mInternalRamp_C = mInternalRamp_C * mReleaseDx;
+
+        if (mInternalRamp_C < 1.e-9f)
+        {
+            ParamSignalData::instance().setSignalValue(_vn, ENV_C, 0.f);
+            mEnvState_C = env_off;
+        }
+    }
+
+    //******************************* Gate ***********************************//
+
+    if (mGateState == gate_open)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_GATE, 1.f);
+    }
+    else if (mGateState == gate_release)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_GATE, mInternalRamp_Gate);
+        mInternalRamp_Gate = mInternalRamp_Gate * mReleaseDx;
+
+        if (mInternalRamp_Gate < 1.e-9f)
+        {
+            ParamSignalData::instance().setSignalValue(_vn, ENV_GATE, 0.f);
+            mGateState = gate_closed;
+        }
+    }
+    else if (mGateState == gate_closed)
+    {
+        ParamSignalData::instance().setSignalValue(_vn, ENV_GATE, 0.f);
+    }
+}
+
+
+
 /******************************************************************************/
 /** @brief    sets the envelope ramps to the value of the incoming velocity
 *******************************************************************************/

@@ -22,9 +22,6 @@ VoiceManager voiceManager;
     */
     void miniSynthCallback(uint8_t *in, uint8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr)
     {
-        // Global Parameter Buffer
-        static float paramBuffer[NUM_VOICES][5] = {0,0};
-
         auto midiBuffer = getBufferForName("MidiBuffer");
 
         //---------------- Retrieve Midi Information if midi values have changed

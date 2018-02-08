@@ -7,26 +7,37 @@
 *******************************************************************************/
 
 #pragma once
+#include <stdint.h>
 
-
-//************************ Controller define - temporal ******************************//
+//********************** Controller define - temporal ************************//
 
 #define REMOTE61
 //#define NANOKONTROL_I
 
+//#define SINGLARRAY
+#define GLBLARRAY
+//#define NOARRAY
 
-//*********************** Number of Voices and Channels ******************************//
+//**************** PARAM IDs in the ParamSignalData Array ********************//
+
+#define ENV_A 0
+#define ENV_B 2
+#define ENV_C 4
+#define ENV_GATE 5
+
+//******************** Number of Voices and Channels *************************//
 
 #define NUM_VOICES 12
 #define NUM_CHANNELS 2
 #define NUM_SIGNALS 400
 
 
-//****************************** Smoother Objects ************************************//
+//*************************** Smoother Objects *******************************//
 
 //#define SMOOTHEROBJ
 
-//********************************* Constants ****************************************//
+
+//***************************** Constants ************************************//
 
 #ifndef DNC_CONST
 #define DNC_CONST 1.e-18f
@@ -36,6 +47,7 @@
 #define SAMPLERATE 48000.f
 #endif
 
+// const const expr anstatt const float -> eher für Templates, brauch ich Templates??
 const float SMOOTHER_INC  = 5.f / (SAMPLERATE * 0.032f);
 const float REVERB_SMOOTHER_INC = 1.f / (SAMPLERATE * 0.001f * 50.f);
 
@@ -63,49 +75,81 @@ const float FREQCLIP_MAX_5 = SAMPLERATE / 2.f;
  *  N -> Voice Number
  *
 *******************************************************************************/
-#include <array>
 
 extern float PARAMSIGNALDATA[NUM_VOICES][NUM_SIGNALS];
-//float DUAL_SIGNALDATA[NUM_CHANNELS][NUM_SIGNALS];
+//external float DUAL_SIGNALDATA[NUM_CHANNELS][NUM_SIGNALS];
 
 
-/****************************** Array Solution *********************************
- *
- *  struct SIGNALDATA
- *  N -> Voice Number
- *
+#define STACKSINGLE
+#ifdef STACKSINGLE
+/******************************************************************************/
+/** Singleton Class for a global ParamSignalData - Stack Version
 *******************************************************************************/
-#if 0
-struct SIGNALDATA
+
+class ParamSignalData
 {
-    //************************ Envelope Signals ******************************//
-    float EnvA_Gain[NUM_VOICES];
-    float EnvA_Gate[NUM_VOICES];
-    float EnvB_Gain[NUM_VOICES];
-    float EnvB_Gate[NUM_VOICES];
-    float EnvC[NUM_VOICES];
-    float EnvG[NUM_VOICES];
+private:
+    ParamSignalData(){}           // private contructor to prevent multiple instancing
+    float mSignalArray[NUM_VOICES][NUM_SIGNALS];
+    uint32_t val;
 
-    //************************** Osc A Signals *******************************//
-    float OscA_Freq[NUM_VOICES];
-    float OscA_Fluct[NUM_VOICES];
-    float OscA_PMs[NUM_VOICES];
-    float OscA_PMs_Shp[NUM_VOICES];
-    float OscA_PMb[NUM_VOICES];
-    float OscA_PMb_Shp[NUM_VOICES];
-    float OscA_PMfb[NUM_VOICES];
-    float OscA_Phase[NUM_VOICES];
-    float OscA_Retrig[NUM_VOICES];
-    float OscA_ChirpFreq[NUM_VOICES];
+public:
 
-    //************************ Shaper A Signals ******************************//
-    float ShpA_Drive[NUM_VOICES];
-    float ShpA_Fold[NUM_VOICES];
-    float ShpA_Asym[NUM_VOICES];
-    float ShpA_Curve[NUM_VOICES];
-    float ShpA_Mix[NUM_VOICES];
-    float ShpA_FB_Mix[NUM_VOICES];
-    float ShpA_RingMod[NUM_VOICES];
+    static ParamSignalData& instance()
+    {
+        static ParamSignalData _instance;
+        return _instance;
+    }
 
-}renderedSignals;
+    ~ParamSignalData() {}
+
+
+    inline float getSignalValue(uint32_t _vn, uint32_t _paramID)
+    {
+        return mSignalArray[_vn][_paramID];
+    }
+
+    inline void setSignalValue(uint32_t _vn, uint32_t _paramID, float _val)
+    {
+        mSignalArray[_vn][_paramID] = _val;
+    }
+};
+#endif
+
+
+//#define HEAPSINGLE
+#ifdef HEAPSINGLE
+/******************************************************************************/
+/** Singleton Class for a global ParamSignalData - Heap Version
+*******************************************************************************/
+
+class ParamSignalData
+{
+private:
+    static ParamSignalData* instance;
+
+    ParamSignalData(){}
+
+    float mSignalArray[NUM_VOICES][NUM_SIGNALS];
+public:
+
+    inline void setSignalValue(uint32_t _vn, uint32_t _paramID, float _val)
+    {
+        mSignalArray[_vn][_paramID] = _val;
+    }
+
+    inline float getSignalValue(uint32_t _vn, uint32_t _paramID)
+    {
+        return mSignalArray[_vn][_paramID];
+    }
+
+    static ParamSignalData* getInstance()
+    {
+        if (instance == 0)
+        {
+            instance = new ParamSignalData();
+        }
+        return instance;
+    }
+};
 #endif
