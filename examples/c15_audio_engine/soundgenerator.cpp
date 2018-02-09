@@ -524,7 +524,7 @@ void Soundgenerator::generateSound(float _feedbackSample, float _envRamp_A, floa
 
 void Soundgenerator::generateSound(float _feedbackSample, float *polyPtr)
 {
-    float env_A = polyPtr[0];
+    float env_A = polyPtr[ENV_A];
     float env_B = polyPtr[2];
     float env_C = polyPtr[4];
     float env_Gate = polyPtr[5];

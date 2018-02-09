@@ -16,7 +16,13 @@ float PARAMSIGNALDATA[NUM_VOICES][NUM_SIGNALS];
 *******************************************************************************/
 
 VoiceManager::VoiceManager()
+    : loop_watch()
 {
+#if 0
+    callbackArray[0] = &VoiceManager::keyDown;
+    callbackArray[1] = &VoiceManager::presetChange;
+#endif
+
     pParamengine = new Paramengine();
 
     uint32_t i;
@@ -242,6 +248,12 @@ void VoiceManager::voiceLoop()
 {
     float *voiceSignal = nullptr;
 
+    static int counter = 0;
+    static int deltaCounter = 1;
+    static float deltaCpu = 0.f;
+
+    loop_watch.start();
+
     //***************************** Main DSP Loop ***************************//
     for (uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
     {
@@ -270,6 +282,21 @@ void VoiceManager::voiceLoop()
         pSVFilter[voiceNumber]->applyStateVariableFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB, pCombFilter[voiceNumber]->mCombFilterOut);
         pFeedbackMixer[voiceNumber]->applyFeedbackMixer(pCombFilter[voiceNumber]->mCombFilterOut, pSVFilter[voiceNumber]->mSVFilterOut, pReverb->mFeedbackOut);
         pOutputMixer->applyOutputMixer(voiceNumber, pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB, pCombFilter[voiceNumber]->mCombFilterOut, pSVFilter[voiceNumber]->mSVFilterOut);
+    }
+
+    loop_watch.stop();
+    counter++;
+
+    if (counter == NUMBER_OF_TS)
+    {
+        loop_watch.calcCPU();
+        std::cout << "CPU Peak: " << loop_watch.mCPU_peak << std::endl;
+        counter = 0;
+
+        deltaCpu = deltaCpu + loop_watch.mCPU_peak;
+
+        std::cout << "CPU Peak delta: " << deltaCpu / deltaCounter << std::endl;
+        deltaCounter++;
     }
 
 
@@ -418,6 +445,7 @@ void VoiceManager::vallocProcess(uint32_t _keyDirection, float _pitch, float _ve
 
         pEnvelopes[v]->setEnvelope(_velocity/ 127.f);
         pSoundGenerator[v]->setPitch(offsetPitch);
+//        callbackArray[0](80,v);
         pSoundGenerator[v]->resetPhase();
         pCombFilter[v]->setPitch(offsetPitch);
         pSVFilter[v]->setPitch(offsetPitch);

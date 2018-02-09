@@ -206,7 +206,7 @@ void Envelopes::applyEnvelope(float *polyPtr)
 
     if (mEnvState_A == env_decay)
     {
-        polyPtr[0] = mVelocity + mVelocity_diff * (1.f - mInternalRamp_A);
+        polyPtr[ENV_A] = mVelocity + mVelocity_diff * (1.f - mInternalRamp_A);
         mInternalRamp_A = mInternalRamp_A * mDecayDx_A;
 
         if (mInternalRamp_A < 1.e-9f)

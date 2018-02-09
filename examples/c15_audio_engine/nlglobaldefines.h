@@ -14,8 +14,8 @@
 #define REMOTE61
 //#define NANOKONTROL_I
 
-//#define SINGLARRAY
-#define GLBLARRAY
+#define SINGLARRAY
+//#define GLBLARRAY
 //#define NOARRAY
 
 //**************** PARAM IDs in the ParamSignalData Array ********************//

@@ -30,6 +30,7 @@
 
 #include <vector>
 
+#include "cpu_stopwatch.h"
 
 class VoiceManager{
 public:
@@ -43,7 +44,7 @@ public:
     void evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
 
 private:
-
+    CPU_Stopwatch loop_watch;
 
     //*************************** Param Engine ***********************************//
 
@@ -217,8 +218,18 @@ private:
         MASTER_PARAM
 #endif
     };
-};
 
+#if 0
+    //************************ Decoder Functions **********************************//
+
+    void keyDown(int _ctrlID, int _ctrlVal) { pSoundGenerator[_ctrlVal]->resetPhase(); /*resetPhase() der Oscillatoren*/ }
+    void presetChange(int _ctrlID, int _ctrlVal) { /* flush all the Buffers*/ }
+
+    typedef void(VoiceManager::*PTR) (int, int);
+
+    PTR callbackArray[2];
+#endif
+};
 
 
 

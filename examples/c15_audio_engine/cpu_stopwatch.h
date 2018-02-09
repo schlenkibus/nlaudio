@@ -1,6 +1,6 @@
 #pragma once
 
-#define NUMBER_OF_TS 50
+#define NUMBER_OF_TS 1000
 
 #include <chrono>
 #include <array>

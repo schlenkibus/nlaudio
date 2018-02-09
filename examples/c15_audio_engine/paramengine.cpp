@@ -42,10 +42,15 @@ Paramengine::~Paramengine()
 
 void Paramengine::setParams(unsigned char _ctrlID, float _ctrlVal)
 {
+
+#ifdef SINGLEARRAY
     ParamSignalData::instance().setSignalValue(0, 10, _ctrlVal);
     printf("Signal Data - Voice 0, Siganl ID 10: %f\n", ParamSignalData::instance().getSignalValue(0, 10));
+#endif
 
-//    PARAMSIGNALDATA[0][4] = _ctrlVal;
-//    printf("Signal Data - Voice 0, Siganl ID 4: %f\n", PARAMSIGNALDATA[0][4]);
-//    printf("Signal Data - Voice 0, Siganl ID 2: %f\n", PARAMSIGNALDATA[0][2]);
+#ifdef GLBLARRAY
+    PARAMSIGNALDATA[0][10] = _ctrlVal;
+    printf("Signal Data - Voice 0, Siganl ID 4: %f\n", PARAMSIGNALDATA[0][4]);
+    printf("Signal Data - Voice 0, Siganl ID 2: %f\n", PARAMSIGNALDATA[0][2]);
+#endif
 }
