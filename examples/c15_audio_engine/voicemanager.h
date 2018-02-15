@@ -16,6 +16,7 @@
 
 #include "paramengine.h"
 
+#include "biquadfilters.h"
 #include "envelopes.h"
 #include "soundgenerator.h"
 #include "combfilter.h"
@@ -42,6 +43,12 @@ public:
     void evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
     void evalTCDEvents(unsigned char _status, unsigned char _data_0, unsigned char _data_1);
 private:
+
+    //************************ Fadepoint Lowpass *********************************//
+    BiquadFilters* pFadepointLowpass;
+    bool mFlushNow;
+    float mFadepoint;
+    uint32_t mFadepointCounter;
 
     //*************************** Param Engine ***********************************//
 

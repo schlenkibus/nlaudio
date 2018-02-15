@@ -256,6 +256,8 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
 
     float delayTime = pLowpass2Hz_L->applyFilter(mDelayTime_L);                  // 2Hz Lowpass for delay time smoothing
 
+    processedSample *= mFlushFade;
+
     mSampleBuffer_L[mSampleBufferIndx] = processedSample;                    // delay - write sample to Buffer
 
     float delaySamples = delayTime * SAMPLERATE;
@@ -297,6 +299,8 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
 
     delayTime = pLowpass2Hz_R->applyFilter(mDelayTime_R);                    // 2Hz Lowpass for delay time smoothing
 
+    processedSample *= mFlushFade;
+
     mSampleBuffer_R[mSampleBufferIndx] = processedSample;                       // delay - Write sample to Buffer
 
     delaySamples = delayTime * SAMPLERATE;
@@ -324,7 +328,6 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
                                                   mSampleBuffer_R[ind_t0],
                                                   mSampleBuffer_R[ind_tp1],
                                                   mSampleBuffer_R[ind_tp2]);
-
 
     processedSample = pLowpass_R->applyFilter(processedSample);                  // 1 pole lowpass
 
@@ -418,7 +421,7 @@ inline void Echo::applyEchoSmoother()
 /** @brief    sets both Buffers to zero, when the preset changes for example
 ******************************************************************************/
 
-inline void Echo::resetBuffer()
+void Echo::resetBuffer()
 {
     mSampleBuffer_L.fill(0.f);
     mSampleBuffer_R.fill(0.f);

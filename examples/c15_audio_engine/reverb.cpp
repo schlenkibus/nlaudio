@@ -401,6 +401,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     wetSample_L = mAsymBuffer_L[ind_t0] + delaySamples_fract * (mAsymBuffer_L[ind_tm1] - mAsymBuffer_L[ind_t0]);
 
+    wetSample_L *= mFlushFade;
 
     wetSample_L = wetSample_L + mDelayStateVar_L9 * mFBAmnt;
 
@@ -635,6 +636,8 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     ind_tm1 &= REVERB_BUFFERSIZE_M1;
 
     wetSample_R = mAsymBuffer_R[ind_t0] + delaySamples_fract * (mAsymBuffer_R[ind_tm1] - mAsymBuffer_R[ind_t0]);
+
+    wetSample_R *= mFlushFade;
 
     wetSample_R = wetSample_R + mDelayStateVar_R9 * mFBAmnt;
 
@@ -1011,6 +1014,18 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
             mMix_ramp = 0.f;
             break;
     }
+}
+
+
+
+/*****************************************************************************/
+/** @brief    sets both Buffers to zero, when the preset changes for example
+******************************************************************************/
+
+void Reverb::resetBuffer()
+{
+    mAsymBuffer_L.fill(0.f);
+    mAsymBuffer_R.fill(0.f);
 }
 
 

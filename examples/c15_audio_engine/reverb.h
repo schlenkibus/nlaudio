@@ -66,6 +66,9 @@ public:
 
     void applyReverb(float _EchosSample_L, float _EchosSample_R, float _ReverbLevel);
     void setReverbParams(unsigned char _ctrlID, float _ctrlVal);
+    void resetBuffer();
+
+    float mFlushFade;
 
 private:
     //*************************** Control Variables **************************//

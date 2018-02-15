@@ -30,14 +30,16 @@ public:
          float _hiCut,
          float _mix);
 
-    ~Echo();                            // Class Destructor
+    ~Echo();                            // reClass Destructor
 
     float mEchoOut_L;
     float mEchoOut_R;
 
     void applyEcho(float _rawSample_L, float _rawSample_R);
     void setEchoParams(unsigned char _ctrlId, float _ctrlVal);
-    inline void resetBuffer();
+    void resetBuffer();
+
+    float mFlushFade;
 
 private:
     //*************************** Control Variabels **************************//

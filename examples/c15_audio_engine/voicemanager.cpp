@@ -17,6 +17,11 @@ float PARAMSIGNALDATA[NUM_VOICES][NUM_SIGNALS];
 
 VoiceManager::VoiceManager()
 {
+    pFadepointLowpass = new BiquadFilters(500.f, 0.f, 0.2f, BiquadFilterType::LOWPASS);
+    mFlushNow = false;
+    mFadepoint = 1.f;
+    mFadepointCounter = 0;
+
     pParamengine = new Paramengine();
 
     uint32_t i;
@@ -107,8 +112,12 @@ VoiceManager::~VoiceManager()
 
 void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
 {
-    std::cout << static_cast<int>(_instrID) << std::endl;
-    std::cout << (_instrID & 15) << std::endl;
+    /// Flushing test
+    if (_ctrlID == 49)
+    {
+        mFadepoint = 0.f;
+        mFlushNow = true;
+    }
 
     if ((_instrID & 15) == InstrID::PARAM_ENGINE)
     {
@@ -259,6 +268,27 @@ void VoiceManager::evalTCDEvents(unsigned char _status, unsigned char _data_0, u
 
 void VoiceManager::voiceLoop()
 {
+    //*************************** Buffer Flushing ***************************//
+
+    float fadepoint = pFadepointLowpass->applyFilter(mFadepoint);
+    pEcho->mFlushFade = fadepoint;
+    pReverb->mFlushFade = fadepoint;
+
+    if (mFlushNow)
+    {
+        mFadepointCounter++;
+
+        if (mFadepointCounter > 480)                // 480 samples = 10ms
+        {
+//            pEcho->resetBuffer();
+//            pReverb->resetBuffer();
+
+            mFadepoint = 1;
+            mFadepointCounter = 0;
+            mFlushNow = false;
+        }
+    }
+
     //***************************** Main DSP Loop ***************************//
     for (uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
     {
