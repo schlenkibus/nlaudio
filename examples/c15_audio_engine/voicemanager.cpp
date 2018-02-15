@@ -107,6 +107,9 @@ VoiceManager::~VoiceManager()
 
 void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
 {
+    std::cout << static_cast<int>(_instrID) << std::endl;
+    std::cout << (_instrID & 15) << std::endl;
+
     if ((_instrID & 15) == InstrID::PARAM_ENGINE)
     {
         pParamengine->setParams(_ctrlID, _ctrlVal);

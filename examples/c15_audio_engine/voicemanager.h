@@ -156,7 +156,7 @@ private:
 
         MASTER_PARAM        = 0xBE,
 
-        PARAM_ENGINE        = 0xBF
+        PARAM_ENGINE        = 0xF
 
 #else
         KEYUP_0,
