@@ -36,7 +36,12 @@ VoiceManager voiceManager;
 //                printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      // MIDI Value Control Output
 
                 // pass Midi Values over to the Voice Manager
-                voiceManager.evalMidiEvents(midiByteBuffer[0], midiByteBuffer[1], static_cast<float>(midiByteBuffer[2]));
+#if INPUT_MIDI == 1
+                voiceManager.evalMidiEvents(midiByteBuffer[0], midiByteBuffer[1], static_cast<float>(midiByteBuffer[2]));           
+#endif
+#ifdef INPUT_TCD
+                voiceManager.evalTCDEvents(midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
+#endif
             }
         }
 

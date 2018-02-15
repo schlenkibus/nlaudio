@@ -37,6 +37,7 @@ public:
 
     void applyEcho(float _rawSample_L, float _rawSample_R);
     void setEchoParams(unsigned char _ctrlId, float _ctrlVal);
+    inline void resetBuffer();
 
 private:
     //*************************** Control Variabels **************************//
@@ -116,6 +117,7 @@ private:
         CROSSFEEDBACKAMNT = 0x09
 #endif
 #ifdef REMOTE61                         // ReMote 61
+        FLUSH_TRG         = 0x01,
         DELAYTIME         = 0x29,
         STEREOAMNT        = 0x2A,
         FEEDBACKAMNT      = 0x2B,

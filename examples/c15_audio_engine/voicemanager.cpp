@@ -16,13 +16,7 @@ float PARAMSIGNALDATA[NUM_VOICES][NUM_SIGNALS];
 *******************************************************************************/
 
 VoiceManager::VoiceManager()
-    : loop_watch()
 {
-#if 0
-    callbackArray[0] = &VoiceManager::keyDown;
-    callbackArray[1] = &VoiceManager::presetChange;
-#endif
-
     pParamengine = new Paramengine();
 
     uint32_t i;
@@ -108,133 +102,149 @@ VoiceManager::~VoiceManager()
 }
 
 /******************************************************************************/
-/** @brief    Parameter setter function
+/** @brief    Parameter setter function -> MIDI
 *******************************************************************************/
 
 void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
 {
-    switch (_instrID)
+    if ((_instrID & 15) == InstrID::PARAM_ENGINE)
     {
-        case InstrID::PARAM_ENGINE:
-            pParamengine->setParams(_ctrlID, _ctrlVal);
-
-            break;
-
-        case InstrID::ENEVELOPES_PARAM:
-            for (uint32_t i = 0; i < NUM_VOICES; i++)
-            {
-                pEnvelopes[i]->setEnvelopePramas(_ctrlID, _ctrlVal);
-            }
-            break;
-
-        case InstrID::OSC_A_PARAM:
-        case InstrID::OSC_B_PARAM:
-        case InstrID::SHAPER_A_PARAM:
-        case InstrID::SHAPER_B_PARAM:
-            for (uint32_t i = 0; i < NUM_VOICES; i++)
-            {
-                pSoundGenerator[i]->setGenParams(_instrID, _ctrlID, _ctrlVal);
-            }
-            break;
-
-        case InstrID::COMBFILTER_PARAM:
-
-            for (uint32_t i = 0; i < NUM_VOICES; i++)
-            {
-                pCombFilter[i]->setCombFilterParams(_ctrlID, _ctrlVal);
-            }
-            break;
-
-        case InstrID::STATEVARIABLE_PARAM:
-
-            for (uint32_t i = 0; i < NUM_VOICES; i++)
-            {
-                pSVFilter[i]->setStateVariableFilterParams(_ctrlID, _ctrlVal);
-            }
-            break;
-
-        case InstrID::FEEDBACKMIXER_PARAM:
-
-            /// Reverb Level should be enough for just one FB Mixer instance ...
-
-            for (uint32_t i = 0; i < NUM_VOICES; i++)
-            {
-                pFeedbackMixer[i]->setFeedbackMixerParams(_ctrlID, _ctrlVal);
-            }
-            break;
-
-        case InstrID::OUTPUTMIXER_PARAM:
-
-            pOutputMixer->setOutputmixerParams(_ctrlID, _ctrlVal);
-            break;
-
-        case InstrID::FLANGER_PARAM:
-
-            pFlanger->setFlangerParams(_ctrlID, _ctrlVal);
-            break;
-
-        case InstrID::CABINET_PARAM:
-
-            pCabinet_L->setCabinetParams(_ctrlID, _ctrlVal);
-            pCabinet_R->setCabinetParams(_ctrlID, _ctrlVal);
-            break;
-
-        case InstrID::GAP_PARAM:
-
-            pGapFilter->setGapFilterParams(_ctrlID, _ctrlVal);
-            break;
-
-
-        case InstrID::ECHO_PARAM:
-
-            pEcho->setEchoParams(_ctrlID, _ctrlVal);
-            break;
-
-        case InstrID::REVERB_PARAM:
-
-            pReverb->setReverbParams(_ctrlID, _ctrlVal);
-            break;
-
-        case InstrID::KEYUP_0:
-        case InstrID::KEYUP_1:
-        case InstrID::KEYUP_2:
-        case InstrID::KEYUP_3:
-        case InstrID::KEYUP_4:
-        case InstrID::KEYUP_5:
-        case InstrID::KEYUP_6:
-        case InstrID::KEYUP_7:
-        case InstrID::KEYUP_8:
-        case InstrID::KEYUP_9:
-        case InstrID::KEYUP_10:
-        case InstrID::KEYUP_11:
-        case InstrID::KEYUP_12:
-        case InstrID::KEYUP_13:
-        case InstrID::KEYUP_14:
-        case InstrID::KEYUP_15:
-
-            vallocProcess(0, _ctrlID, _ctrlVal);
-            break;
-
-        case InstrID::KEYDOWN_0:
-        case InstrID::KEYDOWN_1:
-        case InstrID::KEYDOWN_2:
-        case InstrID::KEYDOWN_3:
-        case InstrID::KEYDOWN_4:
-        case InstrID::KEYDOWN_5:
-        case InstrID::KEYDOWN_6:
-        case InstrID::KEYDOWN_7:
-        case InstrID::KEYDOWN_8:
-        case InstrID::KEYDOWN_9:
-        case InstrID::KEYDOWN_10:
-        case InstrID::KEYDOWN_11:
-        case InstrID::KEYDOWN_12:
-        case InstrID::KEYDOWN_13:
-        case InstrID::KEYDOWN_14:
-        case InstrID::KEYDOWN_15:
-
-            vallocProcess(1, _ctrlID, _ctrlVal);
-            break;
+        pParamengine->setParams(_ctrlID, _ctrlVal);
     }
+    else
+    {
+        switch (_instrID)
+        {
+            case InstrID::ENEVELOPES_PARAM:
+
+                for (uint32_t i = 0; i < NUM_VOICES; i++)
+                {
+                    pEnvelopes[i]->setEnvelopePramas(_ctrlID, _ctrlVal);
+                }
+                break;
+
+            case InstrID::OSC_A_PARAM:
+            case InstrID::OSC_B_PARAM:
+            case InstrID::SHAPER_A_PARAM:
+            case InstrID::SHAPER_B_PARAM:
+
+                for (uint32_t i = 0; i < NUM_VOICES; i++)
+                {
+                    pSoundGenerator[i]->setGenParams(_instrID, _ctrlID, _ctrlVal);
+                }
+                break;
+
+            case InstrID::COMBFILTER_PARAM:
+
+                for (uint32_t i = 0; i < NUM_VOICES; i++)
+                {
+                    pCombFilter[i]->setCombFilterParams(_ctrlID, _ctrlVal);
+                }
+                break;
+
+            case InstrID::STATEVARIABLE_PARAM:
+
+                for (uint32_t i = 0; i < NUM_VOICES; i++)
+                {
+                    pSVFilter[i]->setStateVariableFilterParams(_ctrlID, _ctrlVal);
+                }
+                break;
+
+            case InstrID::FEEDBACKMIXER_PARAM:
+
+                /// Reverb Level should be enough for just one FB Mixer instance ...
+
+                for (uint32_t i = 0; i < NUM_VOICES; i++)
+                {
+                    pFeedbackMixer[i]->setFeedbackMixerParams(_ctrlID, _ctrlVal);
+                }
+                break;
+
+            case InstrID::OUTPUTMIXER_PARAM:
+
+                pOutputMixer->setOutputmixerParams(_ctrlID, _ctrlVal);
+                break;
+
+            case InstrID::FLANGER_PARAM:
+
+                pFlanger->setFlangerParams(_ctrlID, _ctrlVal);
+                break;
+
+            case InstrID::CABINET_PARAM:
+
+                pCabinet_L->setCabinetParams(_ctrlID, _ctrlVal);
+                pCabinet_R->setCabinetParams(_ctrlID, _ctrlVal);
+                break;
+
+            case InstrID::GAP_PARAM:
+
+                pGapFilter->setGapFilterParams(_ctrlID, _ctrlVal);
+                break;
+
+
+            case InstrID::ECHO_PARAM:
+
+                pEcho->setEchoParams(_ctrlID, _ctrlVal);
+                break;
+
+            case InstrID::REVERB_PARAM:
+
+                pReverb->setReverbParams(_ctrlID, _ctrlVal);
+                break;
+
+            case InstrID::KEYUP_0:
+            case InstrID::KEYUP_1:
+            case InstrID::KEYUP_2:
+            case InstrID::KEYUP_3:
+            case InstrID::KEYUP_4:
+            case InstrID::KEYUP_5:
+            case InstrID::KEYUP_6:
+            case InstrID::KEYUP_7:
+            case InstrID::KEYUP_8:
+            case InstrID::KEYUP_9:
+            case InstrID::KEYUP_10:
+            case InstrID::KEYUP_11:
+            case InstrID::KEYUP_12:
+            case InstrID::KEYUP_13:
+            case InstrID::KEYUP_14:
+            case InstrID::KEYUP_15:
+
+                vallocProcess(0, _ctrlID, _ctrlVal);
+                break;
+
+            case InstrID::KEYDOWN_0:
+            case InstrID::KEYDOWN_1:
+            case InstrID::KEYDOWN_2:
+            case InstrID::KEYDOWN_3:
+            case InstrID::KEYDOWN_4:
+            case InstrID::KEYDOWN_5:
+            case InstrID::KEYDOWN_6:
+            case InstrID::KEYDOWN_7:
+            case InstrID::KEYDOWN_8:
+            case InstrID::KEYDOWN_9:
+            case InstrID::KEYDOWN_10:
+            case InstrID::KEYDOWN_11:
+            case InstrID::KEYDOWN_12:
+            case InstrID::KEYDOWN_13:
+            case InstrID::KEYDOWN_14:
+            case InstrID::KEYDOWN_15:
+
+                vallocProcess(1, _ctrlID, _ctrlVal);
+                break;
+            }
+    }
+}
+
+
+
+/******************************************************************************/
+/** @brief    Parameter setter function -> TCD
+*******************************************************************************/
+
+void VoiceManager::evalTCDEvents(unsigned char _status, unsigned char _data_0, unsigned char _data_1)
+{
+
+
 }
 
 
@@ -246,34 +256,16 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 
 void VoiceManager::voiceLoop()
 {
-    float *voiceSignal = nullptr;
-
-    static int counter = 0;
-    static int deltaCounter = 1;
-    static float deltaCpu = 0.f;
-
-    loop_watch.start();
-
     //***************************** Main DSP Loop ***************************//
     for (uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
     {
-
-#ifdef SINGLARRAY
-#ifdef STACKSINGLE
-        pEnvelopes[voiceNumber]->applyEnvelope(voiceNumber);
-        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, voiceNumber);
+#if 1
+        /// Global Array
+        pEnvelopes[voiceNumber]->applyEnvelope(PARAMSIGNALDATA[voiceNumber]);
+        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, PARAMSIGNALDATA[voiceNumber]);
 #endif
-#ifdef HEAPSINGLE
-        pEnvelopes[voiceNumber]->applyEnvelope(voiceNumber);
-        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, voiceNumber);
-#endif
-#endif
-#ifdef GLBLARRAY
-        voiceSignal = PARAMSIGNALDATA[voiceNumber];
-        pEnvelopes[voiceNumber]->applyEnvelope(voiceSignal);
-        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, voiceSignal);
-#endif
-#ifdef NOARRAY
+#if 0
+        /// No Array
         pEnvelopes[voiceNumber]->applyEnvelope();
         pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pEnvelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
 #endif
@@ -283,22 +275,6 @@ void VoiceManager::voiceLoop()
         pFeedbackMixer[voiceNumber]->applyFeedbackMixer(pCombFilter[voiceNumber]->mCombFilterOut, pSVFilter[voiceNumber]->mSVFilterOut, pReverb->mFeedbackOut);
         pOutputMixer->applyOutputMixer(voiceNumber, pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB, pCombFilter[voiceNumber]->mCombFilterOut, pSVFilter[voiceNumber]->mSVFilterOut);
     }
-
-    loop_watch.stop();
-    counter++;
-
-    if (counter == NUMBER_OF_TS)
-    {
-        loop_watch.calcCPU();
-        std::cout << "CPU Peak: " << loop_watch.mCPU_peak << std::endl;
-        counter = 0;
-
-        deltaCpu = deltaCpu + loop_watch.mCPU_peak;
-
-        std::cout << "CPU Peak delta: " << deltaCpu / deltaCounter << std::endl;
-        deltaCounter++;
-    }
-
 
     //******************************** Flanger ******************************//
 
@@ -445,7 +421,6 @@ void VoiceManager::vallocProcess(uint32_t _keyDirection, float _pitch, float _ve
 
         pEnvelopes[v]->setEnvelope(_velocity/ 127.f);
         pSoundGenerator[v]->setPitch(offsetPitch);
-//        callbackArray[0](80,v);
         pSoundGenerator[v]->resetPhase();
         pCombFilter[v]->setPitch(offsetPitch);
         pSVFilter[v]->setPitch(offsetPitch);

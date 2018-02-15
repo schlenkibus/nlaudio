@@ -223,6 +223,15 @@ void Echo::setEchoParams(unsigned char _ctrlTag, float _ctrlVal)
             mCrossFeedbackAmnt = _ctrlVal;
             initFeedbackSmoother();
             break;
+
+        case CtrlID::FLUSH_TRG:
+
+            if (_ctrlVal == 1.f)
+            {
+                printf("Echo - Flush Buffer\n");
+                resetBuffer();
+            }
+            break;
     }
 }
 
@@ -401,6 +410,18 @@ inline void Echo::applyEchoSmoother()
             mCrossFeedback = mCFeedback_base + mCFeedback_diff * mCFeedback_ramp;
         }
     }
+}
+
+
+
+/*****************************************************************************/
+/** @brief    sets both Buffers to zero, when the preset changes for example
+******************************************************************************/
+
+inline void Echo::resetBuffer()
+{
+    mSampleBuffer_L.fill(0.f);
+    mSampleBuffer_R.fill(0.f);
 }
 
 
