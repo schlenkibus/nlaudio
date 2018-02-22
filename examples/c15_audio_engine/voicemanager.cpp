@@ -17,7 +17,7 @@ float PARAMSIGNALDATA[NUM_VOICES][NUM_SIGNALS];
 
 VoiceManager::VoiceManager()
 {
-    pFadepointLowpass = new BiquadFilters(500.f, 0.f, 0.2f, BiquadFilterType::LOWPASS);
+    pFadepointLowpass = new BiquadFilters(250.f, 0.f, 0.2f, BiquadFilterType::LOWPASS);
     mFlushNow = false;
     mFadepoint = 1.f;
     mFadepointCounter = 0;
@@ -76,6 +76,8 @@ VoiceManager::VoiceManager()
 
 VoiceManager::~VoiceManager()
 {
+    delete pFadepointLowpass;
+
     delete pParamengine;
 
     for (uint32_t i = 0; i < NUM_VOICES; i++)
@@ -273,15 +275,15 @@ void VoiceManager::voiceLoop()
     float fadepoint = pFadepointLowpass->applyFilter(mFadepoint);
     pEcho->mFlushFade = fadepoint;
     pReverb->mFlushFade = fadepoint;
+    pFlanger->mFlushFade = fadepoint;
 
-    if (mFlushNow)
+    if (mFlushNow)                                  /// temporal, since the trigger is going to be from rendering
     {
         mFadepointCounter++;
 
-        if (mFadepointCounter > 480)                // 480 samples = 10ms
+        if (mFadepointCounter > 288)                // 6 ms
         {
-//            pEcho->resetBuffer();
-//            pReverb->resetBuffer();
+            flushAllBuffer();
 
             mFadepoint = 1;
             mFadepointCounter = 0;
@@ -303,6 +305,7 @@ void VoiceManager::voiceLoop()
         pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pEnvelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
 #endif
 
+        pCombFilter[voiceNumber]->mFlushFade = fadepoint;
         pCombFilter[voiceNumber]->applyCombFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB);
         pSVFilter[voiceNumber]->applyStateVariableFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB, pCombFilter[voiceNumber]->mCombFilterOut);
         pFeedbackMixer[voiceNumber]->applyFeedbackMixer(pCombFilter[voiceNumber]->mCombFilterOut, pSVFilter[voiceNumber]->mSVFilterOut, pReverb->mFeedbackOut);
@@ -311,18 +314,18 @@ void VoiceManager::voiceLoop()
 
     //******************************** Flanger ******************************//
 
-    pFlanger->applyFlanger(pOutputMixer->mSample_L, pOutputMixer->mSample_R);
+     pFlanger->applyFlanger(pOutputMixer->mSample_L, pOutputMixer->mSample_R);
 
 
     //******************************** Cabinet ******************************//
 
-    pCabinet_L->applyCab(pFlanger->mFlangerOut_L);
-    pCabinet_R->applyCab(pFlanger->mFlangerOut_R);
+     pCabinet_L->applyCab(pFlanger->mFlangerOut_L);
+     pCabinet_R->applyCab(pFlanger->mFlangerOut_R);
 
 
     //****************************** Gap Filter *****************************//
 
-    pGapFilter->applyGapFilter(pCabinet_L->mCabinetOut, pCabinet_R->mCabinetOut);
+     pGapFilter->applyGapFilter(pCabinet_L->mCabinetOut, pCabinet_R->mCabinetOut);
 
 
     //********************************** Echo *******************************//
@@ -504,3 +507,20 @@ void VoiceManager::vallocProcess(uint32_t _keyDirection, float _pitch, float _ve
     }
 }
 
+
+
+/*****************************************************************************/
+/** @brief    sets all Delay Buffer to zero, when the preset changes for example
+******************************************************************************/
+
+void VoiceManager::flushAllBuffer()
+{
+    pEcho->resetBuffer();
+    pFlanger->resetBuffer();
+    pReverb->resetBuffer();
+
+    for (uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
+    {
+        pCombFilter[voiceNumber]->resetBuffer();
+    }
+}

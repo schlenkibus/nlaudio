@@ -37,9 +37,9 @@ public:
 
     void applyEcho(float _rawSample_L, float _rawSample_R);
     void setEchoParams(unsigned char _ctrlId, float _ctrlVal);
-    void resetBuffer();
 
     float mFlushFade;
+    void resetBuffer();
 
 private:
     //*************************** Control Variabels **************************//

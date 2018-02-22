@@ -28,6 +28,8 @@
 
 Flanger::Flanger()
 {
+    mFlushFade = 1.f;
+
     //****************************** Outputs *******************************//
     mFlangerOut_L = 0.f;
     mFlangerOut_R = 0.f;
@@ -114,6 +116,8 @@ Flanger::Flanger(float _rate,
                  float _crossFeedback,
                  float _mix)
 {
+    mFlushFade = 1.f;
+
     //****************************** Outputs *******************************//
     mFlangerOut_L = 0.f;
     mFlangerOut_R = 0.f;
@@ -265,6 +269,7 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
     float depth = pLowpass2Hz_Depth->applyFilter(mLFDepth);              // Depth for both channels
 
     float processedSample = _rawSample_L + (mChannelStateVar_L * mLocalFeedback) + (mChannelStateVar_R * mCrossFeedback);
+    processedSample *= mFlushFade;
     processedSample = pLowpass_L->applyFilter(processedSample);
 
     float delayTime = pLowpass2Hz_L->applyFilter(mFlangerTime_L);
@@ -298,6 +303,7 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
                                                   mSampleBuffer_L[ind_tp1],
                                                   mSampleBuffer_L[ind_tp2]);
 
+    processedSample *= mFlushFade;
     processedSample = mAllpass_L.applyAllpass(processedSample);
 
     mChannelStateVar_L = pHighpass_L->applyFilter(processedSample) + DNC_CONST;
@@ -307,6 +313,8 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
 
     //*************************** Right Channel *****************************//
     processedSample = _rawSample_R + (mChannelStateVar_R * mLocalFeedback) + (mChannelStateVar_L * mCrossFeedback);
+    processedSample *= mFlushFade;
+
     processedSample = pLowpass_R->applyFilter(processedSample);
 
     delayTime = pLowpass2Hz_R->applyFilter(mFlangerTime_R);
@@ -340,6 +348,7 @@ void Flanger::applyFlanger(float _rawSample_L, float _rawSample_R)
                                                   mSampleBuffer_R[ind_tp1],
                                                   mSampleBuffer_R[ind_tp2]);
 
+    processedSample *= mFlushFade;
     processedSample = mAllpass_R.applyAllpass(processedSample);
 
     mChannelStateVar_R = pHighpass_R->applyFilter(processedSample) + DNC_CONST;
@@ -679,4 +688,16 @@ void Flanger::applySmoother()
 void Flanger::triggerLFO(float _velocity)
 {
     mLFDecayStateVar = _velocity;
+}
+
+
+
+/*****************************************************************************/
+/** @brief    sets both Buffers to zero, when the preset changes for example
+******************************************************************************/
+
+void Flanger::resetBuffer()
+{
+    mSampleBuffer_L.fill(0.f);
+    mSampleBuffer_R.fill(0.f);
 }

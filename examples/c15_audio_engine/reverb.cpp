@@ -21,6 +21,8 @@
 
 Reverb::Reverb()
 {
+    mFlushFade = 1.f;
+
     //******************************* Outputs ********************************//
     mReverbOut_L = 0.f;
     mReverbOut_R = 0.f;
@@ -161,6 +163,8 @@ Reverb::Reverb(float _size,
                float _preDelayTime,
                float _mix)
 {
+    mFlushFade = 1.f;
+
     //****************************** Outputs *******************************//
     mReverbOut_L = 0.f;
     mReverbOut_R = 0.f;
@@ -377,8 +381,8 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
     wetSample_L = _EchosSample_L * mFeed;
 
-
     //***************************** Asym 2 L *******************************//
+    wetSample_L *= mFlushFade;
     mAsymBuffer_L[mSampleBufferIndx] = wetSample_L;         // write
 
     if (mPreDelayTime_L > REVERB_BUFFERSIZE_M1)
@@ -402,7 +406,6 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     wetSample_L = mAsymBuffer_L[ind_t0] + delaySamples_fract * (mAsymBuffer_L[ind_tm1] - mAsymBuffer_L[ind_t0]);
 
     wetSample_L *= mFlushFade;
-
     wetSample_L = wetSample_L + mDelayStateVar_L9 * mFBAmnt;
 
 
@@ -615,6 +618,7 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
 
 
     //***************************** Asym 2 R *******************************//
+    wetSample_R *= mFlushFade;
     mAsymBuffer_R[mSampleBufferIndx] = wetSample_R;
 
     if (mPreDelayTime_R > REVERB_BUFFERSIZE_M1)
@@ -638,7 +642,6 @@ void Reverb::applyReverb(float _EchosSample_L, float _EchosSample_R, float _Reve
     wetSample_R = mAsymBuffer_R[ind_t0] + delaySamples_fract * (mAsymBuffer_R[ind_tm1] - mAsymBuffer_R[ind_t0]);
 
     wetSample_R *= mFlushFade;
-
     wetSample_R = wetSample_R + mDelayStateVar_R9 * mFBAmnt;
 
 

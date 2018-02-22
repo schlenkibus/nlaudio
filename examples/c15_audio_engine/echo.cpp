@@ -22,6 +22,8 @@
 
 Echo::Echo()
 {
+    mFlushFade = 1.f;
+
     //******************************* Outputs ********************************//
     mEchoOut_L = 0.f;
     mEchoOut_R = 0.f;
@@ -80,6 +82,8 @@ Echo::Echo(float _delayTime,
            float _hiCut,
            float _mix)
 {
+    mFlushFade = 1.f;
+
     //******************************* Outputs ********************************//
     mEchoOut_L = 0.f;
     mEchoOut_R = 0.f;
@@ -257,7 +261,6 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
     float delayTime = pLowpass2Hz_L->applyFilter(mDelayTime_L);                  // 2Hz Lowpass for delay time smoothing
 
     processedSample *= mFlushFade;
-
     mSampleBuffer_L[mSampleBufferIndx] = processedSample;                    // delay - write sample to Buffer
 
     float delaySamples = delayTime * SAMPLERATE;
@@ -287,6 +290,7 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
                                                   mSampleBuffer_L[ind_tp1],
                                                   mSampleBuffer_L[ind_tp2]);
 
+    processedSample *= mFlushFade;
     processedSample = pLowpass_L->applyFilter(processedSample);               // 1-pole lowpass
 
     mChannelStateVar_L = pHighpass_L->applyFilter(processedSample) + DNC_CONST;                // 1-pole highpass
@@ -300,7 +304,6 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
     delayTime = pLowpass2Hz_R->applyFilter(mDelayTime_R);                    // 2Hz Lowpass for delay time smoothing
 
     processedSample *= mFlushFade;
-
     mSampleBuffer_R[mSampleBufferIndx] = processedSample;                       // delay - Write sample to Buffer
 
     delaySamples = delayTime * SAMPLERATE;
@@ -329,6 +332,7 @@ void Echo::applyEcho(float _rawSample_L, float _rawSample_R)
                                                   mSampleBuffer_R[ind_tp1],
                                                   mSampleBuffer_R[ind_tp2]);
 
+    processedSample *= mFlushFade;
     processedSample = pLowpass_R->applyFilter(processedSample);                  // 1 pole lowpass
 
     mChannelStateVar_R = pHighpass_R->applyFilter(processedSample) + DNC_CONST;              // 1-pole highpass

@@ -55,6 +55,10 @@ public:
     void calcDecayGain();
     void calcDelayTime();
 
+
+    float mFlushFade;
+    void resetBuffer();
+
 private:
     float mPitch;               // Incoming Pitch from a key
     float mMainFreq;            // Frequency after Pitch Edit

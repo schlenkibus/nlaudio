@@ -32,6 +32,8 @@
 
 CombFilter::CombFilter()
 {
+    mFlushFade = 1.f;
+
     //******************************* Outputs ********************************//
     mCombFilterOut = 0.f;
 
@@ -110,6 +112,8 @@ CombFilter::CombFilter(float _ABMix,
                        float _phaseMod,
                        float _phaseModMix)
 {
+    mFlushFade = 1.f;
+
     //******************************* Outputs ********************************//
     mCombFilterOut = 0.f;
 
@@ -291,6 +295,7 @@ void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
     /// Hier fehlt der Einfluss vom Envelope
 
     //****************************** Delay ********************************//
+    mCombFilterOut *= mFlushFade;
     mSampleBuffer[mSampleBufferIndex] = mCombFilterOut;             // write into the SampleBuffer
 
     sampleVar = sampleVar * phaseMod + sampleVar;   // phM
@@ -328,6 +333,8 @@ void CombFilter::applyCombFilter(float _sampleA, float _sampleB)
                                                  mSampleBuffer[ind_t0],
                                                  mSampleBuffer[ind_tp1],
                                                  mSampleBuffer[ind_tp2]);
+
+    mCombFilterOut *= mFlushFade;
 
     /// Hier wird am ende och mal mit EnvC multiplieziert
     /// mCombFilterOut *= env;
@@ -536,7 +543,7 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             break;
 
         case CtrlId::ALLPASS_KEYTRACKING:
-            if (_ctrlVal > 80.f)
+            if (_ctrlVal > 80.f)                ///whyyyyyyyyyy? :/
             {
                 _ctrlVal = 80.f;
             }
@@ -909,3 +916,16 @@ void CombFilter::calcDelayTime()
 
     mDelaySamples = mDelaySamples * mNormPhase + mDelaySamples;     // Allpass influence
 }
+
+
+
+/*****************************************************************************/
+/** @brief    sets both Buffers to zero, when the preset changes for example
+******************************************************************************/
+
+void CombFilter::resetBuffer()
+{
+    mSampleBuffer.fill(0.f);
+}
+
+

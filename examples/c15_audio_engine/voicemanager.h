@@ -42,6 +42,8 @@ public:
     void voiceLoop();
     void evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal);
     void evalTCDEvents(unsigned char _status, unsigned char _data_0, unsigned char _data_1);
+
+    void flushAllBuffer();
 private:
 
     //************************ Fadepoint Lowpass *********************************//

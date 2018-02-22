@@ -47,6 +47,9 @@ public:
     void setFlangerParams(unsigned char _ctrlID, float _ctrlVal);
     void triggerLFO(float _velocity);
 
+    float mFlushFade;
+    void resetBuffer();
+
 private:
     //*************************** Control Variables **************************//
     float mMixWet;
