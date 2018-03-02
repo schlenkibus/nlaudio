@@ -30,6 +30,7 @@
 #include "reverb.h"
 
 #include <vector>
+#include <array>
 
 class VoiceManager{
 public:
@@ -47,10 +48,14 @@ public:
 private:
 
     //************************ Fadepoint Lowpass *********************************//
+    //**************** Fadepoint Lowpass// Raised Cosine *************************//
     BiquadFilters* pFadepointLowpass;
     bool mFlushNow;
     float mFadepoint;
     uint32_t mFadepointCounter;
+
+    std::array<float, FADE_SAMPLES > mRaisedCosineTable;
+
 
     //*************************** Param Engine ***********************************//
 

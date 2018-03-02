@@ -22,6 +22,12 @@ VoiceManager::VoiceManager()
     mFadepoint = 1.f;
     mFadepointCounter = 0;
 
+    for (uint32_t ind = 0; ind < mRaisedCosineTable.size(); ind++)
+    {
+        float x = CONST_HALF_PI * SAMPLE_INTERVAL * ind / FADE_TIME;
+        mRaisedCosineTable[ind] = pow(cos(x), 2);
+    }
+
     pParamengine = new Paramengine();
 
     uint32_t i;
@@ -115,7 +121,7 @@ VoiceManager::~VoiceManager()
 void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID, float _ctrlVal)
 {
     /// Flushing test
-    if (_ctrlID == 49)
+    if (_ctrlID == 127)
     {
         mFadepoint = 0.f;
         mFlushNow = true;
@@ -270,26 +276,20 @@ void VoiceManager::evalTCDEvents(unsigned char _status, unsigned char _data_0, u
 
 void VoiceManager::voiceLoop()
 {
-    //*************************** Buffer Flushing ***************************//
+    //************************* Global Fade Points **************************//
 
-    float fadepoint = pFadepointLowpass->applyFilter(mFadepoint);
-    pEcho->mFlushFade = fadepoint;
-    pReverb->mFlushFade = fadepoint;
-    pFlanger->mFlushFade = fadepoint;
+//#define LOWPASSFLUSH
 
-    if (mFlushNow)                                  /// temporal, since the trigger is going to be from rendering
-    {
-        mFadepointCounter++;
+#ifdef LOWPASSFLUSH
+    float fadePoint = pFadepointLowpass->applyFilter(mFadepoint);           // Lowpass Fade Point
+#else
+    float fadePoint = mRaisedCosineTable[mFadepointCounter];                // Raised Cosine Table Fae Point
+#endif
 
-        if (mFadepointCounter > 288)                // 6 ms
-        {
-            flushAllBuffer();
+    pEcho->mFlushFade = fadePoint;
+    pReverb->mFlushFade = fadePoint;
+    pFlanger->mFlushFade = fadePoint;
 
-            mFadepoint = 1;
-            mFadepointCounter = 0;
-            mFlushNow = false;
-        }
-    }
 
     //***************************** Main DSP Loop ***************************//
     for (uint32_t voiceNumber = 0; voiceNumber < NUM_VOICES; voiceNumber++)
@@ -305,12 +305,43 @@ void VoiceManager::voiceLoop()
         pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pEnvelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
 #endif
 
-        pCombFilter[voiceNumber]->mFlushFade = fadepoint;
+        pCombFilter[voiceNumber]->mFlushFade = fadePoint;
         pCombFilter[voiceNumber]->applyCombFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB);
         pSVFilter[voiceNumber]->applyStateVariableFilter(pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB, pCombFilter[voiceNumber]->mCombFilterOut);
         pFeedbackMixer[voiceNumber]->applyFeedbackMixer(pCombFilter[voiceNumber]->mCombFilterOut, pSVFilter[voiceNumber]->mSVFilterOut, pReverb->mFeedbackOut);
         pOutputMixer->applyOutputMixer(voiceNumber, pSoundGenerator[voiceNumber]->mSampleA, pSoundGenerator[voiceNumber]->mSampleB, pCombFilter[voiceNumber]->mCombFilterOut, pSVFilter[voiceNumber]->mSVFilterOut);
     }
+
+#ifdef LOWPASSFLUSH
+    if (mFlushNow)                                  /// temporal, since the trigger is going to be from rendering
+    {
+        if (mFadepointCounter > FLUSH_INDEX)
+        {
+            flushAllBuffer();
+
+            mFadepoint = 1;
+            mFadepointCounter = 0;
+            mFlushNow = false;
+        }
+
+        mFadepointCounter++;
+    }
+#else
+    if (mFlushNow)
+    {
+        if (mFadepointCounter == FLUSH_INDEX)
+        {
+            flushAllBuffer();
+        }
+
+        if (mFadepointCounter > FADE_SAMPLES)
+        {
+            mFadepointCounter = 0;
+            mFlushNow = false;
+        }
+        mFadepointCounter++;
+    }
+#endif
 
     //******************************** Flanger ******************************//
 

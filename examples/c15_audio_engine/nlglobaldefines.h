@@ -70,3 +70,7 @@ const float FREQCLIP_MAX_3 = SAMPLERATE / 2.18f;
 const float FREQCLIP_MAX_4 = SAMPLERATE / 2.125f;
 const float FREQCLIP_MAX_5 = SAMPLERATE / 2.f;
 
+const float FADE_TIME = 0.003f;
+const uint32_t FADE_SAMPLES = FADE_TIME * 2 * SAMPLERATE + 1;
+const uint32_t FLUSH_INDEX =  FADE_TIME * SAMPLERATE;
+

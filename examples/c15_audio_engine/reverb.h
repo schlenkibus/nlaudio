@@ -8,6 +8,8 @@
 
     @note       all smoothers and the LFO is running at full
                 samplingrate!!!
+                Loop Filter -> Lpf & Hpf Coeficients will be calculated
+                with half the SR
 *******************************************************************************/
 
 #pragma once

@@ -9,6 +9,7 @@
     @todo       Envelope C influence is missing
                 Gate influece is missing
                 Global Defines - Clipping Borders!?
+                PitchEdit -> Delay Bypass -> Crossfade: Input Signal - Delay Output
 *******************************************************************************/
 
 #pragma once
