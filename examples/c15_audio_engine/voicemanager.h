@@ -57,11 +57,6 @@ private:
     std::array<float, FADE_SAMPLES > mRaisedCosineTable;
 
 
-    //*************************** Param Engine ***********************************//
-
-    Paramengine* pParamengine;
-
-
     //*************************** Envelopes ***************************************//
 
     Envelopes* pEnvelopes[NUM_VOICES];

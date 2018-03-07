@@ -11,20 +11,7 @@
 
 #pragma once
 
-#include "nltoolbox.h"
-#include "nlglobaldefines.h"
-
-
-class Paramengine
+struct paramengine
 {
-public:
-
-    Paramengine();              // Default Constructor
-
-    ~Paramengine();             // Destructor
-
-    void setParams(unsigned char _ctrlID, float _ctrlVal);
-
-private:
+    //
 };
-
