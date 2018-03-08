@@ -8,7 +8,6 @@
 
 #include <audio/audiofactory.h>
 #include "voicemanager.h"
-#include "test_envelope.h"
 
 namespace Nl {
 namespace MINISYNTH {

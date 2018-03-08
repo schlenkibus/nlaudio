@@ -36,10 +36,6 @@ extern float PARAMSIGNALDATA[NUM_VOICES][NUM_SIGNALS];
 #define ENV_C 4
 #define ENV_GATE 5
 
-//*************************** Smoother Objects *******************************//
-
-//#define SMOOTHEROBJ
-
 
 //***************************** Constants ************************************//
 

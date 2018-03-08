@@ -17,7 +17,7 @@
 #include "paramengine.h"
 
 #include "biquadfilters.h"
-#include "envelopes.h"
+#include "test_envelopes.h"
 #include "soundgenerator.h"
 #include "combfilter.h"
 #include "statevariablefilter.h"
@@ -59,7 +59,7 @@ private:
 
     //*************************** Envelopes ***************************************//
 
-    Envelopes* pEnvelopes[NUM_VOICES];
+    Test_Envelopes* pTest_Envelopes[NUM_VOICES];
 
 
     //******************** Sound Generating Modules *******************************//

@@ -32,7 +32,7 @@ VoiceManager::VoiceManager()
 
     for (i = 0; i < NUM_VOICES; i++)
     {
-        pEnvelopes[i] = new Envelopes();
+        pTest_Envelopes[i] = new Test_Envelopes();
     }
 
     for (i = 0; i < NUM_VOICES; i++)
@@ -84,8 +84,8 @@ VoiceManager::~VoiceManager()
 
     for (uint32_t i = 0; i < NUM_VOICES; i++)
     {
-        delete pEnvelopes[i];
-        pEnvelopes[i] = NULL;
+        delete pTest_Envelopes[i];
+        pTest_Envelopes[i] = NULL;
 
         delete pSoundGenerator[i];
         pSoundGenerator[i] = NULL;
@@ -129,7 +129,7 @@ void VoiceManager::evalMidiEvents(unsigned char _instrID, unsigned char _ctrlID,
 
             for (uint32_t i = 0; i < NUM_VOICES; i++)
             {
-                pEnvelopes[i]->setEnvelopePramas(_ctrlID, _ctrlVal);
+                pTest_Envelopes[i]->setEnvelopePramas(_ctrlID, _ctrlVal);
             }
             break;
 
@@ -285,13 +285,13 @@ void VoiceManager::voiceLoop()
     {
 #if 1
         /// Global Array
-        pEnvelopes[voiceNumber]->applyEnvelope(PARAMSIGNALDATA[voiceNumber]);
+        pTest_Envelopes[voiceNumber]->applyEnvelope(PARAMSIGNALDATA[voiceNumber]);
         pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, PARAMSIGNALDATA[voiceNumber]);
 #endif
 #if 0
         /// No Array
-        pEnvelopes[voiceNumber]->applyEnvelope();
-        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pEnvelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
+        pTest_Envelopes[voiceNumber]->applyEnvelope();
+        pSoundGenerator[voiceNumber]->generateSound(pFeedbackMixer[voiceNumber]->mFeedbackOut, pTest_Envelopes[voiceNumber]->mEnvRamp_A, pEnvelopes[voiceNumber]->mEnvRamp_B, pEnvelopes[voiceNumber]->mEnvRamp_C, pEnvelopes[voiceNumber]->mGateRamp);
 #endif
 
         pCombFilter[voiceNumber]->mFlushFade = fadePoint;
@@ -475,7 +475,7 @@ void VoiceManager::vallocProcess(uint32_t _keyDirection, float _pitch, float _ve
 
         float offsetPitch = _pitch - 60.f;
 
-        pEnvelopes[v]->setEnvelope(_velocity/ 127.f);
+        pTest_Envelopes[v]->setEnvelope(_velocity/ 127.f);
         pSoundGenerator[v]->setPitch(offsetPitch);
         pSoundGenerator[v]->resetPhase();
         pCombFilter[v]->setPitch(offsetPitch);
@@ -520,7 +520,7 @@ void VoiceManager::vallocProcess(uint32_t _keyDirection, float _pitch, float _ve
 
                 vVoiceState[v] = -1;
 
-                pEnvelopes[v]->killEnvelope();
+                pTest_Envelopes[v]->killEnvelope();
                 break;
             }
         }
