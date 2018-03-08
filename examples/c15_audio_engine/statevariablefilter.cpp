@@ -361,9 +361,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
             {
                 _ctrlVal = 1.0;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - AB Mix: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mABMix_target = _ctrlVal;
             mABMix_base = mABMix_1;
@@ -381,9 +381,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Comb Mix: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mCombMix_target = _ctrlVal;
             mCombMix_base = mCombMix_1;
@@ -400,9 +400,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
             {
                 _ctrlVal = 140.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Cutoff: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mCutPitch_target = _ctrlVal;
             mCutPitch_base = mCutPitch;
@@ -414,8 +414,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
 
         case CtrlId::CUTOFF_KEYTRACKING:
             _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Cutoff KeyTrk: %f\n", _ctrlVal);
+#endif
             mCutKeyTracking = _ctrlVal;
 
             calcCutFrequency();
@@ -426,9 +427,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
 
             if (_ctrlVal > 1.f)
                 _ctrlVal = 1.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Resonance: %f\n", _ctrlVal);
-
+#endif
             mResonance = _ctrlVal;
             calcAttenuation();
             break;
@@ -438,9 +439,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
 
             if (_ctrlVal > 1.f)
                 _ctrlVal = 1.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Resonance KeyTrk: %f\n", _ctrlVal);
-
+#endif
             mResonanceKeyTracking = _ctrlVal;
             mResonanceKeyTracking *= 0.016667f;
 
@@ -454,9 +455,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
             {
                 _ctrlVal = 60.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Spread: %f\n", _ctrlVal);
-
+#endif
             mSpread = _ctrlVal * 0.5f;
             calcCutFrequency();
             break;
@@ -468,9 +469,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Filter Type: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal *= 2.f;
 
             // Set Smoothing Ramps
@@ -511,9 +512,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Parallel: %f\n", _ctrlVal);           
-
+#endif
             // Set Smoothing Ramps
             mFade_ramp = 0.f;
 
@@ -543,9 +544,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - FM: %f\n", _ctrlVal);
-
+#endif
             mFreqMod = _ctrlVal * 5.f;
             mFirst_FreqModConst = mFirst_CutFreq * mFreqMod;
             mSecond_FreqModConst = mSecond_CutFreq * mFreqMod;
@@ -558,9 +559,9 @@ void StateVariableFilter::setStateVariableFilterParams(unsigned char _ctrlID, fl
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("SV Filter - Frequency Mod Mix: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mFreqModMix_target = _ctrlVal;
             mFreqModMix_base = mFreqModMix_1;

@@ -880,8 +880,9 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
     {
         case CtrlID::SIZE:
             _ctrlVal = _ctrlVal / 127.f;
+#ifdef PRINT_PARAMVALUES
             printf("Reverb - Size: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = (2.f - fabs(_ctrlVal)) * _ctrlVal;
 
             // Size for Feed
@@ -915,8 +916,9 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
 
         case CtrlID::COLOR:
             _ctrlVal = _ctrlVal / 127.f;
+#ifdef PRINT_PARAMVALUES
             printf("Reverb - Color: %f\n", _ctrlVal);
-
+#endif
             // Color for Feed
             mFeedColor = _ctrlVal;
 
@@ -968,16 +970,18 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
 
         case CtrlID::CHORUS:
             _ctrlVal = _ctrlVal / 127.f;
+#ifdef PRINT_PARAMVALUES
             printf("Reverb - Chorus: %f\n", _ctrlVal);
-
+#endif
             mDepthChorus = _ctrlVal * _ctrlVal;
             initDepthSmoother();
             break;
 
         case CtrlID::PRE_DELAY:
             _ctrlVal = _ctrlVal / 127.f;
+#ifdef PRINT_PARAMVALUES
             printf("Reverb - Pre Delay: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = _ctrlVal * _ctrlVal * _ctrlVal;
             _ctrlVal *= 200.f;
 
@@ -999,8 +1003,9 @@ void Reverb::setReverbParams(unsigned char _ctrlID, float _ctrlVal)
 
         case CtrlID::MIX:
             _ctrlVal = _ctrlVal / 127.f;
+#ifdef PRINT_PARAMVALUES
             printf("Reverb - Mix: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = _ctrlVal * _ctrlVal;
 
             // Initialize Smoother ID 7: Dry and Wet

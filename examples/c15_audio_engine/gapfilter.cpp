@@ -212,9 +212,9 @@ void GapFilter::setGapFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 120.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Gap Filter - Center: %f\n", _ctrlVal);
-
+#endif
             mCenter = _ctrlVal;
             calcGapFreq();
             break;
@@ -226,9 +226,9 @@ void GapFilter::setGapFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 96.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Gap Filter - Gap: %f\n", _ctrlVal);
-
+#endif
             mGap = _ctrlVal * 0.5f;
             calcGapFreq();
             break;
@@ -240,9 +240,9 @@ void GapFilter::setGapFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Gap Filter - Balance: %f\n", _ctrlVal);
-
+#endif
             mBalance = _ctrlVal;
             calcFilterMix();
             break;
@@ -254,9 +254,9 @@ void GapFilter::setGapFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Gap Filter - Mix: %f\n", _ctrlVal);
-
+#endif
             mMix = _ctrlVal;
 
             if (mMix > 0.f)
@@ -279,9 +279,9 @@ void GapFilter::setGapFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 36.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Gap Filter - Stereo: %f\n", _ctrlVal);
-
+#endif
             mStereo = _ctrlVal * 0.5f;
             calcGapFreq();
             break;
@@ -293,9 +293,9 @@ void GapFilter::setGapFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Gap Filter - Resonance: %f\n", _ctrlVal);
-
+#endif
             mResonance_target = _ctrlVal * 0.9f;
             mResonance_base = mResonance;
             mResonance_diff = mResonance_target - mResonance_base;

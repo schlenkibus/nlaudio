@@ -374,9 +374,9 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
         case CtrlID::RATE:
             _ctrlVal = (_ctrlVal / 127.f);
             _ctrlVal = _ctrlVal * _ctrlVal * 10.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - Rate: %f\n", _ctrlVal);
-
+#endif
             mLFRate = _ctrlVal * SAMPLE_INTERVAL;
 
             mLFDecayWarpedRate = _ctrlVal * 0.55f;
@@ -395,9 +395,9 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 180.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - Phase: %f\n", _ctrlVal);
-
+#endif
             // Initialize Smoother
             mLFPhase_target = _ctrlVal / 360.f;
             mLFPhase_base = mLFPhase;
@@ -416,16 +416,17 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
             }
 
             _ctrlVal = _ctrlVal * fabs(_ctrlVal);
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - T Mod: %f\n", _ctrlVal);
-
+#endif
             mLFDepth = _ctrlVal;
             break;
 
         case CtrlID::ENVELOPE:
             _ctrlVal = (_ctrlVal / 127.f);
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - Env: %f\n", _ctrlVal);
-
+#endif
             // Initialize Smoother
             mEnvWet_target = _ctrlVal;
             mEnvWet_base = mEnvWet;
@@ -438,9 +439,9 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
         case CtrlID::TIME:
             _ctrlVal = _ctrlVal / 127.f;
             _ctrlVal = _ctrlVal * _ctrlVal * 50.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - Time: %f\n", _ctrlVal);
-
+#endif
             mTime = _ctrlVal * 0.001f;
 
             mFlangerTime_L = mTime * (1.f + mStereo);
@@ -454,9 +455,9 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 50.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - Stereo: %f\n", _ctrlVal);
-
+#endif
             mStereo = _ctrlVal * 0.01f;
 
             mFlangerTime_L = mTime * (1.f + mStereo);
@@ -470,25 +471,25 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - AP Mod: %f\n", _ctrlVal);
-
+#endif
             mAPMod = _ctrlVal * 70.f;
             break;
 
         case CtrlID::AP_TUNE:
             _ctrlVal = (_ctrlVal / 127.f) * 140.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - AP Tune: %f\n", _ctrlVal);
-
+#endif
             mAPTune = _ctrlVal;
             break;
 
         case CtrlID::HI_CUT:
             _ctrlVal = (_ctrlVal / 127.f) * 80.f + 60.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - HI Cut: %f\n", _ctrlVal);
-
+#endif
             pLowpass_L->setCutFreq(NlToolbox::Conversion::pitch2freq(_ctrlVal));
             pLowpass_R->setCutFreq(NlToolbox::Conversion::pitch2freq(_ctrlVal));
             break;
@@ -500,9 +501,9 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - Feedback: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = _ctrlVal * 0.5f + 0.5f;
 
             if (_ctrlVal < 0.33f)
@@ -543,9 +544,9 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - Cross Feedback: %f\n", _ctrlVal);
-
+#endif
             mXFeedback = _ctrlVal;
 
             // Initialize Smoothers
@@ -571,9 +572,9 @@ void Flanger::setFlangerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Flanger - Mix: %f\n", _ctrlVal);
-
+#endif
             // Initialize Smoother
             mMixWet_target = _ctrlVal;
             mMixWet_base = mMixWet;

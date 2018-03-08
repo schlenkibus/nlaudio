@@ -204,9 +204,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer - Comb Level: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mCombLevel_target = _ctrlVal;
             mCombLevel_base = mCombLevel;
@@ -223,9 +223,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer - SV Filter Level: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mSVFilterLevel_target = _ctrlVal;
             mSVFilterLevel_base = mSVFilterLevel;
@@ -242,9 +242,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer - Effects Level: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mEffectsLevel_target = _ctrlVal * fabs(_ctrlVal);
             mEffectsLevel_base = mEffectsLevel;
@@ -261,9 +261,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer - Reverb Level: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mReverbLevel_target = _ctrlVal;
             mReverbLevel_base = mReverbLevel;
@@ -275,9 +275,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
 
         case CtrlID::DRIVE:
             _ctrlVal = (_ctrlVal / 127.f) * 50.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer - Drive: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mDrive_target = NlToolbox::Conversion::db2af(_ctrlVal) * 0.25f;
             mDrive_base = mDrive;
@@ -289,9 +289,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
 
         case CtrlID::FOLD:
             _ctrlVal = (_ctrlVal / 127.f);
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer - Fold: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mFold_target = _ctrlVal;
             mFold_base = mFold;
@@ -303,9 +303,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
 
         case CtrlID::ASYM:
             _ctrlVal = (_ctrlVal / 127.f);
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer - Asym: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mAsym_target = _ctrlVal;
             mAsym_base = mAsym;
@@ -322,9 +322,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
             {
                 _ctrlVal = 2.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer: Level: %f\n", NlToolbox::Conversion::af2db(_ctrlVal * _ctrlVal));
-
+#endif
             // Set Smoothing Ramp
             mLevel_target = _ctrlVal * _ctrlVal;
             mLevel_base = mLevel_current;
@@ -342,9 +342,9 @@ void FeedbackMixer::setFeedbackMixerParams(unsigned char _ctrlID, float _ctrlVal
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Feedback Mixer: Key Tracking: %f\n", _ctrlVal);
-
+#endif
             mPitchInfluence = NlToolbox::Conversion::db2af(_ctrlVal * mPitch);
             mMainLevel = mLevel_current * mPitchInfluence;
             break;

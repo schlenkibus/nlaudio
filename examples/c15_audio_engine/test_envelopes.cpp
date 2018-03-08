@@ -52,9 +52,9 @@ void Test_Envelopes::setEnvelopePramas(unsigned char _ctrlID, float _ctrlVal)
             _ctrlVal = (_ctrlVal / 127.f) * 1000.f;
             _ctrlVal = (_ctrlVal * 0.208165f * 0.5f) - 20.f;
             _ctrlVal = NlToolbox::Conversion::db2af(_ctrlVal);
-
+#ifdef PRINT_PARAMVALUES
             printf("Envelope - A Decay: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = 1.f / ((_ctrlVal/ 1000.f) * SAMPLERATE + 1.f);
             mDecayDx_A = 1.f - _ctrlVal;
             break;
@@ -63,9 +63,9 @@ void Test_Envelopes::setEnvelopePramas(unsigned char _ctrlID, float _ctrlVal)
             _ctrlVal = (_ctrlVal / 127.f) * 1000.f;
             _ctrlVal = (_ctrlVal * 0.208165f * 0.5f) - 20.f;
             _ctrlVal = NlToolbox::Conversion::db2af(_ctrlVal);
-
+#ifdef PRINT_PARAMVALUES
             printf("Envelope - B Decay: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = 1.f / ((_ctrlVal/ 1000.f) * SAMPLERATE + 1.f);
             mDecayDx_B = 1.f - _ctrlVal;
             break;
@@ -74,9 +74,9 @@ void Test_Envelopes::setEnvelopePramas(unsigned char _ctrlID, float _ctrlVal)
             _ctrlVal = (_ctrlVal / 127.f) * 1000.f;
             _ctrlVal = (_ctrlVal * 0.208165f * 0.5f) - 20.f;
             _ctrlVal = NlToolbox::Conversion::db2af(_ctrlVal);
-
+#ifdef PRINT_PARAMVALUES
             printf("Envelope - C Decay: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = 1.f / ((_ctrlVal/ 1000.f) * SAMPLERATE + 1.f);
             mDecayDx_C = 1.f - _ctrlVal;
             break;

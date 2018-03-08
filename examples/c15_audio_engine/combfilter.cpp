@@ -432,9 +432,9 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.0;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - AB Mix: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mABMix_target = NlToolbox::Curves::applySineCurve(_ctrlVal);
             mABMix_base = mABMix_1;
@@ -451,18 +451,18 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 119.99f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Pitch Edit: %f\n", _ctrlVal);
-
+#endif
             mPitchEdit = _ctrlVal;
             calcMainFreq();
             break;
 
         case CtrlId::PITCH_KEYTRACKING:
             _ctrlVal = (_ctrlVal / 127.f) * 1.05f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Pitch Key Trk: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mPitchKeyTrk_target = _ctrlVal;
             mPitchKeyTrk_base = mPitchKeyTrk;
@@ -494,18 +494,18 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 100.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Decay Time: %f\n", _ctrlVal);
-
+#endif
             mDecay = _ctrlVal;
             calcDecayGain();
             break;
 
         case CtrlId::DECAY_KEYTRACKING:
             _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Decay Key Trk: %f\n", _ctrlVal);
-
+#endif
             mDecayKeyTrk = _ctrlVal;
             calcDecayGain();
             break;
@@ -526,18 +526,18 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 140.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Allpass Frequency: %f\n", _ctrlVal);
-
+#endif
             mAllpassTune = _ctrlVal;
             calcAllpassFreq();
             break;
 
         case CtrlId::ALLPASS_RES:
             _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Allpass Resonance: %f\n", _ctrlVal);
-
+#endif
             mAllpassRes = (_ctrlVal * 1.99f) + -1.f;
             calcAllpassFreq();
             break;
@@ -549,9 +549,9 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             }
 
             _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Allpass Key Trk: %f\n", _ctrlVal);
-
+#endif
             mAllpassKeyTrk = _ctrlVal;
             calcAllpassFreq();
             break;
@@ -572,18 +572,18 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
 #endif
         case CtrlId::LOWPASS_FREQ:
             _ctrlVal = (_ctrlVal / 1.27f) + 40.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Lowpass Frequency: %f\n", _ctrlVal);
-
+#endif
             mLowpassHiCut = _ctrlVal;
             calcLowpassFreq();
             break;
 
         case CtrlId::LOWPASS_KEYTRACKING:
             _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Lowpass Key Trk: %f\n", _ctrlVal);
-
+#endif
             mLowpassKeyTrk = _ctrlVal;
             calcLowpassFreq();
             break;
@@ -614,9 +614,9 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
                 _ctrlVal = 80.f;
             }
 
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Phase Mod Amount %f\n", _ctrlVal);
-
+#endif
             mPhaseMod = _ctrlVal * fabs(_ctrlVal) * 0.9f;
             break;
 
@@ -627,9 +627,9 @@ void CombFilter::setCombFilterParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Comb Filter - Phase Mod Mix %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mPhaseModMix_target = _ctrlVal;
             mPhaseModMix_base = mPhaseModMix_1;

@@ -300,9 +300,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: A Level: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mALevel_target = _ctrlVal * 2.f;
 
@@ -320,9 +320,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 100.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: A Pan: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mAPan_target = (_ctrlVal * 0.005f) + 0.5f;
 
@@ -340,9 +340,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: B Level: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mBLevel_target = _ctrlVal * 2.f;
 
@@ -360,9 +360,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 100.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: B Pan: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mBPan_target = (_ctrlVal * 0.005f) + 0.5f;
 
@@ -380,9 +380,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: Comb Level: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mCombLevel_target = _ctrlVal;
 
@@ -400,9 +400,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 100.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: Comb Pan: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mCombPan_target = (_ctrlVal * 0.005f) + 0.5f;
 
@@ -420,9 +420,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 1.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: SV Filter Level: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mSVFilterLevel_target = _ctrlVal;
 
@@ -440,9 +440,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 100.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: SV Filter Pan: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mSVFilterPan_target = (_ctrlVal * 0.005f) + 0.5f;
 
@@ -455,9 +455,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
 
         case CtrlID::DRIVE:
             _ctrlVal = (_ctrlVal / 127.f) * 50.f;
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: Drive: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mDrive_target = NlToolbox::Conversion::db2af(_ctrlVal) * 0.25f;
 
@@ -470,9 +470,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
 
         case CtrlID::FOLD:
             _ctrlVal = (_ctrlVal / 127.f);
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: Fold: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mFold_target = _ctrlVal;
 
@@ -485,9 +485,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
 
         case CtrlID::ASYM:
             _ctrlVal = (_ctrlVal / 127.f);
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: Asym: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mAsym_target = _ctrlVal;
 
@@ -505,9 +505,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
             {
                 _ctrlVal = 2.f;
             }
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: Main Level: %f\n", NlToolbox::Conversion::af2db(_ctrlVal * _ctrlVal));
-
+#endif
             // Set Smoothing Ramp
             mMainLevel_target = _ctrlVal * _ctrlVal * 0.64f;
 
@@ -520,9 +520,9 @@ void Outputmixer::setOutputmixerParams(unsigned char _ctrlID, float _ctrlVal)
 
         case CtrlID::KEYPAN:
             _ctrlVal = (_ctrlVal / 127.f);
-
+#ifdef PRINT_PARAMVALUES
             printf("Output Mixer: Key Pan: %f\n", _ctrlVal);
-
+#endif
             // Set Smoothing Ramp
             mKeypan_target = _ctrlVal / 60.f;
 

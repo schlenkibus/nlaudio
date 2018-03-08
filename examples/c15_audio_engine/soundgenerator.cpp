@@ -733,9 +733,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
         {
             case OscCtrlID::OFFSETPITCH:
                 _ctrlVal -= 20;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - Pitch Offset: %f\n", _ctrlVal);
-
+#endif
                 mModuleA_PitchOffset = _ctrlVal;
                 mModuleA_OscFreq = setOscFreq(mPitch, mModuleA_KeyTracking, mModuleA_PitchOffset);
                 mModuleA_PhaseInc = setPhaseInc(mModuleA_OscFreq, mModuleA_Fluct, mModuleA_RandVal);
@@ -748,9 +748,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - Fluct: %f\n", _ctrlVal);
-
+#endif
                 mModuleA_Fluct = (_ctrlVal * _ctrlVal * 0.95f);
                 break;
 
@@ -761,9 +761,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - PM Self: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 1: Pm Self
                 mModuleA_PmSelf_target = fabs(_ctrlVal) * _ctrlVal * 0.5f;
                 mModuleA_PmSelf_base = mModuleA_PmSelf;
@@ -780,9 +780,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - PM B: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 3: Pm Cross
                 mModuleA_PmCross_target = fabs(_ctrlVal) * _ctrlVal;
                 mModuleA_PmCross_base = mModuleA_PmCross;
@@ -799,9 +799,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - PM FB: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 11: PM Feedback
                 mModuleA_PmFeedback_target = _ctrlVal;
                 mModuleA_PmFeedback_base = mModuleA_PmFeedback;
@@ -813,9 +813,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case OscCtrlID::PMSELF_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - PM Self Env A: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 14: PM Self Env A Amount
                 mModuleA_PmSelf_EnvA_Amnt_target = _ctrlVal;
                 mModuleA_PmSelf_EnvA_Amnt_base = mModuleA_PmSelf_EnvA_Amnt;
@@ -827,9 +827,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case OscCtrlID::PMCROSS_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - PM Cross Env B: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 15: PM Cross Env B Amount
                 mModuleA_PmCross_EnvB_Amnt_target = _ctrlVal;
                 mModuleA_PmCross_EnvB_Amnt_base = mModuleA_PmCross_EnvB_Amnt;
@@ -841,9 +841,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case OscCtrlID::PMFEEDBACK_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - PM Feedback Env C: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 16: PM Feedback Env C Amount
                 mModuleA_PmFeedback_EnvC_Amnt_target = _ctrlVal;
                 mModuleA_PmFeedback_EnvC_Amnt_base = mModuleA_PmFeedback_EnvC_Amnt;
@@ -858,9 +858,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 105;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A: Key Tracking: %f\n", _ctrlVal);
-
+#endif
                 mModuleA_KeyTracking = _ctrlVal / 100.f;
                 mModuleA_OscFreq = setOscFreq(mPitch, mModuleA_KeyTracking, mModuleA_PitchOffset);
                 mModuleA_PhaseInc = setPhaseInc(mModuleA_OscFreq, mModuleA_Fluct, mModuleA_RandVal);
@@ -873,9 +873,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 0.5f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - Phase: %f\n", _ctrlVal);
-
+#endif
                 mModuleA_ResetPhase = _ctrlVal;
                 break;
 
@@ -886,10 +886,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - Shaper PM Self: %f\n", _ctrlVal);
-
-
+#endif
                 // Initialize Smoother ID 2: Pm Self Shaper
                 mModuleA_PmSelfShaper_target = _ctrlVal;
                 mModuleA_PmSelfShaper_base = mModuleA_PmSelfShaper;
@@ -906,9 +905,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - Shaper PM B: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 4: Pm Cross Shaper
                 mModuleA_PmCrossShaper_target = _ctrlVal;
                 mModuleA_PmCrossShaper_base = mModuleA_PmCrossShaper;
@@ -925,9 +924,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 140.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc A - Chirp Freq: %f\n", _ctrlVal);
-
+#endif
                 _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 
                 pModuleA_ChirpFilter->setFrequency(_ctrlVal);
@@ -943,9 +942,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
             case ShaperCtrlID::DRIVE:
 
                 _ctrlVal = (_ctrlVal/ 127.f) * 25.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper A - Drive: %f\n", _ctrlVal);
-
+#endif
                 _ctrlVal = NlToolbox::Conversion::db2af(_ctrlVal);
                 _ctrlVal *= 0.18f;
                 _ctrlVal += -0.18f;
@@ -966,9 +965,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper A - Fold: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 6: Fold
                 mModuleA_Fold_target = _ctrlVal;
                 mModuleA_Fold_base = mModuleA_Fold;
@@ -985,9 +984,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper A - Asym: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 7: Asym
                 mModuleA_Asym_target = _ctrlVal;
                 mModuleA_Asym_base = mModuleA_Asym;
@@ -1004,9 +1003,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper A - Main Mix: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 8: Shaper Mix
                 mModuleA_ShaperMix_target = _ctrlVal;
                 mModuleA_ShaperMix_base = mModuleA_ShaperMix;
@@ -1023,8 +1022,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper A - Feedback Mix: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 10: Feedback Mix Level
                 mModuleA_FeedbackMix_target = _ctrlVal * _ctrlVal * _ctrlVal;
                 mModuleA_FeedbackMix_base = mModuleA_FeedbackMix;
@@ -1041,9 +1041,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper A - Ring Modulation: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 9: Ring Modulation
                 mModuleA_RingMod_target = _ctrlVal;
                 mModuleA_RingMod_base = mModuleA_RingMod;
@@ -1055,9 +1055,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case ShaperCtrlID::DRIVE_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper A - Drive Env A Amount: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 17: Drive Env A Amount
                 mModuleA_Drive_EnvA_Amnt_target = _ctrlVal;
                 mModuleA_Drive_EnvA_Amnt_base = mModuleA_Drive_EnvA_Amnt;
@@ -1070,9 +1070,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case ShaperCtrlID::FBMIX_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper A - Feedback Mix Env C Amount: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 18: Feedback Mis Env C Amount
                 mModuleA_FeedbackMix_EnvC_Amnt_target = _ctrlVal;
                 mModuleA_FeedbackMix_EnvC_Amnt_base = mModuleA_FeedbackMix_EnvC_Amnt;
@@ -1091,9 +1091,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
         {
             case OscCtrlID::OFFSETPITCH:
                 _ctrlVal -= 20;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - Pitch Offset: %f\n", _ctrlVal);
-
+#endif
                 mModuleB_PitchOffset = _ctrlVal;
                 mModuleB_OscFreq = setOscFreq(mPitch, mModuleB_KeyTracking, mModuleB_PitchOffset);
                 mModuleB_PhaseInc = setPhaseInc(mModuleB_OscFreq, mModuleB_Fluct, mModuleB_RandVal);
@@ -1106,9 +1106,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - Fluct: %f\n", _ctrlVal);
-
+#endif
                 mModuleB_Fluct = (_ctrlVal * _ctrlVal * 0.95f);
                 break;
 
@@ -1119,9 +1119,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - PM Self: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 1: Pm Self
                 mModuleB_PmSelf_target = fabs(_ctrlVal) * _ctrlVal * 0.5f;
                 mModuleB_PmSelf_base = mModuleB_PmSelf;
@@ -1138,9 +1138,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - PM A: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 3: Pm Cross
                 mModuleB_PmCross_target = fabs(_ctrlVal) * _ctrlVal;
                 mModuleB_PmCross_base = mModuleB_PmCross;
@@ -1157,9 +1157,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - PM FB: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 11: PM Feedback
                 mModuleB_PmFeedback_target = _ctrlVal;
                 mModuleB_PmFeedback_diff = mModuleB_PmFeedback_target - mModuleB_PmFeedback;
@@ -1170,9 +1170,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case OscCtrlID::PMSELF_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - PM Self Env B: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 14: PM Self Env B Amount
                 mModuleB_PmSelf_EnvB_Amnt_target = _ctrlVal;
                 mModuleB_PmSelf_EnvB_Amnt_base = mModuleB_PmSelf_EnvB_Amnt;
@@ -1184,9 +1184,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case OscCtrlID::PMCROSS_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - PM Cross Env A: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 15: PM Cross Env A Amount
                 mModuleB_PmCross_EnvA_Amnt_target = _ctrlVal;
                 mModuleB_PmCross_EnvA_Amnt_base = mModuleB_PmCross_EnvA_Amnt;
@@ -1198,9 +1198,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case OscCtrlID::PMFEEDBACK_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - PM Feedback Env C: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 16: PM Feedback Env C Amount
                 mModuleB_PmFeedback_EnvC_Amnt_target = _ctrlVal;
                 mModuleB_PmFeedback_EnvC_Amnt_base = mModuleB_PmFeedback_EnvC_Amnt;
@@ -1215,9 +1215,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 105;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - Key Tracking: %f\n", _ctrlVal);
-
+#endif
                 mModuleB_KeyTracking = _ctrlVal / 100.f;
                 mModuleB_OscFreq = setOscFreq(mPitch, mModuleB_KeyTracking, mModuleB_PitchOffset);
                 mModuleB_PhaseInc = setPhaseInc(mModuleB_OscFreq, mModuleB_Fluct, mModuleB_RandVal);
@@ -1230,9 +1230,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 0.5f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - Phase: %f\n", _ctrlVal);
-
+#endif
                 mModuleB_ResetPhase = _ctrlVal;
                 break;
 
@@ -1243,9 +1243,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - Shaper PM Self: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 2: Pm Self Shaper
                 mModuleB_PmSelfShaper_target = _ctrlVal;
                 mModuleB_PmSelfShaper_base = mModuleB_PmSelfShaper;
@@ -1262,9 +1262,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - Shaper PM A: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 4: Pm Cross Shaper
                 mModuleB_PmCrossShaper_target = _ctrlVal;
                 mModuleB_PmCrossShaper_base = mModuleB_PmCrossShaper;
@@ -1282,9 +1282,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 140.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Osc B - Chirp Freq: %f\n", _ctrlVal);
-
+#endif
                 _ctrlVal = NlToolbox::Conversion::pitch2freq(_ctrlVal - 1.5f);
 
                 pModuleB_ChirpFilter->setFrequency(_ctrlVal);
@@ -1299,9 +1299,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
         {
             case ShaperCtrlID::DRIVE:
                 _ctrlVal = (_ctrlVal/ 127.f) * 25.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper B - Drive: %f\n", _ctrlVal);
-
+#endif
                 _ctrlVal = NlToolbox::Conversion::db2af(_ctrlVal);
                 _ctrlVal *= 0.18f;
                 _ctrlVal += -0.18f;
@@ -1322,9 +1322,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper B - Fold: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 6: Fold
                 mModuleB_Fold_target = _ctrlVal;
                 mModuleB_Fold_base = mModuleB_Fold;
@@ -1341,9 +1341,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper B - Asym: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 7: Asym
                 mModuleB_Asym_target = _ctrlVal;
                 mModuleB_Asym_base = mModuleB_Asym;
@@ -1360,9 +1360,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper B - Main Mix: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 8: Shaper Mix
                 mModuleB_ShaperMix_target = _ctrlVal;
                 mModuleB_ShaperMix_base = mModuleB_ShaperMix;
@@ -1379,8 +1379,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper B - Feedback Mix: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 10: Feedback Mix Level
                 mModuleB_FeedbackMix_target = _ctrlVal * _ctrlVal * _ctrlVal;
                 mModuleB_FeedbackMix_base = mModuleB_FeedbackMix;
@@ -1397,9 +1398,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
                 {
                     _ctrlVal = 1.f;
                 }
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper B - Ring Modulation: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 9: Ring Modulatino
                 mModuleB_RingMod_target = _ctrlVal;
                 mModuleB_RingMod_base = mModuleB_RingMod;
@@ -1411,9 +1412,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case ShaperCtrlID::DRIVE_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper B - Drive Env B Amount: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 17: Drive Env B Amount
                 mModuleB_Drive_EnvB_Amnt_target = _ctrlVal;
                 mModuleB_Drive_EnvB_Amnt_base = mModuleB_Drive_EnvB_Amnt;
@@ -1426,9 +1427,9 @@ void Soundgenerator::setGenParams(unsigned char _instrID, unsigned char _ctrlID,
 
             case ShaperCtrlID::FBMIX_ENV:
                 _ctrlVal = _ctrlVal / 127.f;
-
+#ifdef PRINT_PARAMVALUES
                 printf("Shaper B - Feedback Mix Env C Amount: %f\n", _ctrlVal);
-
+#endif
                 // Initialize Smoother ID 18: Feedback Mix Env C Amount
                 mModuleB_FeedbackMix_EnvC_Amnt_target = _ctrlVal;
                 mModuleB_FeedbackMix_EnvC_Amnt_base = mModuleB_FeedbackMix_EnvC_Amnt;

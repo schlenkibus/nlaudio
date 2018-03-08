@@ -115,8 +115,9 @@ void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
     {
         case CtrlId::HICUT:
             _ctrlVal = (_ctrlVal * 80.f) / 127.f + 60.f;            //Midi to Pitch [60 .. 140]
+#ifdef PRINT_PARAMVALUES
             printf("Cabinet - HiCut: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = pow(2.f, (_ctrlVal - 69.f) / 12) * 440.f;    //Pitch to Freq [261Hz .. 26580Hz]
 
             pLowpass_1->setCutFreq(_ctrlVal);
@@ -125,8 +126,9 @@ void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
 
         case CtrlId::LOCUT:
             _ctrlVal = (_ctrlVal * 80.f) / 127.f + 20.f;            //Midi to Pitch [20 ..100]
+#ifdef PRINT_PARAMVALUES
             printf("Cabinet - LoCut: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal = pow(2.f, (_ctrlVal - 69.f) / 12) * 440.f;    //Pitch to Freq [26Hz .. 2637Hz]
 
             pHighpass->setCutFreq(_ctrlVal);
@@ -134,8 +136,9 @@ void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
 
         case CtrlId::MIX:
             _ctrlVal = _ctrlVal / 127.f;                            //Midi to [0 .. 1]
+#ifdef PRINT_PARAMVALUES
             printf("Cabinet - Mix: %f\n", _ctrlVal);
-
+#endif
             // Initialize Smoother ID 1: Dry
             mDry_target = 1.f - _ctrlVal;
             mDry_base = mDry;
@@ -155,8 +158,9 @@ void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
 
         case CtrlId::CABLEVEL:
             _ctrlVal = (_ctrlVal - 127.f) * (50.f / 127.f);         //Midi to [-50db .. 0dB]
+#ifdef PRINT_PARAMVALUES
             printf("Cabinet - Cab Lvl: %f\n", _ctrlVal);
-
+#endif
             mCabLvl = NlToolbox::Conversion::db2af(_ctrlVal);
 
             // Initialize Smoother ID 2: Wet
@@ -171,8 +175,9 @@ void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
 
         case CtrlId::DRIVE:
             _ctrlVal = _ctrlVal * (50.f / 127.f);                     //Midi to [0dB .. 50dB]
+#ifdef PRINT_PARAMVALUES
             printf("Cabinet - Drive: %f\n", _ctrlVal);
-
+#endif
             // Initialize Smoother ID 3: Drive
             mDrive_target = NlToolbox::Conversion::db2af(_ctrlVal);
 
@@ -185,8 +190,9 @@ void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
 
         case CtrlId::TILT:
             _ctrlVal = (_ctrlVal - 63.5f) * (50.f / 63.5f);           //Midi to [-50dB .. 50dB]
+#ifdef PRINT_PARAMVALUES
             printf("Cabinet - Tilt: %f\n", _ctrlVal);
-
+#endif
             pLowshelf_1->setTilt(_ctrlVal);
             pLowshelf_2->setTilt(_ctrlVal * (-1.f));
 
@@ -196,15 +202,17 @@ void Cabinet::setCabinetParams(unsigned char _ctrlId, float _ctrlVal)
 
         case CtrlId::FOLD:
             _ctrlVal = _ctrlVal / 127.f;                              //Midi to [0 .. 1]
+#ifdef PRINT_PARAMVALUES
             printf("Cabinet - Fold: %f\n", _ctrlVal);
-
+#endif
             mFold = _ctrlVal;
             break;
 
         case CtrlId::ASYM:
             _ctrlVal = _ctrlVal / 127.f;                              //Midi to [0 .. 1]
+#ifdef PRINT_PARAMVALUES
             printf("Cabinet - Asym: %f\n", _ctrlVal);
-
+#endif
             mAsym = _ctrlVal;
             break;
     }

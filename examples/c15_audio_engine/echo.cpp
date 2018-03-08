@@ -159,16 +159,18 @@ void Echo::setEchoParams(unsigned char _ctrlTag, float _ctrlVal)
     {
         case CtrlID::HICUT:
             _ctrlVal = (_ctrlVal * 80.f) / 127.f + 60.f;
+#ifdef PRINT_PARAMVALUES
             printf("Echo - HiCut: %f\n", _ctrlVal);
-
+#endif
             pLowpass_L->setCutFreq(NlToolbox::Conversion::pitch2freq(_ctrlVal));
             pLowpass_R->setCutFreq(NlToolbox::Conversion::pitch2freq(_ctrlVal));
             break;
 
         case CtrlID::MIX:
             _ctrlVal = _ctrlVal / 127.f;
+#ifdef PRINT_PARAMVALUES
             printf("Echo - Mix: %f\n", _ctrlVal);
-
+#endif
             _ctrlVal *= _ctrlVal;               // square of the value
 
             // Initialize Smoother ID 1: Dry
@@ -191,8 +193,9 @@ void Echo::setEchoParams(unsigned char _ctrlTag, float _ctrlVal)
         case CtrlID::DELAYTIME:
             _ctrlVal = _ctrlVal / 127.f;
             _ctrlVal = _ctrlVal * _ctrlVal * 1.5f;
+#ifdef PRINT_PARAMVALUES
             printf("Echo - Time: %f\n", _ctrlVal * 1000.f);
-
+#endif
             mDelayTime = _ctrlVal;
             calcChannelDelayTime();
             break;
@@ -206,24 +209,27 @@ void Echo::setEchoParams(unsigned char _ctrlTag, float _ctrlVal)
             }
 
             _ctrlVal = _ctrlVal * 33.f;
+#ifdef PRINT_PARAMVALUES
             printf("Echo - Stereo: %f\n", _ctrlVal);
-
+#endif
             mStereoAmnt = _ctrlVal;
             calcChannelDelayTime();
             break;
 
         case CtrlID::FEEDBACKAMNT:
             _ctrlVal = _ctrlVal / 127.f;
+#ifdef PRINT_PARAMVALUES
             printf("Echo - Feedback: %f\n", _ctrlVal);
-
+#endif
             mFeedbackAmnt = _ctrlVal;
             initFeedbackSmoother();
             break;
 
         case CtrlID::CROSSFEEDBACKAMNT:
             _ctrlVal = _ctrlVal / 127.f;
+#ifdef PRINT_PARAMVALUES
             printf("Echo - Cross Feedback: %f\n", _ctrlVal);
-
+#endif
             mCrossFeedbackAmnt = _ctrlVal;
             initFeedbackSmoother();
             break;
@@ -232,7 +238,9 @@ void Echo::setEchoParams(unsigned char _ctrlTag, float _ctrlVal)
 
             if (_ctrlVal == 1.f)
             {
+#ifdef PRINT_PARAMVALUES
                 printf("Echo - Flush Buffer\n");
+#endif
                 resetBuffer();
             }
             break;

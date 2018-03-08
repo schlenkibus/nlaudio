@@ -9,6 +9,8 @@
 #pragma once
 #include <stdint.h>
 
+//#define PRINT_PARAMVALUES
+
 //********************** Controller define - temporal ************************//
 
 #define REMOTE61
