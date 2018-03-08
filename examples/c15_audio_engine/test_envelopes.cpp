@@ -1,19 +1,19 @@
 /******************************************************************************/
-/** @file		envelopes.cpp
-    @date		2017-07-11
+/** @file		test_envelopes.cpp
+    @date		2018-03-08
     @version	1.0
     @author		Anton Schmied[2017-07-11]
     @brief		Envelope Class member and method definitions
 *******************************************************************************/
 
-#include "envelopes.h"
+#include "test_envelopes.h"
 
 /******************************************************************************/
 /** Soundgenerator Default Constructor
  * @brief    initialization of the modules local variabels with default values
 *******************************************************************************/
 
-Envelopes::Envelopes()
+Test_Envelopes::Test_Envelopes()
 {
     mEnvRamp_A = 0.f;
     mEnvRamp_B = 0.f;
@@ -44,7 +44,7 @@ Envelopes::Envelopes()
  *  @param    midi control ID -> enum CtrlID (envelope.h)
 ******************************************************************************/
 
-void Envelopes::setEnvelopePramas(unsigned char _ctrlID, float _ctrlVal)
+void Test_Envelopes::setEnvelopePramas(unsigned char _ctrlID, float _ctrlVal)
 {
     switch (_ctrlID)
     {
@@ -90,7 +90,7 @@ void Envelopes::setEnvelopePramas(unsigned char _ctrlID, float _ctrlVal)
  *            active by a Note-On Event
 *******************************************************************************/
 
-void Envelopes::applyEnvelope()
+void Test_Envelopes::applyEnvelope()
 {
     //**************************** Envelope A ********************************//
 
@@ -200,7 +200,7 @@ void Envelopes::applyEnvelope()
  *            active by a Note-On Event -> writes the values to a global array
 *******************************************************************************/
 
-void Envelopes::applyEnvelope(float *polyPtr)
+void Test_Envelopes::applyEnvelope(float *polyPtr)
 {
     //**************************** Envelope A ********************************//
 
@@ -307,7 +307,7 @@ void Envelopes::applyEnvelope(float *polyPtr)
 /** @brief    sets the envelope ramps to the value of the incoming velocity
 *******************************************************************************/
 
-void Envelopes::setEnvelope(float _velocity)
+void Test_Envelopes::setEnvelope(float _velocity)
 {
     mVelocity = _velocity;
     mVelocity_diff = 0.f - _velocity;
@@ -328,7 +328,7 @@ void Envelopes::setEnvelope(float _velocity)
 /** @brief    sets the envelope ramps to 0.f -> instant off
 *******************************************************************************/
 
-void Envelopes::killEnvelope()
+void Test_Envelopes::killEnvelope()
 {
     mEnvState_A = env_release;
     mEnvState_B = env_release;

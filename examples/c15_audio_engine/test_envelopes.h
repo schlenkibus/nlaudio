@@ -1,6 +1,6 @@
 /******************************************************************************/
-/** @file		envelopes.h
-    @date		2017-07-11
+/** @file		test_envelopes.h
+    @date		2018-03-08
     @version	1.0
     @author		Anton Schmied[2017-07-11]
     @brief		An implementation of a simple Envelope which
@@ -14,15 +14,15 @@
 #include "nlglobaldefines.h"
 #include "nltoolbox.h"
 
-class Envelopes
+class Test_Envelopes
 {
 
 public:
-    Envelopes();     // default Constructor
+    Test_Envelopes();     // default Constructor
 
 //    Envelope();     // parametrized Constructor
 
-    ~Envelopes(){}
+    ~Test_Envelopes(){}
 
     float mEnvRamp_A, mEnvRamp_B, mEnvRamp_C;
     float mGateRamp;
