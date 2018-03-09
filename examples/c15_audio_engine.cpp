@@ -78,10 +78,10 @@ int main()
         //auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
 
         //this is for the MiniSynth
-//        auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
+        auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
 
         // first try of dsp_host
-        auto handle = Nl::DspHostHandle::dspHostTCDControl(audioIn, audioOut, midiIn, buffersize, samplerate);
+//        auto handle = Nl::DSP_HOST_HANDLE::dspHostTCDControl(audioIn, audioOut, midiIn, buffersize, samplerate);
 
         // Wait for user to exit by pressing 'q'
         // Print buffer statistics on other keys
