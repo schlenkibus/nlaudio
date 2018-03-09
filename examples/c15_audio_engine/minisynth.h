@@ -12,8 +12,7 @@
 namespace Nl {
 namespace MINISYNTH {
 
-    JobHandle miniSynthMidiControl(const AlsaCardIdentifier &audioInCard,
-                                         const AlsaCardIdentifier &audioOutCard,
+    JobHandle miniSynthMidiControl(      const AlsaCardIdentifier &audioOutCard,
                                          const AlsaCardIdentifier &midiIn,
                                          unsigned int buffersize,
                                          unsigned int samplerate);

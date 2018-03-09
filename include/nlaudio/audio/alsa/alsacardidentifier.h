@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <list>
+#include <vector>
 #include <iosfwd>
 
 namespace Nl {
@@ -12,7 +12,7 @@ public:
 
 	   std::string getCardString() const;
 	   std::string getCardStringExtended() const;
-	   static std::list<AlsaCardIdentifier> getCardIdentifiers();
+       static std::vector<AlsaCardIdentifier> getCardIdentifiers();
 private:
 	   unsigned int m_card;
 	   unsigned int m_device;

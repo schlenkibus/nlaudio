@@ -41,9 +41,9 @@ std::string AlsaCardIdentifier::getCardStringExtended() const
 }
 
 //Static
-std::list<Nl::AlsaCardIdentifier> AlsaCardIdentifier::getCardIdentifiers()
+std::vector<Nl::AlsaCardIdentifier> AlsaCardIdentifier::getCardIdentifiers()
 {
-	std::list<Nl::AlsaCardIdentifier> ret;
+    std::vector<Nl::AlsaCardIdentifier> ret;
 
 	auto cardInfoList = Nl::getDetailedCardInfos();
 

@@ -19,8 +19,10 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <ostream>
 #include <stdio.h>
+#include <getopt.h>
 
 #include <audio/audioalsainput.h>
 #include <audio/audioalsaoutput.h>
@@ -52,36 +54,136 @@ Nl::StopWatch sw("AudioCallback");
 //
 //#include "c15_audio_engine/soundgenerator.h"
 
-int main()
+void usage(const char* name)
 {
+    std::cout << "usage:" << std::endl <<
+                 "   " << name << ":" << std::endl <<
+                 "        -s" << " Samplerate in Hz (default=48000)" << std::endl <<
+                 "        -v" << " Voice count (default=20)" << std::endl <<
+                 "        -t" << " Mode" << std::endl <<
+                 "        -a" << " Audio Device" << std::endl <<
+                 "        -m" << " Midi Device" << std::endl;
+
+    exit(EXIT_SUCCESS);
+}
+
+enum cmd_opts {
+    OPT_SAMPLERATE,
+    OPT_VOICECOUNT,
+    OPT_MODE,
+    OPT_AUDIODEVICE,
+    OPT_MIDIDEVICE,
+    OPT_NUM_ITEMS
+};
+
+
+int main(int argc, char **argv)
+{
+
+    int32_t opts[OPT_NUM_ITEMS];
+    std::fill_n(opts, OPT_NUM_ITEMS, -1);
+
+    // Add default values here!
+    opts[OPT_SAMPLERATE] = 48000;
+    opts[OPT_VOICECOUNT] = 20;
+
+    int index = 0;
+    if (argc == 1) {
+        std::cout << std::endl << "Audio Devices:" << std::endl;
+
+        auto availableDevices = Nl::AlsaCardIdentifier::getCardIdentifiers();
+        for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it, index++)
+            std::cout << "[" << index << "]  " << *it << std::endl;
+
+        std::cout << std::endl;
+        usage(argv[0]);
+    }
+
+    char c = 0;
+    while ((c = getopt(argc, argv, "hs:v:t:a:m:")) != -1) {
+        switch (c)
+        {
+        case 'h':
+            usage(argv[0]);
+        case 's': // Samplerate
+            opts[OPT_SAMPLERATE] = atoi(optarg);
+            break;
+        case 'v': // Voice count
+            opts[OPT_VOICECOUNT] = atoi(optarg);
+            break;
+        case 't': // Mode
+            opts[OPT_MODE] = atoi(optarg);
+            break;
+        case 'a': // Audio Device
+            opts[OPT_AUDIODEVICE] = atoi(optarg);
+            break;
+        case 'm': // Midi Device
+            opts[OPT_MIDIDEVICE] = atoi(optarg);
+            break;
+        default:
+            usage(argv[0]);
+        }
+    }
+
+    // Get real name for audio device, and check if selection is valid in order to provide better information to the user
+    bool hasInvalidOpts = true;
+    std::string strAudioDevive = "invalid";
+
+    auto availableCards = Nl::AlsaCardIdentifier::getCardIdentifiers();
+    int32_t numDevices = availableCards.size();
+
+    if (opts[OPT_AUDIODEVICE] < numDevices) {
+        std::stringstream ss;
+        ss << availableCards.at(opts[OPT_AUDIODEVICE]);
+        strAudioDevive = ss.str();
+        hasInvalidOpts = false;
+    }
+
+    for (unsigned i=0; i<OPT_NUM_ITEMS && !hasInvalidOpts; i++) {
+        if (opts[i] < 0) {
+            hasInvalidOpts = true;
+        }
+    }
+
+    if (hasInvalidOpts) {
+        std::cout << "Invalid Arguments! " << std::endl <<
+                     "Samplerate       : " << (opts[OPT_SAMPLERATE] < 0 ? "invalid" :  std::to_string(opts[OPT_SAMPLERATE])) << std::endl <<
+                     "Voice Count      : " << (opts[OPT_VOICECOUNT] < 0 ? "invalid" : std::to_string(opts[OPT_VOICECOUNT])) << std::endl <<
+                     "Mode             : " << (opts[OPT_MODE] < 0 ? "invalid" : std::to_string(opts[OPT_MODE])) << std::endl <<
+                     "Audio Device     : " << strAudioDevive  << std::endl <<
+                     "Midi Device      : " << (opts[OPT_MIDIDEVICE] < 0 ? "invalid" : std::to_string(opts[OPT_MIDIDEVICE])) << std::endl <<
+                     std::endl;
+
+        exit(EXIT_FAILURE);
+    }
+
+
+    // Start the real stuff now
     try
     {
-        auto availableDevices = Nl::getDetailedCardInfos();
-        for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it)
-            std::cout << *it << std::endl;
-
-        auto availableDevs = Nl::AlsaCardIdentifier::getCardIdentifiers();
-        for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
-            std::cout << *it << std::endl;
-
-        Nl::AlsaCardIdentifier audioIn(1,0,0, "USB Device");
-        Nl::AlsaCardIdentifier audioOut(1,0,0, "USB Device");
-        Nl::AlsaCardIdentifier midiIn(2,0,0, "Midi In");
+        Nl::AlsaCardIdentifier audioOut = availableCards.at(opts[OPT_AUDIODEVICE]);
+        Nl::AlsaCardIdentifier midiIn(1,0,0, "Midi In"); //TODO: Add lib function to look for midi devices
 
         const int buffersize = 256;
-        const int samplerate = 48000;
+        const int samplerate = opts[OPT_SAMPLERATE];
 
-        //auto handle = Nl::Examples::inputToOutput(audioIn, audioOut, buffersize, samplerate);
-        //auto handle = Nl::Examples::silence(audioOutDevice, buffersize, samplerate);
-        //auto handle = Nl::Examples::midiSine(audioOut, midiIn, buffersize, samplerate);
-        //auto handle = Nl::Examples::midiSineWithMidi(audioOut, midiIn, buffersize, samplerate);
-        //auto handle = Nl::Examples::inputToOutputWithMidi(audioIn, audioOut, midiIn, buffersize, samplerate);
+        // We can use the opts[OPT_MODE] command line flag here, to select a mode!
+        std::cout << "[MODE=" << opts[OPT_MODE] << "][RUNNING] ";
 
-        //this is for the MiniSynth
-        auto handle = Nl::MINISYNTH::miniSynthMidiControl(audioIn, audioOut, midiIn, buffersize, samplerate);
-
-        // first try of dsp_host
-//        auto handle = Nl::DSP_HOST_HANDLE::dspHostTCDControl(audioIn, audioOut, midiIn, buffersize, samplerate);
+        Nl::JobHandle handle;
+        switch(opts[OPT_MODE]) {
+        case 0:
+            std::cout << "Nl::MINISYNTH::miniSynthMidiControl()" << std::endl;
+            handle = Nl::MINISYNTH::miniSynthMidiControl(audioOut, midiIn, buffersize, samplerate);
+            break;
+        case 1:
+            std::cout << "Nl::DSP_HOST_HANDLE::dspHostTCDControl()" << std::endl;
+            handle = Nl::DSP_HOST_HANDLE::dspHostTCDControl(audioOut, midiIn, buffersize, samplerate);
+            break;
+        default:
+            std::cout << ">>> INVALID MODE <<<" << std::endl;
+            exit(EXIT_FAILURE);
+        }
 
         // Wait for user to exit by pressing 'q'
         // Print buffer statistics on other keys
@@ -92,11 +194,8 @@ int main()
         //	     The calls should happen in this order. Otherwise we trigger
         //		 a deadlock with the audio callback.
 
-		//while(true) {
-#if 1
         while(getchar() != 'q')
         {
-//            std::cout << getchar() << std::endl;
             std::cout << sw << std::endl;
 
             if (handle.audioOutput) std::cout << "Audio: Output Statistics:" << std::endl
@@ -110,12 +209,7 @@ int main()
                 std::cout << "Midi: Input Statistics:" << std::endl
                           << "rxBytes=" << rxBytes << "  txBytes=" << txBytes << std::endl;
             }
-
-            std::cout << "BufferCount: " << handle.audioInput->getBufferCount() << std::endl;
-
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
-#endif
 
         // Tell worker thread to cleanup and quit
         Nl::terminateWorkingThread(handle.workingThreadHandle);

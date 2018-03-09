@@ -16,7 +16,7 @@ namespace DSP_HOST_HANDLE {
             @param    buffer size
             @param    Sample Specs
     */
-    void dspHostCallback(uint8_t *in, uint8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr)
+    void dspHostCallback(uint8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr)
     {
         auto midiBuffer = getBufferForName("MidiBuffer");
 
@@ -73,8 +73,7 @@ namespace DSP_HOST_HANDLE {
 
 
 
-    JobHandle dspHostTCDControl(const AlsaCardIdentifier &audioInCard,
-                                const AlsaCardIdentifier &audioOutCard,
+    JobHandle dspHostTCDControl(const AlsaCardIdentifier &audioOutCard,
                                 const AlsaCardIdentifier &midiInCard,
                                 unsigned int buffersize,
                                 unsigned int samplerate)
@@ -83,12 +82,11 @@ namespace DSP_HOST_HANDLE {
 
         JobHandle ret;
 
-        ret.inBuffer = createBuffer("InputBuffer");
+        // No input here
+        ret.inBuffer = nullptr;
+        ret.audioInput = nullptr;
+
         ret.outBuffer = createBuffer("OutputBuffer");
-
-        ret.audioInput = createAlsaInputDevice(audioInCard, ret.inBuffer, buffersize);
-        ret.audioInput->setSamplerate(samplerate);
-
         ret.audioOutput = createAlsaOutputDevice(audioOutCard, ret.outBuffer, buffersize);
         ret.audioOutput->setSamplerate(samplerate);
 
@@ -96,10 +94,9 @@ namespace DSP_HOST_HANDLE {
         ret.midiInput = createRawMidiDevice(midiInCard, ret.inMidiBuffer);
 
         ret.audioOutput->start();
-        ret.audioInput->start();
         ret.midiInput->start();
 
-        ret.workingThreadHandle = registerInOutCallbackOnBuffer(ret.inBuffer, ret.outBuffer, dspHostCallback, nullptr);
+        ret.workingThreadHandle = registerOutputCallbackOnBuffer(ret.outBuffer, dspHostCallback, nullptr);
 
         return ret;
     }
