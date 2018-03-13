@@ -7,7 +7,7 @@
 namespace Nl {
 namespace DSP_HOST_HANDLE {
 
-    dsp_host dsp_host;
+    dsp_host m_host;    // renamed member dsp_host to m_host (Matthias)
 
     /** @brief    Callback function for Sine Generator and Audio Input - testing with ReMote 61
             @param    Input Buffer
@@ -32,16 +32,16 @@ namespace DSP_HOST_HANDLE {
                 // printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      // MIDI Value Control Output
 
 #if 1
-                dsp_host.evalMidi();
+                m_host.evalMidi();
 #else
-                dsp_host.evalMidi();
+                m_host.evalMidi();
 #endif
             }
         }
 
         for (unsigned int frameIndex = 0; frameIndex < sampleSpecs.buffersizeInFramesPerPeriode; ++frameIndex)
         {
-            dsp_host.tickMain();
+            m_host.tickMain();
 
             float outputSample;
 
@@ -49,11 +49,11 @@ namespace DSP_HOST_HANDLE {
             {
                 if (channelIndex)
                 {
-                     outputSample = dsp_host.m_mainOut_R;
+                     outputSample = m_host.m_mainOut_R;
                 }
                 else if (!channelIndex)
                 {
-                     outputSample = dsp_host.m_mainOut_L;
+                     outputSample = m_host.m_mainOut_L;
                 }
 
 
@@ -78,7 +78,7 @@ namespace DSP_HOST_HANDLE {
                                 unsigned int buffersize,
                                 unsigned int samplerate)
     {
-        dsp_host.setSamplerate(samplerate);
+        m_host.setSamplerate(samplerate);
 
         JobHandle ret;
 

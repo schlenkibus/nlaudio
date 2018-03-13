@@ -3,8 +3,8 @@
     @date
     @version
     @author
-    @brief		..
-
+    @brief		main container object holding param and audio engine
+                (including shared rendering signals, tcd decoder)
     @todo
 *******************************************************************************/
 
@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include "paramengine.h"
+#include "tcd_decoder.h"
 
 /******************************************************************************/
 /** Global Defines - potentially temporal
@@ -29,9 +30,11 @@ public:
     void tickMain();
     void evalMidi();
 
-
+    /* first local variables */
     unsigned int m_samplerate;
     float m_paramsignaldata[NUM_V][NUM_P];
-
+    /* main signal output (left, right) */
     float m_mainOut_R, m_mainOut_L;
+    /* local data structures */
+    decoder m_decoder;
 };
