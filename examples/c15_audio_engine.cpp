@@ -166,6 +166,8 @@ int main(int argc, char **argv)
 
         const int buffersize = 256;
         const int samplerate = opts[OPT_SAMPLERATE];
+        // Matthias: require number of voices, too (implemented)
+        const int polyphony = opts[OPT_VOICECOUNT];
 
         // We can use the opts[OPT_MODE] command line flag here, to select a mode!
         std::cout << "[MODE=" << opts[OPT_MODE] << "][RUNNING] ";
@@ -178,7 +180,7 @@ int main(int argc, char **argv)
             break;
         case 1:
             std::cout << "Nl::DSP_HOST_HANDLE::dspHostTCDControl()" << std::endl;
-            handle = Nl::DSP_HOST_HANDLE::dspHostTCDControl(audioOut, midiIn, buffersize, samplerate);
+            handle = Nl::DSP_HOST_HANDLE::dspHostTCDControl(audioOut, midiIn, buffersize, samplerate, polyphony);
             break;
         default:
             std::cout << ">>> INVALID MODE <<<" << std::endl;

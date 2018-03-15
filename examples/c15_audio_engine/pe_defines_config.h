@@ -26,14 +26,14 @@ const uint32_t dsp_upsample_factor[2] = {1, 2};
 
 #define dsp_render_min 1e-9
 
-/* project parameter definition */
+/* project parameter definition (prepared for 20 voices) */
 
 #define sig_number_of_params 26             // 13 ENV_A params, 6 OSC params, 2 MASTER params, 5 POLY params (no EnvC Rate)
-#define sig_number_of_param_items 61        // (13 + 6 + 2) MONO params = 21 param itmems; (5 x 8) POLY params = 40 param items; total: 32 + 40 = 61 items
+#define sig_number_of_param_items 121       // (13 + 6 + 2) MONO params = 21 param itmems; (5 x 20) POLY params = 100 param items; total: 21 + 100 = 121 items
 #define sig_number_of_signal_items 10       // small test project requires 10 shared signals
 #define sig_number_of_utilities 2
 #define sig_number_of_envelopes 5
-#define sig_number_of_env_items 33
+#define sig_number_of_env_items 81          // 4 POLY Envelopes (A..Gate) = 4 * 20 = 80 items, 1 MONO (Flanger Decay), total: 81 items
 #define sig_number_of_env_segments 4
 #define sig_number_of_env_types 3
 #define sig_number_of_env_events 3

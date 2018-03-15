@@ -11,11 +11,10 @@
 
 namespace Nl {
 namespace DSP_HOST_HANDLE {
-
     JobHandle dspHostTCDControl(const AlsaCardIdentifier &audioOutCard,
                                 const AlsaCardIdentifier &midiIn,
                                 unsigned int buffersize,
-                                unsigned int samplerate);
-
+                                unsigned int samplerate,
+                                unsigned int polyphony);
 }   //namespace DSP_HOST
 }   //namespace NL

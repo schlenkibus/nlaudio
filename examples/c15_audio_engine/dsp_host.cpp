@@ -1,3 +1,4 @@
+#include <iostream>
 #include "dsp_host.h"
 
 dsp_host::dsp_host()
@@ -8,14 +9,14 @@ dsp_host::dsp_host()
     m_paramsignaldata[NUM_V][NUM_P] = {};
 }
 
-
-
-void dsp_host::setSamplerate(unsigned int _samplerate)
+// Matthias: new proper init
+void dsp_host::init(unsigned int _samplerate, unsigned int _polyphony)
 {
     m_samplerate = _samplerate;
-    // add number of voices!
-}
+    m_voices = _polyphony;
 
+    std::cout << "DSP_HOST::INIT(samplerate: " << m_samplerate << ", voices: " << m_voices << ")" << std::endl;
+}
 
 void dsp_host::tickMain()
 {
