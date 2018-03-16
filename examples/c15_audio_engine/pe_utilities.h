@@ -21,7 +21,7 @@ struct id_list
     uint32_t m_length = 0;
     /* list operations */
     void reset();
-    void add(const uint32_t id);
+    void add(const uint32_t _id);
 };
 
 struct dual_id_list
@@ -30,7 +30,7 @@ struct dual_id_list
     id_list m_data[2];
     /* list operations */
     void reset();
-    void add(const uint32_t listId, const uint32_t id);
+    void add(const uint32_t _listId, const uint32_t _id);
 };
 
 struct polyDual_id_list
@@ -39,7 +39,7 @@ struct polyDual_id_list
     dual_id_list m_data[dsp_poly_types];
     /* list operations */
     void reset();
-    void add(const uint32_t polyId, const uint32_t listId, const uint32_t id);
+    void add(const uint32_t _polyId, const uint32_t _listId, const uint32_t _id);
 };
 
 struct poly_id_list
@@ -48,7 +48,7 @@ struct poly_id_list
     id_list m_data[dsp_poly_types];
     /* list operations */
     void reset();
-    void add(const uint32_t polyType, const uint32_t id);
+    void add(const uint32_t _polyId, const uint32_t _id);
 };
 
 struct clock_id_list
@@ -57,7 +57,7 @@ struct clock_id_list
     poly_id_list m_data[dsp_clock_types];
     /* list operations */
     void reset();
-    void add(const uint32_t clockType, const uint32_t polyType, const uint32_t id);
+    void add(const uint32_t _clockId, const uint32_t _polyId, const uint32_t _id);
 };
 
 struct dual_clock_id_list
@@ -66,7 +66,7 @@ struct dual_clock_id_list
     clock_id_list m_data[2];
     /* list operations */
     void reset();
-    void add(const uint32_t listID, const uint32_t clockType, const uint32_t polyType, const uint32_t id);
+    void add(const uint32_t _listId, const uint32_t _clockId, const uint32_t _polyId, const uint32_t _id);
 };
 
 struct env_id_list
@@ -76,7 +76,7 @@ struct env_id_list
     uint32_t m_length = 0;
     /* list operations */
     void reset();
-    void add(const uint32_t id);
+    void add(const uint32_t _id);
 };
 
 struct dual_env_id_list
@@ -85,5 +85,5 @@ struct dual_env_id_list
     env_id_list m_data[2];
     /* list operations */
     void reset();
-    void add(const uint32_t listId, const uint32_t id);
+    void add(const uint32_t _listId, const uint32_t _id);
 };

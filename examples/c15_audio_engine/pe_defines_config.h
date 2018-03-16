@@ -14,12 +14,13 @@
 
 /* main project config */
 
-#define dsp_poly_types 2
-#define dsp_clock_types 4
+#define dsp_poly_types 2                    // two polyphony types (mono, poly)
+#define dsp_clock_types 4                   // four different parameter types (sync, audio, fast, slow)
+#define dsp_number_of_voices 20             // maximum of allowed voices
 
 const uint32_t dsp_clock_divisions[2][2] = {
-    {5, 120},
-    {10, 240}
+    {5, 120},                               // (sample) clock divisions for fast, slow subclocks (Samplerate = 48000 Hz)
+    {10, 240}                               // (sample) clock divisions for fast, slow subclocks (Samplerate = 96000 Hz) (mode: constant rate, variable divisions)
 };
 
 const uint32_t dsp_upsample_factor[2] = {1, 2};

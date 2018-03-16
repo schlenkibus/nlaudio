@@ -14,21 +14,16 @@
 #include "paramengine.h"
 #include "tcd_decoder.h"
 
-/******************************************************************************/
-/** Global Defines - potentially temporal
-*******************************************************************************/
-const uint32_t NUM_V = 20;  // maximal number of voices
-const uint32_t NUM_P = 26;  // actual number of parameters (test project 1)
-
+/* dsp_host: main dsp object, holding TCD Decoder, Parameter Engine, Audio Engine, shared Signal Array, main signal (L, R) */
 class dsp_host
 {
 public:
-    dsp_host();         //default Constructor (init function does the job actually, see below)
+    dsp_host();                                     // default Constructor (init function does the job actually, see below)
     /* first local variables */
-    unsigned int m_samplerate;
-    unsigned int m_voices;
+    uint32_t m_samplerate;                          // project sample rate is given at program startup by commandline
+    uint32_t m_voices;                              // project polyphony is given at program startup by commandline
     /* hosting shared param signal array */
-    float m_paramsignaldata[NUM_V][NUM_P];
+    float m_paramsignaldata[dsp_number_of_voices][sig_number_of_params];
     /* main signal output (left, right) */
     float m_mainOut_R, m_mainOut_L;
     /* local data structures */

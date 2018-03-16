@@ -36,15 +36,15 @@ struct decoder
     /* proper init */
     void init();
     /* tcd command evaluation */
-    uint32_t getCommandId(const uint32_t status);
+    uint32_t getCommandId(const uint32_t _status);
     /* tcd argument parsing */
-    uint32_t unsigned14(const uint32_t data0, const uint32_t data1);
-    int32_t signed14(const uint32_t data0, const uint32_t data1);
-    void unsigned28upper(const uint32_t data0, const uint32_t data1);
-    void signed28upper(const uint32_t data0, const uint32_t data1);
-    int32_t apply28lower(const uint32_t data0, const uint32_t data1);
+    uint32_t unsigned14(const uint32_t _data0, const uint32_t _data1);
+    int32_t signed14(const uint32_t _data0, const uint32_t _data1);
+    void unsigned28upper(const uint32_t _data0, const uint32_t _data1);
+    void signed28upper(const uint32_t _data0, const uint32_t _data1);
+    int32_t apply28lower(const uint32_t _data0, const uint32_t _data1);
     /* tcd voice and parameter selection event evaluation */
-    uint32_t selectionEvent(const uint32_t from, const uint32_t to, const uint32_t id);
+    uint32_t selectionEvent(const uint32_t _from, const uint32_t _to, const uint32_t _id);
     /* tcd list traversal */
     uint32_t traverseRecall();
     uint32_t traverseKeyEvent();

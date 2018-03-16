@@ -6,7 +6,7 @@ dsp_host::dsp_host()
     m_mainOut_R = 0.f;
     m_mainOut_L = 0.f;
 
-    m_paramsignaldata[NUM_V][NUM_P] = {};
+    m_paramsignaldata[dsp_number_of_voices][sig_number_of_params] = {};
 }
 
 // Matthias: new proper init
