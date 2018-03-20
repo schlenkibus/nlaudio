@@ -14,18 +14,16 @@
 
 /* main project config */
 
-#define dsp_poly_types 2                    // two polyphony types (mono, poly)
+#define dsp_poly_types 2                    // two polyphony types (mono, poly) - (later, a dual type needs to be implemented)
 #define dsp_clock_types 4                   // four different parameter types (sync, audio, fast, slow)
-#define dsp_number_of_voices 20             // maximum of allowed voices
+#define dsp_number_of_voices 20             // maximum allowed number of voices
 
-const uint32_t dsp_clock_divisions[2][2] = {
-    {5, 120},                               // (sample) clock divisions for fast, slow subclocks (Samplerate = 48000 Hz)
-    {10, 240}                               // (sample) clock divisions for fast, slow subclocks (Samplerate = 96000 Hz) (mode: constant rate, variable divisions)
+const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in rates (Hz) now
+    9600,                                   // fast rate is 9600 Hz
+    400                                     // slow rate is 400 Hz
 };
 
-const uint32_t dsp_upsample_factor[2] = {1, 2};
-
-#define dsp_render_min 1e-9
+#define dsp_render_min 1e-9                 // minimal rendered value for exponential transitions
 
 /* project parameter definition (prepared for 20 voices) */
 
@@ -51,13 +49,22 @@ const uint32_t dsp_upsample_factor[2] = {1, 2};
 #define dsp_expon_level_range 400
 #define dsp_expon_time_from -20
 #define dsp_expon_time_range 110
-#define dsp_expon_time_factor 104.0781
+#define dsp_expon_time_factor 104.0781      // measured value to produce exactly time of 16000 (equals highest time)
 
 #define env_norm_peak 0.023766461           // equals 1 / 42.0761 (taken from prototype)
 #define env_clip_peak 1.412537545           // equals +3 dB (candidate levelKT clipping)
+#define env_init_gateRelease 1              // release time of gate envelopes (in milliseconds)
+#define env_highest_finite_time 16000.f     // highest allowed finite time
 
 /* tcd list handling */
 
 #define lst_number_of_lists 2               // predefined paramId lists (simplifying recal and key event update TCD sequences)
 #define lst_recall_length 21                // declare number of paramIds for recall list (MONO - currently)
 #define lst_keyEvent_length 5               // declare number of paramIds for key event list (POLY - currently)
+
+/* internal ids of crucial TCD parameters */
+#define par_envelopeA 0                     // item pointer to (consecutive) envelope parameters A (internal ids)
+#define par_envelopeB 0                     // item pointer to (consecutive) envelope parameters B (internal ids)
+#define par_envelopeC 0                     // item pointer to (consecutive) envelope parameters C (internal ids)
+#define par_noteSteal 21                    // item pointer to note steal (internal id)
+#define par_notePitch 22                    // item pointer to note pitch (internal id)

@@ -32,9 +32,9 @@ namespace DSP_HOST_HANDLE {
                 // printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      // MIDI Value Control Output
 
 #if 1
-                m_host.evalMidi();
+                m_host.evalMidi(midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
 #else
-                m_host.evalMidi();
+                m_host.evalMidi(midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
 #endif
             }
         }

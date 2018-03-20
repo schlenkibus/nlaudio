@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <stdint.h>
+//#include <stdint.h>
 #include "paramengine.h"
 #include "tcd_decoder.h"
 
@@ -18,19 +18,34 @@
 class dsp_host
 {
 public:
-    dsp_host();                                     // default Constructor (init function does the job actually, see below)
-    /* first local variables */
-    uint32_t m_samplerate;                          // project sample rate is given at program startup by commandline
-    uint32_t m_voices;                              // project polyphony is given at program startup by commandline
+    dsp_host();                                                         // default Constructor (signal initialization only)
+    /* local variables */
+    uint32_t m_samplerate;                                              // project sample rate is given at program startup by commandline
+    uint32_t m_voices;                                                  // project polyphony is given at program startup by commandline
+    uint32_t m_clockPosition[dsp_clock_types] = {0, 0, 0, 0};           // sample clock data structure
+    uint32_t m_clockDivision[dsp_clock_types] = {0, 1, 5, 120};         // clock division settings (defaults to 48000 Hz sampleRate)
+    uint32_t m_upsampleFactor = 1;                                      // time conversion handle (sampleRate / 48000)
     /* hosting shared param signal array */
     float m_paramsignaldata[dsp_number_of_voices][sig_number_of_params];
     /* main signal output (left, right) */
-    float m_mainOut_R, m_mainOut_L;
+    float m_mainOut_R, m_mainOut_L;                                     // final stereo (monophonic) audio (output) signal
     /* local data structures */
-    decoder m_decoder;
+    decoder m_decoder;                                                  // TCD command evaluation
+    paramengine m_params;                                               // parameter and envelope rendering
     /* proper init (samplerate & polyphony) */
-    void init(unsigned int _samplerate, unsigned int _polyphony);
-    /* the two main interaction methods: perform sample tick, eval MIDI message */
-    void tickMain();
-    void evalMidi();
+    void init(uint32_t _samplerate, uint32_t _polyphony);
+    /* the two main interaction methods */
+    void tickMain();                                                    // main trigger for sample clock operations
+    void evalMidi(uint32_t _status, uint32_t _data0, uint32_t _data1);  // main trigger for MIDI input (TCD)
+    /* main TCD mechanism commands */
+    void voiceSelectionUpdate();                                        // evaluation of the voice selection mechanism
+    void paramSelectionUpdate();                                        // evaluation of the param selection mechanism
+    void preloadUpdate(uint32_t _mode, uint32_t _listId);               // evaluation of the preload mechanism
+    void destinationUpdate(float _value);                               // distribution of an incoming destination (to selection)
+    void timeUpdate(float _value);                                      // distribution of an incoming time (to selection)
+    void utilityUpdate(float _value);                                   // evaluation of the utility mechanism
+    void listUpdate(float _dest);                                       // evaluation of the list mechanism
+    void keyUp(uint32_t _voiceId, float _velocity);                     // key up event trigger
+    void keyDown(uint32_t _voiceId, float _velocity);                   // key down event trigger
+    void keyApply(uint32_t _voiceId);                                   // key application and distribution (to voice selection)
 };
