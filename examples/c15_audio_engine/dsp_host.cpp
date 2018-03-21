@@ -8,7 +8,7 @@ dsp_host::dsp_host()
     m_mainOut_R = 0.f;
     m_mainOut_L = 0.f;
     /* init shared signal array */
-    m_paramsignaldata[dsp_number_of_voices][sig_number_of_params] = {};
+    m_paramsignaldata[dsp_number_of_voices][sig_number_of_signal_items] = {};
 }
 
 /* proper init - initialize engine(s) according to sampleRate and polyphony */
@@ -462,5 +462,390 @@ void dsp_host::keyApply(uint32_t _voiceId)
         /* update and reset oscillator phases */
         m_paramsignaldata[_voiceId][7] = m_params.m_body[m_params.m_head[24].m_index + _voiceId].m_signal;  // POLY PHASE_A -> OSC_A Phase
         /* AUDIO_ENGINE: reset oscillator phases */
+    }
+}
+
+/* End of Main Definition, Test functionality below:
+ * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
+ */
+
+/* testing the engine - midi input */
+void dsp_host::testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
+{
+    /* */
+    uint32_t chan = _status & 15;
+    uint32_t type = (_status & 127) >> 4;
+    /* */
+    std::cout << "MIDI IN (chan: " << chan << ", type: ";
+    /* */
+    switch(type)
+    {
+    case 0:
+        /* NOTE OFF (explicit) */
+        std::cout << "NOTE_OFF, pitch: " << _data0 << ", velocity: " << _data1;
+        testNoteOff(_data0, _data1);
+        break;
+    case 1:
+        /* NOTE ON (if velocity > 0) */
+        if(_data1 > 0)
+        {
+            std::cout << "NOTE_ON, pitch: " << _data0 << ", velocity: " << _data1;
+            testNoteOn(_data0, _data1);
+        }
+        else
+        {
+            std::cout << "NOTE_OFF, pitch: " << _data0 << ", velocity: " << _data1;
+            testNoteOff(_data0, _data1);
+        }
+        break;
+    case 2:
+        /* POLY AFTERTOUCH */
+        std::cout << "POLY_AT, pitch: " << _data0 << ", value: " << _data1;
+        break;
+    case 3:
+        /* CONTROL CHANGE */
+        std::cout << "CONTROL_CHANGE, ctrl: " << _data0 << ", value: " << _data1;
+        testRouteControls(_data0, _data1);
+        break;
+    case 4:
+        /* PROGRAM CHANGE */
+        std::cout << "PROGRAM_CHANGE, nr: " << _data0;
+        break;
+    case 5:
+        /* MONO AFTERTOUCH */
+        std::cout << "MONO_AT, value: " << _data0;
+        break;
+    case 6:
+        /* PITCH BEND */
+        std::cout << "PITCH_BEND, value: " << _data0 << ", " << _data1;
+        break;
+    }
+    std::cout << ")" << std::endl;
+}
+
+/* test key down */
+void dsp_host::testNoteOn(uint32_t _pitch, uint32_t _velocity)
+{
+    /* get current voiceId and trigger list sequence for key event */
+    m_test_noteId[_pitch] = m_test_voiceId + 1;             // (plus one in order to distinguish from zero)
+    /* prepare pitch and velocity */
+    int32_t notePitch = (_pitch - 60) * 1000;
+    uint32_t noteVel = static_cast<uint32_t>(static_cast<float>(_velocity) * m_test_normalizeMidi * utility_definition[0][0]);
+    /* key event sequence */
+    evalMidi(47, 2, 1);                                     // enable preload (key event list mode)
+    evalMidi(0, 0, m_test_voiceId);                         // select voice: current
+    evalMidi(5, 0, 0);                                      // voice steal: 0
+    testParseDestination(notePitch);                        // note pitch
+    evalMidi(5, 0, 0);                                      // voice pan: 0
+    evalMidi(5, 0, 0);                                      // phase A: 0
+    evalMidi(5, 0, 0);                                      // phase B: 0
+    evalMidi(23, noteVel >> 7, noteVel & 127);              // key down: velocity
+    evalMidi(47, 0, 2);                                     // apply preloaded values
+    /* take current voiceId and increase it (wrapped around polyphony) - sloppy approach */
+    m_test_voiceId = (m_test_voiceId + 1) % m_voices;
+}
+
+/* test key up */
+void dsp_host::testNoteOff(uint32_t _pitch, uint32_t _velocity)
+{
+    /* get note's voiceId and prepare velocity */
+    uint32_t usedVoiceId = m_test_noteId[_pitch] - 1;       // (subtract one in order to get real id)
+    m_test_noteId[_pitch] = 0;                              // clear voiceId assignment
+    uint32_t noteVel = static_cast<uint32_t>(static_cast<float>(_velocity) * m_test_normalizeMidi * utility_definition[0][0]);
+    /* key event sequence */
+    evalMidi(47, 0, 1);                                     // enable preload (no list mode)
+    evalMidi(0, 0, usedVoiceId);                            // select voice: used voice (by note number)
+    evalMidi(7, noteVel >> 7, noteVel & 127);               // key up: velocity
+    evalMidi(47, 0, 2);                                     // apply preloaded values
+}
+
+/* midi ctrl routing */
+void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
+{
+    /* based on the controller layout, transform control changes into tcd messages */
+    switch(testMidiMapping[testMidiDevice][_id])
+    {
+    case 0:
+        /* ignore */
+        break;
+    case 1:
+        /* set param 0 - env a attack */
+        testEditParameter(0, _value);
+        break;
+    case 2:
+        /* set param 1 - env a decay1 */
+        testEditParameter(1, _value);
+        break;
+    case 3:
+        /* set param 2 - env a breakpoit */
+        testEditParameter(2, _value);
+        break;
+    case 4:
+        /* set param 3 - env a decay2 */
+        testEditParameter(3, _value);
+        break;
+    case 5:
+        /* set param 4 - env a sustain */
+        testEditParameter(4, _value);
+        break;
+    case 6:
+        /* set param 5 - env a release */
+        testEditParameter(5, _value);
+        break;
+    case 7:
+        /* set param 6 - env a gain */
+        testEditParameter(6, _value);
+        break;
+    case 8:
+        /* set param 7 - env a level velocity */
+        testEditParameter(7, _value);
+        break;
+    case 9:
+        /* set param 8 - env a attack velocity */
+        testEditParameter(8, _value);
+        break;
+    case 10:
+        /* set param 9 - env a release velocity */
+        testEditParameter(9, _value);
+        break;
+    case 11:
+        /* set param 10 - env a level keytrack */
+        testEditParameter(10, _value);
+        break;
+    case 12:
+        /* set param 11 - env a time keytrack */
+        testEditParameter(11, _value);
+        break;
+    case 13:
+        /* set param 12 - env a attack curve */
+        testEditParameter(12, _value);
+        break;
+    case 14:
+        /* set param 13 - osc a pitch */
+        testEditParameter(13, _value);
+        break;
+    case 15:
+        /* set param 14 - osc a pitch keytrack */
+        testEditParameter(14, _value);
+        break;
+    case 16:
+        /* set param 15 - osc a fluctuation */
+        testEditParameter(15, _value);
+        break;
+    case 17:
+        /* set param 16 - osc a pm self */
+        testEditParameter(16, _value);
+        break;
+    case 18:
+        /* set param 17 - osc a pm self env a */
+        testEditParameter(17, _value);
+        break;
+    case 19:
+        /* set param 18 - osc a chirp */
+        testEditParameter(18, _value);
+        break;
+    case 20:
+        /* set param 19 - master volume */
+        testEditParameter(19, _value);
+        break;
+    case 21:
+        /* set param 20 - master tune */
+        testEditParameter(20, _value);
+        break;
+    case 22:
+        /* set global time */
+        testSetGlobalTime(_value * 128);            // approach 14 bit full time (16383)
+        break;
+    case 23:
+        /* recall preset 0 */
+        testLoadPreset(0);
+        break;
+    case 24:
+        /* recall preset 1 */
+        testLoadPreset(1);
+        break;
+    case 25:
+        /* recall preset 2 */
+        testLoadPreset(2);
+        break;
+    case 26:
+        /* trigger flush */
+        testFlush();
+        break;
+    case 27:
+        /* print param head */
+        testGetParamHeadData();
+        break;
+    case 28:
+        /* print param body */
+        testGetParamRenderData();
+        break;
+    case 29:
+        /* print signal */
+        testGetSignalData();
+        break;
+    case 30:
+        /* set reference */
+        testSetReference(_value);
+        break;
+    }
+}
+
+/* edit a particular parameter */
+void dsp_host::testEditParameter(uint32_t _id, int32_t _value)
+{
+    /* prepare id and value - currently, every value is unipolar */
+    uint32_t tcdId = m_params.m_head[_id].m_id;
+    int32_t tcdVal = static_cast<int32_t>(static_cast<float>(_value) * m_test_normalizeMidi * param_definition[_id][3]);
+    std::cout << "\nSET_PARAM(" << tcdId << ", " << tcdVal << ")" << std::endl;
+    /* select parameter, set destination */
+    evalMidi(1, tcdId >> 7, tcdId & 127);                   // select param: id
+    testParseDestination(tcdVal);                           // parse destination
+}
+
+/* set transition time */
+void dsp_host::testSetGlobalTime(uint32_t _value)
+{
+    std::cout << "\nSET_TIME(" << _value << ")" << std::endl;
+    /* select all voices, params and update time */
+    evalMidi(0, 127, 127);                                  // select all voices
+    evalMidi(1, 127, 127);                                  // select all params
+    if(_value < 16384)
+    {
+        /* T */
+        evalMidi(2, _value >> 7, _value & 127);             // set time
+    }
+    else
+    {
+        /* TU + TL */
+        uint32_t upper = _value >> 14;
+        _value &= 16383;
+        evalMidi(34, upper >> 7, upper & 127);              // set time upper
+        evalMidi(50, _value >> 7, _value & 127);            // set time lower
+    }
+}
+
+/* set reference frequency */
+void dsp_host::testSetReference(uint32_t _value)
+{
+    std::cout << "\nSET_REFERENCE" << std::endl;
+    /* prepare value */
+    uint32_t val = static_cast<uint32_t>(static_cast<float>(_value) * m_test_normalizeMidi * utility_definition[1][0]);
+    /* select and update reference utility */
+    evalMidi(8, 0, 1);                                      // select utility (reference tone)
+    evalMidi(24, val >> 7, val & 127);                      // update utility
+}
+
+/* preset recall approach */
+void dsp_host::testLoadPreset(uint32_t _presetId)
+{
+    std::cout << "\nRECALL(" << _presetId << ")" << std::endl;
+    /* run a recall sequence based on the given preset id (predefined presets in pe_defines_testconfig.h) */
+    int32_t val;
+    /* recall sequence - no flush */
+    evalMidi(47, 1, 1);                                     // enable preload (recall list mode)
+    for(uint32_t p = 0; p < testRecallSequenceLength; p++)
+    {
+        /* traverse normalized recall array */
+        val = static_cast<int32_t>(testPresetData[_presetId][p] * param_definition[p][3]);
+        testParseDestination(val);
+    }
+    evalMidi(47, 0, 2);                                     // apply preloaded values
+}
+
+/* trigger flush */
+void dsp_host::testFlush()
+{
+    std::cout << "\nFLUSH" << std::endl;
+    /* pass the trigger TCD message */
+    evalMidi(39, 0, 0);                                     // flush
+}
+
+/* glance at current signals */
+void dsp_host::testGetSignalData()
+{
+    /* print out the signal array to the terminal */
+    std::cout << "\nPARAM_SIGNAL:" << std::endl;
+    for(uint32_t p = 0; p < sig_number_of_signal_items; p++)
+    {
+        std::cout << p << " - ";
+        for(uint32_t v = 0; v < m_voices; v++)
+        {
+            std::cout << m_paramsignaldata[v][p] << ", ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+/* glance at parameter definition */
+void dsp_host::testGetParamHeadData()
+{
+    /* print out the parameter definitions to the terminal */
+    std::cout << "\nPARAM_HEAD:" << std::endl;
+    for(uint32_t p = 0; p < sig_number_of_params; p++)
+    {
+        param_head* obj = &m_params.m_head[p];
+        std::cout << "id: " << obj->m_id << ", ";
+        std::cout << "index: " << obj->m_index << ", ";
+        std::cout << "size: " << obj->m_size << ", ";
+        std::cout << "clock: " << obj->m_clockType << ", ";
+        std::cout << "poly: " << obj->m_polyType << ", ";
+        std::cout << "scaleId: " << obj->m_scaleId << ", ";
+        std::cout << "postId: " << obj->m_postId << ", ";
+        std::cout << "norm: " << obj->m_normalize << ", ";
+        std::cout << "scaleArg: " << obj->m_scaleArg << std::endl;
+    }
+}
+
+/* glance at parameter rendering status */
+void dsp_host::testGetParamRenderData()
+{
+    /* print out the parameter rendering status to the terminal */
+    std::cout << "\nPARAM_BODY:" << std::endl;
+    for(uint32_t p = 0; p < sig_number_of_params; p++)
+    {
+        param_head* obj = &m_params.m_head[p];
+        uint32_t index = obj->m_index;
+        for(uint32_t i = 0; i < obj->m_size; i++)
+        {
+            param_body* item = &m_params.m_body[index];
+            std::cout << "P(" << obj->m_id << ", " << i << "):\t";
+            std::cout << "state: " << item->m_state << ",\tpreload: " << item->m_preload;
+            std::cout << ",\tsignal: " << item->m_signal << ",\tdx:[" << item->m_dx[0] << ", " << item->m_dx[1] << "]";
+            std::cout << ",\tx: " << item->m_x << ",\tstart: " << item->m_start;
+            std::cout << ",\tdiff: " << item->m_diff << ",\tdest: " << item->m_dest << std::endl;
+            index++;
+        }
+    }
+}
+
+/* prepare destinations */
+void dsp_host::testParseDestination(int32_t _value)
+{
+    /* prepare value */
+    int32_t val = abs(_value);
+    uint32_t upper = val >> 14;
+    /* determine fitting destination format */
+    if(_value < -8191)
+    {
+        /* DU + DL (negative) */
+        evalMidi(37, (upper >> 7) + 128, upper & 127);
+        evalMidi(53, (val & 16383) >> 7, val & 127);
+    }
+    else if(_value < 0)
+    {
+        /* DS (negative) */
+        evalMidi(21, (val >> 7) + 128, val & 127);
+    }
+    else if(_value < 16384)
+    {
+        /* D */
+        evalMidi(5, _value >> 7, _value & 127);
+    }
+    else
+    {
+        /* DU + DL (positive) */
+        evalMidi(37, upper >> 7, upper & 127);
+        evalMidi(53, (val & 16383) >> 7, val & 127);
     }
 }

@@ -13,6 +13,8 @@
 //#include <stdint.h>
 #include "paramengine.h"
 #include "tcd_decoder.h"
+/* for testing purposes */
+#include "pe_defines_testconfig.h"
 
 /* dsp_host: main dsp object, holding TCD Decoder, Parameter Engine, Audio Engine, shared Signal Array, main signal (L, R) */
 class dsp_host
@@ -26,7 +28,7 @@ public:
     uint32_t m_clockDivision[dsp_clock_types] = {0, 1, 5, 120};         // clock division settings (defaults to 48000 Hz sampleRate)
     uint32_t m_upsampleFactor = 1;                                      // time conversion handle (sampleRate / 48000)
     /* hosting shared param signal array */
-    float m_paramsignaldata[dsp_number_of_voices][sig_number_of_params];
+    float m_paramsignaldata[dsp_number_of_voices][sig_number_of_signal_items];
     /* main signal output (left, right) */
     float m_mainOut_R, m_mainOut_L;                                     // final stereo (monophonic) audio (output) signal
     /* local data structures */
@@ -48,4 +50,21 @@ public:
     void keyUp(uint32_t _voiceId, float _velocity);                     // key up event trigger
     void keyDown(uint32_t _voiceId, float _velocity);                   // key down event trigger
     void keyApply(uint32_t _voiceId);                                   // key application and distribution (to voice selection)
+    /* test stuff */
+    uint32_t m_test_voiceId = 0;                                        // a rather sloppy voice allocation approach
+    uint32_t m_test_noteId[128] = {};                                   // active note tracking
+    const float m_test_normalizeMidi = 1.f / 127.f;                     // normalize midi values
+    void testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1);  // testing the engine
+    void testNoteOn(uint32_t _pitch, uint32_t _velocity);               // testing note on messages
+    void testNoteOff(uint32_t _pitch, uint32_t _velocity);              // testing note off messages
+    void testRouteControls(uint32_t _id, uint32_t _value);              // evaluate control change messages and distribute events
+    void testEditParameter(uint32_t _id, int32_t _value);               // testing parameter editing
+    void testSetGlobalTime(uint32_t _value);                            // testing times
+    void testSetReference(uint32_t _value);                             // testing reference tone
+    void testLoadPreset(uint32_t _presetId);                            // testing simple preset recall sequence
+    void testFlush();                                                   // testing flush
+    void testGetSignalData();                                           // print signal
+    void testGetParamHeadData();                                        // print param configuration
+    void testGetParamRenderData();                                      // print param rendering state
+    void testParseDestination(int32_t _value);                          // send destinations accordingly
 };

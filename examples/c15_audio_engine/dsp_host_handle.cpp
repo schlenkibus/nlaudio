@@ -4,6 +4,9 @@
 #include <audio/audioalsaoutput.h>
 #include <midi/rawmididevice.h>
 
+/* run the program either in pure TCD mode (0) or test functionality (1) */
+#define testFlag 1
+
 namespace Nl {
 namespace DSP_HOST_HANDLE {
 
@@ -31,8 +34,8 @@ namespace DSP_HOST_HANDLE {
 
                 // printf("%02X %02X %02X\n", midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);      // MIDI Value Control Output
 
-#if 1
-                m_host.evalMidi(midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
+#if testFlag
+                m_host.testMidi(midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
 #else
                 m_host.evalMidi(midiByteBuffer[0], midiByteBuffer[1], midiByteBuffer[2]);
 #endif
