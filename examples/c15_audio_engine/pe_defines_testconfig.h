@@ -6,7 +6,8 @@
 
 /* needed are control id mappings (maybe for two different devices) and (two ore more) predefined presets */
 
-#define testMidiDevice 0
+#define testMidiDevice 1
+
 #define testRecallSequenceLength 21
 /* valid triggers */
 #define test_P0 1
@@ -61,7 +62,7 @@ const uint32_t testMidiMapping[2][128] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, test_PS
     }
 };
 
