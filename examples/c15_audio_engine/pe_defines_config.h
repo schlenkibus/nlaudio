@@ -40,7 +40,7 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 /* dsp helper values */
 
 #define dsp_samples_to_ms 1e-3
-#define dsp_init_pitch_reference 440
+#define dsp_init_pitch_reference 440.f
 #define dsp_expon_osc_pitch_from -20
 #define dsp_expon_osc_pitch_range 150
 #define dsp_expon_lin_pitch_from -150

@@ -11,7 +11,7 @@
 
 #pragma once
 
-//#include <stdint.h>
+#include <stdint.h>
 #include "pe_defines_params.h"
 #include "pe_exponentiator.h"
 #include "pe_env_engine.h"

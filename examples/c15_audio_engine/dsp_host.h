@@ -10,7 +10,7 @@
 
 #pragma once
 
-//#include <stdint.h>
+#include <stdint.h>
 #include "paramengine.h"
 #include "tcd_decoder.h"
 /* for testing purposes */
