@@ -43,8 +43,8 @@ const float param_definition[sig_number_of_params][8] = {
     {        302,    3,      0,      200,    9,      80,     -1,     0      },         // 18 OSC_A_CHIRP
     // END OSCILLATOR A - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // MASTER:
-    {        243,    2,      0,      16000,  4,      4,      9,      1      },         // 19 MASTER_VOLUME (direct, spread)
-    {        244,    3,      0,      100,    0,      0,      -1,     0      },         // 20 MASTER_TUNE
+    {        247,    2,      0,      16000,  4,      4,      9,      0      },         // 19 MASTER_VOLUME (direct, spread)
+    {        248,    3,      0,      100,    0,      0,      -1,     0      },         // 20 MASTER_TUNE
     // END MASTER - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // POLY KEY: (Env C Rate discarded for now)
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST
