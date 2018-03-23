@@ -69,7 +69,7 @@ std::ostream& operator<<(std::ostream& lhs, const MidiCard& rhs);
 class RawMidiDevice : public Midi
 {
 public:
-	RawMidiDevice(const AlsaCardIdentifier &card, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer);
+    RawMidiDevice(const AlsaMidiCardIdentifier &card, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer);
 	~RawMidiDevice();
 
 	static std::list<MidiCard> getAvailableDevices();
@@ -90,7 +90,7 @@ protected:
 private:
 	snd_rawmidi_t *m_handle;
 	snd_rawmidi_params_t *m_params;
-	AlsaCardIdentifier m_card;
+    AlsaMidiCardIdentifier m_card;
 	int m_buffersize;
 	std::thread *m_thread;
 	std::shared_ptr<BlockingCircularBuffer<uint8_t>> m_buffer;

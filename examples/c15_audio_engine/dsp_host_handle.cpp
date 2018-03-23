@@ -76,8 +76,8 @@ namespace DSP_HOST_HANDLE {
 
 
     // Matthias: added polyphony as argument
-    JobHandle dspHostTCDControl(const AlsaCardIdentifier &audioOutCard,
-                                const AlsaCardIdentifier &midiInCard,
+    JobHandle dspHostTCDControl(const AlsaAudioCardIdentifier &audioOutCard,
+                                const AlsaMidiCardIdentifier &midiInCard,
                                 unsigned int buffersize,
                                 unsigned int samplerate,
                                 unsigned int polyphony)

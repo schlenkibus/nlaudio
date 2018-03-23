@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     if (argc == 1) {
         std::cout << std::endl << "Audio Devices:" << std::endl;
 
-        auto availableDevices = Nl::AlsaCardIdentifier::getCardIdentifiers();
+        auto availableDevices = Nl::AlsaAudioCardIdentifier::getCardIdentifiers();
         for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it, index++)
             std::cout << "[" << index << "]  " << *it << std::endl;
 
@@ -129,10 +129,10 @@ int main(int argc, char **argv)
     bool hasInvalidOpts = true;
     std::string strAudioDevive = "invalid";
 
-    auto availableCards = Nl::AlsaCardIdentifier::getCardIdentifiers();
+    auto availableCards = Nl::AlsaAudioCardIdentifier::getCardIdentifiers();
     int32_t numDevices = availableCards.size();
 
-    if (opts[OPT_AUDIODEVICE] < numDevices) {
+    if (opts[OPT_AUDIODEVICE] < numDevices && opts[OPT_AUDIODEVICE] > 0) {
         std::stringstream ss;
         ss << availableCards.at(opts[OPT_AUDIODEVICE]);
         strAudioDevive = ss.str();
@@ -161,8 +161,8 @@ int main(int argc, char **argv)
     // Start the real stuff now
     try
     {
-        Nl::AlsaCardIdentifier audioOut = availableCards.at(opts[OPT_AUDIODEVICE]);
-        Nl::AlsaCardIdentifier midiIn(1,0,0, "Midi In"); //TODO: Add lib function to look for midi devices
+        Nl::AlsaAudioCardIdentifier audioOut = availableCards.at(opts[OPT_AUDIODEVICE]);
+        Nl::AlsaMidiCardIdentifier midiIn(1,0,0, "Midi In"); //TODO: Add lib function to look for midi devices
 
         const int buffersize = 256;
         const int samplerate = opts[OPT_SAMPLERATE];
@@ -223,7 +223,7 @@ int main(int argc, char **argv)
     } catch (std::exception& e) {
         std::cout << "### Exception ###" << std::endl << "  " << e.what() << std::endl;
     } catch(...) {
-        std::cout << "### Exception ###" << std::endl << "  default" << std::endl;
+        std::cout << "### Exception ###" << std::endl << "  default: most likely libasound.so" << std::endl;
     }
 }
 

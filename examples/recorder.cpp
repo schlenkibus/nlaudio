@@ -36,11 +36,11 @@ int main()
         for(auto it=availableDevices.begin(); it!=availableDevices.end(); ++it)
             std::cout << *it << std::endl;
 
-        auto availableDevs = Nl::AlsaCardIdentifier::getCardIdentifiers();
+        auto availableDevs = Nl::AlsaAudioCardIdentifier::getCardIdentifiers();
         for (auto it=availableDevs.begin(); it!=availableDevs.end(); ++it)
             std::cout << *it << std::endl;
 
-        Nl::AlsaCardIdentifier audioIn(0,0,0, "USB Device");
+        Nl::AlsaAudioCardIdentifier audioIn(0,0,0, "USB Device");
 
         const int buffersize = 1024;
         const int samplerate = 48000;
@@ -115,7 +115,7 @@ void recorderCallback(u_int8_t *out,
     }
 }
 
-JobHandle recorder(const AlsaCardIdentifier &audioInCard,
+JobHandle recorder(const AlsaAudioCardIdentifier &audioInCard,
                    unsigned int buffersize,
                    unsigned int samplerate,
                    int fd)

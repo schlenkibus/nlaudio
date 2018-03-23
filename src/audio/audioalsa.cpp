@@ -34,12 +34,12 @@ namespace Nl {
  * Constructor for AudioAlsa
  *
 */
-AudioAlsa::AudioAlsa(const AlsaCardIdentifier& card, SharedBufferHandle buffer, bool isInput) :
+AudioAlsa::AudioAlsa(const AlsaAudioCardIdentifier& card, SharedBufferHandle buffer, bool isInput) :
 	m_handle(nullptr),
 	m_hwParams(nullptr),
 	m_xrunRecoveryCounter(0),
 	m_audioBuffer(buffer),
-	m_card(card),
+    m_card(card),
 	m_deviceOpen(false),
 	m_isInput(isInput)
 

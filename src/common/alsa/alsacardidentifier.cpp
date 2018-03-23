@@ -24,7 +24,7 @@
 
 namespace Nl {
 
-/** \ingroup Audio
+/** \ingroup Common
  *
  * \brief Constructor
  * \param card Card identification number
@@ -36,53 +36,81 @@ namespace Nl {
  *
 */
 AlsaCardIdentifier::AlsaCardIdentifier(unsigned int card,
-									   unsigned int device,
-									   unsigned int subdevice,
-									   const std::string& name) :
-	m_card(card),
-	m_device(device),
-	m_subdevice(subdevice),
-	m_name(name)
+                                       unsigned int device,
+                                       unsigned int subdevice,
+                                       const std::string& name) :
+    m_card(card),
+    m_device(device),
+    m_subdevice(subdevice),
+    m_name(name)
 {
-	std::stringstream ss;
-	ss << "hw:" << card << "," << device << "," << subdevice;
-	m_cardString = ss.str();
+    std::stringstream ss;
+    ss << "hw:" << card << "," << device << "," << subdevice;
+    m_cardString = ss.str();
 }
 
 std::string AlsaCardIdentifier::getCardString() const
 {
-	return m_cardString;
+    return m_cardString;
 }
 
 std::string AlsaCardIdentifier::getCardStringExtended() const
 {
-	return m_name + " " + m_cardString;
+    return m_name + " " + m_cardString;
 }
 
-//Static
-std::vector<Nl::AlsaCardIdentifier> AlsaCardIdentifier::getCardIdentifiers()
+
+
+
+AlsaAudioCardIdentifier::AlsaAudioCardIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, const std::string &name) :
+    basetype(card, device, subdevice, name)
+{}
+/*
+std::vector<AlsaCardIdentifier> AlsaAudioCardIdentifier::getIdentifiers()
 {
-    std::vector<Nl::AlsaCardIdentifier> ret;
 
-	auto cardInfoList = Nl::getDetailedCardInfos();
+}
+*/
 
-	for (auto cardIt=cardInfoList.begin(); cardIt!=cardInfoList.end(); ++cardIt)
-		for (auto deviceIt=cardIt->devices.begin(); deviceIt!=cardIt->devices.end(); ++deviceIt)
-			for (auto subdeviceIt=deviceIt->subdevices.begin(); subdeviceIt!=deviceIt->subdevices.end(); ++subdeviceIt) {
-				int card = cardIt->cardId;
-				int device = deviceIt->deviceId;
-				int subdevice = subdeviceIt->subdeviceId;
-				std::string name = cardIt->name;
-				ret.push_back(Nl::AlsaCardIdentifier(card, device, subdevice, name));
-			}
+AlsaMidiCardIdentifier::AlsaMidiCardIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, const std::string &name) :
+    basetype(card, device, subdevice, name)
+{}
+/*
+std::vector<AlsaMidiCardIdentifier> AlsaMidiCardIdentifier::AlsaMidiCardIdentifier::getIdentifiers()
+{
 
-	return ret;
+}
+*/
+
+std::vector<Nl::AlsaAudioCardIdentifier> AlsaAudioCardIdentifier::getCardIdentifiers()
+{
+    std::vector<Nl::AlsaAudioCardIdentifier> ret;
+
+    auto cardInfoList = Nl::getDetailedCardInfos();
+
+    for (auto cardIt=cardInfoList.begin(); cardIt!=cardInfoList.end(); ++cardIt)
+        for (auto deviceIt=cardIt->devices.begin(); deviceIt!=cardIt->devices.end(); ++deviceIt)
+            for (auto subdeviceIt=deviceIt->subdevices.begin(); subdeviceIt!=deviceIt->subdevices.end(); ++subdeviceIt) {
+                int card = cardIt->cardId;
+                int device = deviceIt->deviceId;
+                int subdevice = subdeviceIt->subdeviceId;
+                std::string name = cardIt->name;
+                ret.push_back(Nl::AlsaAudioCardIdentifier(card, device, subdevice, name));
+            }
+
+    return ret;
 }
 
-std::ostream& operator<<(std::ostream& lhs, const AlsaCardIdentifier& rhs)
+std::ostream& operator<<(std::ostream& lhs, const AlsaAudioCardIdentifier& rhs)
 {
-	lhs << rhs.getCardStringExtended();
-	return lhs;
+    lhs << rhs.getCardStringExtended();
+    return lhs;
+}
+
+std::ostream& operator<<(std::ostream& lhs, const AlsaMidiCardIdentifier& rhs)
+{
+    lhs << rhs.getCardStringExtended();
+    return lhs;
 }
 
 } // namespace Nl

@@ -33,7 +33,7 @@ class AudioJack : public Audio
 public:
 	typedef Audio basetype;
 
-	AudioJack(const AlsaCardIdentifier& card, SharedBufferHandle buffer, bool isInput);
+    AudioJack(const AlsaAudioCardIdentifier& card, SharedBufferHandle buffer, bool isInput);
 	virtual ~AudioJack();
 
 	virtual void open(); // Might throw, therefore not in constructor
@@ -68,7 +68,7 @@ protected:
 	SharedBufferHandle m_audioBuffer;
 	jack_port_t *m_jackPort;
 	jack_client_t *m_jackClient;
-	AlsaCardIdentifier m_card;
+    AlsaAudioCardIdentifier m_card;
 
 private:
 	static int worker(jack_nframes_t nframes, void *arg);
