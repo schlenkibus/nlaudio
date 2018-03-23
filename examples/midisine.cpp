@@ -7,7 +7,7 @@
 #include <common/stopwatch.h>
 #include <common/tools.h>
 
-Nl::StopWatch sw("AudioCallback", 10000);
+Nl::StopWatch sw("AudioCallback", 10000, Nl::StopWatch::SUMMARY);
 
 int main()
 {

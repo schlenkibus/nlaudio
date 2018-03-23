@@ -92,11 +92,16 @@ private:
 class StopWatch
 {
 public:
-    StopWatch(const std::string& name, uint32_t windowSize);
+    enum Mode {
+        SUMMARY,
+        DETAILED
+    };
+
+    StopWatch(const std::string& name, uint32_t windowSize, Mode m);
     void start(const std::string& name);
     void stop();
-    std::ostream& printDetailed(std::ostream& rhs);
-    std::ostream& printSummary(std::ostream& rhs);
+
+    std::ostream& print(std::ostream& rhs);
 
 private:
     std::mutex m_mutex;
@@ -105,6 +110,10 @@ private:
     bool m_waitingForStop;
     std::string m_name;
     uint32_t m_windowSize;
+    Mode m_mode;
+
+    std::ostream& printDetailed(std::ostream& rhs);
+    std::ostream& printSummary(std::ostream& rhs);
 };
 
 std::ostream& operator<<(std::ostream& lhs, StopWatch& rhs);
