@@ -18,6 +18,6 @@
 #define OSC_A_FRQ       4
 #define OSC_A_FLU       5
 #define OSC_A_PMSEA     6
-
+#define OSC_A_PHS       7
 #define OSC_A_CHI       8
 #define MST_VOL         9
