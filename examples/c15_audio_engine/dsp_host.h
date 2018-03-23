@@ -67,4 +67,5 @@ public:
     void testGetParamHeadData();                                        // print param configuration
     void testGetParamRenderData();                                      // print param rendering state
     void testParseDestination(int32_t _value);                          // send destinations accordingly
+    void testInit();
 };

@@ -40,6 +40,7 @@
 #define test_PB 28
 #define test_PS 29
 #define test_RF 30
+#define test_I 31
 
 const uint32_t testMidiMapping[2][128] = {
     /* device 1 (axiom at home) */
@@ -55,7 +56,7 @@ const uint32_t testMidiMapping[2][128] = {
     },
     /* device 2 (remote at work) */
     {
-        test_R0, test_R1, test_R2, test_FL, test_PH, test_PB, test_PS, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        test_R0, test_R1, test_R2, test_FL, test_PH, test_PB, test_PS, test_I, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, test_P0, test_P1, test_P2, test_P3, test_P4, test_P5, test_P6, test_P7, 0, 0, test_P8,
         test_P9, test_P10, test_P11, test_P12, test_P13, test_P14, test_P15, 0, 0, test_P16, test_P17, test_P18, test_P19, test_P20, test_TIME, test_RF,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -66,14 +67,14 @@ const uint32_t testMidiMapping[2][128] = {
     }
 };
 
-const float testPresetData[3][testRecallSequenceLength] = {
+const int32_t testPresetData[3][testRecallSequenceLength] = {
     /* preset 0 - null */
     {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     },
     /* preset 1 - default */
     {
-        0, 0.59, 0.5, 0.79, 0, 0.53, 0, 0.5, 0, 0, 0, 0.05, 0, (80.f / 150.f), (100.f / 105.f), 0, 0, 0, (4.f / 6.f), 0.5, 0
+        0, 9440, 8000, 12640, 0, 8480, 0, 7680, 0, 0, 0, 800, 0, 8000, 10000, 0, 0, 0, 8000, 8000, 0
     },
     /* preset 2 - null */
     {
