@@ -17,8 +17,8 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "audio/alsa/alsacardidentifier.h"
-#include "audio/alsa/alsacardinfo.h"
+#include "common/alsa/alsacardidentifier.h"
+#include "common/alsa/alsacardinfo.h"
 #include <string>
 #include <sstream>
 

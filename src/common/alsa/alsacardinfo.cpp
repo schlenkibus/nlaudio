@@ -17,7 +17,7 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "audio/alsa/alsacardinfo.h"
+#include "common/alsa/alsacardinfo.h"
 
 #include <ostream>
 #include <alsa/asoundlib.h>

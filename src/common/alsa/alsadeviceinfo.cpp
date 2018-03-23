@@ -17,16 +17,20 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>.
 ***/
 
-#include "audio/alsa/alsasubdeviceinfo.h"
+#include "common/alsa/alsadeviceinfo.h"
+
 #include <ostream>
 
 namespace Nl {
 
-std::ostream& operator<<(std::ostream& lhs, const AlsaSubdeviceInfo& rhs)
+std::ostream& operator<<(std::ostream& lhs, const AlsaDeviceInfo& rhs)
 {
-	lhs << "Subdevice[" << rhs.subdeviceId << "] "
-		   "Name: " << rhs.name;
+	lhs << "Device[" << rhs.deviceId << "] "
+		   "Name: " << rhs.name << ", " <<
+		   "Id: " << rhs.id << ", " <<
+		   "Subdevices: " << rhs.subdevices.size();
+
 	return lhs;
 }
 
-} // namespace Nl
+}

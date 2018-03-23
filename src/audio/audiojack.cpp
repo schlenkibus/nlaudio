@@ -19,7 +19,7 @@
 
 #include "audio/audiojack.h"
 #include "common/blockingcircularbuffer.h"
-#include "audio/alsa/alsacardidentifier.h"
+#include "common/alsa/alsacardidentifier.h"
 
 
 namespace Nl {

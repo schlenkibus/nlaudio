@@ -26,8 +26,8 @@
 #include <iosfwd>
 
 #include "audio/audio.h"
-#include "audio/alsa/alsacardidentifier.h"
-#include "audio/alsa/alsacardinfo.h"
+#include "common/alsa/alsacardidentifier.h"
+#include "common/alsa/alsacardinfo.h"
 #include "common/bufferstatistics.h"
 #include "common/blockingcircularbuffer.h"
 

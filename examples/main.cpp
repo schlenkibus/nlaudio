@@ -36,7 +36,7 @@
 #include "effects.h"
 #include "common/tools.h"
 #include "common/stopwatch.h"
-#include "audio/alsa/alsacardidentifier.h"
+#include "common/alsa/alsacardidentifier.h"
 #include "common/blockingcircularbuffer.h"
 #include "audio/audioalsaexception.h"
 

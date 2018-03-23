@@ -21,7 +21,7 @@
 
 #include "audio/audio.h"
 #include "common/bufferstatistics.h"
-#include "audio/alsa/alsacardidentifier.h"
+#include "common/alsa/alsacardidentifier.h"
 #include "common/blockingcircularbuffer.h"
 
 #include <jack/jack.h>

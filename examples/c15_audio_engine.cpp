@@ -28,7 +28,7 @@
 #include <audio/audioalsaoutput.h>
 #include <audio/audiofactory.h>
 #include <audio/audioalsa.h>
-#include <audio/alsa/alsacardidentifier.h>
+#include <common/alsa/alsacardidentifier.h>
 #include <audio/audioalsaexception.h>
 
 #include <midi/midi.h>
