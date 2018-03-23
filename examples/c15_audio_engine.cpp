@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     try
     {
         Nl::AlsaAudioCardIdentifier audioOut = availableCards.at(opts[OPT_AUDIODEVICE]);
-        Nl::AlsaMidiCardIdentifier midiIn(2,0,0, "Midi In"); //TODO: Add lib function to look for midi devices
+        Nl::AlsaMidiCardIdentifier midiIn(opts[OPT_MIDIDEVICE],0,0, "Midi In"); //TODO: Add lib function to look for midi devices
 
         const int buffersize = 256;
         const int samplerate = opts[OPT_SAMPLERATE];
