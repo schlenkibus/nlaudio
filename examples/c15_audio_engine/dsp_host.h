@@ -11,10 +11,12 @@
 #pragma once
 
 #include <stdint.h>
+#include <vector>
 #include "paramengine.h"
 #include "tcd_decoder.h"
 /* for testing purposes */
 #include "pe_defines_testconfig.h"
+#include "ae_soundgenerator.h"          // Anton
 
 /* dsp_host: main dsp object, holding TCD Decoder, Parameter Engine, Audio Engine, shared Signal Array, main signal (L, R) */
 class dsp_host
@@ -67,4 +69,17 @@ public:
     void testGetParamHeadData();                                        // print param configuration
     void testGetParamRenderData();                                      // print param rendering state
     void testParseDestination(int32_t _value);                          // send destinations accordingly
+    void testInit();
+
+    /*fadepoint for flushing*/
+    bool m_flushnow;
+    float m_fadepoint;
+    uint32_t m_tableCounter;
+    uint32_t m_fadeSamples;
+    uint32_t m_flushIndex;
+    std::vector<float> m_raised_cos_table;
+    void flushAllBuffers();
+
+    /*audio engine stuff*/
+    ae_soundgenerator m_soundgenerator[dsp_number_of_voices];
 };

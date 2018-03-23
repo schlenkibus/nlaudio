@@ -28,6 +28,29 @@ void dsp_host::init(uint32_t _samplerate, uint32_t _polyphony)
     std::cout << "DSP_HOST::CLOCK_divisions(" << m_clockDivision[0] << ", " << m_clockDivision[1] << ", ";
     std::cout << m_clockDivision[2] << ", " << m_clockDivision[3] << ")" << std::endl;
     std::cout << "DSP_HOST::upsampleFactor: " << m_upsampleFactor << std::endl;
+
+    /*fadepoint for flushing*/
+    m_flushnow = false;
+    m_tableCounter = 0;
+
+    float fade_time = 0.003f;
+    float sample_interval = 1.f / _samplerate;
+    m_fadeSamples = fade_time * _samplerate * 2 + 1;
+    m_flushIndex = fade_time * _samplerate;
+    m_raised_cos_table.resize(m_fadeSamples);
+
+    for (uint32_t ind = 0; ind < m_raised_cos_table.size(); ind++)
+    {
+        float x = 1.5708f * sample_interval * ind / fade_time;
+        m_raised_cos_table[ind] = pow(cos(x), 2);
+    }
+
+    /* audio engine */
+    for (uint32_t p = 0; p < _polyphony; p++)
+    {
+        m_soundgenerator[p].init(static_cast<float>(_samplerate), p);
+    }
+
 }
 
 /* */
@@ -82,6 +105,13 @@ void dsp_host::tickMain()
         i = m_params.m_head[m_params.m_clockIds.m_data[1].m_data[0].m_data[p]].m_index;
         m_params.tickItem(i);
     }
+
+    m_mainOut_L = 0.f;
+    m_mainOut_R = 0.f;
+
+    /*set the current fadepoint*/
+    float currFadeVal = m_raised_cos_table[m_tableCounter];
+
     for(v = 0; v < m_voices; v++)
     {
         /* this is the MAIN POLYPHONIC LOOP - rendering (and post processing) parameters, envelopes and the AUDIO_ENGINE */
@@ -93,8 +123,34 @@ void dsp_host::tickMain()
         }
         /* post processing and envelope rendering */
         m_params.postProcess_audio(m_paramsignaldata[v], v);
+
         /* (TODO) AUDIO_ENGINE: poly dsp phase */
+        m_soundgenerator[v].generateSound(0.f, m_paramsignaldata[v]);
+
+        /* temporal outputmix */
+        m_mainOut_L += m_soundgenerator[v].m_sampleA;
+        m_mainOut_R += m_soundgenerator[v].m_sampleB;
     }
+
+    /*check current fadepoint for flushing*/
+    if (m_flushnow)
+    {
+        if (m_tableCounter == m_flushIndex)
+        {
+            flushAllBuffers();
+        }
+
+        if (m_tableCounter > m_fadeSamples)
+        {
+            m_tableCounter = 0;
+            m_flushnow = false;
+        }
+        else
+        {
+            m_tableCounter++;
+        }
+    }
+
     /* (TODO) AUDIO_ENGINE: mono dsp phase */
     /* finally: update (fast and slow) clock positions */
     m_clockPosition[2] = (m_clockPosition[2] + 1) % m_clockDivision[2];
@@ -210,6 +266,7 @@ void dsp_host::evalMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
         break;
     case 15:
         /* flush (audio_engine trigger needed) */
+        m_flushnow = true;
         break;
     case 16:
         /* selectUtility */
@@ -461,7 +518,9 @@ void dsp_host::keyApply(uint32_t _voiceId)
         }
         /* update and reset oscillator phases */
         m_paramsignaldata[_voiceId][7] = m_params.m_body[m_params.m_head[24].m_index + _voiceId].m_signal;  // POLY PHASE_A -> OSC_A Phase
+
         /* AUDIO_ENGINE: reset oscillator phases */
+        m_soundgenerator[_voiceId].resetPhase(m_paramsignaldata[_voiceId]);
     }
 }
 
@@ -594,23 +653,23 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 7:
         /* set param 6 - env a gain */
-        testEditParameter(6, _value);
+        testEditParameter(6, 24 * ((2 * _value) - 127));    // bipolar
         break;
     case 8:
         /* set param 7 - env a level velocity */
-        testEditParameter(7, _value);
+        testEditParameter(7, 60 * _value);
         break;
     case 9:
         /* set param 8 - env a attack velocity */
-        testEditParameter(8, _value);
+        testEditParameter(8, 60 * _value);
         break;
     case 10:
         /* set param 9 - env a release velocity */
-        testEditParameter(9, _value);
+        testEditParameter(9, 60 * _value);
         break;
     case 11:
         /* set param 10 - env a level keytrack */
-        testEditParameter(10, _value);
+        testEditParameter(10, ((2 * _value) - 127));        // bipolar
         break;
     case 12:
         /* set param 11 - env a time keytrack */
@@ -618,11 +677,11 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 13:
         /* set param 12 - env a attack curve */
-        testEditParameter(12, _value);
+        testEditParameter(12, ((2 * _value) - 127));        // bipolar
         break;
     case 14:
         /* set param 13 - osc a pitch */
-        testEditParameter(13, _value);
+        testEditParameter(13, 150 * _value);
         break;
     case 15:
         /* set param 14 - osc a pitch keytrack */
@@ -634,7 +693,7 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 17:
         /* set param 16 - osc a pm self */
-        testEditParameter(16, _value);
+        testEditParameter(16, ((2 * _value) - 127));        // bipolar
         break;
     case 18:
         /* set param 17 - osc a pm self env a */
@@ -642,7 +701,7 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 19:
         /* set param 18 - osc a chirp */
-        testEditParameter(18, _value);
+        testEditParameter(18, 60 * _value);
         break;
     case 20:
         /* set param 19 - master volume */
@@ -650,11 +709,11 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 21:
         /* set param 20 - master tune */
-        testEditParameter(20, _value);
+        testEditParameter(20, 48 * ((2 * _value) - 127));        // bipolar
         break;
     case 22:
         /* set global time */
-        testSetGlobalTime(_value * 128);            // approach 14 bit full time (16383)
+        testSetGlobalTime(_value * 126);                    // approach 14 bit full time (16000)
         break;
     case 23:
         /* recall preset 0 */
@@ -686,7 +745,11 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 30:
         /* set reference */
-        testSetReference(_value);
+        testSetReference(80 * _value);
+        break;
+    case 31:
+        /* init */
+        testInit();
         break;
     }
 }
@@ -728,9 +791,9 @@ void dsp_host::testSetGlobalTime(uint32_t _value)
 /* set reference frequency */
 void dsp_host::testSetReference(uint32_t _value)
 {
-    std::cout << "\nSET_REFERENCE" << std::endl;
     /* prepare value */
     uint32_t val = static_cast<uint32_t>(static_cast<float>(_value) * m_test_normalizeMidi * utility_definition[1][0]);
+    std::cout << "\nSET_REFERENCE(" << val << ")" << std::endl;
     /* select and update reference utility */
     evalMidi(8, 0, 1);                                      // select utility (reference tone)
     evalMidi(24, val >> 7, val & 127);                      // update utility
@@ -741,14 +804,12 @@ void dsp_host::testLoadPreset(uint32_t _presetId)
 {
     std::cout << "\nRECALL(" << _presetId << ")" << std::endl;
     /* run a recall sequence based on the given preset id (predefined presets in pe_defines_testconfig.h) */
-    int32_t val;
     /* recall sequence - no flush */
     evalMidi(47, 1, 1);                                     // enable preload (recall list mode)
     for(uint32_t p = 0; p < testRecallSequenceLength; p++)
     {
         /* traverse normalized recall array */
-        val = static_cast<int32_t>(testPresetData[_presetId][p] * param_definition[p][3]);
-        testParseDestination(val);
+        testParseDestination(testPresetData[_presetId][p]);
     }
     evalMidi(47, 0, 2);                                     // apply preloaded values
 }
@@ -829,13 +890,13 @@ void dsp_host::testParseDestination(int32_t _value)
     if(_value < -8191)
     {
         /* DU + DL (negative) */
-        evalMidi(37, (upper >> 7) + 128, upper & 127);
+        evalMidi(37, (upper >> 7) + 64, upper & 127);
         evalMidi(53, (val & 16383) >> 7, val & 127);
     }
     else if(_value < 0)
     {
         /* DS (negative) */
-        evalMidi(21, (val >> 7) + 128, val & 127);
+        evalMidi(21, (val >> 7) + 64, val & 127);
     }
     else if(_value < 16384)
     {
@@ -848,4 +909,22 @@ void dsp_host::testParseDestination(int32_t _value)
         evalMidi(37, upper >> 7, upper & 127);
         evalMidi(53, (val & 16383) >> 7, val & 127);
     }
+}
+void dsp_host::testInit()
+{
+    /* */
+    std::cout << "\nINIT SEQUENCE" << std::endl;
+    evalMidi(0, 127, 127);      // select all voices
+    evalMidi(1, 127, 127);      // select all parameters
+    evalMidi(2, 0, 0);          // set time to zero
+    testLoadPreset(1);          // load default preset
+}
+
+/******************************************************************************/
+/**
+*******************************************************************************/
+
+void dsp_host::flushAllBuffers()
+{
+    printf("flushing all buffers ... \n'");
 }
