@@ -62,9 +62,6 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     float oscA_fluct = _signal[OSC_A_FLU];
     float oscA_pmSelf = _signal[OSC_A_PMSEA];
 
-    float envA = _signal[ENV_A_SIG];
-
-
     //**************************** Modulation A ******************************//
     float tmpVar = m_oscA_selfmix * oscA_pmSelf;
     tmpVar = tmpVar + 0.f * 1.f;                    /// m_oscB_crossmix * oscB_pmCross
@@ -108,6 +105,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     //******************************* Shaper B *******************************//
 
     //****************************** Crossfades ******************************//
+    m_oscA_selfmix = oscSampleA;
     m_sampleA = oscSampleA;
     m_sampleB = 0.f;
 
