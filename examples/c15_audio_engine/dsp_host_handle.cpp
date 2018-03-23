@@ -4,8 +4,12 @@
 #include <audio/audioalsaoutput.h>
 #include <midi/rawmididevice.h>
 
+#include <common/stopwatch.h>
+
 /* run the program either in pure TCD mode (0) or test functionality (1) */
 #define testFlag 1
+
+extern std::shared_ptr<Nl::StopWatch> sw;
 
 namespace Nl {
 namespace DSP_HOST_HANDLE {
@@ -21,6 +25,7 @@ namespace DSP_HOST_HANDLE {
     */
     void dspHostCallback(uint8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr)
     {
+        StopBlockTime(sw, "dsp_host");
         auto midiBuffer = getBufferForName("MidiBuffer");
 
         //---------------- Retrieve Midi Information if midi values have changed

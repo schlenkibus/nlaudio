@@ -49,7 +49,7 @@
 using namespace std;
 
 //TODO: Glbal Variables are bad (even in a namespace)
-Nl::StopWatch sw("AudioCallback");
+std::shared_ptr<Nl::StopWatch> sw(new Nl::StopWatch("AudioCallback", 10000));
 
 //
 //#include "c15_audio_engine/soundgenerator.h"
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
     try
     {
         Nl::AlsaAudioCardIdentifier audioOut = availableCards.at(opts[OPT_AUDIODEVICE]);
-        Nl::AlsaMidiCardIdentifier midiIn(1,0,0, "Midi In"); //TODO: Add lib function to look for midi devices
+        Nl::AlsaMidiCardIdentifier midiIn(2,0,0, "Midi In"); //TODO: Add lib function to look for midi devices
 
         const int buffersize = 256;
         const int samplerate = opts[OPT_SAMPLERATE];
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 
         while(getchar() != 'q')
         {
-            std::cout << sw << std::endl;
+            std::cout << *sw << std::endl;
 
             if (handle.audioOutput) std::cout << "Audio: Output Statistics:" << std::endl
                                               << handle.audioOutput->getStats() << std::endl;

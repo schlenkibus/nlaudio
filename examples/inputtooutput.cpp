@@ -9,7 +9,7 @@
 
 using namespace Nl;
 
-std::shared_ptr<StopWatch> sw(new StopWatch("AudioCallback"));
+std::shared_ptr<StopWatch> sw(new StopWatch("AudioCallback", 10000));
 
 
 

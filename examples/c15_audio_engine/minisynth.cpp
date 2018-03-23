@@ -7,11 +7,14 @@
 #include <audio/audioalsaoutput.h>
 #include <midi/rawmididevice.h>
 
+extern std::shared_ptr<Nl::StopWatch> sw;
+
 namespace Nl {
 namespace MINISYNTH {
 
 //--------------- Objects
 VoiceManager voiceManager;
+
 
 /** @brief    Callback function for Sine Generator and Audio Input - testing with ReMote 61
         @param    Input Buffer
@@ -22,6 +25,7 @@ VoiceManager voiceManager;
     */
 void miniSynthCallback(uint8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr)
 {
+    StopBlockTime(sw, "miniSynth");
     auto midiBuffer = getBufferForName("MidiBuffer");
 
     //---------------- Retrieve Midi Information if midi values have changed
