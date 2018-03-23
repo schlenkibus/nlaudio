@@ -9,7 +9,7 @@
 #pragma once
 #include <stdint.h>
 
-//#define PRINT_PARAMVALUES
+#define PRINT_PARAMVALUES
 
 //********************** Controller define - temporal ************************//
 

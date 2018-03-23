@@ -129,7 +129,7 @@ void dsp_host::tickMain()
 
         /* temporal outputmix */
         m_mainOut_L += m_soundgenerator[v].m_sampleA;
-        m_mainOut_R += m_soundgenerator[v].m_sampleB;
+        m_mainOut_R += m_soundgenerator[v].m_sampleA;
     }
 
     /*check current fadepoint for flushing*/
