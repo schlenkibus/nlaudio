@@ -745,7 +745,7 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 30:
         /* set reference */
-        testSetReference(_value);
+        testSetReference(80 * _value);
         break;
     case 31:
         /* init */
