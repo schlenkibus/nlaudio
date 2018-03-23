@@ -24,7 +24,7 @@
 
 namespace Nl {
 
-AudioJack::AudioJack(const AlsaCardIdentifier &card, SharedBufferHandle buffer, bool isInput) :
+AudioJack::AudioJack(const AlsaAudioCardIdentifier &card, SharedBufferHandle buffer, bool isInput) :
 	m_isInput(isInput),
 	m_audioBuffer(buffer),
 	m_jackPort(nullptr),

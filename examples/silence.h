@@ -5,11 +5,13 @@
 namespace Nl {
 namespace Examples {
 
-void recorderCallback(u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)));
+void silenceCallback(u_int8_t *out,
+                     const SampleSpecs &sampleSpecs __attribute__ ((unused)),
+                     SharedUserPtr ptr __attribute__ ((unused)));
 
-JobHandle recorder(const AlsaCardIdentifier &audioOutCard,
-                       unsigned int buffersize,
-                       unsigned int samplerate, int fd);
+JobHandle silence(const AlsaAudioCardIdentifier &audioOutCard,
+                  unsigned int buffersize,
+                  unsigned int samplerate);
 
 }
 }

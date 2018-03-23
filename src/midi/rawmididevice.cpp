@@ -35,7 +35,7 @@ namespace Nl {
  * Constructor for RawMidiDevice
  *
 */
-RawMidiDevice::RawMidiDevice(const AlsaCardIdentifier &card, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer) :
+RawMidiDevice::RawMidiDevice(const AlsaMidiCardIdentifier &card, std::shared_ptr<BlockingCircularBuffer<uint8_t>> buffer) :
 	m_handle(nullptr),
 	m_params(nullptr),
 	m_card(card),

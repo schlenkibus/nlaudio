@@ -28,7 +28,7 @@ class AudioAlsaOutput : public AudioAlsa
 public:
 	typedef AudioAlsa basetype;
 
-	AudioAlsaOutput(const AlsaCardIdentifier& card, SharedBufferHandle buffer);
+    AudioAlsaOutput(const AlsaAudioCardIdentifier &card, SharedBufferHandle buffer);
 
 	virtual void open();
 	virtual void start();

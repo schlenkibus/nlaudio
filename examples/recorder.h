@@ -7,7 +7,7 @@ namespace Examples {
 
 void silenceCallback(u_int8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)));
 
-JobHandle recorder(const AlsaCardIdentifier &audioInCard,
+JobHandle recorder(const AlsaAudioCardIdentifier &audioInCard,
                         unsigned int buffersize,
                         unsigned int samplerate,
                         int fd);

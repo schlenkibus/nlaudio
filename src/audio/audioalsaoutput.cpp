@@ -21,7 +21,7 @@
 
 namespace Nl {
 
-AudioAlsaOutput::AudioAlsaOutput(const AlsaCardIdentifier &card, SharedBufferHandle buffer) :
+AudioAlsaOutput::AudioAlsaOutput(const AlsaAudioCardIdentifier &card, SharedBufferHandle buffer) :
 	basetype(card, buffer, false)
 {
 }

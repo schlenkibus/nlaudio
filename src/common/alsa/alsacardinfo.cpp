@@ -46,7 +46,7 @@ std::ostream& operator<<(std::ostream& lhs, const AlsaCardInfo& rhs)
 	return lhs;
 }
 
-/** \ingroup Audio
+/** \ingroup Common
  *
  * \brief Static function, that returns available devices
  * \return All available cards on the plattform, represented by a list of \ref AlsaCardInfo
@@ -73,8 +73,6 @@ std::list<AlsaCardInfo> getDetailedCardInfos()
 			snd_ctl_card_info_t *cardinfo;
 			snd_ctl_card_info_alloca(&cardinfo);
 			if (snd_ctl_card_info(handle, cardinfo) == 0) {
-
-				//snd_ctl_elem_info_get_interface()
 
 				dev = -1;
 				while (snd_ctl_pcm_next_device(handle, &dev) == 0 && dev >= 0) {

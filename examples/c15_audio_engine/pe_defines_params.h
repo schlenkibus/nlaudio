@@ -60,5 +60,5 @@ const float param_definition[sig_number_of_params][8] = {
 // utility parameters: define range, scale id, scale arg
 const float utility_definition[sig_number_of_utilities][3] = {
     {        4096,   0,      0          },                                      // velocity definition (for now: tcd range 4096)
-    {        8000,   0,      400        }                                       // pitch reference (A3)
+    {        100,    0,      400        }                                       // pitch reference (A3)
 };

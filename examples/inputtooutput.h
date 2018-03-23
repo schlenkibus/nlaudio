@@ -9,7 +9,7 @@ void inToOutCallback(u_int8_t *in,
 					 const SampleSpecs &sampleSpecs __attribute__ ((unused)),
 					 SharedUserPtr ptr __attribute__ ((unused)));
 
-JobHandle inputToOutput(const AlsaCardIdentifier &audioInCard,
-							 const AlsaCardIdentifier &audioOutCard,
-							 unsigned int buffersize,
-							 unsigned int samplerate);
+JobHandle inputToOutput(const AlsaAudioCardIdentifier &audioInCard,
+                             const AlsaAudioCardIdentifier &audioOutCard,
+                             unsigned int buffersize,
+                             unsigned int samplerate);

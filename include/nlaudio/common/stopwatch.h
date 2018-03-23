@@ -37,9 +37,9 @@ class StopWatch;
  *
 */
 struct Timestamp {
-	std::chrono::time_point<std::chrono::high_resolution_clock> start; ///< Start Time of the time stamp
-	std::chrono::time_point<std::chrono::high_resolution_clock> stop; ///< Stop Time of the time stamp
-	std::string name;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start; ///< Start Time of the time stamp
+    std::chrono::time_point<std::chrono::high_resolution_clock> stop; ///< Stop Time of the time stamp
+    std::string name;
 };
 
 /** \ingroup Tools
@@ -65,10 +65,10 @@ struct Timestamp {
 class StopBlockTime
 {
 public:
-	StopBlockTime(std::shared_ptr<StopWatch> sw, std::string name);
-	~StopBlockTime();
+    StopBlockTime(std::shared_ptr<StopWatch> sw, std::string name);
+    ~StopBlockTime();
 private:
-	std::shared_ptr<StopWatch> m_currentStopWatch;
+    std::shared_ptr<StopWatch> m_currentStopWatch;
 };
 
 /** \ingroup Tools
@@ -92,18 +92,18 @@ private:
 class StopWatch
 {
 public:
-	StopWatch(const std::string& name);
-	void start(const std::string& name);
-	void stop();
-	std::ostream& printDetailed(std::ostream& rhs);
-	std::ostream& printSummary(std::ostream& rhs);
+    StopWatch(const std::string& name);
+    void start(const std::string& name);
+    void stop();
+    std::ostream& printDetailed(std::ostream& rhs);
+    std::ostream& printSummary(std::ostream& rhs);
 
 private:
-	std::mutex m_mutex;
-	std::queue<Timestamp> m_timestamps;
-	Timestamp m_currentTimeStamp;
-	bool m_waitingForStop;
-	std::string m_name;
+    std::mutex m_mutex;
+    std::queue<Timestamp> m_timestamps;
+    Timestamp m_currentTimeStamp;
+    bool m_waitingForStop;
+    std::string m_name;
 };
 
 std::ostream& operator<<(std::ostream& lhs, StopWatch& rhs);

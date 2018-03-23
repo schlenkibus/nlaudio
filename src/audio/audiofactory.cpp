@@ -112,7 +112,7 @@ SharedBufferHandle getBufferForName(const std::string& name)
  * The device is automatically opened.\n
  *
 */
-SharedRawMidiDeviceHandle createRawMidiDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
+SharedRawMidiDeviceHandle createRawMidiDevice(const AlsaMidiCardIdentifier &card, SharedBufferHandle buffer)
 {
 	SharedRawMidiDeviceHandle midi(new RawMidiDevice(card, buffer));
 	midi->open();
@@ -132,7 +132,7 @@ SharedRawMidiDeviceHandle createRawMidiDevice(const AlsaCardIdentifier &card, Sh
  * The device is automatically opened.\n
  *
 */
-SharedAudioHandle createJackInputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
+SharedAudioHandle createJackInputDevice(const AlsaAudioCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
 {
 	SharedAudioHandle input(new AudioJack(card, buffer, true));
 	input->open();
@@ -156,7 +156,7 @@ SharedAudioHandle createJackInputDevice(const AlsaCardIdentifier& card, SharedBu
  * The device is automatically opened.\n
  *
 */
-SharedAudioHandle createJackOutputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
+SharedAudioHandle createJackOutputDevice(const AlsaAudioCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
 {
 	SharedAudioHandle output(new AudioJack(card, buffer, false));
 	output->open();
@@ -180,7 +180,7 @@ SharedAudioHandle createJackOutputDevice(const AlsaCardIdentifier& card, SharedB
  * The device is automatically opened.\n
  *
 */
-SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier& card, SharedBufferHandle buffer, unsigned int buffersize)
+SharedAudioHandle createAlsaInputDevice(const AlsaAudioCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize)
 {
 	SharedAudioHandle input(new AudioAlsaInput(card, buffer));
 	input->open();
@@ -204,7 +204,7 @@ SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier& card, SharedBu
  * The device is automatically opened.\n
  *
 */
-SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
+SharedAudioHandle createAlsaInputDevice(const AlsaAudioCardIdentifier &card, SharedBufferHandle buffer)
 {
 	return createAlsaInputDevice(card, buffer, DEFAULT_BUFFERSIZE);
 }
@@ -240,7 +240,7 @@ SharedAudioHandle createAlsaInputDevice(const AlsaCardIdentifier &card, SharedBu
  * The device is automatically opened.\n
  *
 */
-SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize)
+SharedAudioHandle createAlsaOutputDevice(const AlsaAudioCardIdentifier &card, SharedBufferHandle buffer, unsigned int buffersize)
 {
 	SharedAudioHandle output(new AudioAlsaOutput(card, buffer));
 	output->open();
@@ -264,7 +264,7 @@ SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedB
  * The device is automatically opened.\n
  *
 */
-SharedAudioHandle createAlsaOutputDevice(const AlsaCardIdentifier &card, SharedBufferHandle buffer)
+SharedAudioHandle createAlsaOutputDevice(const AlsaAudioCardIdentifier &card, SharedBufferHandle buffer)
 {
 	return createAlsaOutputDevice(card, buffer, DEFAULT_BUFFERSIZE);
 }

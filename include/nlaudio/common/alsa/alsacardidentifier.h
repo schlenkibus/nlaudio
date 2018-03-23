@@ -27,20 +27,45 @@ namespace Nl {
 
 class AlsaCardIdentifier {
 public:
-	   AlsaCardIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, const std::string& name);
+    AlsaCardIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, const std::string& name);
 
-	   std::string getCardString() const;
-	   std::string getCardStringExtended() const;
-       static std::vector<AlsaCardIdentifier> getCardIdentifiers();
+    std::string getCardString() const;
+    std::string getCardStringExtended() const;
+
+    //virtual std::vector<AlsaCardIdentifier> getIdentifiers() = 0;
+
 private:
-	   unsigned int m_card;
-	   unsigned int m_device;
-	   unsigned int m_subdevice;
-	   std::string m_cardString;
-	   std::string m_name;
+    unsigned int m_card;
+    unsigned int m_device;
+    unsigned int m_subdevice;
+    std::string m_cardString;
+    std::string m_name;
 };
 
-std::ostream& operator<<(std::ostream& lhs, const Nl::AlsaCardIdentifier& rhs);
+
+class AlsaAudioCardIdentifier : public AlsaCardIdentifier {
+public:
+    typedef AlsaCardIdentifier basetype;
+
+    AlsaAudioCardIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, const std::string& name);
+
+    //virtual std::vector<AlsaCardIdentifier> getIdentifiers();
+
+    static std::vector<AlsaAudioCardIdentifier> getCardIdentifiers();
+};
+
+std::ostream& operator<<(std::ostream& lhs, const AlsaAudioCardIdentifier& rhs);
+
+class AlsaMidiCardIdentifier : public AlsaCardIdentifier {
+public:
+    typedef AlsaCardIdentifier basetype;
+
+    AlsaMidiCardIdentifier(unsigned int card, unsigned int device, unsigned int subdevice, const std::string& name);
+
+    //virtual std::vector<AlsaMidiCardIdentifier> getIdentifiers();
+};
+
+std::ostream& operator<<(std::ostream& lhs, const AlsaMidiCardIdentifier& rhs);
 
 } // namespace Nl
 

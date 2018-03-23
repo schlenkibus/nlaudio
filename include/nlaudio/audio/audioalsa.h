@@ -38,7 +38,7 @@ class AudioAlsa : public Audio
 public:
 	typedef Audio basetype;
 
-	AudioAlsa(const AlsaCardIdentifier& card, SharedBufferHandle buffer, bool isInput);
+    AudioAlsa(const AlsaAudioCardIdentifier& card, SharedBufferHandle buffer, bool isInput);
 	virtual ~AudioAlsa();
 
 	virtual void open() = 0; // Might throw, therefore not in constructor
@@ -90,7 +90,7 @@ protected:
 
 	void throwOnAlsaError(const std::string &file, const std::string &func, int line, int e) const;
 private:
-	AlsaCardIdentifier m_card;
+    AlsaAudioCardIdentifier m_card;
 
 	bool m_deviceOpen;
 	bool m_isInput;

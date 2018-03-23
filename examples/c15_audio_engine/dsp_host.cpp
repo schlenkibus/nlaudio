@@ -709,7 +709,7 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 21:
         /* set param 20 - master tune */
-        testEditParameter(20, ((2 * _value) - 127));        // bipolar
+        testEditParameter(20, 48 * ((2 * _value) - 127));        // bipolar
         break;
     case 22:
         /* set global time */
@@ -745,7 +745,7 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         break;
     case 30:
         /* set reference */
-        testSetReference(_value);
+        testSetReference(80 * _value);
         break;
     case 31:
         /* init */

@@ -21,8 +21,8 @@ int main()
 	try
 	{
 
-		AlsaCardIdentifier audioIn(1,0,0, "USB Device");
-		AlsaCardIdentifier audioOut(1,0,0, "USB Device");
+        AlsaAudioCardIdentifier audioIn(1,0,0, "USB Device");
+        AlsaAudioCardIdentifier audioOut(1,0,0, "USB Device");
 
         const int buffersize = 16768;
 		const int samplerate = 48000;
@@ -76,7 +76,7 @@ void inToOutCallback(u_int8_t *in,
 	memcpy(out, in, sampleSpecs.buffersizeInBytes);
 }
 
-JobHandle inputToOutput(const AlsaCardIdentifier &inCard, const AlsaCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate)
+JobHandle inputToOutput(const AlsaAudioCardIdentifier &inCard, const AlsaAudioCardIdentifier &outCard, unsigned int buffersize, unsigned int samplerate)
 {
 	// In this example, we just copy data from input to output
 	// Samplerate and buffersize can be set. A handle to stop the

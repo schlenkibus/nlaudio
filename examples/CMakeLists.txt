@@ -30,14 +30,14 @@ add_executable(nlaudio_inputtooutput inputtooutput.cpp)
 target_link_libraries(nlaudio_inputtooutput nlaudio)
 
 ### silence
-#set(SILENCE_EXAMPLE_SOURCES silence.cpp)
-#add_executable(silence_example ${SILENCE_EXAMPLE_SOURCES})
-#target_link_libraries(silence_example nlaudio)
-#
+set(SILENCE_EXAMPLE_SOURCES silence.cpp)
+add_executable(silence_example ${SILENCE_EXAMPLE_SOURCES})
+target_link_libraries(silence_example nlaudio)
+
 ### midisine
-#set(MIDISINE_EXAMPLE_SOURCES midisine.cpp)
-#add_executable(midisine_example ${MIDISINE_EXAMPLE_SOURCES})
-#target_link_libraries(midisine_example nlaudio)
+set(MIDISINE_EXAMPLE_SOURCES midisine.cpp)
+add_executable(midisine_example ${MIDISINE_EXAMPLE_SOURCES})
+target_link_libraries(midisine_example nlaudio)
 
 ### recorder
 set(RECORDER_EXAMPLE_SOURCES recorder.cpp)

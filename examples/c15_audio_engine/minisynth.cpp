@@ -75,8 +75,8 @@ void miniSynthCallback(uint8_t *out, const SampleSpecs &sampleSpecs __attribute_
 
 
 
-JobHandle miniSynthMidiControl(const AlsaCardIdentifier &audioOutCard,
-                               const AlsaCardIdentifier &midiInCard,
+JobHandle miniSynthMidiControl(const AlsaAudioCardIdentifier &audioOutCard,
+                               const AlsaMidiCardIdentifier &midiInCard,
                                unsigned int buffersize,
                                unsigned int samplerate)
 {
