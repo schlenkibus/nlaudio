@@ -76,6 +76,10 @@ void dsp_host::tickMain()
                 m_params.tickItem(i);
             }
             m_params.postProcess_slow(m_paramsignaldata[v], v);
+
+            /*Trigger forFGilter COefficients -> will be in a function... soon...*/
+            float chirpFreq = m_paramsignaldata[v][OSC_A_CHI];
+            m_soundgenerator[v].m_chirpFilter_A.setCoeffs(chirpFreq);
         }
     }
     /* second: evaluate fast clock status */
@@ -152,6 +156,9 @@ void dsp_host::tickMain()
     }
 
     /* (TODO) AUDIO_ENGINE: mono dsp phase */
+    m_mainOut_L *= m_paramsignaldata[0][MST_VOL];
+    m_mainOut_R *= m_paramsignaldata[0][MST_VOL];
+
     /* finally: update (fast and slow) clock positions */
     m_clockPosition[2] = (m_clockPosition[2] + 1) % m_clockDivision[2];
     m_clockPosition[3] = (m_clockPosition[3] + 1) % m_clockDivision[3];

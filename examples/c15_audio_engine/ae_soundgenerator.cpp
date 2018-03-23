@@ -45,7 +45,7 @@ void ae_soundgenerator::init(float _samplerate, uint32_t _vn)
 
 void ae_soundgenerator::resetPhase(float *_signal)
 {
-   m_oscA_phase = _signal[7];           /// Osc A Phase Label missing
+   m_oscA_phase = _signal[OSC_A_PHS];           /// Osc A Phase Label missing
                                         /// Osc B Phase reset missing
 }
 
