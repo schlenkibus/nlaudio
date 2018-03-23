@@ -29,7 +29,7 @@ struct decoder
     uint32_t m_listIndex = 0;
     /* local data structures */
     const int32_t m_getSign[2] = {1, -1};
-    uint32_t m_event[5];
+    int32_t m_event[5];
     dual_id_list m_selectedVoices;
     polyDual_id_list m_selectedParams;
     id_list m_listTraversal[lst_number_of_lists];
