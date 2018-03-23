@@ -92,7 +92,7 @@ private:
 class StopWatch
 {
 public:
-    StopWatch(const std::string& name);
+    StopWatch(const std::string& name, uint32_t windowSize);
     void start(const std::string& name);
     void stop();
     std::ostream& printDetailed(std::ostream& rhs);
@@ -104,6 +104,7 @@ private:
     Timestamp m_currentTimeStamp;
     bool m_waitingForStop;
     std::string m_name;
+    uint32_t m_windowSize;
 };
 
 std::ostream& operator<<(std::ostream& lhs, StopWatch& rhs);

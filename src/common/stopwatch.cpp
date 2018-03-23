@@ -32,10 +32,10 @@ namespace Nl {
  *
 */
 StopBlockTime::StopBlockTime(std::shared_ptr<StopWatch> sw, std::string name = "noname") :
-	m_currentStopWatch(sw)
+    m_currentStopWatch(sw)
 {
-	if (m_currentStopWatch)
-		m_currentStopWatch->start(name);
+    if (m_currentStopWatch)
+        m_currentStopWatch->start(name);
 }
 
 /** \ingroup Tools
@@ -47,10 +47,10 @@ StopBlockTime::StopBlockTime(std::shared_ptr<StopWatch> sw, std::string name = "
 */
 StopBlockTime::~StopBlockTime()
 {
-	if (m_currentStopWatch)
-		m_currentStopWatch->stop();
+    if (m_currentStopWatch)
+        m_currentStopWatch->stop();
 
-	m_currentStopWatch = nullptr;
+    m_currentStopWatch = nullptr;
 }
 
 /** \ingroup Tools
@@ -60,12 +60,13 @@ StopBlockTime::~StopBlockTime()
  * Creates a StopWatch object
  *
 */
-StopWatch::StopWatch(const std::string &name) :
-	m_mutex(),
+StopWatch::StopWatch(const std::string &name, uint32_t windowSize) :
+    m_mutex(),
     m_timestamps(),
-	m_currentTimeStamp(),
-	m_waitingForStop(false),
-	m_name(name)
+    m_currentTimeStamp(),
+    m_waitingForStop(false),
+    m_name(name),
+    m_windowSize(windowSize)
 {
 }
 
@@ -80,17 +81,17 @@ StopWatch::StopWatch(const std::string &name) :
 */
 void StopWatch::start(const std::string &name)
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
 
-	if (m_waitingForStop) {
-		std::cout << "ERR: " << "Unbalanced start()/stop(). Ignoring start()!" << std::endl;
-		return;
-	}
+    if (m_waitingForStop) {
+        std::cout << "ERR: " << "Unbalanced start()/stop(). Ignoring start()!" << std::endl;
+        return;
+    }
 
-	m_currentTimeStamp.start = std::chrono::high_resolution_clock::now();
-	m_currentTimeStamp.name = name;
+    m_currentTimeStamp.start = std::chrono::high_resolution_clock::now();
+    m_currentTimeStamp.name = name;
 
-	m_waitingForStop = true;
+    m_waitingForStop = true;
 }
 /** \ingroup Tools
  *
@@ -102,19 +103,24 @@ void StopWatch::start(const std::string &name)
 */
 void StopWatch::stop()
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
 
-	if (!m_waitingForStop) {
-		std::cout << "ERR: " << "Unbalanced start()/stop(). Ignoring stop()!" << std::endl;
-		return;
-	}
+    if (!m_waitingForStop) {
+        std::cout << "ERR: " << "Unbalanced start()/stop(). Ignoring stop()!" << std::endl;
+        return;
+    }
 
-	m_currentTimeStamp.stop = std::chrono::high_resolution_clock::now();
+    m_currentTimeStamp.stop = std::chrono::high_resolution_clock::now();
 
-	// Protect by mutex
-	m_timestamps.push(m_currentTimeStamp);
+    // Do moving window, if 10000 values are reached
+    if (m_timestamps.size() >= 10000)
+        m_timestamps.pop();
 
-	m_waitingForStop = false;
+    // Protect by mutex
+    m_timestamps.push(m_currentTimeStamp);
+
+
+    m_waitingForStop = false;
 }
 
 /** \ingroup Tools
@@ -128,32 +134,32 @@ void StopWatch::stop()
 */
 std::ostream& StopWatch::printDetailed(std::ostream &rhs)
 {
-	//TODO: Make this print the whole buffer with all details.
-	//      Not used right now.
+    //TODO: Make this print the whole buffer with all details.
+    //      Not used right now.
 
-	// Create an new empty copy and swap with the full one.
-	m_mutex.lock();
-	std::queue<Timestamp> workCopy;
-	std::swap(m_timestamps, workCopy);
-	m_mutex.unlock();
+    // Create an new empty copy and swap with the full one.
+    m_mutex.lock();
+    std::queue<Timestamp> workCopy;
+    std::swap(m_timestamps, workCopy);
+    m_mutex.unlock();
 
-	while (!workCopy.empty()) {
-		Timestamp cur = workCopy.front();
-		workCopy.pop();
+    while (!workCopy.empty()) {
+        Timestamp cur = workCopy.front();
+        workCopy.pop();
 
-		int delta_us = std::chrono::duration_cast<std::chrono::microseconds>(cur.stop-cur.start).count();
+        int delta_us = std::chrono::duration_cast<std::chrono::microseconds>(cur.stop-cur.start).count();
 
-		std::cout << cur.name
-				  << "  "
-					 //<< std::chrono::system_clock::to_time_t(cur.start)
-					 //<< std::put_time(std::chrono::system_clock::to_time_t(cur.start), "%F %T")
-					 //<< "  "
-					 //<< std::put_time(std::chrono::system_clock::to_time_t(cur.stop), "%F %T")
-					 << "  "
-				  << delta_us <<  " us" << std::endl;
-	}
+        std::cout << cur.name
+                  << "  "
+                     //<< std::chrono::system_clock::to_time_t(cur.start)
+                     //<< std::put_time(std::chrono::system_clock::to_time_t(cur.start), "%F %T")
+                     //<< "  "
+                     //<< std::put_time(std::chrono::system_clock::to_time_t(cur.stop), "%F %T")
+                  << "  "
+                  << delta_us <<  " us" << std::endl;
+    }
 
-	return rhs;
+    return rhs;
 }
 
 /** \ingroup Tools
@@ -167,48 +173,48 @@ std::ostream& StopWatch::printDetailed(std::ostream &rhs)
 */
 std::ostream& StopWatch::printSummary(std::ostream &rhs)
 {
-	// Create an new empty copy and swap with the full one.
-	m_mutex.lock();
-	std::queue<Timestamp> workCopy;
-	std::swap(m_timestamps, workCopy);
-	m_mutex.unlock();
+    // Create an new empty copy and swap with the full one.
+    m_mutex.lock();
+    std::queue<Timestamp> workCopy;
+    std::swap(m_timestamps, workCopy);
+    m_mutex.unlock();
 
-	unsigned long itemCount = workCopy.size();
-	unsigned long sum = 0;
-	unsigned int min = std::numeric_limits<unsigned int>::max();
-	unsigned int max = 0;
-	std::string minName = "";
-	std::string maxName = "";
+    unsigned long itemCount = workCopy.size();
+    unsigned long sum = 0;
+    unsigned int min = std::numeric_limits<unsigned int>::max();
+    unsigned int max = 0;
+    std::string minName = "";
+    std::string maxName = "";
 
-	while (!workCopy.empty()) {
-		Timestamp cur = workCopy.front();
-		workCopy.pop();
+    while (!workCopy.empty()) {
+        Timestamp cur = workCopy.front();
+        workCopy.pop();
 
-		unsigned int delta_us = std::chrono::duration_cast<std::chrono::microseconds>(cur.stop-cur.start).count();
-		sum += delta_us;
+        unsigned int delta_us = std::chrono::duration_cast<std::chrono::microseconds>(cur.stop-cur.start).count();
+        sum += delta_us;
 
-		if (delta_us < min) {
-			min = delta_us;
-			minName = cur.name;
-		}
+        if (delta_us < min) {
+            min = delta_us;
+            minName = cur.name;
+        }
 
-		if (delta_us > max) {
-			max = delta_us;
-			maxName = cur.name;
-		}
-	}
+        if (delta_us > max) {
+            max = delta_us;
+            maxName = cur.name;
+        }
+    }
 
-	double mean = static_cast<double>(sum) / static_cast<double>(itemCount);
+    double mean = static_cast<double>(sum) / static_cast<double>(itemCount);
 
-	rhs << std::setiosflags(std::ios::fixed) << std::setprecision(2)
-		<< "Timing: [" << m_name << "] " << std::endl
-		<< "values=" << itemCount << " "
-		<< "sum=" << sum << "us "
-		<< "min[" << minName << "]=" << min << "us "
-		<< "max[" << maxName << "]=" << max << "us "
-		<< "mean=" << mean << "us" << std::endl;
+    rhs << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+        << "Timing: [" << m_name << "] " << std::endl
+        << "values=" << itemCount << " "
+        << "sum=" << sum << "us "
+        << "min[" << minName << "]=" << min << "us "
+        << "max[" << maxName << "]=" << max << "us "
+        << "mean=" << mean << "us" << std::endl;
 
-	return rhs;
+    return rhs;
 }
 
 /** \ingroup Tools
@@ -227,7 +233,7 @@ std::ostream& StopWatch::printSummary(std::ostream &rhs)
 */
 std::ostream& operator<<(std::ostream& lhs, StopWatch& rhs)
 {
-	return rhs.printSummary(lhs);
+    return rhs.printSummary(lhs);
 }
 
 }
