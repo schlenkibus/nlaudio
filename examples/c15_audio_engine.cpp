@@ -49,7 +49,7 @@
 using namespace std;
 
 //TODO: Glbal Variables are bad (even in a namespace)
-std::shared_ptr<Nl::StopWatch> sw(new Nl::StopWatch("AudioCallback", 10000));
+std::shared_ptr<Nl::StopWatch> sw(new Nl::StopWatch("AudioCallback", 10000, Nl::StopWatch::SUMMARY));
 
 //
 //#include "c15_audio_engine/soundgenerator.h"

@@ -60,13 +60,14 @@ StopBlockTime::~StopBlockTime()
  * Creates a StopWatch object
  *
 */
-StopWatch::StopWatch(const std::string &name, uint32_t windowSize) :
+StopWatch::StopWatch(const std::string &name, uint32_t windowSize, Mode m) :
     m_mutex(),
     m_timestamps(),
     m_currentTimeStamp(),
     m_waitingForStop(false),
     m_name(name),
-    m_windowSize(windowSize)
+    m_windowSize(windowSize),
+    m_mode(m)
 {
 }
 
@@ -121,6 +122,23 @@ void StopWatch::stop()
 
 
     m_waitingForStop = false;
+}
+
+/** \ingroup Tools
+ *
+ * \brief Is used for prints using operator<<, depending on \ref Mode
+ * \param rhs A stream of type \ref std::ostream where data is written to.
+ * \return A stream of type \ref std::ostream containing new data.
+ *
+ * This function prints a detailed list, oder a summery, dependent on \ref Mode
+ *
+*/
+std::ostream& StopWatch::print(std::ostream& rhs)
+{
+    if (m_mode == SUMMARY)
+        return printSummary(rhs);
+
+    return printDetailed(rhs);
 }
 
 /** \ingroup Tools
@@ -233,7 +251,7 @@ std::ostream& StopWatch::printSummary(std::ostream &rhs)
 */
 std::ostream& operator<<(std::ostream& lhs, StopWatch& rhs)
 {
-    return rhs.printSummary(lhs);
+    return rhs.print(lhs);
 }
 
 }

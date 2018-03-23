@@ -1,7 +1,6 @@
 ﻿#include "minisynth.h"
 
 #include <common/stopwatch.h>
-#include "cpu_stopwatch.h"
 
 #include <audio/audioalsainput.h>
 #include <audio/audioalsaoutput.h>
