@@ -758,6 +758,9 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         /* init */
         testInit();
         break;
+    case 32:
+        /* infinity release */
+        testEditParameter(5, 16160);
     }
 }
 
@@ -769,8 +772,8 @@ void dsp_host::testEditParameter(uint32_t _id, int32_t _value)
     int32_t tcdVal = static_cast<int32_t>(static_cast<float>(_value) * m_test_normalizeMidi * param_definition[_id][3]);
     std::cout << "\nSET_PARAM(" << tcdId << ", " << tcdVal << ")" << std::endl;
     /* select parameter, set destination */
-    evalMidi(1, tcdId >> 7, tcdId & 127);                   // select param: id
-    testParseDestination(tcdVal);                           // parse destination
+    evalMidi(1, tcdId >> 7, tcdId & 127);                       // select param: id
+    testParseDestination(tcdVal);                               // parse destination
 }
 
 /* set transition time */
@@ -778,20 +781,21 @@ void dsp_host::testSetGlobalTime(uint32_t _value)
 {
     std::cout << "\nSET_TIME(" << _value << ")" << std::endl;
     /* select all voices, params and update time */
-    evalMidi(0, 127, 127);                                  // select all voices
-    evalMidi(1, 127, 127);                                  // select all params
+    _value *= static_cast<uint32_t>(m_params.m_millisecond);    // convert time accordingly in samples
+    evalMidi(0, 127, 127);                                      // select all voices
+    evalMidi(1, 127, 127);                                      // select all params
     if(_value < 16384)
     {
         /* T */
-        evalMidi(2, _value >> 7, _value & 127);             // set time
+        evalMidi(2, _value >> 7, _value & 127);                 // set time
     }
     else
     {
         /* TU + TL */
         uint32_t upper = _value >> 14;
         _value &= 16383;
-        evalMidi(34, upper >> 7, upper & 127);              // set time upper
-        evalMidi(50, _value >> 7, _value & 127);            // set time lower
+        evalMidi(34, upper >> 7, upper & 127);                  // set time upper
+        evalMidi(50, _value >> 7, _value & 127);                // set time lower
     }
 }
 
@@ -802,8 +806,8 @@ void dsp_host::testSetReference(uint32_t _value)
     uint32_t val = static_cast<uint32_t>(static_cast<float>(_value) * m_test_normalizeMidi * utility_definition[1][0]);
     std::cout << "\nSET_REFERENCE(" << val << ")" << std::endl;
     /* select and update reference utility */
-    evalMidi(8, 0, 1);                                      // select utility (reference tone)
-    evalMidi(24, val >> 7, val & 127);                      // update utility
+    evalMidi(8, 0, 1);                                          // select utility (reference tone)
+    evalMidi(24, val >> 7, val & 127);                          // update utility
 }
 
 /* preset recall approach */
@@ -812,13 +816,13 @@ void dsp_host::testLoadPreset(uint32_t _presetId)
     std::cout << "\nRECALL(" << _presetId << ")" << std::endl;
     /* run a recall sequence based on the given preset id (predefined presets in pe_defines_testconfig.h) */
     /* recall sequence - no flush */
-    evalMidi(47, 1, 1);                                     // enable preload (recall list mode)
+    evalMidi(47, 1, 1);                                         // enable preload (recall list mode)
     for(uint32_t p = 0; p < testRecallSequenceLength; p++)
     {
         /* traverse normalized recall array */
         testParseDestination(testPresetData[_presetId][p]);
     }
-    evalMidi(47, 0, 2);                                     // apply preloaded values
+    evalMidi(47, 0, 2);                                         // apply preloaded values
 }
 
 /* trigger flush */
@@ -826,7 +830,7 @@ void dsp_host::testFlush()
 {
     std::cout << "\nFLUSH" << std::endl;
     /* pass the trigger TCD message */
-    evalMidi(39, 0, 0);                                     // flush
+    evalMidi(39, 0, 0);                                         // flush
 }
 
 /* glance at current signals */
