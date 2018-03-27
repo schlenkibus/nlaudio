@@ -41,6 +41,7 @@
 #define test_PS 29
 #define test_RF 30
 #define test_I 31
+#define test_INF 32
 
 const uint32_t testMidiMapping[2][128] = {
     /* device 1 (axiom at home) */
@@ -56,7 +57,7 @@ const uint32_t testMidiMapping[2][128] = {
     },
     /* device 2 (remote at work) */
     {
-        test_R0, test_R1, test_R2, test_FL, test_PH, test_PB, test_PS, test_I, 0, 0, 0, 0, 0, 0, 0, 0,
+        test_R0, test_R1, test_R2, test_FL, test_PH, test_PB, test_PS, test_I, test_INF, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, test_P0, test_P1, test_P2, test_P3, test_P4, test_P5, test_P6, test_P7, 0, 0, test_P8,
         test_P9, test_P10, test_P11, test_P12, test_P13, test_P14, test_P15, 0, 0, test_P16, test_P17, test_P18, test_P19, test_P20, test_TIME, test_RF,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
