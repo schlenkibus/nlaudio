@@ -277,11 +277,13 @@ float env_engine::squaredCurvature(float _value, float _curvature)
 }
 
 /* envelope triggers */
-void env_engine::startEnvelope(const uint32_t _voiceId, const uint32_t _envId)
+void env_engine::startEnvelope(const uint32_t _voiceId, const uint32_t _envId, float _attackCurve)
 {
     /* provide object and item references */
     env_head* obj = &m_head[_envId];
     env_body* item = &m_body[obj->m_index + _voiceId];
+    /* update attack curvature */
+    obj->m_attackCurve = _attackCurve;
     /* update rendering variables */
     item->m_x = item->m_segment[item->m_next].m_dx;
     item->m_y = 1 - item->m_segment[item->m_next].m_dx;

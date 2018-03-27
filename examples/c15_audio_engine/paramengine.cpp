@@ -278,7 +278,7 @@ void paramengine::keyApply(const uint32_t _voiceId)
         /* key down */
         envUpdateStart(_voiceId, 0, pitch, velocity);   // Envelope A
         // Envelopes B, C currently missing
-        m_envelopes.startEnvelope(_voiceId, 3);         // Gate
+        m_envelopes.startEnvelope(_voiceId, 3, 0);      // Gate
     }
 }
 
@@ -289,7 +289,7 @@ void paramengine::keyApplyMono()
     if(m_event.m_mono.m_type == 1)
     {
         m_envelopes.setSegmentDest(0, 4, 1, m_event.m_mono.m_velocity);
-        m_envelopes.startEnvelope(0, 4);
+        m_envelopes.startEnvelope(0, 4, 0);
     }
 }
 
@@ -300,11 +300,12 @@ void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId,
     const uint32_t envIndex = m_envIds[_envId];
     float time, dest;
     /* determine envelope event parameters */
-    float timeKT = m_body[m_head[envIndex + 11].m_index].m_signal * _pitch;
-    float levelVel = m_body[m_head[envIndex + 7].m_index].m_signal;
-    float attackVel = m_body[m_head[envIndex + 8].m_index].m_signal * _velocity;
+    float timeKT = -m_body[m_head[envIndex + 11].m_index].m_signal * _pitch;
+    float levelVel = -m_body[m_head[envIndex + 7].m_index].m_signal;
+    float attackVel = -m_body[m_head[envIndex + 8].m_index].m_signal * _velocity;
     float levelKT = m_body[m_head[envIndex + 10].m_index].m_signal * _pitch;
-    float peak = fmin(m_convert.eval_level((-(1 - _velocity) * levelVel * env_norm_peak) + levelKT), env_clip_peak);
+    // float peak = fmin(m_convert.eval_level(((1 - _velocity) * levelVel * env_norm_peak) + levelKT), env_clip_peak);
+    float peak = fmin(m_convert.eval_level(((1 - _velocity) * levelVel) + levelKT), env_clip_peak);
     /* envelope event updates */
     m_event.m_env[_envId].m_levelFactor[_voiceId] = peak;
     m_event.m_env[_envId].m_timeFactor[_voiceId][0] = m_convert.eval_level(timeKT + attackVel) * m_millisecond;
@@ -324,8 +325,8 @@ void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId,
     m_envelopes.setSegmentDx(_voiceId, _envId, 3, 1 / (time + 1));
     dest = peak * m_body[m_head[envIndex + 4].m_index].m_signal;
     m_envelopes.setSegmentDest(_voiceId, _envId, 3, dest);
-    /* trigger envelope start */
-    m_envelopes.startEnvelope(_voiceId, _envId);
+    /* trigger envelope start (passing envelope curvature) */
+    m_envelopes.startEnvelope(_voiceId, _envId, m_body[m_head[envIndex + 12].m_index].m_signal);
 }
 
 /* envelope updates - stop procedure */
@@ -335,8 +336,8 @@ void paramengine::envUpdateStop(const uint32_t _voiceId, const uint32_t _envId, 
     const uint32_t envIndex = m_envIds[_envId];
     float time;
     /* determine envelope event parameters */
-    float timeKT = m_body[m_head[envIndex + 11].m_index].m_signal * _pitch;
-    float releaseVel = m_body[m_head[envIndex + 9].m_index].m_signal * _velocity;
+    float timeKT = -m_body[m_head[envIndex + 11].m_index].m_signal * _pitch;
+    float releaseVel = -m_body[m_head[envIndex + 9].m_index].m_signal * _velocity;
     /* envelope event updates */
     m_event.m_env[_envId].m_timeFactor[_voiceId][3] = m_convert.eval_level(timeKT + releaseVel) * m_millisecond;
     /* envelope segment updates (Release - Time) - distinguish finite and infinite times */
@@ -499,7 +500,7 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     /* poly envelope ticking */
     m_envelopes.tickPoly(_voiceId);
     /* poly envelope distribution */
-    _signal[0] = m_envelopes.m_body[m_envelopes.m_head[0].m_index + _voiceId].m_signal;     // Envelope A
+    _signal[0] = m_envelopes.m_body[m_envelopes.m_head[0].m_index + _voiceId].m_signal * m_body[m_head[6].m_index].m_signal;     // Envelope A post Gain
     _signal[3] = m_envelopes.m_body[m_envelopes.m_head[3].m_index + _voiceId].m_signal;     // Gate
     /* Oscillator parameter post processing */
     float pm_amt, pm_env;

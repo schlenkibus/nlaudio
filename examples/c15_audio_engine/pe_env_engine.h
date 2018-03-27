@@ -82,6 +82,6 @@ struct env_engine
     /* helper function in order to produce polynomial transitions */
     float squaredCurvature(float _value, float _curvature);
     /* main envelope triggers (relating to keyUp, keyDown) */
-    void startEnvelope(const uint32_t _voiceId, const uint32_t _envId);
+    void startEnvelope(const uint32_t _voiceId, const uint32_t _envId, float _attackCurve);
     void stopEnvelope(const uint32_t _voiceId, const uint32_t _envId);
 };
