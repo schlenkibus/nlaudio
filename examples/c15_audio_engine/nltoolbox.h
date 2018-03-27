@@ -449,6 +449,34 @@ inline float pitch2freq(float pitch)
 //    return pow(1.05946309f, pitch) * 8.17579892f;         // alternative
 }
 
+
+
+/*****************************************************************************/
+/** @brief    conversion from float to int using casting within an expression
+ *  @param    float value
+ *  @return   int value
+******************************************************************************/
+
+inline int float2int(float value)
+{
+    /// Expression approach
+//    return (value >= 0.f)
+//           ? static_cast<int>(value + 0.5f)
+//           : static_cast<int>(value - 0.5f);
+
+    /// Statement approach
+    if (value >= 0.f)
+    {
+        value += 0.5f;
+    }
+    else
+    {
+        value -= 0.5f;
+    }
+
+    return static_cast<int>(value);
+}
+
 } // namespace Conversion
 
 

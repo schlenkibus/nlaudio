@@ -16,7 +16,9 @@
 #include "tcd_decoder.h"
 /* for testing purposes */
 #include "pe_defines_testconfig.h"
-#include "ae_soundgenerator.h"          // Anton
+
+/* Audio Engine */
+#include "ae_soundgenerator.h"
 
 /* dsp_host: main dsp object, holding TCD Decoder, Parameter Engine, Audio Engine, shared Signal Array, main signal (L, R) */
 class dsp_host
@@ -72,14 +74,22 @@ public:
     void testInit();
 
     /*fadepoint for flushing*/
+
+
+    /* Audio Engine */
+    ae_soundgenerator m_soundgenerator[dsp_number_of_voices];
+
+    void initAudioEngine(float _samplerate, uint32_t _polyphony);
+    void makePolySound(float *_signal, uint32_t _voiceID);
+    void makeMonoSound(float *_signal);
+
+    inline void resetOscPhase(float *_signal, uint32_t _voiceID);
+    inline void setFilterCoefficients(float *_signal, uint32_t _voiceID);
+
     bool m_flushnow;
     float m_fadepoint;
     uint32_t m_tableCounter;
     uint32_t m_fadeSamples;
     uint32_t m_flushIndex;
     std::vector<float> m_raised_cos_table;
-    void flushAllBuffers();
-
-    /*audio engine stuff*/
-    ae_soundgenerator m_soundgenerator[dsp_number_of_voices];
 };

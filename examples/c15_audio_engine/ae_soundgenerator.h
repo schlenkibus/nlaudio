@@ -23,7 +23,7 @@ struct ae_soundgenerator
 
     void generateSound(float _feedbackSample, float *_signal);
     void init(float _samplerate, uint32_t _vn);
-    void resetPhase(float *_signal);
+    void resetPhase(float _phaseA, float _phaseB);
 
     //************************** Shared Variables *****************************//
     float m_sample_interval;

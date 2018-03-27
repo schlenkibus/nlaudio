@@ -29,28 +29,8 @@ void dsp_host::init(uint32_t _samplerate, uint32_t _polyphony)
     std::cout << m_clockDivision[2] << ", " << m_clockDivision[3] << ")" << std::endl;
     std::cout << "DSP_HOST::upsampleFactor: " << m_upsampleFactor << std::endl;
 
-    /*fadepoint for flushing*/
-    m_flushnow = false;
-    m_tableCounter = 0;
-
-    float fade_time = 0.003f;
-    float sample_interval = 1.f / _samplerate;
-    m_fadeSamples = fade_time * _samplerate * 2 + 1;
-    m_flushIndex = fade_time * _samplerate;
-    m_raised_cos_table.resize(m_fadeSamples);
-
-    for (uint32_t ind = 0; ind < m_raised_cos_table.size(); ind++)
-    {
-        float x = 1.5708f * sample_interval * ind / fade_time;
-        m_raised_cos_table[ind] = pow(cos(x), 2);
-    }
-
-    /* audio engine */
-    for (uint32_t p = 0; p < _polyphony; p++)
-    {
-        m_soundgenerator[p].init(static_cast<float>(_samplerate), p);
-    }
-
+    /* Audio Engine */
+    initAudioEngine(static_cast<float>(_samplerate), _polyphony);
 }
 
 /* */
@@ -78,8 +58,9 @@ void dsp_host::tickMain()
             m_params.postProcess_slow(m_paramsignaldata[v], v);
 
             /*Trigger forFGilter COefficients -> will be in a function... soon...*/
-            float chirpFreq = m_paramsignaldata[v][OSC_A_CHI];
-            m_soundgenerator[v].m_chirpFilter_A.setCoeffs(chirpFreq);
+            setFilterCoefficients(m_paramsignaldata[v], v);
+//            float chirpFreq = m_paramsignaldata[v][OSC_A_CHI];
+//            m_soundgenerator[v].m_chirpFilter_A.setCoeffs(chirpFreq);
         }
     }
     /* second: evaluate fast clock status */
@@ -129,35 +110,38 @@ void dsp_host::tickMain()
         m_params.postProcess_audio(m_paramsignaldata[v], v);
 
         /* (TODO) AUDIO_ENGINE: poly dsp phase */
-        m_soundgenerator[v].generateSound(0.f, m_paramsignaldata[v]);
+        makePolySound(m_paramsignaldata[v], v);
 
-        /* temporal outputmix */
-        m_mainOut_L += m_soundgenerator[v].m_sampleA;
-        m_mainOut_R += m_soundgenerator[v].m_sampleA;
+//        m_soundgenerator[v].generateSound(0.f, m_paramsignaldata[v]);
+
+//        /* temporal outputmix */
+//        m_mainOut_L += m_soundgenerator[v].m_sampleA;
+//        m_mainOut_R += m_soundgenerator[v].m_sampleA;
     }
 
-    /*check current fadepoint for flushing*/
-    if (m_flushnow)
-    {
-        if (m_tableCounter == m_flushIndex)
-        {
-            flushAllBuffers();
-        }
+//    /*check current fadepoint for flushing*/
+//    if (m_flushnow)
+//    {
+//        if (m_tableCounter == m_flushIndex)
+//        {
+//            flushAllBuffers();
+//        }
 
-        if (m_tableCounter > m_fadeSamples)
-        {
-            m_tableCounter = 0;
-            m_flushnow = false;
-        }
-        else
-        {
-            m_tableCounter++;
-        }
-    }
+//        if (m_tableCounter > m_fadeSamples)
+//        {
+//            m_tableCounter = 0;
+//            m_flushnow = false;
+//        }
+//        else
+//        {
+//            m_tableCounter++;
+//        }
+//    }
 
     /* (TODO) AUDIO_ENGINE: mono dsp phase */
-    m_mainOut_L *= m_paramsignaldata[0][MST_VOL];
-    m_mainOut_R *= m_paramsignaldata[0][MST_VOL];
+    makeMonoSound(m_paramsignaldata[0]);
+//    m_mainOut_L *= m_paramsignaldata[0][MST_VOL];
+//    m_mainOut_R *= m_paramsignaldata[0][MST_VOL];
 
     /* finally: update (fast and slow) clock positions */
     m_clockPosition[2] = (m_clockPosition[2] + 1) % m_clockDivision[2];
@@ -527,7 +511,9 @@ void dsp_host::keyApply(uint32_t _voiceId)
         m_paramsignaldata[_voiceId][7] = m_params.m_body[m_params.m_head[24].m_index + _voiceId].m_signal;  // POLY PHASE_A -> OSC_A Phase
 
         /* AUDIO_ENGINE: reset oscillator phases */
-        m_soundgenerator[_voiceId].resetPhase(m_paramsignaldata[_voiceId]);
+        resetOscPhase(m_paramsignaldata[_voiceId], _voiceId);
+//        m_audioengine.resetOscPhase(_voiceId, m_paramsignaldata[_voiceId]);
+//        m_soundgenerator[_voiceId].resetPhase(m_paramsignaldata[_voiceId]);
     }
 }
 
@@ -927,11 +913,109 @@ void dsp_host::testInit()
     testLoadPreset(1);          // load default preset
 }
 
+
+
+
 /******************************************************************************/
 /**
 *******************************************************************************/
 
-void dsp_host::flushAllBuffers()
+void dsp_host::initAudioEngine(float _samplerate, uint32_t _polyphony)
 {
-    printf("flushing all buffers ... \n'");
+    /* Fading POint for the Flush Mechanism */
+    m_flushnow = false;
+    m_tableCounter = 0;
+
+    float fade_time = 0.003f;
+    float sample_interval = 1.f / _samplerate;
+    m_fadeSamples = fade_time * _samplerate * 2 + 1;
+    m_flushIndex = fade_time * _samplerate;
+    m_raised_cos_table.resize(m_fadeSamples);
+
+    for (uint32_t ind = 0; ind < m_raised_cos_table.size(); ind++)
+    {
+        float x = 1.5708f * sample_interval * ind / fade_time;
+        m_raised_cos_table[ind] = pow(cos(x), 2);
+    }
+
+    /* DSP Module initialization */
+    for (uint32_t p = 0; p < _polyphony; p++)
+    {
+        m_soundgenerator[p].init(_samplerate, p);
+    }
 }
+
+
+
+/******************************************************************************/
+/**
+*******************************************************************************/
+
+void dsp_host::makePolySound(float *_signal, uint32_t _voiceID)
+{
+    /* Soundgenerator: Oscillators and Shapers */
+    m_soundgenerator[_voiceID].generateSound(0.f, _signal);
+
+    /* temporal outputmix */
+    m_mainOut_L += (m_soundgenerator[_voiceID].m_sampleA);
+    m_mainOut_R += (m_soundgenerator[_voiceID].m_sampleA);
+}
+
+
+
+/******************************************************************************/
+/**
+*******************************************************************************/
+
+void dsp_host::makeMonoSound(float *_signal)
+{
+    /*check current fadepoint for flushing*/
+    if (m_flushnow)
+    {
+        if (m_tableCounter == m_flushIndex)
+        {
+            printf("flushing all buffers ... \n'");
+        }
+
+        if (m_tableCounter > m_fadeSamples)
+        {
+            m_tableCounter = 0;
+            m_flushnow = false;
+        }
+        else
+        {
+            m_tableCounter++;
+        }
+    }
+
+    /* MOno Modules */
+
+    /* Soft clip */
+    m_mainOut_L *= _signal[MST_VOL];
+    m_mainOut_R *= _signal[MST_VOL];
+}
+
+
+
+/******************************************************************************/
+/**
+*******************************************************************************/
+
+inline void dsp_host::resetOscPhase(float *_signal, uint32_t _voiceID)
+{
+    m_soundgenerator[_voiceID].resetPhase(_signal[OSC_A_PHS], 0.f);
+}
+
+
+
+/******************************************************************************/
+/**
+*******************************************************************************/
+
+inline void dsp_host::setFilterCoefficients(float *_signal, uint32_t _voiceID)
+{
+    /* Osciallator Chirp Filter */
+    m_soundgenerator[_voiceID].m_chirpFilter_A.setCoeffs(_signal[OSC_A_CHI]);
+    m_soundgenerator[_voiceID].m_chirpFilter_B.setCoeffs(0.f);                  /// _signal[OSC_B_CHI]
+}
+

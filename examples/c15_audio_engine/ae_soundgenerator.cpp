@@ -11,6 +11,10 @@
 
 #include "ae_soundgenerator.h"
 
+/******************************************************************************/
+/** @brief
+*******************************************************************************/
+
 ae_soundgenerator::ae_soundgenerator()
 {
 
@@ -43,10 +47,10 @@ void ae_soundgenerator::init(float _samplerate, uint32_t _vn)
 /** @brief
 *******************************************************************************/
 
-void ae_soundgenerator::resetPhase(float *_signal)
+void ae_soundgenerator::resetPhase(float _phaseA, float _phaseB)
 {
-   m_oscA_phase = _signal[OSC_A_PHS];           /// Osc A Phase Label missing
-                                        /// Osc B Phase reset missing
+   m_oscA_phase = _phaseA;
+   m_oscB_phase = _phaseB;
 }
 
 
@@ -61,6 +65,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     float osc_freq = _signal[OSC_A_FRQ];
 
     //**************************** Modulation A ******************************//
+    float test = _signal[OSC_A_PMSEA];
     float tmpVar = m_oscA_selfmix * _signal[OSC_A_PMSEA];
     tmpVar = tmpVar + 0.f * 1.f;                    /// m_oscB_crossmix * _signal[OSCA_PM_B]
     tmpVar = tmpVar + _feedbackSample * 1.f;        /// * _signal[OSCA_PM_F]
@@ -71,7 +76,8 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     tmpVar += m_oscA_phase;
 
     tmpVar += (-0.25f);                                     // Wrap
-    tmpVar = tmpVar - int(tmpVar + 0.5f);                   // tmpVar -= round(tmpVar);
+//    tmpVar -= round(tmpVar);
+    tmpVar = tmpVar - NlToolbox::Conversion::float2int(tmpVar);     /// avoiding round() with a static_cast<int> solution
 
     if (fabs(m_oscA_phase_stateVar - tmpVar) > 0.5f)        // Check edge
     {
@@ -84,7 +90,8 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     m_oscA_phase_stateVar = tmpVar;
 
     m_oscA_phase += m_oscA_phaseInc;
-    m_oscA_phase = m_oscA_phase - int(m_oscA_phase + 0.5f);  // m_oscA_phase -= round(m_oscA_phase);
+//    m_oscA_phase -= round(m_oscA_phase);
+    m_oscA_phase = m_oscA_phase - NlToolbox::Conversion::float2int(m_oscA_phase);       /// avoiding round() with a static_cast<int> solution
 
     tmpVar += tmpVar;                                   // oscSinP3
     tmpVar = fabs(tmpVar);
@@ -105,7 +112,8 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     tmpVar += m_oscB_phase;
 
     tmpVar += (0.25f);
-    tmpVar = tmpVar - int(tmpVar + 0.5f);                   // tmpVar -= round(tmpVar);
+//    tmpVar -= round(tmpVar);
+    tmpVar = tmpVar - NlToolbox::Conversion::float2int(tmpVar);             /// avoiding round() with a static_cast<int> solution
 
     squareTmpVar = tmpVar * tmpVar;
     float oscSampleB = tmpVar * ((2.26548f * squareTmpVar - 5.13274f) * squareTmpVar + 3.14159f);
