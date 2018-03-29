@@ -8,7 +8,7 @@ dsp_host::dsp_host()
     m_mainOut_R = 0.f;
     m_mainOut_L = 0.f;
     /* init shared signal array */
-    m_paramsignaldata[dsp_number_of_voices][sig_number_of_signal_items] = {};
+//    m_paramsignaldata[dsp_number_of_voices][sig_number_of_signal_items] = {};
 }
 
 /* proper init - initialize engine(s) according to sampleRate and polyphony */

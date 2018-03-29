@@ -32,7 +32,7 @@ public:
     uint32_t m_clockDivision[dsp_clock_types] = {0, 1, 5, 120};         // clock division settings (defaults to 48000 Hz sampleRate)
     uint32_t m_upsampleFactor = 1;                                      // time conversion handle (sampleRate / 48000)
     /* hosting shared param signal array */
-    float m_paramsignaldata[dsp_number_of_voices][sig_number_of_signal_items];
+    float m_paramsignaldata[dsp_number_of_voices][sig_number_of_signal_items] = {};
     /* main signal output (left, right) */
     float m_mainOut_R, m_mainOut_L;                                     // final stereo (monophonic) audio (output) signal
     /* local data structures */
