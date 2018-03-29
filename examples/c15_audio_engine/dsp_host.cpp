@@ -973,7 +973,7 @@ void dsp_host::makePolySound(float *_signal, uint32_t _voiceID)
 
 void dsp_host::makeMonoSound(float *_signal)
 {
-    /*check current fadepoint for flushing*/
+    //****************************** Fade n Flush ****************************//
     if (m_flushnow)
     {
         if (m_tableCounter == m_flushIndex)
@@ -992,11 +992,49 @@ void dsp_host::makeMonoSound(float *_signal)
         }
     }
 
-    /* MOno Modules */
+    //****************************** Mono Modules ****************************//
 
-    /* Soft clip */
-    m_mainOut_L *= _signal[MST_VOL];
-    m_mainOut_R *= _signal[MST_VOL];
+    //******************************* Soft Clip ******************************//
+    m_mainOut_L *= _signal[MST_VOL];            /// -> reverb output here!
+
+    m_mainOut_L *= 0.1588f;
+    if (m_mainOut_L > 0.25f)
+    {
+        m_mainOut_L = 0.25f;
+    }
+    if (m_mainOut_L < -0.25f)
+    {
+        m_mainOut_L = -0.25f;
+    }
+
+    m_mainOut_L += -0.25f;
+    m_mainOut_L += m_mainOut_L;
+
+    m_mainOut_L = 0.5f - fabs(m_mainOut_L);
+
+    float sample_square = m_mainOut_L * m_mainOut_L;
+    m_mainOut_L = m_mainOut_L * ((2.26548 * sample_square - 5.13274) * sample_square + 3.14159);
+
+
+    m_mainOut_R *= _signal[MST_VOL];            /// -> reverb output here!
+    m_mainOut_R *= 0.1588f;
+
+    if (m_mainOut_R > 0.25f)
+    {
+        m_mainOut_R = 0.25f;
+    }
+    if (m_mainOut_R < -0.25f)
+    {
+        m_mainOut_R = -0.25f;
+    }
+
+    m_mainOut_R += -0.25f;
+    m_mainOut_R += m_mainOut_R;
+
+    m_mainOut_R = 0.5f - fabs(m_mainOut_R);
+
+    sample_square = m_mainOut_R * m_mainOut_R;
+    m_mainOut_R = m_mainOut_R * ((2.26548 * sample_square - 5.13274) * sample_square + 3.14159);
 }
 
 
