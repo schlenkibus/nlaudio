@@ -459,12 +459,12 @@ inline float pitch2freq(float pitch)
 
 inline int float2int(float value)
 {
-    /// Expression approach
+    /// Statement approach
 //    return (value >= 0.f)
 //           ? static_cast<int>(value + 0.5f)
 //           : static_cast<int>(value - 0.5f);
 
-    /// Statement approach
+    /// Expression approach
     if (value >= 0.f)
     {
         value += 0.5f;

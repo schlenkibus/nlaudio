@@ -65,7 +65,6 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     float osc_freq = _signal[OSC_A_FRQ];
 
     //**************************** Modulation A ******************************//
-    float test = _signal[OSC_A_PMSEA];
     float tmpVar = m_oscA_selfmix * _signal[OSC_A_PMSEA];
     tmpVar = tmpVar + 0.f * 1.f;                    /// m_oscB_crossmix * _signal[OSCA_PM_B]
     tmpVar = tmpVar + _feedbackSample * 1.f;        /// * _signal[OSCA_PM_F]
