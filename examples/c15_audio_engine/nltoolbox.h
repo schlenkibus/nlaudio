@@ -178,23 +178,47 @@ inline float arctan(float x)
  *  @return   sine value
 ******************************************************************************/
 
-inline float sinP3(float x)
+inline float sinP3_warp(float _x)
 {
-    x += -0.25f;
+    _x += -0.25f;
 
-    float x_round = round(x);
-    x -= x_round;
+//    _x = _x - round(_x);
 
-    x += x;
-    x = fabs(x);
-    x = 0.5f - x;
+    if (_x >= 0.f)
+    {
+        _x -= static_cast<int>(_x + 0.5f);
+    }
+    else
+    {
+        _x -= static_cast<int>(_x - 0.5f);
+    }
 
-    float x_square = x * x;
-    x = x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);
+    _x += _x;
+    _x = fabs(_x);
+    _x = 0.5f - _x;
 
-    return x;
+    float x_square = _x * _x;
+    return _x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);
 }
 
+
+
+/*****************************************************************************/
+/** @brief    sine calculation of an incoming value - 3rd degree polynomial
+ *            with no warping
+ *  @param    value
+ *  @return   sine value
+******************************************************************************/
+
+inline float sinP3_noWarp(float _x)
+{
+    _x += _x;
+    _x = fabs(_x);
+    _x = 0.5f - _x;
+
+    float x_square = _x * _x;
+    return _x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);
+}
 
 
 /*****************************************************************************/
@@ -457,24 +481,25 @@ inline float pitch2freq(float pitch)
  *  @return   int value
 ******************************************************************************/
 
-inline int float2int(float value)
+inline int float2int(float _value)
 {
+    /// cmath approach
+//    return round(_value);
+
     /// Statement approach
-//    return (value >= 0.f)
-//           ? static_cast<int>(value + 0.5f)
-//           : static_cast<int>(value - 0.5f);
+//    return (_value >= 0.f)
+//           ? static_cast<int>(_value + 0.5f)
+//           : static_cast<int>(_value - 0.5f);
 
     /// Expression approach
-    if (value >= 0.f)
+    if (_value >= 0.f)
     {
-        value += 0.5f;
+        return static_cast<int>(_value + 0.5f);
     }
     else
     {
-        value -= 0.5f;
+        return static_cast<int>(_value - 0.5f);
     }
-
-    return static_cast<int>(value);
 }
 
 } // namespace Conversion

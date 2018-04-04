@@ -458,7 +458,7 @@ void Soundgenerator::generateSound(float _feedbackSample, float _envRamp_A, floa
     float shaperSampleA = oscSampleA * tmpVar;
     tmpVar = shaperSampleA;
 
-    shaperSampleA = NlToolbox::Math::sinP3(shaperSampleA);
+    shaperSampleA = NlToolbox::Math::sinP3_warp(shaperSampleA);
     shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, tmpVar, mModuleA_Fold);
 
     squareTmpVar = shaperSampleA * shaperSampleA + (-0.5f);
@@ -472,7 +472,7 @@ void Soundgenerator::generateSound(float _feedbackSample, float _envRamp_A, floa
     float shaperSampleB = oscSampleB * tmpVar;
     tmpVar = shaperSampleB;
 
-    shaperSampleB = NlToolbox::Math::sinP3(shaperSampleB);
+    shaperSampleB = NlToolbox::Math::sinP3_warp(shaperSampleB);
     shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, tmpVar, mModuleB_Fold);
 
     squareTmpVar = shaperSampleB * shaperSampleB + (-0.5f);
@@ -610,7 +610,7 @@ void Soundgenerator::generateSound(float _feedbackSample, float *polyPtr)
     float shaperSampleA = oscSampleA * tmpVar;
     tmpVar = shaperSampleA;
 
-    shaperSampleA = NlToolbox::Math::sinP3(shaperSampleA);
+    shaperSampleA = NlToolbox::Math::sinP3_warp(shaperSampleA);
     shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, tmpVar, mModuleA_Fold);
 
     squareTmpVar = shaperSampleA * shaperSampleA + (-0.5f);
@@ -624,7 +624,7 @@ void Soundgenerator::generateSound(float _feedbackSample, float *polyPtr)
     float shaperSampleB = oscSampleB * tmpVar;
     tmpVar = shaperSampleB;
 
-    shaperSampleB = NlToolbox::Math::sinP3(shaperSampleB);
+    shaperSampleB = NlToolbox::Math::sinP3_warp(shaperSampleB);
     shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, tmpVar, mModuleB_Fold);
 
     squareTmpVar = shaperSampleB * shaperSampleB + (-0.5f);

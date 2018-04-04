@@ -61,9 +61,6 @@ void ae_soundgenerator::resetPhase(float _phaseA, float _phaseB)
 
 void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
 {
-    //**************************** Get Signals *******************************//
-    float osc_freq = _signal[OSC_A_FRQ];
-
     //**************************** Modulation A ******************************//
     float tmpVar = m_oscA_selfmix * _signal[OSC_A_PMSEA];
     tmpVar = tmpVar + 0.f * 1.f;                    /// m_oscB_crossmix * _signal[OSCA_PM_B]
@@ -74,30 +71,24 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     tmpVar = m_chirpFilter_A.applyFilter(tmpVar);
     tmpVar += m_oscA_phase;
 
-    tmpVar += (-0.25f);                                     // Wrap
-//    tmpVar -= round(tmpVar);
-    tmpVar = tmpVar - NlToolbox::Conversion::float2int(tmpVar);     /// avoiding round() with a static_cast<int> solution
+    tmpVar += (-0.25f);                                         // Wrap
+    tmpVar -= NlToolbox::Conversion::float2int(tmpVar);
 
-    if (fabs(m_oscA_phase_stateVar - tmpVar) > 0.5f)        // Check edge
+    if (fabs(m_oscA_phase_stateVar - tmpVar) > 0.5f)            // Check edge
     {
         m_OscA_randVal_int = m_OscA_randVal_int * 1103515245 + 12345;
         m_OscA_randVal_float = static_cast<float>(m_OscA_randVal_int) * 4.5657e-10f;
     }
 
-    m_oscA_phaseInc = ((m_OscA_randVal_float * _signal[OSC_A_FLU] * osc_freq) + osc_freq) * m_sample_interval;           /// multiply by 1/samplerate
+    float osc_freq = _signal[OSC_A_FRQ];
+    m_oscA_phaseInc = ((m_OscA_randVal_float * _signal[OSC_A_FLU] * osc_freq) + osc_freq) * m_sample_interval;
 
     m_oscA_phase_stateVar = tmpVar;
 
     m_oscA_phase += m_oscA_phaseInc;
-//    m_oscA_phase -= round(m_oscA_phase);
-    m_oscA_phase = m_oscA_phase - NlToolbox::Conversion::float2int(m_oscA_phase);       /// avoiding round() with a static_cast<int> solution
+    m_oscA_phase -= NlToolbox::Conversion::float2int(m_oscA_phase);
 
-    tmpVar += tmpVar;                                   // oscSinP3
-    tmpVar = fabs(tmpVar);
-    tmpVar = 0.5f - tmpVar;
-
-    float squareTmpVar = tmpVar * tmpVar;
-    float oscSampleA = tmpVar * ((2.26548f * squareTmpVar - 5.13274f) * squareTmpVar + 3.14159f);
+    float oscSampleA = NlToolbox::Math::sinP3_noWarp(tmpVar);
 
 
     //**************************** Modulation B ******************************//
@@ -110,39 +101,51 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     tmpVar = m_chirpFilter_B.applyFilter(tmpVar);
     tmpVar += m_oscB_phase;
 
-    tmpVar += (0.25f);
-//    tmpVar -= round(tmpVar);
-    tmpVar = tmpVar - NlToolbox::Conversion::float2int(tmpVar);             /// avoiding round() with a static_cast<int> solution
+    tmpVar += (-0.25f);                                         // Warp
+    tmpVar -= NlToolbox::Conversion::float2int(tmpVar);
 
-    squareTmpVar = tmpVar * tmpVar;
-    float oscSampleB = tmpVar * ((2.26548f * squareTmpVar - 5.13274f) * squareTmpVar + 3.14159f);
+    if (fabs(m_oscB_phase_stateVar - tmpVar) > 0.5f)            // Check edge
+    {
+        m_OscB_randVal_int = m_OscB_randVal_int * 1103515245 + 12345;
+        m_OscB_randVal_float = static_cast<float>(m_OscB_randVal_int) * 4.5657e-10f;
+    }
+
+    osc_freq = 0.f;                                 /// _signal[OSC_B_FRQ]
+    m_oscB_phaseInc = ((m_OscB_randVal_float * 0.f * osc_freq) + osc_freq) * m_sample_interval;     /// _signal[OSC_B_FLU]
+
+    m_oscB_phase_stateVar = tmpVar;
+
+    m_oscB_phase += m_oscB_phaseInc;
+    m_oscB_phase -=  NlToolbox::Conversion::float2int(m_oscB_phase);
+
+    float oscSampleB = NlToolbox::Math::sinP3_noWarp(tmpVar);
 
 
     //******************************* Shaper A *******************************//
-    tmpVar = 0.f;           /// _signal[SHPA_DRI] * 0.18f;
+    tmpVar = 0.f;                                                                   /// _signal[SHPA_DRI] * 0.18f;
 
     float shaperSampleA = oscSampleA * tmpVar;
     tmpVar = shaperSampleA;
 
-    shaperSampleA = NlToolbox::Math::sinP3(shaperSampleA);
+    shaperSampleA = NlToolbox::Math::sinP3_warp(shaperSampleA);
     shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, tmpVar, 0.f);     /// _signal[SHPA_FOLD]
 
-    squareTmpVar = shaperSampleA * shaperSampleA + (-0.5f);
+    tmpVar = shaperSampleA * shaperSampleA + (-0.5f);
 
-    shaperSampleA = NlToolbox::Others::parAsym(shaperSampleA, squareTmpVar, 0.f);   /// _signal[SHPA_ASYM]
+    shaperSampleA = NlToolbox::Others::parAsym(shaperSampleA, tmpVar, 0.f);         /// _signal[SHPA_ASYM]
 
     //******************************* Shaper B *******************************//
-    tmpVar = 0.f;           /// _signal[SHPB_DRI] * 0.18f;
+    tmpVar = 0.f;                                                                   /// _signal[SHPB_DRI] * 0.18f;
 
     float shaperSampleB = oscSampleB * tmpVar;
     tmpVar = shaperSampleB;
 
-    shaperSampleB = NlToolbox::Math::sinP3(shaperSampleB);
+    shaperSampleB = NlToolbox::Math::sinP3_warp(shaperSampleB);
     shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, tmpVar, 0.f);     /// _signal[SHPB_FOLD]
 
-    squareTmpVar = shaperSampleB * shaperSampleB + (-0.5f);
+    tmpVar = shaperSampleB * shaperSampleB + (-0.5f);
 
-    shaperSampleB = NlToolbox::Others::parAsym(shaperSampleB, squareTmpVar, 0.f);   /// _signal[SHPB_ASYM]
+    shaperSampleB = NlToolbox::Others::parAsym(shaperSampleB, tmpVar, 0.f);         /// _signal[SHPB_ASYM]
 
     //****************************** Crossfades ******************************//
     m_oscA_selfmix = oscSampleA;

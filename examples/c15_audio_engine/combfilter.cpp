@@ -720,8 +720,8 @@ void CombFilter::calcLowpassFreq()
     //********************** Negative Phase Calculation ********************//
     tmpVar = mMainFreq * SAMPLE_INTERVAL;
 
-    float stateVar_r = NlToolbox::Math::sinP3(tmpVar);
-    float stateVar_i = NlToolbox::Math::sinP3(tmpVar + 0.25f);
+    float stateVar_r = NlToolbox::Math::sinP3_warp(tmpVar);
+    float stateVar_i = NlToolbox::Math::sinP3_warp(tmpVar + 0.25f);
 
     stateVar_r = stateVar_r * mLowpassCoeff_A1;
     stateVar_i = stateVar_i * -mLowpassCoeff_A1 + 1.f;
@@ -774,10 +774,10 @@ void CombFilter::calcAllpassFreq()
     //******************** Norm Phase Calculation ***************************//
     tmpVar = mMainFreq * SAMPLE_INTERVAL;
 
-    float stateVar1_i = NlToolbox::Math::sinP3(tmpVar) * -1.f * mAllpassCoeff_1;
-    float stateVar2_i = NlToolbox::Math::sinP3(tmpVar + tmpVar);
-    float stateVar1_r = NlToolbox::Math::sinP3(tmpVar + 0.25f) * mAllpassCoeff_1;
-    float stateVar2_r = NlToolbox::Math::sinP3(tmpVar + tmpVar + 0.25f);
+    float stateVar1_i = NlToolbox::Math::sinP3_warp(tmpVar) * -1.f * mAllpassCoeff_1;
+    float stateVar2_i = NlToolbox::Math::sinP3_warp(tmpVar + tmpVar);
+    float stateVar1_r = NlToolbox::Math::sinP3_warp(tmpVar + 0.25f) * mAllpassCoeff_1;
+    float stateVar2_r = NlToolbox::Math::sinP3_warp(tmpVar + tmpVar + 0.25f);
 
 
     float var1_i = stateVar1_i - stateVar2_i;

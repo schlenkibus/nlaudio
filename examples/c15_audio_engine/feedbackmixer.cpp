@@ -155,7 +155,7 @@ void FeedbackMixer::applyFeedbackMixer(float _CombSample, float _SVFilterSample,
     mainSample = mDrive * mainSample;
 
     float holdSample = mainSample;
-    mainSample = NlToolbox::Math::sinP3(mainSample);
+    mainSample = NlToolbox::Math::sinP3_warp(mainSample);
     mainSample = NlToolbox::Others::threeRanges(mainSample, holdSample, mFold);
 
     holdSample = mainSample * mainSample;
