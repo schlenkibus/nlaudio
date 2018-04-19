@@ -479,7 +479,7 @@ void dsp_host::keyApply(uint32_t _voiceId)
             /* AUDIO_ENGINE: trigger non-voice-steal */
         }
         /* update and reset oscillator phases */
-        m_paramsignaldata[_voiceId][7] = m_params.m_body[m_params.m_head[24].m_index + _voiceId].m_signal;  // POLY PHASE_A -> OSC_A Phase
+        m_paramsignaldata[_voiceId][OSC_A_PHS] = m_params.m_body[m_params.m_head[24].m_index + _voiceId].m_signal;  // POLY PHASE_A -> OSC_A Phase
 
         /* AUDIO_ENGINE: reset oscillator phases */
         resetOscPhase(m_paramsignaldata[_voiceId], _voiceId);

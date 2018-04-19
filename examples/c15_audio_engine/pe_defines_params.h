@@ -50,7 +50,7 @@ const float param_definition[sig_number_of_params][8] = {
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST
     {        405,    0,      1,      1,      0,      0,      -1,     0      },         // 21 POLY_NOTE_STEAL
     {        406,    0,      1,      1000,   0,      0,      -1,     0      },         // 22 POLY_PITCH
-    {        407,    0,      1,      16000,  0,      0,      -1,     0      },         // 23 POLY_VOICE_PAN
+    {        407,    0,      1,      16000,  0,      0.5,    -1,     0      },         // 23 POLY_VOICE_PAN
     {        408,    0,      1,      14400,  0,      0,      -1,     0      },         // 24 POLY_PHASE_A
     {        409,    0,      1,      14400,  0,      0,      -1,     0      }          // 25 POLY_PHASE_B
     // END POLY KEY - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

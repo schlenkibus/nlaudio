@@ -433,9 +433,9 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     /* determine Oscillator A Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch - EnvC missing) */
     keyTracking = m_body[m_head[14].m_index].m_signal;
     oscPitch = m_body[m_head[13].m_index].m_signal;
-    _signal[4] = m_pitch_reference * oscPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking));   // nyquist clip?
+    _signal[OSC_A_FRQ] = m_pitch_reference * oscPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking));   // nyquist clip?
     /* determine Oscillator A Chirp Frequency in Hz */
-    _signal[8] = m_body[m_head[18].m_index].m_signal * 440.f;                                               // nyquist clip?
+    _signal[OSC_A_CHI] = m_body[m_head[18].m_index].m_signal * 440.f;                                               // nyquist clip?
 }
 
 /* Post Processing - fast parameters */
@@ -500,12 +500,12 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     /* poly envelope ticking */
     m_envelopes.tickPoly(_voiceId);
     /* poly envelope distribution */
-    _signal[0] = m_envelopes.m_body[m_envelopes.m_head[0].m_index + _voiceId].m_signal * m_body[m_head[6].m_index].m_signal;     // Envelope A post Gain
-    _signal[3] = m_envelopes.m_body[m_envelopes.m_head[3].m_index + _voiceId].m_signal;     // Gate
+    _signal[ENV_A_SIG] = m_envelopes.m_body[m_envelopes.m_head[0].m_index + _voiceId].m_signal * m_body[m_head[6].m_index].m_signal;     // Envelope A post Gain
+    _signal[ENV_G_SIG] = m_envelopes.m_body[m_envelopes.m_head[3].m_index + _voiceId].m_signal;     // Gate
     /* Oscillator parameter post processing */
     float pm_amt, pm_env;
     /* Oscillator A */
     pm_amt = m_body[m_head[16].m_index].m_signal;
     pm_env = m_body[m_head[17].m_index].m_signal;
-    _signal[6] = ((_signal[0] * pm_env) + (1 - pm_env)) * pm_amt;                           // Osc A PM Self (Env A)
+    _signal[OSC_A_PMSEA] = ((_signal[ENV_A_SIG] * pm_env) + (1 - pm_env)) * pm_amt;                           // Osc A PM Self (Env A)
 }
