@@ -17,6 +17,7 @@
 #include "pe_env_engine.h"
 #include "pe_key_event.h"
 #include "pe_utilities.h"
+#include "pe_defines_labels.h"
 #include "dsp_defines_signallabels.h"
 
 /* */

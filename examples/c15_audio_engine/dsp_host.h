@@ -83,7 +83,7 @@ public:
     void makePolySound(float *_signal, uint32_t _voiceID);
     void makeMonoSound(float *_signal);
 
-    inline void resetOscPhase(float *_signal, uint32_t _voiceID);
+    //inline void resetOscPhase(float *_signal, uint32_t _voiceID);
     inline void setFilterCoefficients(float *_signal, uint32_t _voiceID);
 
     bool m_flushnow;

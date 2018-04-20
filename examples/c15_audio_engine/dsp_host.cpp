@@ -470,7 +470,7 @@ void dsp_host::keyApply(uint32_t _voiceId)
     if(m_params.m_event.m_poly[_voiceId].m_type == 1)
     {
         /* determine note steal */
-        if(m_params.m_body[m_params.m_head[par_noteSteal].m_index].m_signal == 1)
+        if(m_params.m_body[m_params.m_head[P_KEY_VS].m_index].m_signal == 1)
         {
             /* AUDIO_ENGINE: trigger voice-steal */
         }
@@ -478,11 +478,15 @@ void dsp_host::keyApply(uint32_t _voiceId)
         {
             /* AUDIO_ENGINE: trigger non-voice-steal */
         }
+        /* OLD approach of phase reset - over shared array */
         /* update and reset oscillator phases */
-        m_paramsignaldata[_voiceId][OSC_A_PHS] = m_params.m_body[m_params.m_head[24].m_index + _voiceId].m_signal;  // POLY PHASE_A -> OSC_A Phase
+        //m_paramsignaldata[_voiceId][OSC_A_PHS] = m_params.m_body[m_params.m_head[P_KEY_PA].m_index + _voiceId].m_signal;  // POLY PHASE_A -> OSC_A Phase
 
         /* AUDIO_ENGINE: reset oscillator phases */
-        resetOscPhase(m_paramsignaldata[_voiceId], _voiceId);
+        //resetOscPhase(m_paramsignaldata[_voiceId], _voiceId);
+        /* NEW approach of phase reset - no array involved - still only unisono phase */
+        float phaseA = m_params.m_body[m_params.m_head[P_KEY_PA].m_index + _voiceId].m_signal;
+        m_soundgenerator[_voiceId].resetPhase(phaseA, 0.f);
     }
 }
 
@@ -1011,12 +1015,12 @@ void dsp_host::makeMonoSound(float *_signal)
 /******************************************************************************/
 /**
 *******************************************************************************/
-
+/*
 inline void dsp_host::resetOscPhase(float *_signal, uint32_t _voiceID)
 {
     m_soundgenerator[_voiceID].resetPhase(_signal[OSC_A_PHS], 0.f);
 }
-
+*/
 
 
 /******************************************************************************/

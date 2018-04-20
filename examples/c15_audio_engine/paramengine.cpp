@@ -264,7 +264,7 @@ void paramengine::keyUp(const uint32_t _voiceId, float _velocity)
 void paramengine::keyApply(const uint32_t _voiceId)
 {
     /* apply key event (update envelopes according to event type) */
-    const float pitch = m_body[m_head[par_notePitch].m_index + _voiceId].m_signal;
+    const float pitch = m_body[m_head[P_KEY_NP].m_index + _voiceId].m_signal;
     const float velocity = m_event.m_poly[_voiceId].m_velocity;
     if(m_event.m_poly[_voiceId].m_type == 0)
     {
@@ -300,11 +300,11 @@ void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId,
     const uint32_t envIndex = m_envIds[_envId];
     float time, dest;
     /* determine envelope event parameters */
-    float timeKT = -m_body[m_head[envIndex + 11].m_index].m_signal * _pitch;
-    float levelVel = -m_body[m_head[envIndex + 7].m_index].m_signal;
-    float attackVel = -m_body[m_head[envIndex + 8].m_index].m_signal * _velocity;
-    float levelKT = m_body[m_head[envIndex + 10].m_index].m_signal * _pitch;
-    // float peak = fmin(m_convert.eval_level(((1 - _velocity) * levelVel * env_norm_peak) + levelKT), env_clip_peak);
+    float timeKT = -m_body[m_head[envIndex + E_TKT].m_index].m_signal * _pitch;
+    float levelVel = -m_body[m_head[envIndex + E_LV].m_index].m_signal;
+    float attackVel = -m_body[m_head[envIndex + E_AV].m_index].m_signal * _velocity;
+    float levelKT = m_body[m_head[envIndex + E_LKT].m_index].m_signal * _pitch;
+    /* determine envelope peak level */
     float peak = fmin(m_convert.eval_level(((1 - _velocity) * levelVel) + levelKT), env_clip_peak);
     /* envelope event updates */
     m_event.m_env[_envId].m_levelFactor[_voiceId] = peak;
@@ -312,21 +312,21 @@ void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId,
     m_event.m_env[_envId].m_timeFactor[_voiceId][1] = m_convert.eval_level(timeKT) * m_millisecond;
     m_event.m_env[_envId].m_timeFactor[_voiceId][2] = m_event.m_env[_envId].m_timeFactor[_voiceId][1];
     /* envelope segment updates (Attack - Time, Peak) */
-    time = m_body[m_head[envIndex].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][0];
+    time = m_body[m_head[envIndex + E_ATT].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][0];
     m_envelopes.setSegmentDx(_voiceId, _envId, 1, 1 / (time + 1));
     m_envelopes.setSegmentDest(_voiceId, _envId, 1, peak);
     /* envelope segment updates (Decay1 - Time, Breakpoint Level) */
-    time = m_body[m_head[envIndex + 1].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][1];
+    time = m_body[m_head[envIndex + E_DEC1].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][1];
     m_envelopes.setSegmentDx(_voiceId, _envId, 2, 1 / (time + 1));
-    dest = peak * m_body[m_head[envIndex + 2].m_index].m_signal;
+    dest = peak * m_body[m_head[envIndex + E_BP].m_index].m_signal;
     m_envelopes.setSegmentDest(_voiceId, _envId, 2, dest);
     /* envelope segment updates (Decay2 - Time, Sustain Level) */
-    time = m_body[m_head[envIndex + 3].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][2];
+    time = m_body[m_head[envIndex + E_DEC2].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][2];
     m_envelopes.setSegmentDx(_voiceId, _envId, 3, 1 / (time + 1));
-    dest = peak * m_body[m_head[envIndex + 4].m_index].m_signal;
+    dest = peak * m_body[m_head[envIndex + E_SUS].m_index].m_signal;
     m_envelopes.setSegmentDest(_voiceId, _envId, 3, dest);
     /* trigger envelope start (passing envelope curvature) */
-    m_envelopes.startEnvelope(_voiceId, _envId, m_body[m_head[envIndex + 12].m_index].m_signal);
+    m_envelopes.startEnvelope(_voiceId, _envId, m_body[m_head[envIndex + E_AC].m_index].m_signal);
 }
 
 /* envelope updates - stop procedure */
@@ -336,15 +336,15 @@ void paramengine::envUpdateStop(const uint32_t _voiceId, const uint32_t _envId, 
     const uint32_t envIndex = m_envIds[_envId];
     float time;
     /* determine envelope event parameters */
-    float timeKT = -m_body[m_head[envIndex + 11].m_index].m_signal * _pitch;
-    float releaseVel = -m_body[m_head[envIndex + 9].m_index].m_signal * _velocity;
+    float timeKT = -m_body[m_head[envIndex + E_TKT].m_index].m_signal * _pitch;
+    float releaseVel = -m_body[m_head[envIndex + E_RV].m_index].m_signal * _velocity;
     /* envelope event updates */
     m_event.m_env[_envId].m_timeFactor[_voiceId][3] = m_convert.eval_level(timeKT + releaseVel) * m_millisecond;
     /* envelope segment updates (Release - Time) - distinguish finite and infinite times */
-    if(m_body[m_head[envIndex + 5].m_index].m_signal <= env_highest_finite_time)
+    if(m_body[m_head[envIndex + E_REL].m_index].m_signal <= env_highest_finite_time)
     {
         /* finite release time */
-        time = m_body[m_head[envIndex + 5].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][3];
+        time = m_body[m_head[envIndex + E_REL].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][3];
         m_envelopes.setSegmentDx(_voiceId, _envId, 4, 1 / (time + 1));
     }
     else
@@ -363,19 +363,19 @@ void paramengine::envUpdateTimes(const uint32_t _voiceId, const uint32_t _envId)
     const uint32_t envIndex = m_envIds[_envId];
     float time;
     /* envelope segment updates (Attack - Time) */
-    time = m_body[m_head[envIndex].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][0];
+    time = m_body[m_head[envIndex + E_ATT].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][0];
     m_envelopes.setSegmentDx(_voiceId, _envId, 1, 1 / (time + 1));
     /* envelope segment updates (Decay1 - Time) */
-    time = m_body[m_head[envIndex + 1].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][1];
+    time = m_body[m_head[envIndex + E_DEC1].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][1];
     m_envelopes.setSegmentDx(_voiceId, _envId, 2, 1 / (time + 1));
     /* envelope segment updates (Decay2 - Time) */
-    time = m_body[m_head[envIndex + 3].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][2];
+    time = m_body[m_head[envIndex + E_DEC2].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][2];
     m_envelopes.setSegmentDx(_voiceId, _envId, 3, 1 / (time + 1));
     /* envelope segment updates (Release  Time) - distinguish finite and infinite times */
-    if(m_body[m_head[envIndex + 5].m_index].m_signal <= env_highest_finite_time)
+    if(m_body[m_head[envIndex + E_REL].m_index].m_signal <= env_highest_finite_time)
     {
         /* finite release time */
-        time = m_body[m_head[envIndex + 5].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][3];
+        time = m_body[m_head[envIndex + E_REL].m_index].m_signal * m_event.m_env[_envId].m_timeFactor[_voiceId][3];
         m_envelopes.setSegmentDx(_voiceId, _envId, 4, 1 / (time + 1));
     }
     else
@@ -392,9 +392,9 @@ void paramengine::envUpdateLevels(const uint32_t _voiceId, const uint32_t _envId
     const uint32_t envIndex = m_envIds[_envId];
     float peak = m_event.m_env[_envId].m_levelFactor[_voiceId];
     /* envelope segment updates (Decay1 - Breakpoint Level) */
-    m_envelopes.setSegmentDest(_voiceId, _envId, 2, peak * m_body[m_head[envIndex + 2].m_index].m_signal);
+    m_envelopes.setSegmentDest(_voiceId, _envId, 2, peak * m_body[m_head[envIndex + E_BP].m_index].m_signal);
     /* envelope segment updates (Decay2 - Sustain Level) */
-    m_envelopes.setSegmentDest(_voiceId, _envId, 3, peak * m_body[m_head[envIndex + 4].m_index].m_signal);
+    m_envelopes.setSegmentDest(_voiceId, _envId, 3, peak * m_body[m_head[envIndex + E_SUS].m_index].m_signal);
 }
 
 /* Post Processing - slow parameters */
@@ -428,14 +428,14 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     envUpdateTimes(_voiceId, 0);    // Envelope A
     /* later: Envelope C trigger at slow clock? */
     /* Pitch Updates */
-    float basePitch = m_body[m_head[par_notePitch].m_index + _voiceId].m_signal + m_body[m_head[20].m_index].m_signal;
+    float basePitch = m_body[m_head[P_KEY_NP].m_index + _voiceId].m_signal + m_body[m_head[P_MA_T].m_index].m_signal;
     float keyTracking, oscPitch;
     /* determine Oscillator A Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch - EnvC missing) */
-    keyTracking = m_body[m_head[14].m_index].m_signal;
-    oscPitch = m_body[m_head[13].m_index].m_signal;
+    keyTracking = m_body[m_head[P_OA_PKT].m_index].m_signal;
+    oscPitch = m_body[m_head[P_OA_P].m_index].m_signal;
     _signal[OSC_A_FRQ] = m_pitch_reference * oscPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking));   // nyquist clip?
     /* determine Oscillator A Chirp Frequency in Hz */
-    _signal[OSC_A_CHI] = m_body[m_head[18].m_index].m_signal * 440.f;                                               // nyquist clip?
+    _signal[OSC_A_CHI] = m_body[m_head[P_OA_CHI].m_index].m_signal * 440.f;                                               // nyquist clip?
 }
 
 /* Post Processing - fast parameters */
@@ -500,12 +500,12 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     /* poly envelope ticking */
     m_envelopes.tickPoly(_voiceId);
     /* poly envelope distribution */
-    _signal[ENV_A_SIG] = m_envelopes.m_body[m_envelopes.m_head[0].m_index + _voiceId].m_signal * m_body[m_head[6].m_index].m_signal;     // Envelope A post Gain
+    _signal[ENV_A_SIG] = m_envelopes.m_body[m_envelopes.m_head[0].m_index + _voiceId].m_signal * m_body[m_head[P_EA_GAIN].m_index].m_signal;     // Envelope A post Gain
     _signal[ENV_G_SIG] = m_envelopes.m_body[m_envelopes.m_head[3].m_index + _voiceId].m_signal;     // Gate
     /* Oscillator parameter post processing */
     float pm_amt, pm_env;
     /* Oscillator A */
-    pm_amt = m_body[m_head[16].m_index].m_signal;
-    pm_env = m_body[m_head[17].m_index].m_signal;
+    pm_amt = m_body[m_head[P_OA_PMS].m_index].m_signal;
+    pm_env = m_body[m_head[P_OA_PMSEA].m_index].m_signal;
     _signal[OSC_A_PMSEA] = ((_signal[ENV_A_SIG] * pm_env) + (1 - pm_env)) * pm_amt;                           // Osc A PM Self (Env A)
 }
