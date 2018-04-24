@@ -37,8 +37,8 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #elif DSP_TEST_MODE==2
 
 // configuration for test 2                 -> see Linux Engine - Test 2
-#define sig_number_of_params 97             // 3 * (13 ENV params) + 2 * (15 OSC + 8 SHP params) + (4 OUT params) + (2 MASTER params) + (6 KEY params)
-#define sig_number_of_param_items 211       // (39 + 46 + 4 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
+#define sig_number_of_params 95             // 3 * (13 ENV params) + 2 * (14 OSC + 8 SHP params) + (4 OUT params) + (2 MASTER params) + (6 KEY params)
+#define sig_number_of_param_items 209       // (39 + 44 + 4 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
 #define sig_number_of_signal_items 39       // 39 shared signals
 
 #endif
@@ -80,8 +80,8 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 
 #elif DSP_TEST_MODE==2
 
-#define lst_recall_length 21
-#define lst_keyEvent_length 5
+#define lst_recall_length 89                // 89 preset-relevant parameters
+#define lst_keyEvent_length 6               // 6 key event parameters
 
 #endif
 

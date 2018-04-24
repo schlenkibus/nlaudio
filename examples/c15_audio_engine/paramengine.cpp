@@ -270,6 +270,8 @@ void paramengine::keyApply(const uint32_t _voiceId)
     {
         /* key up */
         envUpdateStop(_voiceId, 0, pitch, velocity);    // Envelope A
+#if DSP_TEST_MODE==2
+#endif
         // Envelopes B, C currently missing
         m_envelopes.stopEnvelope(_voiceId, 3);          // Gate
     }
@@ -277,6 +279,8 @@ void paramengine::keyApply(const uint32_t _voiceId)
     {
         /* key down */
         envUpdateStart(_voiceId, 0, pitch, velocity);   // Envelope A
+#if DSP_TEST_MODE==2
+#endif
         // Envelopes B, C currently missing
         m_envelopes.startEnvelope(_voiceId, 3, 0);      // Gate
     }
@@ -424,6 +428,7 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
             _signal[p] = m_body[m_head[m_postIds.m_data[0].m_data[3].m_data[0].m_data[i]].m_index].m_signal;
         }
     }
+#if DSP_TEST_MODE==1
     /* update envelope times */
     envUpdateTimes(_voiceId, 0);    // Envelope A
     /* later: Envelope C trigger at slow clock? */
@@ -436,6 +441,8 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     _signal[OSC_A_FRQ] = m_pitch_reference * oscPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking));   // nyquist clip?
     /* determine Oscillator A Chirp Frequency in Hz */
     _signal[OSC_A_CHI] = m_body[m_head[P_OA_CHI].m_index].m_signal * 440.f;                                               // nyquist clip?
+#elif DSP_TEST_MODE==2
+#endif
 }
 
 /* Post Processing - fast parameters */
@@ -465,8 +472,11 @@ void paramengine::postProcess_fast(float *_signal, const uint32_t _voiceId)
             _signal[p] = m_body[m_head[m_postIds.m_data[0].m_data[2].m_data[0].m_data[i]].m_index].m_signal;
         }
     }
+#if DSP_TEST_MODE==1
     /* update envelope levels */
     envUpdateLevels(_voiceId, 0);   // Envelope A
+#elif DSP_TEST_MODE==2
+#endif
 }
 
 /* Post Processing - audio parameters */
@@ -499,6 +509,7 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     }
     /* poly envelope ticking */
     m_envelopes.tickPoly(_voiceId);
+#if DSP_TEST_MODE==1
     /* poly envelope distribution */
     _signal[ENV_A_SIG] = m_envelopes.m_body[m_envelopes.m_head[0].m_index + _voiceId].m_signal * m_body[m_head[P_EA_GAIN].m_index].m_signal;     // Envelope A post Gain
     _signal[ENV_G_SIG] = m_envelopes.m_body[m_envelopes.m_head[3].m_index + _voiceId].m_signal;     // Gate
@@ -508,4 +519,6 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     pm_amt = m_body[m_head[P_OA_PMS].m_index].m_signal;
     pm_env = m_body[m_head[P_OA_PMSEA].m_index].m_signal;
     _signal[OSC_A_PMSEA] = ((_signal[ENV_A_SIG] * pm_env) + (1 - pm_env)) * pm_amt;                           // Osc A PM Self (Env A)
+#elif DSP_TEST_MODE==2
+#endif
 }

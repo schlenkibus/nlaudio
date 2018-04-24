@@ -3,10 +3,13 @@
 #pragma once
 
 #include <stdint.h>
+#include "dsp_defines_session.h"
 
 /* needed are control id mappings (maybe for two different devices) and (two ore more) predefined presets */
 
 #define testMidiDevice 1
+
+#if DSP_TEST_MODE==1
 
 #define testRecallSequenceLength 21
 /* valid triggers */
@@ -82,3 +85,51 @@ const int32_t testPresetData[3][testRecallSequenceLength] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     },
 };
+
+#elif DSP_TEST_MODE==2
+
+/* preset definition */
+
+#define testRecallSequences 3
+#define testRecallSequenceLength 88
+
+const int32_t testPresetData[testRecallSequences][testRecallSequenceLength] = {
+    /* preset 0 - null */
+    {
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,              // Env A
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,              // Env B
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                     // Env C
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,       // Osc A
+        0,     0,     0,     0,     0,     0,     0,     0,                                                 // Shp A
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,       // Osc B
+        0,     0,     0,     0,     0,     0,     0,     0,                                                 // Shp B
+        0,     0,     0,     0,                                                                             // Out Mix
+        0,     0                                                                                            // Master
+    },
+    /* preset 1 - default */
+    {
+        0,     9440,  8000,  12640, 0,     8480,  0,     7680,  0,     0,     0,     800,   0,              // Env A
+        0,     9440,  8000,  12640, 0,     8480,  0,     7680,  0,     0,     0,     800,   0,              // Env B
+        0,     9440,  8000,  12640, 0,     8480,  7680,  0,     0,     0,     800,   0,                     // Env C
+        8000,  10000, 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     8000,    // Osc A
+        2000,  0,     8000,  0,     0,     0,     0,     0,                                                 // Shp A
+        8000,  10000, 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     8000,    // Osc B
+        2000,  0,     8000,  0,     0,     0,     0,     0,                                                 // Shp B
+        0,     0,     0,     0,                                                                             // Out Mix
+        8000,  0                                                                                            // Master
+    },
+    /* preset 2 - null */
+    {
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,              // Env A
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,              // Env B
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                     // Env C
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,       // Osc A
+        0,     0,     0,     0,     0,     0,     0,     0,                                                 // Shp A
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,       // Osc B
+        0,     0,     0,     0,     0,     0,     0,     0,                                                 // Shp B
+        0,     0,     0,     0,                                                                             // Out Mix
+        0,     0                                                                                            // Master
+    }
+};
+
+#endif

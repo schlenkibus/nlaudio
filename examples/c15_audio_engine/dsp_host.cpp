@@ -485,14 +485,22 @@ void dsp_host::keyApply(uint32_t _voiceId)
         /* AUDIO_ENGINE: reset oscillator phases */
         //resetOscPhase(m_paramsignaldata[_voiceId], _voiceId);
         /* NEW approach of phase reset - no array involved - still only unisono phase */
+#if DSP_TEST_MODE==1
         float phaseA = m_params.m_body[m_params.m_head[P_KEY_PA].m_index + _voiceId].m_signal;
         m_soundgenerator[_voiceId].resetPhase(phaseA, 0.f);
+#elif DSP_TEST_MODE==2
+        float phaseA = m_params.m_body[m_params.m_head[P_KEY_PA].m_index + _voiceId].m_signal;
+        float phaseB = m_params.m_body[m_params.m_head[P_KEY_PB].m_index + _voiceId].m_signal;
+        m_soundgenerator[_voiceId].resetPhase(phaseA, phaseB);
+#endif
     }
 }
 
 /* End of Main Definition, Test functionality below:
  * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *
  */
+
+#if DSP_TEST_MODE==1
 
 /* testing the engine - midi input */
 void dsp_host::testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
@@ -890,8 +898,62 @@ void dsp_host::testInit()
     testLoadPreset(1);          // load default preset
 }
 
+#elif DSP_TEST_MODE==2
 
+void dsp_host::testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
+{
+    /* */
+    uint32_t chan = _status & 15;
+    uint32_t type = (_status & 127) >> 4;
+    /* */
+    std::cout << "MIDI IN (chan: " << chan << ", type: ";
+    /* */
+    switch(type)
+    {
+    case 0:
+        /* NOTE OFF (explicit) */
+        std::cout << "NOTE_OFF, pitch: " << _data0 << ", velocity: " << _data1;
+        //testNoteOff(_data0, _data1);
+        break;
+    case 1:
+        /* NOTE ON (if velocity > 0) */
+        if(_data1 > 0)
+        {
+            std::cout << "NOTE_ON, pitch: " << _data0 << ", velocity: " << _data1;
+            //testNoteOn(_data0, _data1);
+        }
+        else
+        {
+            std::cout << "NOTE_OFF, pitch: " << _data0 << ", velocity: " << _data1;
+            //testNoteOff(_data0, _data1);
+        }
+        break;
+    case 2:
+        /* POLY AFTERTOUCH */
+        std::cout << "POLY_AT, pitch: " << _data0 << ", value: " << _data1;
+        break;
+    case 3:
+        /* CONTROL CHANGE */
+        std::cout << "CONTROL_CHANGE, ctrl: " << _data0 << ", value: " << _data1;
+        //testRouteControls(_data0, _data1);
+        break;
+    case 4:
+        /* PROGRAM CHANGE */
+        std::cout << "PROGRAM_CHANGE, nr: " << _data0;
+        break;
+    case 5:
+        /* MONO AFTERTOUCH */
+        std::cout << "MONO_AT, value: " << _data0;
+        break;
+    case 6:
+        /* PITCH BEND */
+        std::cout << "PITCH_BEND, value: " << _data0 << ", " << _data1;
+        break;
+    }
+    std::cout << ")" << std::endl;
+}
 
+#endif
 
 /******************************************************************************/
 /**
