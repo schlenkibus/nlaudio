@@ -77,10 +77,22 @@ public:
 #elif DSP_TEST_MODE==2
     uint32_t m_test_voiceId = 0;                                        // a rather sloppy voice allocation approach
     uint32_t m_test_noteId[128] = {};                                   // active note tracking
-    const float m_test_normalizeMidi = 1.f / 127.f;                     // normalize midi values
-    const float m_test_normalizeInf = 1.f / 126.f;                      // normalize midi values for infinities
+    const float m_test_normalizeMidi = (1.f / 127.f);                   // normalize midi values
     uint32_t m_test_selectedGroup = 0;                                  // a group selector
+    uint32_t m_test_midiMode = 1;                                       // a mode selector (init to GLOBAL MODE)
     void testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1);  // testing the engine
+    void testRouteControls(uint32_t _id, uint32_t _value);              // control routing
+    void testNoteOn(uint32_t _pitch, uint32_t _velocity);               // testing note on messages
+    void testNoteOff(uint32_t _pitch, uint32_t _velocity);              // testing note off messages
+    void testSetGlobalTime(uint32_t _value);                            // testing times
+    void testSetReference(uint32_t _value);                             // testing reference tone
+    void testLoadPreset(uint32_t _presetId);                            // testing simple preset recall sequence
+    void testFlush();                                                   // testing flush
+    void testGetSignalData();                                           // print signal
+    void testGetParamHeadData();                                        // print param configuration
+    void testGetParamRenderData();                                      // print param rendering state
+    void testParseDestination(int32_t _value);                          // send destinations accordingly
+    void testInit();
 #endif
 
     /*fadepoint for flushing*/

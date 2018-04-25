@@ -900,57 +900,402 @@ void dsp_host::testInit()
 
 #elif DSP_TEST_MODE==2
 
+/* midi input for test purposes (reMote) */
 void dsp_host::testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
 {
     /* */
-    uint32_t chan = _status & 15;
+    //uint32_t chan = _status & 15;
     uint32_t type = (_status & 127) >> 4;
-    /* */
-    std::cout << "MIDI IN (chan: " << chan << ", type: ";
     /* */
     switch(type)
     {
     case 0:
         /* NOTE OFF (explicit) */
-        std::cout << "NOTE_OFF, pitch: " << _data0 << ", velocity: " << _data1;
-        //testNoteOff(_data0, _data1);
+        testNoteOff(_data0, _data1);
         break;
     case 1:
         /* NOTE ON (if velocity > 0) */
         if(_data1 > 0)
         {
-            std::cout << "NOTE_ON, pitch: " << _data0 << ", velocity: " << _data1;
-            //testNoteOn(_data0, _data1);
+            testNoteOn(_data0, _data1);
         }
         else
         {
-            std::cout << "NOTE_OFF, pitch: " << _data0 << ", velocity: " << _data1;
-            //testNoteOff(_data0, _data1);
+            testNoteOff(_data0, _data1);
         }
-        break;
-    case 2:
-        /* POLY AFTERTOUCH */
-        std::cout << "POLY_AT, pitch: " << _data0 << ", value: " << _data1;
         break;
     case 3:
         /* CONTROL CHANGE */
-        std::cout << "CONTROL_CHANGE, ctrl: " << _data0 << ", value: " << _data1;
-        //testRouteControls(_data0, _data1);
-        break;
-    case 4:
-        /* PROGRAM CHANGE */
-        std::cout << "PROGRAM_CHANGE, nr: " << _data0;
-        break;
-    case 5:
-        /* MONO AFTERTOUCH */
-        std::cout << "MONO_AT, value: " << _data0;
-        break;
-    case 6:
-        /* PITCH BEND */
-        std::cout << "PITCH_BEND, value: " << _data0 << ", " << _data1;
+        testRouteControls(testMidiMapping[m_test_midiMode][_data0], _data1);
         break;
     }
-    std::cout << ")" << std::endl;
+}
+
+/* control and mode routing */
+void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
+{
+    uint32_t type = _id >> 5;
+    _id &= 31;
+    switch(type)
+    {
+    case 0:
+        /* main triggers */
+        switch(_id)
+        {
+        case 1:
+            /* Group Mode */
+            std::cout << "enabled GROUP mode" << std::endl;
+            m_test_midiMode = 0;
+            break;
+        case 2:
+            std::cout << "enabled GLOBAL mode" << std::endl;
+            m_test_midiMode = 1;
+            /* Global Mode */
+            break;
+        case 3:
+            /* Print Head */
+            std::cout << "print parameters: HEAD" << std::endl;
+            testGetParamHeadData();
+            break;
+        case 4:
+            /* Print Body */
+            std::cout << "print parameters: BODY" << std::endl;
+            testGetParamRenderData();
+            break;
+        case 5:
+            /* Print Signal */
+            std::cout << "print parameters: SIGNAL" << std::endl;
+            testGetSignalData();
+            break;
+        case 6:
+            /* Init */
+            std::cout << "triggered INIT" << std::endl;
+            testInit();
+            break;
+        case 7:
+            /* Flush */
+            std::cout << "triggered FLUSH" << std::endl;
+            testFlush();
+            break;
+        case 8:
+            /* Preset 0 */
+            std::cout << "load PRESET 0" << std::endl;
+            testLoadPreset(0);
+            break;
+        case 9:
+            /* Preset 1 */
+            std::cout << "load PRESET 1" << std::endl;
+            testLoadPreset(1);
+            break;
+        case 10:
+            /* Preset 2 */
+            std::cout << "load PRESET 2" << std::endl;
+            testLoadPreset(2);
+            break;
+        case 11:
+            /* Preset 3 */
+            std::cout << "load PRESET 3" << std::endl;
+            testLoadPreset(3);
+            break;
+        case 12:
+            /* Preset 4 */
+            std::cout << "load PRESET 4" << std::endl;
+            testLoadPreset(4);
+            break;
+        case 13:
+            /* Preset 5 */
+            std::cout << "load PRESET 5" << std::endl;
+            testLoadPreset(5);
+            break;
+        case 14:
+            /* Preset 6 */
+            std::cout << "load PRESET 6" << std::endl;
+            testLoadPreset(6);
+            break;
+        case 15:
+            /* Preset 7 */
+            std::cout << "load PRESET 7" << std::endl;
+            testLoadPreset(7);
+            break;
+        }
+        break;
+    case 1:
+        /* group select */
+        m_test_selectedGroup = _id;
+        switch(_id)
+        {
+        case 1:
+            /* Env A */
+            std::cout << "selected ENVELOPE_A" << std::endl;
+            break;
+        case 2:
+            /* Env B */
+            std::cout << "selected ENVELOPE_B" << std::endl;
+            break;
+        case 3:
+            /* Env C */
+            std::cout << "selected ENVELOPE_C" << std::endl;
+            break;
+        case 4:
+            /* Osc A */
+            std::cout << "selected OSCILLATOR_A" << std::endl;
+            break;
+        case 5:
+            /* Shp A */
+            std::cout << "selected SHAPER_A" << std::endl;
+            break;
+        case 6:
+            /* Osc B */
+            std::cout << "selected OSCILLATOR_B" << std::endl;
+            break;
+        case 7:
+            /* Shp B */
+            std::cout << "selected SHAPER_B" << std::endl;
+            break;
+        case 8:
+            /* Out Mix */
+            std::cout << "selected OUTPUT_MIXER" << std::endl;
+            break;
+        case 17:
+            /* Master */
+            std::cout << "selected MASTER" << std::endl;
+            break;
+        }
+        break;
+    case 2:
+        /* control edits */
+        if(m_test_midiMode == 0)
+        {
+            uint32_t pId = testParamRouting[m_test_selectedGroup][_id - 1];
+            /* group edits */
+            if(pId > 0)
+            {
+                pId--;
+                uint32_t tcdId = param_definition[pId][0];
+                uint32_t rng = param_definition[pId][9];
+                uint32_t pol = param_definition[pId][8];
+                float val = _value * m_test_normalizeMidi;
+                if(pol > 0)
+                {
+                    val = (2 * val) - 1;
+                }
+                val *= rng;
+                evalMidi(1, tcdId >> 7, tcdId & 127);
+                testParseDestination(static_cast<int32_t>(val));
+                std::cout << "edit PARAM " << tcdId << " (" << val << ")" << std::endl;
+            }
+        }
+        else
+        {
+            /* global edits */
+            switch(_id)
+            {
+            case 1:
+                /* reference tone */
+                testSetReference(80 * _value);
+                break;
+            case 2:
+                /* transition time */
+                testSetGlobalTime(_value);
+                break;
+            }
+        }
+        break;
+    }
+}
+
+/* test key down */
+void dsp_host::testNoteOn(uint32_t _pitch, uint32_t _velocity)
+{
+    /* get current voiceId and trigger list sequence for key event */
+    m_test_noteId[_pitch] = m_test_voiceId + 1;             // (plus one in order to distinguish from zero)
+    /* prepare pitch and velocity */
+    int32_t notePitch = (_pitch - 60) * 1000;
+    uint32_t noteVel = static_cast<uint32_t>(static_cast<float>(_velocity) * m_test_normalizeMidi * utility_definition[0][0]);
+    /* key event sequence */
+    evalMidi(47, 2, 1);                                     // enable preload (key event list mode)
+    evalMidi(0, 0, m_test_voiceId);                         // select voice: current
+    evalMidi(5, 0, 0);                                      // phase A: 0
+    evalMidi(5, 0, 0);                                      // phase B: 0
+    testParseDestination(notePitch);                        // note pitch
+    evalMidi(5, 0, 0);                                      // voice pan: 0
+    evalMidi(5, 0, 0);                                      // env c rate: 0
+    evalMidi(5, 0, 0);                                      // voice steal: 0
+    evalMidi(23, noteVel >> 7, noteVel & 127);              // key down: velocity
+    evalMidi(47, 0, 2);                                     // apply preloaded values
+    /* take current voiceId and increase it (wrapped around polyphony) - sloppy approach */
+    m_test_voiceId = (m_test_voiceId + 1) % m_voices;
+}
+
+/* test key up */
+void dsp_host::testNoteOff(uint32_t _pitch, uint32_t _velocity)
+{
+    /* get note's voiceId and prepare velocity */
+    uint32_t usedVoiceId = m_test_noteId[_pitch] - 1;       // (subtract one in order to get real id)
+    m_test_noteId[_pitch] = 0;                              // clear voiceId assignment
+    uint32_t noteVel = static_cast<uint32_t>(static_cast<float>(_velocity) * m_test_normalizeMidi * utility_definition[0][0]);
+    /* key event sequence */
+    evalMidi(47, 0, 1);                                     // enable preload (no list mode)
+    evalMidi(0, 0, usedVoiceId);                            // select voice: used voice (by note number)
+    evalMidi(7, noteVel >> 7, noteVel & 127);               // key up: velocity
+    evalMidi(47, 0, 2);                                     // apply preloaded values
+}
+
+/* set transition time */
+void dsp_host::testSetGlobalTime(uint32_t _value)
+{
+    std::cout << "\nSET_TIME(" << _value << ")" << std::endl;
+    /* select all voices, params and update time */
+    _value *= static_cast<uint32_t>(m_params.m_millisecond);    // convert time accordingly in samples
+    evalMidi(0, 127, 127);                                      // select all voices
+    evalMidi(1, 127, 127);                                      // select all params
+    if(_value < 16384)
+    {
+        /* T */
+        evalMidi(2, _value >> 7, _value & 127);                 // set time
+    }
+    else
+    {
+        /* TU + TL */
+        uint32_t upper = _value >> 14;
+        _value &= 16383;
+        evalMidi(34, upper >> 7, upper & 127);                  // set time upper
+        evalMidi(50, _value >> 7, _value & 127);                // set time lower
+    }
+}
+
+/* set reference frequency */
+void dsp_host::testSetReference(uint32_t _value)
+{
+    /* prepare value */
+    uint32_t val = static_cast<uint32_t>(static_cast<float>(_value) * m_test_normalizeMidi * utility_definition[1][0]);
+    std::cout << "\nSET_REFERENCE(" << val << ")" << std::endl;
+    /* select and update reference utility */
+    evalMidi(8, 0, 1);                                          // select utility (reference tone)
+    evalMidi(24, val >> 7, val & 127);                          // update utility
+}
+
+/* preset recall approach */
+void dsp_host::testLoadPreset(uint32_t _presetId)
+{
+    std::cout << "\nRECALL(" << _presetId << ")" << std::endl;
+    /* run a recall sequence based on the given preset id (predefined presets in pe_defines_testconfig.h) */
+    /* recall sequence - no flush */
+    evalMidi(47, 1, 1);                                         // enable preload (recall list mode)
+    for(uint32_t p = 0; p < testRecallSequenceLength; p++)
+    {
+        /* traverse normalized recall array */
+        testParseDestination(testPresetData[_presetId][p]);
+    }
+    evalMidi(47, 0, 2);                                         // apply preloaded values
+}
+
+/* trigger flush */
+void dsp_host::testFlush()
+{
+    std::cout << "\nFLUSH" << std::endl;
+    /* pass the trigger TCD message */
+    evalMidi(39, 0, 0);                                         // flush
+}
+
+/* glance at current signals */
+void dsp_host::testGetSignalData()
+{
+    /* print out the signal array to the terminal */
+    std::cout << "\nPARAM_SIGNAL:" << std::endl;
+    for(uint32_t p = 0; p < sig_number_of_signal_items; p++)
+    {
+        std::cout << p << " - ";
+        for(uint32_t v = 0; v < m_voices; v++)
+        {
+            std::cout << m_paramsignaldata[v][p] << ", ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+/* glance at parameter definition */
+void dsp_host::testGetParamHeadData()
+{
+    /* print out the parameter definitions to the terminal */
+    std::cout << "\nPARAM_HEAD:" << std::endl;
+    for(uint32_t p = 0; p < sig_number_of_params; p++)
+    {
+        param_head* obj = &m_params.m_head[p];
+        std::cout << "id: " << obj->m_id << ", ";
+        std::cout << "index: " << obj->m_index << ", ";
+        std::cout << "size: " << obj->m_size << ", ";
+        std::cout << "clock: " << obj->m_clockType << ", ";
+        std::cout << "poly: " << obj->m_polyType << ", ";
+        std::cout << "scaleId: " << obj->m_scaleId << ", ";
+        std::cout << "postId: " << obj->m_postId << ", ";
+        std::cout << "norm: " << obj->m_normalize << ", ";
+        std::cout << "scaleArg: " << obj->m_scaleArg << std::endl;
+    }
+}
+
+/* glance at parameter rendering status */
+void dsp_host::testGetParamRenderData()
+{
+    /* print out the parameter rendering status to the terminal */
+    std::cout << "\nPARAM_BODY:" << std::endl;
+    for(uint32_t p = 0; p < sig_number_of_params; p++)
+    {
+        param_head* obj = &m_params.m_head[p];
+        uint32_t index = obj->m_index;
+        for(uint32_t i = 0; i < obj->m_size; i++)
+        {
+            param_body* item = &m_params.m_body[index];
+            std::cout << "P(" << obj->m_id << ", " << i << "):\t";
+            std::cout << "state: " << item->m_state << ",\tpreload: " << item->m_preload;
+            std::cout << ",\tsignal: " << item->m_signal << ",\tdx:[" << item->m_dx[0] << ", " << item->m_dx[1] << "]";
+            std::cout << ",\tx: " << item->m_x << ",\tstart: " << item->m_start;
+            std::cout << ",\tdiff: " << item->m_diff << ",\tdest: " << item->m_dest << std::endl;
+            index++;
+        }
+    }
+}
+
+/* prepare destinations */
+void dsp_host::testParseDestination(int32_t _value)
+{
+    /* prepare value */
+    int32_t val = abs(_value);
+    uint32_t upper = val >> 14;
+    /* determine fitting destination format */
+    if(_value < -8191)
+    {
+        /* DU + DL (negative) */
+        evalMidi(37, (upper >> 7) + 64, upper & 127);
+        evalMidi(53, (val & 16383) >> 7, val & 127);
+    }
+    else if(_value < 0)
+    {
+        /* DS (negative) */
+        evalMidi(21, (val >> 7) + 64, val & 127);
+    }
+    else if(_value < 16384)
+    {
+        /* D */
+        evalMidi(5, _value >> 7, _value & 127);
+    }
+    else
+    {
+        /* DU + DL (positive) */
+        evalMidi(37, upper >> 7, upper & 127);
+        evalMidi(53, (val & 16383) >> 7, val & 127);
+    }
+}
+
+/* init procedure */
+void dsp_host::testInit()
+{
+    /* */
+    std::cout << "\nINIT SEQUENCE" << std::endl;
+    evalMidi(0, 127, 127);      // select all voices
+    evalMidi(1, 127, 127);      // select all parameters
+    evalMidi(2, 0, 0);          // set time to zero
+    testLoadPreset(1);          // load default preset
 }
 
 #endif
@@ -1014,7 +1359,7 @@ void dsp_host::makeMonoSound(float *_signal)
     {
         if (m_tableCounter == m_flushIndex)
         {
-            printf("flushing all buffers ... \n'");
+            printf("flushing all buffers ... \n");
         }
 
         if (m_tableCounter > m_fadeSamples)
