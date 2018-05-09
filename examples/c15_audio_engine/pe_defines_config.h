@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "dsp_defines_session.h"
 #include <stdint.h>
 
 /* main project config */
@@ -26,10 +27,22 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define dsp_render_min 1e-9                 // minimal rendered value for exponential transitions
 
 /* project parameter definition (prepared for 20 voices) */
+#if DSP_TEST_MODE==1
 
+// configuration for test 1
 #define sig_number_of_params 26             // 13 ENV_A params, 6 OSC params, 2 MASTER params, 5 POLY params (no EnvC Rate)
 #define sig_number_of_param_items 121       // (13 + 6 + 2) MONO params = 21 param itmems; (5 x 20) POLY params = 100 param items; total: 21 + 100 = 121 items
 #define sig_number_of_signal_items 10       // small test project requires 10 shared signals
+
+#elif DSP_TEST_MODE==2
+
+// configuration for test 2                 -> see Linux Engine - Test 2
+#define sig_number_of_params 95             // 3 * (13 ENV params) + 2 * (14 OSC + 8 SHP params) + (4 OUT params) + (2 MASTER params) + (6 KEY params)
+#define sig_number_of_param_items 209       // (39 + 44 + 4 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
+#define sig_number_of_signal_items 39       // 39 shared signals
+
+#endif
+
 #define sig_number_of_utilities 2
 #define sig_number_of_envelopes 5
 #define sig_number_of_env_items 81          // 4 POLY Envelopes (A..Gate) = 4 * 20 = 80 items, 1 MONO (Flanger Decay), total: 81 items
@@ -56,15 +69,23 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define env_init_gateRelease 1              // release time of gate envelopes (in milliseconds)
 #define env_highest_finite_time 16000.f     // highest allowed finite time
 
-/* tcd list handling */
+/* tcd list handling - !!! change for test 2 */
 
 #define lst_number_of_lists 2               // predefined paramId lists (simplifying recal and key event update TCD sequences)
+
+#if DSP_TEST_MODE==1
+
 #define lst_recall_length 21                // declare number of paramIds for recall list (MONO - currently)
 #define lst_keyEvent_length 5               // declare number of paramIds for key event list (POLY - currently)
 
-/* internal ids of crucial TCD parameters */
+#elif DSP_TEST_MODE==2
+
+#define lst_recall_length 89                // 89 preset-relevant parameters
+#define lst_keyEvent_length 6               // 6 key event parameters
+
+#endif
+
+/* internal ids of crucial TCD parameters - remove later, when pe_defines_labels is established */
 #define par_envelopeA 0                     // item pointer to (consecutive) envelope parameters A (internal ids)
-#define par_envelopeB 0                     // item pointer to (consecutive) envelope parameters B (internal ids)
-#define par_envelopeC 0                     // item pointer to (consecutive) envelope parameters C (internal ids)
-#define par_noteSteal 21                    // item pointer to note steal (internal id)
-#define par_notePitch 22                    // item pointer to note pitch (internal id)
+#define par_envelopeB 13                    // item pointer to (consecutive) envelope parameters B (internal ids)
+#define par_envelopeC 26                    // item pointer to (consecutive) envelope parameters C (internal ids)

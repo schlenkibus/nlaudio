@@ -80,8 +80,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
         m_OscA_randVal_float = static_cast<float>(m_OscA_randVal_int) * 4.5657e-10f;
     }
 
-    float osc_freq = _signal[OSC_A_FRQ];
-    m_oscA_phaseInc = ((m_OscA_randVal_float * _signal[OSC_A_FLU] * osc_freq) + osc_freq) * m_sample_interval;
+    m_oscA_phaseInc = ((m_OscA_randVal_float * _signal[OSC_A_FLUEC] * osc_freq) + osc_freq) * m_sample_interval;           /// multiply by 1/samplerate
 
     m_oscA_phase_stateVar = tmpVar;
 
