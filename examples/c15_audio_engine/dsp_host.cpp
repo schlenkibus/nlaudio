@@ -1322,11 +1322,13 @@ void dsp_host::initAudioEngine(float _samplerate, uint32_t _polyphony)
         m_raised_cos_table[ind] = pow(cos(x), 2);
     }
 
-    //******************************* DSP Module *****************************//
+    //****************************** DSP Modules *****************************//
     for (uint32_t p = 0; p < _polyphony; p++)
     {
         m_soundgenerator[p].init(_samplerate, p);
     }
+
+    m_outputmixer.init(_samplerate, _polyphony);
 }
 
 
@@ -1339,11 +1341,13 @@ void dsp_host::makePolySound(float *_signal, uint32_t _voiceID)
 {
     //***************************** Soundgenerator ***************************//
     //************************* Oscillators n Shapers ************************//
-    m_soundgenerator[_voiceID].generateSound(0.f, _signal);
+    m_soundgenerator[_voiceID].generateSound(0.f, _signal);             /// _feedbackSample
 
     //****************************** Outputmixer *****************************//
-    m_mainOut_L += (m_soundgenerator[_voiceID].m_sampleA);
-    m_mainOut_R += (m_soundgenerator[_voiceID].m_sampleA);
+    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, 0.f, 0.f, _signal);
+
+//    m_mainOut_L += (m_soundgenerator[_voiceID].m_sampleA);
+//    m_mainOut_R += (m_soundgenerator[_voiceID].m_sampleA);
 }
 
 
@@ -1373,9 +1377,11 @@ void dsp_host::makeMonoSound(float *_signal)
         }
     }
     //****************************** Mono Modules ****************************//
+    m_outputmixer.filterAndLevel(_signal);
 
     //******************************* Soft Clip ******************************//
-    m_mainOut_L *= _signal[MST_VOL];            /// -> reverb output here!
+    m_mainOut_L = m_outputmixer.m_sampleL * _signal[MST_VOL];
+//    m_mainOut_L *= _signal[MST_VOL];            /// -> reverb output here!
 
     m_mainOut_L *= 0.1588f;
     if (m_mainOut_L > 0.25f)
@@ -1396,7 +1402,8 @@ void dsp_host::makeMonoSound(float *_signal)
     m_mainOut_L = m_mainOut_L * ((2.26548 * sample_square - 5.13274) * sample_square + 3.14159);
 
 
-    m_mainOut_R *= _signal[MST_VOL];            /// -> reverb output here!
+    m_mainOut_R = m_outputmixer.m_sampleR * _signal[MST_VOL];
+//    m_mainOut_R *= _signal[MST_VOL];            /// -> reverb output here!
     m_mainOut_R *= 0.1588f;
 
     if (m_mainOut_R > 0.25f)

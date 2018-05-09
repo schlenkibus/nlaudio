@@ -21,8 +21,8 @@ struct ae_soundgenerator
 
     float m_sampleA, m_sampleB;       // Generated Samples
 
-    void generateSound(float _feedbackSample, float *_signal);
     void init(float _samplerate, uint32_t _vn);
+    void generateSound(float _feedbackSample, float *_signal);
     void resetPhase(float _phaseA, float _phaseB);
 
     //************************** Shared Variables *****************************//
@@ -30,6 +30,7 @@ struct ae_soundgenerator
 
     //*********************** Oscillator A Variables **************************//
     float m_oscA_selfmix;
+    float m_oscA_crossmix;
 
     float m_oscA_phase;
     float m_oscA_phase_stateVar;
@@ -41,6 +42,7 @@ struct ae_soundgenerator
 
     //*********************** Oscillator B Variables **************************//
     float m_oscB_selfmix;
+    float m_oscB_crossmix;
 
     float m_oscB_phase;
     float m_oscB_phase_stateVar;
@@ -53,8 +55,8 @@ struct ae_soundgenerator
     struct ChirpFilter
     {
         float m_warp_const;
-        float m_stateVar;
         float m_omega;
+        float m_stateVar;
         float m_a0, m_a1;
 
         void initFilter(float _samplerate, float _chirpFrequency)

@@ -63,8 +63,8 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
 {
     //**************************** Modulation A ******************************//
     float tmpVar = m_oscA_selfmix * _signal[OSC_A_PMSEA];
-    tmpVar = tmpVar + 0.f * 1.f;                    /// m_oscB_crossmix * _signal[OSCA_PM_B]
-    tmpVar = tmpVar + _feedbackSample * 1.f;        /// * _signal[OSCA_PM_F]
+    tmpVar = tmpVar + m_oscB_crossmix * _signal[OSC_A_PMBEB];
+    tmpVar = tmpVar + _feedbackSample * _signal[OSC_A_PMFEC];
 
 
     //**************************** Oscillator A ******************************//
@@ -80,7 +80,8 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
         m_OscA_randVal_float = static_cast<float>(m_OscA_randVal_int) * 4.5657e-10f;
     }
 
-    m_oscA_phaseInc = ((m_OscA_randVal_float * _signal[OSC_A_FLUEC] * osc_freq) + osc_freq) * m_sample_interval;           /// multiply by 1/samplerate
+    float osc_freq = _signal[OSC_A_FRQ];
+    m_oscA_phaseInc = ((m_OscA_randVal_float * _signal[OSC_A_FLUEC] * osc_freq) + osc_freq) * m_sample_interval;
 
     m_oscA_phase_stateVar = tmpVar;
 
@@ -91,9 +92,9 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
 
 
     //**************************** Modulation B ******************************//
-    tmpVar = m_oscB_selfmix * 1.f;                  /// _signal[OSCB_PM_B];
-    tmpVar = tmpVar + 0.f * 1.f;                    /// m_oscA_crossmix * _signal[OSCB_PM_A];
-    tmpVar = tmpVar + _feedbackSample * 1.f;        /// * _signal[OSCB_PM_F]
+    tmpVar = m_oscB_selfmix * _signal[OSC_B_PMSEB];
+    tmpVar = tmpVar + m_oscA_crossmix * _signal[OSC_B_PMAEA];
+    tmpVar = tmpVar + _feedbackSample * _signal[OSC_B_PMFEC];
 
 
     //**************************** Oscillator B ******************************//
@@ -109,8 +110,8 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
         m_OscB_randVal_float = static_cast<float>(m_OscB_randVal_int) * 4.5657e-10f;
     }
 
-    osc_freq = 0.f;                                 /// _signal[OSC_B_FRQ]
-    m_oscB_phaseInc = ((m_OscB_randVal_float * 0.f * osc_freq) + osc_freq) * m_sample_interval;     /// _signal[OSC_B_FLU]
+    osc_freq = _signal[OSC_B_FRQ];
+    m_oscB_phaseInc = ((m_OscB_randVal_float * _signal[OSC_B_FLUEC] * osc_freq) + osc_freq) * m_sample_interval;
 
     m_oscB_phase_stateVar = tmpVar;
 
@@ -121,41 +122,64 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
 
 
     //******************************* Shaper A *******************************//
-    tmpVar = 0.f;                                                                   /// _signal[SHPA_DRI] * 0.18f;
+    tmpVar = _signal[SHP_A_DRVEA] * 0.18f;
 
     float shaperSampleA = oscSampleA * tmpVar;
     tmpVar = shaperSampleA;
 
     shaperSampleA = NlToolbox::Math::sinP3_warp(shaperSampleA);
-    shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, tmpVar, 0.f);     /// _signal[SHPA_FOLD]
+    shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, tmpVar, _signal[SHP_A_FLD]);
 
     tmpVar = shaperSampleA * shaperSampleA + (-0.5f);
 
-    shaperSampleA = NlToolbox::Others::parAsym(shaperSampleA, tmpVar, 0.f);         /// _signal[SHPA_ASYM]
+    shaperSampleA = NlToolbox::Others::parAsym(shaperSampleA, tmpVar, _signal[SHP_A_ASM]);
 
     //******************************* Shaper B *******************************//
-    tmpVar = 0.f;                                                                   /// _signal[SHPB_DRI] * 0.18f;
+    tmpVar = _signal[SHP_B_DRVEB] * 0.18f;
 
     float shaperSampleB = oscSampleB * tmpVar;
     tmpVar = shaperSampleB;
 
     shaperSampleB = NlToolbox::Math::sinP3_warp(shaperSampleB);
-    shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, tmpVar, 0.f);     /// _signal[SHPB_FOLD]
+    shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, tmpVar, _signal[SHP_B_FLD]);
 
     tmpVar = shaperSampleB * shaperSampleB + (-0.5f);
 
-    shaperSampleB = NlToolbox::Others::parAsym(shaperSampleB, tmpVar, 0.f);         /// _signal[SHPB_ASYM]
+    shaperSampleB = NlToolbox::Others::parAsym(shaperSampleB, tmpVar, _signal[SHP_B_ASM]);
 
     //****************************** Crossfades ******************************//
-    m_oscA_selfmix = oscSampleA;
-    m_sampleA = oscSampleA;
-    m_sampleB = 0.f;
+//    m_oscA_selfmix = oscSampleA;
+//    m_sampleA = oscSampleA;
+//    m_sampleB = 0.f;
+
+    m_oscA_selfmix  = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, _signal[OSC_A_PMSSH]);
+    m_oscA_crossmix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, _signal[OSC_B_PMASH]);
+
+    m_oscB_selfmix  = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, _signal[OSC_B_PMSSH]);
+    m_oscB_crossmix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, _signal[OSC_A_PMBSH]);
+
+    m_sampleA = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, _signal[SHP_A_MIX]);
+    m_sampleB = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, _signal[SHP_B_MIX]);
+
 
     //************************** Envelope Influence **************************//
     m_sampleA *= _signal[ENV_A_SIG];
-    m_sampleB *= 0.f;                        // _signal[ENV_B_SIG];
+    m_sampleB *= _signal[ENV_B_SIG];
+
 
     //**************************** Feedback Mix ******************************//
+    tmpVar    = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], _signal[SHP_A_FBEC]);
+    tmpVar   *= _feedbackSample;
+    m_sampleA = NlToolbox::Crossfades::unipolarCrossFade(m_sampleA, tmpVar, _signal[SHP_A_FBM]);
+
+    tmpVar    = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], _signal[SHP_B_FBEC]);
+    tmpVar   *= _feedbackSample;
+    m_sampleB = NlToolbox::Crossfades::unipolarCrossFade(m_sampleB, tmpVar, _signal[SHP_B_FBM]);
+
 
     //************************** Ring Modulation *****************************//
+    tmpVar = m_sampleA * m_sampleB;
+
+    m_sampleA = NlToolbox::Crossfades::unipolarCrossFade(m_sampleA, tmpVar, _signal[SHP_A_RM]);
+    m_sampleB = NlToolbox::Crossfades::unipolarCrossFade(m_sampleB, tmpVar, _signal[SHP_B_RM]);
 }

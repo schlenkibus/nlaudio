@@ -55,6 +55,25 @@ inline float bipolarCrossFade(float _sample1, float _sample2, float _mix)
 
 }
 
+
+
+/*****************************************************************************/
+/** @brief    unipolar mix calculation between two samples
+ *  @param    first sample
+ *  @param    second sample
+ *  @param    mix amount
+ *  @return   a mix of both samples
+******************************************************************************/
+
+inline float unipolarCrossFade(float _sample1, float _sample2, float _mix)
+{
+    _sample1 = (1.f - _mix) * _sample1;
+    _sample2 = _mix * _sample2;
+
+    return _sample1 + _sample2;
+
+}
+
 } // namespcace Crossfades
 
 

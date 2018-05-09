@@ -8,6 +8,8 @@
 
     @todo       Unison
                 Check 1-Pole Filters
+                the shaper state variables should be unique for each voice!!!
+                NOT one for all!!!! -> fail!
 *******************************************************************************/
 
 #pragma once
