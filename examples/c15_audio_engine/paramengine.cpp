@@ -68,6 +68,12 @@ void paramengine::init(uint32_t _sampleRate, uint32_t _voices)
     m_envelopes.init(_voices, 1 / ((env_init_gateRelease * m_millisecond) + 1));
 }
 
+/* helper - nyquist clip */
+float paramengine::evalNyquist(float freq)
+{
+    return fmin(m_nyquist_frequency, freq);
+}
+
 /* TCD mechanism - scaling */
 float paramengine::scale(const uint32_t _scaleId, const float _scaleArg, float _value)
 {
@@ -453,13 +459,29 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     /* later: Envelope C trigger at slow clock? */
     /* Pitch Updates */
     float basePitch = m_body[m_head[P_KEY_NP].m_index + _voiceId].m_signal + m_body[m_head[P_MA_T].m_index].m_signal;
-    float keyTracking, oscPitch;
-    /* determine Oscillator A Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch - EnvC missing) */
+    float keyTracking, oscPitch, envMod;
+    /* Oscillator A */
+    /* - Oscillator A Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch, Envelope C) */
     keyTracking = m_body[m_head[P_OA_PKT].m_index].m_signal;
     oscPitch = m_body[m_head[P_OA_P].m_index].m_signal;
-    _signal[OSC_A_FRQ] = m_pitch_reference * oscPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking));   // nyquist clip?
-    /* determine Oscillator A Chirp Frequency in Hz */
-    _signal[OSC_A_CHI] = m_body[m_head[P_OA_CHI].m_index].m_signal * 440.f;  // nyquist clip?
+    envMod = _signal[ENV_C_SIG] * m_body[m_head[P_OA_PEC].m_index].m_signal;
+    _signal[OSC_A_FRQ] = evalNyquist(m_pitch_reference * oscPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    /* - Oscillator A Fluctuation (Envelope C) */
+    envMod = m_body[m_head[P_OA_FEC].m_index].m_signal;
+    _signal[OSC_A_FLUEC] = m_body[m_head[P_OA_F].m_index].m_signal * NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], envMod);
+    /* - Oscillator A Chirp Frequency in Hz */
+    _signal[OSC_A_CHI] = evalNyquist(m_body[m_head[P_OA_CHI].m_index].m_signal * 440.f);
+    /* Oscillator B */
+    /* - Oscillator B Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch, Envelope C) */
+    keyTracking = m_body[m_head[P_OB_PKT].m_index].m_signal;
+    oscPitch = m_body[m_head[P_OB_P].m_index].m_signal;
+    envMod = _signal[ENV_C_SIG] * m_body[m_head[P_OB_PEC].m_index].m_signal;
+    _signal[OSC_B_FRQ] = evalNyquist(m_pitch_reference * oscPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    /* - Oscillator B Fluctuation (Envelope C) */
+    envMod = m_body[m_head[P_OB_FEC].m_index].m_signal;
+    _signal[OSC_B_FLUEC] = m_body[m_head[P_OB_F].m_index].m_signal * NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], envMod);
+    /* - Oscillator B Chirp Frequency in Hz */
+    _signal[OSC_B_CHI] = evalNyquist(m_body[m_head[P_OB_CHI].m_index].m_signal * 440.f);
 #endif
 }
 
@@ -548,10 +570,48 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     _signal[ENV_C_SIG] = m_envelopes.m_body[m_envelopes.m_head[2].m_index + _voiceId].m_signal;     // Envelope C
     _signal[ENV_G_SIG] = m_envelopes.m_body[m_envelopes.m_head[3].m_index + _voiceId].m_signal;     // Gate
     /* Oscillator parameter post processing */
-    float pm_amt, pm_env;
+    float tmp_amt, tmp_env;
     /* Oscillator A */
-    pm_amt = m_body[m_head[P_OA_PMS].m_index].m_signal;
-    pm_env = m_body[m_head[P_OA_PMSEA].m_index].m_signal;
-    _signal[OSC_A_PMSEA] = ((_signal[ENV_A_SIG] * pm_env) + (1 - pm_env)) * pm_amt;                           // Osc A PM Self (Env A)
+    /* - Oscillator A - PM Self */
+    tmp_amt = m_body[m_head[P_OA_PMS].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OA_PMSEA].m_index].m_signal;
+    _signal[OSC_A_PMSEA] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_A_SIG], tmp_env) * tmp_amt;  // Osc A PM Self (Env A)
+    /* - Oscillator A - PM B */
+    tmp_amt = m_body[m_head[P_OA_PMB].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OA_PMBEB].m_index].m_signal;
+    _signal[OSC_A_PMBEB] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_B_SIG], tmp_env) * tmp_amt;  // Osc A PM B (Env B)
+    /* - Oscillator A - PM FB */
+    tmp_amt = m_body[m_head[P_OA_PMF].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OA_PMFEC].m_index].m_signal;
+    _signal[OSC_A_PMFEC] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], tmp_env) * tmp_amt;  // Osc A PM FB (Env C)
+    /* Shaper A */
+    /* - Shaper A Drive (Envelope A) */
+    tmp_amt = m_body[m_head[P_SA_D].m_index].m_signal;
+    tmp_env = m_body[m_head[P_SA_DEA].m_index].m_signal;
+    _signal[SHP_A_DRVEA] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_A_SIG], tmp_env) * tmp_amt;
+    /* - Shaper A Feedback Mix (Envelope C) */
+    tmp_env = m_body[m_head[P_SA_FBEC].m_index].m_signal;
+    _signal[SHP_A_FBEC] = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], tmp_env);
+    /* Oscillator B */
+    /* - Oscillator B - PM Self */
+    tmp_amt = m_body[m_head[P_OB_PMS].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OB_PMSEB].m_index].m_signal;
+    _signal[OSC_B_PMSEB] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_B_SIG], tmp_env) * tmp_amt;  // Osc B PM Self (Env B)
+    /* - Oscillator B - PM A */
+    tmp_amt = m_body[m_head[P_OB_PMA].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OB_PMAEA].m_index].m_signal;
+    _signal[OSC_B_PMAEA] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_A_SIG], tmp_env) * tmp_amt;  // Osc B PM A (Env A)
+    /* - Oscillator B - PM FB */
+    tmp_amt = m_body[m_head[P_OB_PMF].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OB_PMFEC].m_index].m_signal;
+    _signal[OSC_B_PMFEC] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], tmp_env) * tmp_amt;  // Osc B PM FB (Env C)
+    /* Shaper B */
+    /* - Shaper B Drive (Envelope B) */
+    tmp_amt = m_body[m_head[P_SB_D].m_index].m_signal;
+    tmp_env = m_body[m_head[P_SB_DEB].m_index].m_signal;
+    _signal[SHP_B_DRVEB] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_B_SIG], tmp_env) * tmp_amt;
+    /* - Shaper B Feedback Mix (Envelope C) */
+    tmp_env = m_body[m_head[P_SB_FBEC].m_index].m_signal;
+    _signal[SHP_B_FBEC] = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], tmp_env);
 #endif
 }

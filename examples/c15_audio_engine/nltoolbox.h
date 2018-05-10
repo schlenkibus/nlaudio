@@ -95,7 +95,7 @@ inline float sin(float x)
 {
     float x_square = x * x;
 
-    x = (((((x_square * -2.39f * pow(10.f, -8.f) + 2.7526f * pow(10.f, -6.f))
+    x = (((((x_square * -2.39e-8 + 2.7526e-6)
             * x_square + (-0.000198409f))
            * x_square + 0.00833333f)
           * x_square + (-0.166667f))
@@ -116,7 +116,7 @@ inline float cos(float x)
 {
     float x_square = x * x;
 
-    x = (((((x_square * -2.605f * pow(10.f, -7.f) + 2.47609 * pow(10.f, -5.f))
+    x = (((((x_square * -2.605e-7 + 2.47609e-5)
             * x_square + (-0.00138884))
            * x_square + 0.0416666)
           * x_square + (-0.499923))
@@ -468,7 +468,7 @@ inline float db2af(float dbIn)
 inline float af2db(float afIn)
 {
     if (afIn == 0.f)                        // vorsichthalber gegen ne = schützen
-        afIn = 1.f * pow(10.f, 15.f);
+        afIn = 1e15;
 
     return 20.f * log10(afIn);      // gibt es eine feine annäherung?
 }
