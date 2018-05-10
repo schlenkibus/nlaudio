@@ -83,17 +83,17 @@
 #define P_OB_F      64
 #define P_OB_FEC    65
 #define P_OB_PMS    66
-#define P_OB_PMSEA  67
+#define P_OB_PMSEB  67
 #define P_OB_PMSSH  68
-#define P_OB_PMB    69
-#define P_OB_PMBEB  70
-#define P_OB_PMBSH  71
+#define P_OB_PMA    69
+#define P_OB_PMAEA  70
+#define P_OB_PMASH  71
 #define P_OB_PMF    72
 #define P_OB_PMFEC  73
 #define P_OB_CHI    74
 
 #define P_SB_D      75
-#define P_SB_DEA    76
+#define P_SB_DEB    76
 #define P_SB_F      77
 #define P_SB_A      78
 #define P_SB_M      79

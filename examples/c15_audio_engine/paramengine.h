@@ -19,6 +19,7 @@
 #include "pe_utilities.h"
 #include "pe_defines_labels.h"
 #include "dsp_defines_signallabels.h"
+#include "nltoolbox.h"
 
 /* */
 struct param_head
@@ -84,6 +85,8 @@ struct paramengine
     poly_key_event m_event;
     /* proper init */
     void init(uint32_t _sampleRate, uint32_t _voices);
+    /* helper */
+    float evalNyquist(float freq);
     /* TCD mechanism */
     float scale(const uint32_t _scaleId, const float _scaleArg, float _value);              // provided tcd scale functions
     void setDx(const uint32_t _voiceId, const uint32_t _paramId, float _value);             // param dx update
