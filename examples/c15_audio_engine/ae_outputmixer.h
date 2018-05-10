@@ -11,7 +11,7 @@
 
 #include "nltoolbox.h"
 #include "dsp_defines_signallabels.h"
-#include "onepolefilters.h"
+#include <vector>
 
 struct ae_outputmixer
 {
@@ -19,8 +19,8 @@ struct ae_outputmixer
 
     float m_sampleL, m_sampleR;
 
-    float m_stateVarL[20] = {};
-    float m_stateVarR[20] = {};
+    std::vector<float> m_stateVarL;
+    std::vector<float> m_stateVarR;
 
     uint32_t m_numberOfVoices;
     uint32_t m_voiceCounter;

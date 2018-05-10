@@ -32,6 +32,9 @@ void ae_outputmixer::init(float _samplerate, uint32_t _numberOfVoices)
     m_numberOfVoices = _numberOfVoices;
     m_voiceCounter = _numberOfVoices - 1;
 
+    m_stateVarL.assign(_numberOfVoices, 0.f);
+    m_stateVarR.assign(_numberOfVoices, 0.f);
+
     m_highpass_L.initFilter(_samplerate, NlToolbox::Conversion::pitch2freq(8.f));
     m_highpass_R.initFilter(_samplerate, NlToolbox::Conversion::pitch2freq(8.f));
 }
