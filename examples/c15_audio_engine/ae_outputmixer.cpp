@@ -29,8 +29,7 @@ void ae_outputmixer::init(float _samplerate, uint32_t _numberOfVoices)
     m_sampleL = 0.f;
     m_sampleR = 0.f;
 
-    m_numberOfVoices = _numberOfVoices;
-    m_voiceCounter = _numberOfVoices - 1;
+    m_warpedConst_30hz = (6.28319f / _samplerate) * 30.f;
 
     m_stateVarL.assign(_numberOfVoices, 0.f);
     m_stateVarR.assign(_numberOfVoices, 0.f);
@@ -45,16 +44,8 @@ void ae_outputmixer::init(float _samplerate, uint32_t _numberOfVoices)
 /** @brief
 *******************************************************************************/
 
-void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter, float *_signal)
+void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter, float *_signal, uint32_t _voiceID)
 {
-    m_voiceCounter = (m_voiceCounter + 1) % m_numberOfVoices;
-    if (m_voiceCounter == 0)
-    {
-        m_sampleL = 0.f;
-        m_sampleR = 0.f;
-    }
-
-
     //******************************* Left Mix *******************************//
     float mainSample = 1.f * _sampleA + 1.f * _sampleB +                                /// _signal[OUT_A_L] and _signal[OUT_B_L]
                         1.f * _sampleComb + 1.f * _sampleSVFilter;                      /// _signal[OUT_COMB_L] and _signal[OUT_SVF_L]
@@ -67,8 +58,8 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
     mainSample = NlToolbox::Others::threeRanges(mainSample, tmpVar, 0.5f);              /// _signal[OUT_FLD]
 
     tmpVar = mainSample * mainSample;
-    tmpVar = tmpVar * m_stateVarL[m_voiceCounter];
-    m_stateVarL[m_voiceCounter] = tmpVar * 0.00427428f + m_stateVarL[m_voiceCounter] + DNC_CONST;       /// recalculate the factor, it'S dependant on samplerate
+    tmpVar = tmpVar * m_stateVarL[_voiceID];
+    m_stateVarL[_voiceID] = tmpVar * m_warpedConst_30hz + m_stateVarL[_voiceID] + DNC_CONST;
 
     mainSample = NlToolbox::Others::parAsym(mainSample, tmpVar, 0.f);                   /// _signal[OUT_ASM]
 
@@ -86,8 +77,8 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
     mainSample = NlToolbox::Others::threeRanges(mainSample, tmpVar, 0.5f);              /// _signal[OUT_FLD]
 
     tmpVar = mainSample * mainSample;
-    tmpVar = tmpVar * m_stateVarR[m_voiceCounter];
-    m_stateVarR[m_voiceCounter] = tmpVar * 0.00427428f + m_stateVarR[m_voiceCounter] + DNC_CONST;  /// recalculate the factor, it'S dependant on samplerate
+    tmpVar = tmpVar * m_stateVarR[_voiceID];
+    m_stateVarR[_voiceID] = tmpVar * m_warpedConst_30hz + m_stateVarR[_voiceID] + DNC_CONST;
 
     mainSample = NlToolbox::Others::parAsym(mainSample, tmpVar, 0.f);                   /// _signal[OUT_ASM]
 

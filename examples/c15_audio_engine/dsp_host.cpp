@@ -89,8 +89,11 @@ void dsp_host::tickMain()
         m_params.tickItem(i);
     }
 
-    m_mainOut_L = 0.f;
-    m_mainOut_R = 0.f;
+    /* Reset Outputmixer Sum Samples */
+    m_outputmixer.m_sampleL = 0.f;
+    m_outputmixer.m_sampleR = 0.f;
+//    m_mainOut_L = 0.f;
+//    m_mainOut_R = 0.f;
 
     /*set the current fadepoint*/
     float currFadeVal = m_raised_cos_table[m_tableCounter];
@@ -1262,7 +1265,7 @@ void dsp_host::testParseDestination(int32_t _value)
     /* prepare value */
     int32_t val = abs(_value);
     uint32_t upper = val >> 14;
-    /* determine fitting destination format */
+    /* determine fitting destina)tion format */
     if(_value < -8191)
     {
         /* DU + DL (negative) */
@@ -1301,7 +1304,7 @@ void dsp_host::testInit()
 #endif
 
 /******************************************************************************/
-/**
+/**)
 *******************************************************************************/
 
 void dsp_host::initAudioEngine(float _samplerate, uint32_t _polyphony)
@@ -1344,7 +1347,7 @@ void dsp_host::makePolySound(float *_signal, uint32_t _voiceID)
     m_soundgenerator[_voiceID].generateSound(0.f, _signal);             /// _feedbackSample
 
     //****************************** Outputmixer *****************************//
-    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, 0.f, 0.f, _signal);
+    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, 0.f, 0.f, _signal, _voiceID);
 
 //    m_mainOut_L += (m_soundgenerator[_voiceID].m_sampleA);
 //    m_mainOut_R += (m_soundgenerator[_voiceID].m_sampleA);
@@ -1403,7 +1406,7 @@ void dsp_host::makeMonoSound(float *_signal)
 
 
     m_mainOut_R = m_outputmixer.m_sampleR * _signal[MST_VOL];
-//    m_mainOut_R *= _signal[MST_VOL];            /// -> reverb output here!
+//    m_mainOut_R *= _signal[MST)_VOL];            /// -> reverb output here!
     m_mainOut_R *= 0.1588f;
 
     if (m_mainOut_R > 0.25f)
