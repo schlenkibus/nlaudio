@@ -134,6 +134,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
 
     shaperSampleA = NlToolbox::Others::parAsym(shaperSampleA, tmpVar, _signal[SHP_A_ASM]);
 
+
     //******************************* Shaper B *******************************//
     tmpVar = _signal[SHP_B_DRVEB] * 0.18f;
 
@@ -168,6 +169,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
 
 
     //**************************** Feedback Mix ******************************//
+    /// -> the crossfade for ENV_G_SIG, ENV_C_SIG and SHP_A_FBEC/SHP_B_FBEC will soon be part of processing
     tmpVar    = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], _signal[SHP_A_FBEC]);
     tmpVar   *= _feedbackSample;
     m_sampleA = NlToolbox::Crossfades::unipolarCrossFade(m_sampleA, tmpVar, _signal[SHP_A_FBM]);

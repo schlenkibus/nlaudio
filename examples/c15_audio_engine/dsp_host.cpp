@@ -57,9 +57,12 @@ void dsp_host::tickMain()
             }
             m_params.postProcess_slow(m_paramsignaldata[v], v);
 
-            /*Trigger forF ilter Coefficients -> the function is made*/
-            setFilterCoefficients(m_paramsignaldata[v], v);
+            /* polyphon Trigger for Filter Coefficients */
+            setPolyFilterCoeffs(m_paramsignaldata[v], v);
         }
+
+        /* monophon Trigger for Filter Coefficients */
+        setMonoFilterCoeffs(m_paramsignaldata[v]);
     }
     /* second: evaluate fast clock status */
     if(m_clockPosition[2] == 0)
@@ -1348,9 +1351,6 @@ void dsp_host::makePolySound(float *_signal, uint32_t _voiceID)
 
     //****************************** Outputmixer *****************************//
     m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, 0.f, 0.f, _signal, _voiceID);
-
-//    m_mainOut_L += (m_soundgenerator[_voiceID].m_sampleA);
-//    m_mainOut_R += (m_soundgenerator[_voiceID].m_sampleA);
 }
 
 
@@ -1406,7 +1406,7 @@ void dsp_host::makeMonoSound(float *_signal)
 
 
     m_mainOut_R = m_outputmixer.m_sampleR * _signal[MST_VOL];
-//    m_mainOut_R *= _signal[MST)_VOL];            /// -> reverb output here!
+//    m_mainOut_R *= _signal[MST_VOL];            /// -> reverb output here!
     m_mainOut_R *= 0.1588f;
 
     if (m_mainOut_R > 0.25f)
@@ -1432,22 +1432,22 @@ void dsp_host::makeMonoSound(float *_signal)
 /******************************************************************************/
 /**
 *******************************************************************************/
-/*
-inline void dsp_host::resetOscPhase(float *_signal, uint32_t _voiceID)
+
+inline void dsp_host::setPolyFilterCoeffs(float *_signal, uint32_t _voiceID)
 {
-    m_soundgenerator[_voiceID].resetPhase(_signal[OSC_A_PHS], 0.f);
+    //************************ Osciallator Chirp Filter **********************//
+    m_soundgenerator[_voiceID].m_chirpFilter_A.setCoeffs(_signal[OSC_A_CHI]);
+    m_soundgenerator[_voiceID].m_chirpFilter_B.setCoeffs(_signal[OSC_B_CHI]);
 }
-*/
+
+
 
 
 /******************************************************************************/
 /**
 *******************************************************************************/
 
-inline void dsp_host::setFilterCoefficients(float *_signal, uint32_t _voiceID)
+inline void dsp_host::setMonoFilterCoeffs(float *_signal)
 {
-    //************************ Osciallator Chirp Filter **********************//
-    m_soundgenerator[_voiceID].m_chirpFilter_A.setCoeffs(_signal[OSC_A_CHI]);
-    m_soundgenerator[_voiceID].m_chirpFilter_B.setCoeffs(0.f);                  /// _signal[OSC_B_CHI]
-}
 
+}

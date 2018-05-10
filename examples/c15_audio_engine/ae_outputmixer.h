@@ -32,30 +32,23 @@ struct ae_outputmixer
     //*************************** Highpass Filters ****************************//
     struct OnePoleHighpassFilter
     {
-        float m_warp_const;
-        float m_omegaTan;
         float m_inStateVar, m_outStateVar;
         float m_b0, m_b1, m_a1;
 
         void initFilter(float _samplerate, float _cutFrequency)
         {
-            m_warp_const = 3.14159f / _samplerate;
             m_inStateVar = 0.f;
             m_outStateVar = 0.f;
-            setCoeffs(_cutFrequency);
+
+            _cutFrequency = _cutFrequency * (3.14159f / _samplerate);
+            _cutFrequency = NlToolbox::Math::tan(_cutFrequency);
+
+            m_a1 = (1.f - _cutFrequency) / (1.f + _cutFrequency);
+            m_b0 = 1.f / (1.f + _cutFrequency);
+            m_b1 = (1.f / (1.f + _cutFrequency)) * -1.f;
         }
 
-        void setCoeffs(float _cutFrequency)
-        {
-            _cutFrequency *= m_warp_const;
-            m_omegaTan = NlToolbox::Math::tan(_cutFrequency);
-
-            m_a1 = (1.f - m_omegaTan) / (1.f + m_omegaTan);
-            m_b0 = 1.f / (1.f + m_omegaTan);
-            m_b1 = (1.f / (1.f + m_omegaTan)) * -1.f;
-        }
-
-        float applyFilter(float _sample)
+        inline float applyFilter(float _sample)
         {
             float tmpVar;
 

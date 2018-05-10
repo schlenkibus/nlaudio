@@ -83,7 +83,7 @@ struct ae_soundgenerator
             float tmpVar = _sample;
 
             _sample = (_sample + m_stateVar) * m_omega;     // FIR
-            m_stateVar = tmpVar + 1.e-18f;
+            m_stateVar = tmpVar + DNC_CONST;
 
             return _sample;
         }
