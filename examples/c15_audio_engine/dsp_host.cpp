@@ -1218,6 +1218,8 @@ void dsp_host::testGetSignalData()
         }
         std::cout << std::endl;
     }
+    /* print out the left and right output signal to the terminal */
+    std::cout << "\nOUTPUT_SIGNAL: " << m_mainOut_L << ", " << m_mainOut_R << std::endl;
 }
 
 /* glance at parameter definition */

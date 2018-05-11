@@ -428,7 +428,7 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     {
         p = m_head[m_postIds.m_data[0].m_data[3].m_data[1].m_data[i]].m_postId;
         _signal[p] = m_body[m_head[m_postIds.m_data[0].m_data[3].m_data[1].m_data[i]].m_index + _voiceId].m_signal;
-    };
+    }
     /* automatic mono to mono copy (effect parameters) - only for voice 0 */
     if(_voiceId == 0)
     {
@@ -502,7 +502,7 @@ void paramengine::postProcess_fast(float *_signal, const uint32_t _voiceId)
     {
         p = m_head[m_postIds.m_data[0].m_data[2].m_data[1].m_data[i]].m_postId;
         _signal[p] = m_body[m_head[m_postIds.m_data[0].m_data[2].m_data[1].m_data[i]].m_index + _voiceId].m_signal;
-    };
+    }
     /* automatic mono to mono copy (effect parameters) - only for voice 0 */
     if(_voiceId == 0)
     {
@@ -520,6 +520,19 @@ void paramengine::postProcess_fast(float *_signal, const uint32_t _voiceId)
     envUpdateLevels(_voiceId, 0);   // Envelope A
     envUpdateLevels(_voiceId, 1);   // Envelope B
     envUpdateLevels(_voiceId, 2);   // Envelope C
+    /* update output mixer levels and pannings */
+    float tmp_key = m_body[m_head[P_KEY_VP].m_index + _voiceId].m_signal; // currently shifting panning?
+    float tmp_lvl, tmp_pan;
+    /* - A */
+    tmp_lvl = m_body[m_head[P_OM_AL].m_index].m_signal;
+    tmp_pan = NlToolbox::Clipping::uniNorm(m_body[m_head[P_OM_AP].m_index].m_signal + 0.f);
+    _signal[OUT_A_L] = tmp_lvl * (1.f - tmp_pan);
+    _signal[OUT_A_R] = tmp_lvl * tmp_pan;
+    /* - B */
+    tmp_lvl = m_body[m_head[P_OM_BL].m_index].m_signal;
+    tmp_pan = NlToolbox::Clipping::uniNorm(m_body[m_head[P_OM_BP].m_index].m_signal + 0.f);
+    _signal[OUT_B_L] = tmp_lvl * (1.f - tmp_pan);
+    _signal[OUT_B_R] = tmp_lvl * tmp_pan;
 #endif
 }
 
@@ -540,7 +553,7 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     {
         p = m_head[m_postIds.m_data[0].m_data[1].m_data[1].m_data[i]].m_postId;
         _signal[p] = m_body[m_head[m_postIds.m_data[0].m_data[1].m_data[1].m_data[i]].m_index + _voiceId].m_signal;
-    };
+    }
     /* automatic mono to mono copy (effect parameters) and mono envelope ticking - only for voice 0 */
     if(_voiceId == 0)
     {
@@ -588,7 +601,7 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     /* - Shaper A Drive (Envelope A) */
     tmp_amt = m_body[m_head[P_SA_D].m_index].m_signal;
     tmp_env = m_body[m_head[P_SA_DEA].m_index].m_signal;
-    _signal[SHP_A_DRVEA] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_A_SIG], tmp_env) * tmp_amt;
+    _signal[SHP_A_DRVEA] = (NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_A_SIG], tmp_env) * tmp_amt) + 0.18f;
     /* - Shaper A Feedback Mix (Envelope C) */
     tmp_env = m_body[m_head[P_SA_FBEC].m_index].m_signal;
     _signal[SHP_A_FBEC] = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], tmp_env);
@@ -609,7 +622,7 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     /* - Shaper B Drive (Envelope B) */
     tmp_amt = m_body[m_head[P_SB_D].m_index].m_signal;
     tmp_env = m_body[m_head[P_SB_DEB].m_index].m_signal;
-    _signal[SHP_B_DRVEB] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_B_SIG], tmp_env) * tmp_amt;
+    _signal[SHP_B_DRVEB] = (NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_B_SIG], tmp_env) * tmp_amt) + 0.18f;
     /* - Shaper B Feedback Mix (Envelope C) */
     tmp_env = m_body[m_head[P_SB_FBEC].m_index].m_signal;
     _signal[SHP_B_FBEC] = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], tmp_env);
