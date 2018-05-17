@@ -17,6 +17,26 @@
 namespace NlToolbox {
 
 /*****************************************************************************/
+/** @brief    Clipping Tools
+ *  @param    value (normalized, abs(value) <= 1.0)
+ *  @return   clipped value (currently either unipolar or bipolar)
+******************************************************************************/
+
+namespace Clipping {
+
+inline float uniNorm(float _value)
+{
+    return (fmax(0.f, fmin(1.f, _value)));
+}
+
+inline float biNorm(float _value)
+{
+    return (fmax(-1.f, fmin(1.f, _value)));
+}
+
+} // namespace Clipping
+
+/*****************************************************************************/
 /** @brief    Crossfade Tools
 ******************************************************************************/
 

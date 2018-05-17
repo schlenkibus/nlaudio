@@ -47,7 +47,7 @@ void ae_outputmixer::init(float _samplerate, uint32_t _numberOfVoices)
 void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleComb, float _sampleSVFilter, float *_signal, uint32_t _voiceID)
 {
     //******************************* Left Mix *******************************//
-    float mainSample = 1.f * _sampleA + 1.f * _sampleB +                                /// _signal[OUT_A_L] and _signal[OUT_B_L]
+    float mainSample = _signal[OUT_A_L] * _sampleA + _signal[OUT_B_L] * _sampleB +      /// _signal[OUT_A_L] and _signal[OUT_B_L]
                         1.f * _sampleComb + 1.f * _sampleSVFilter;                      /// _signal[OUT_COMB_L] and _signal[OUT_SVF_L]
 
     //************************* Left Sample Shaper ***************************//
@@ -66,7 +66,7 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
     m_sampleL += mainSample;
 
     //****************************** Right Mix *******************************//
-    mainSample = 1.f * _sampleA + 1.f * _sampleB +                                      /// _signal[OUT_A_R] and _signal[OUT_B_R]
+    mainSample = _signal[OUT_A_R] * _sampleA + _signal[OUT_B_R] * _sampleB +            /// _signal[OUT_A_R] and _signal[OUT_B_R]
             1.f * _sampleComb + 1.f * _sampleSVFilter;                                  /// _signal[OUT_COMB_R] and _signal[OUT_SVF_R]
 
     //************************ Right Sample Shaper ***************************//
