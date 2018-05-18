@@ -149,10 +149,6 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     shaperSampleB = NlToolbox::Others::parAsym(shaperSampleB, tmpVar, _signal[SHP_B_ASM]);
 
     //****************************** Crossfades ******************************//
-//    m_oscA_selfmix = oscSampleA;
-//    m_sampleA = oscSampleA;
-//    m_sampleB = 0.f;
-
     m_oscA_selfmix  = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, _signal[OSC_A_PMSSH]);
     m_oscA_crossmix = NlToolbox::Crossfades::bipolarCrossFade(oscSampleA, shaperSampleA, _signal[OSC_B_PMASH]);
 

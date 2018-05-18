@@ -9,51 +9,63 @@
 
 #pragma once
 
+#include <array>
 #include "nltoolbox.h"
 #include "dsp_defines_signallabels.h"
+
+#define COMB_BUFFER_SIZE    8192
+#define COMB_BUFFER_SIZE_M1 8191
+#define COMB_BUFFER_SIZE_M3 8189
 
 struct ae_combfilter
 {
     ae_combfilter();        // Default Contructor
 
+    float m_samplerate;
+
     float m_sampleComb;     // Generated Sample
     float m_decayStateVar;
+
+    float m_sampleInterval;
+    float m_warpConst_PI;
+    float m_warpConst_2PI;
 
     void init(float _samplerate, uint32_t _vn);
     void applyCombfilter(float _sampleA, float _sampleB, float *_signal);
 
-
     //**************************** Highpass Filter ****************************//
-    struct OnePoleHighpassFilter
-    {
-        float m_inStateVar, m_outStateVar;
-        float m_b0, m_b1, m_a1;
+    void setHighpassCoeffs(float _frequency);
 
-        void initFilter(float _samplerate, float _cutFrequency)
-        {
-            m_inStateVar = 0.f;
-            m_outStateVar = 0.f;
+    float m_hpCoeff_b0, m_hpCoeff_b1, m_hpCoeff_a1;
+    float m_hpInStateVar, m_hpOutStateVar;
 
-            _cutFrequency = _cutFrequency * (3.14159f / _samplerate);
-            _cutFrequency = NlToolbox::Math::tan(_cutFrequency);
+    //***************************** Lowpass Filter ****************************//
+    void setLowpassCoeffs(float _frequency);
 
-            m_a1 = (1.f - _cutFrequency) / (1.f + _cutFrequency);
-            m_b0 = 1.f / (1.f + _cutFrequency);
-            m_b1 = (1.f / (1.f + _cutFrequency)) * -1.f;
-        }
+    float m_lpCoeff;
+    float m_lpStateVar;
 
-        inline float applyFilter(float _sample)
-        {
-            float tmpVar;
+    //***************************** Allpass Filter ****************************//
+    void setAllpassCoeffs(float _frequency, float _resonance);
 
-            tmpVar  = m_b0 * _sample;
-            tmpVar += m_b1 * m_inStateVar;
-            tmpVar += m_a1 * m_outStateVar;
+    float m_apCoeff_1, m_apCoeff_2;
+    float m_apStateVar_1;        // Allpass State Variables
+    float m_apStateVar_2;
+    float m_apStateVar_3;
+    float m_apStateVar_4;
 
-            m_inStateVar  = _sample + DNC_CONST;
-            m_outStateVar = tmpVar + DNC_CONST;
+    //****************************** Delay/ Decay *****************************//
+    void setDelayTime(float _frequency);
 
-            return tmpVar;
-        }
-    }m_highpass;
+    uint32_t m_delayBufferInd;
+    std::array<float, COMB_BUFFER_SIZE> m_delayBuffer;
+
+    float m_delaySamples;
+    float m_delayFreqClip;
+    float m_delayConst;
+    float m_delayStateVar;
+
+    void setDecayGain(float _frequency, float _decaytime);
+
+    float m_decayGain;
 };

@@ -231,6 +231,7 @@ void dsp_host::evalMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
         /* keyDown */
         f = static_cast<float>(m_decoder.unsigned14(_data0, _data1));
         keyDown(m_decoder.m_voiceFrom, f);
+
         break;
     case 15:
         /* flush (audio_engine trigger needed) */
@@ -917,6 +918,12 @@ void dsp_host::testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
     {
     case 0:
         /* NOTE OFF (explicit) */
+        if (_data0 > 127)
+        {
+            printf("ooooooh ... exp %d \n", _data0);
+
+        }
+
         testNoteOff(_data0, _data1);
         break;
     case 1:
@@ -927,6 +934,11 @@ void dsp_host::testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
         }
         else
         {
+            if (_data0 > 127)
+            {
+                printf("ooooooh ... exp %d \n", _data0);
+
+            }
             testNoteOff(_data0, _data1);
         }
         break;
@@ -1440,6 +1452,18 @@ inline void dsp_host::setPolyFilterCoeffs(float *_signal, uint32_t _voiceID)
     //************************ Osciallator Chirp Filter **********************//
     m_soundgenerator[_voiceID].m_chirpFilter_A.setCoeffs(_signal[OSC_A_CHI]);
     m_soundgenerator[_voiceID].m_chirpFilter_B.setCoeffs(_signal[OSC_B_CHI]);
+
+//    ae_soundgenerator *ptr = &m_soundgenerator[_voiceID];
+//    ptr->m_chirpFilter_A.setCoeffs(_signal[OSC_A_CHI]);
+//    ptr->m_chirpFilter_B.setCoeffs(_signal[OSC_B_CHI]);
+
+    //****************************** Comb Filter *****************************//
+//    ae_combfilter *ptr = &m_combfilter[_voiceID];
+//    ptr.setHighpassCoeffs(_signal[CMB_F]);
+//    ptr.setLowpassCoeffs(_signal[CMB_LPF]);
+//    ptr.setAllpassCoeffs(_signal[CMB_APF], _signal[CMB_APRES]);
+//    ptr.setDelayTime(_signal[CMB_F]);
+//    ptr.setDecayGain(_signal[CMB_F], _signal[CMB_DT]);
 }
 
 

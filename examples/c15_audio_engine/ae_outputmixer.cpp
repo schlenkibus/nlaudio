@@ -58,7 +58,7 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
     mainSample = NlToolbox::Others::threeRanges(mainSample, tmpVar, 0.5f);              /// _signal[OUT_FLD]
 
     tmpVar = mainSample * mainSample;
-    tmpVar = tmpVar * m_stateVarL[_voiceID];
+    tmpVar = tmpVar - m_stateVarL[_voiceID];
     m_stateVarL[_voiceID] = tmpVar * m_warpedConst_30hz + m_stateVarL[_voiceID] + DNC_CONST;
 
     mainSample = NlToolbox::Others::parAsym(mainSample, tmpVar, 0.f);                   /// _signal[OUT_ASM]
@@ -77,7 +77,7 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
     mainSample = NlToolbox::Others::threeRanges(mainSample, tmpVar, 0.5f);              /// _signal[OUT_FLD]
 
     tmpVar = mainSample * mainSample;
-    tmpVar = tmpVar * m_stateVarR[_voiceID];
+    tmpVar = tmpVar - m_stateVarR[_voiceID];
     m_stateVarR[_voiceID] = tmpVar * m_warpedConst_30hz + m_stateVarR[_voiceID] + DNC_CONST;
 
     mainSample = NlToolbox::Others::parAsym(mainSample, tmpVar, 0.f);                   /// _signal[OUT_ASM]
