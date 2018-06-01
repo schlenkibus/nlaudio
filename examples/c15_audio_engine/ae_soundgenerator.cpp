@@ -122,9 +122,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
 
 
     //******************************* Shaper A *******************************//
-    tmpVar = _signal[SHP_A_DRVEA] * 0.18f;
-
-    float shaperSampleA = oscSampleA * tmpVar;
+    float shaperSampleA = oscSampleA * _signal[SHP_A_DRVEA];
     tmpVar = shaperSampleA;
 
     shaperSampleA = NlToolbox::Math::sinP3_warp(shaperSampleA);
@@ -136,9 +134,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
 
 
     //******************************* Shaper B *******************************//
-    tmpVar = _signal[SHP_B_DRVEB] * 0.18f;
-
-    float shaperSampleB = oscSampleB * tmpVar;
+    float shaperSampleB = oscSampleB * _signal[SHP_B_DRVEB];
     tmpVar = shaperSampleB;
 
     shaperSampleB = NlToolbox::Math::sinP3_warp(shaperSampleB);
