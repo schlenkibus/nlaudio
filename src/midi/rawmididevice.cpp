@@ -120,7 +120,7 @@ void RawMidiDevice::worker(RawMidiDevice *ptr)
 {
 	const int buffersize = ptr->m_buffersize;
 
-	uint8_t buffer[buffersize];
+    uint8_t buffer[buffersize] = {0};
 
 	snd_rawmidi_drain(ptr->m_handle);
 
