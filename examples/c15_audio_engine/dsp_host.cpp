@@ -129,6 +129,7 @@ void dsp_host::tickMain()
 void dsp_host::evalMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
 {
     /* TCD MIDI evaluation */
+    int32_t i;
     float f;
     switch(m_decoder.getCommandId(_status & 127))
     {
@@ -136,14 +137,30 @@ void dsp_host::evalMidi(uint32_t _status, uint32_t _data0, uint32_t _data1)
         /* ignore */
         break;
     case 1:
-        /* selectVoice */
-        m_decoder.m_voiceFrom = m_decoder.m_voiceTo = m_decoder.unsigned14(_data0, _data1);
-        voiceSelectionUpdate();
+        /* selectVoice - rigorous safety mechanism */
+        i = m_decoder.unsigned14(_data0, _data1);
+        if((i > -1) && ((i < m_voices)) || (i == 16383))
+        {
+            m_decoder.m_voiceFrom = m_decoder.m_voiceTo = i;
+            voiceSelectionUpdate();
+        }
+        else
+        {
+            std::cout << "ignored selectVoice(" << i << ")" << std::endl;
+        }
         break;
     case 2:
-        /* selectMultipleVoices */
-        m_decoder.m_voiceTo = m_decoder.unsigned14(_data0, _data1);
-        voiceSelectionUpdate();
+        /* selectMultipleVoices - rigorous safety mechanism */
+        i = m_decoder.unsigned14(_data0, _data1);
+        if((i > -1) && ((i < m_voices) || (i == 16383)))
+        {
+            m_decoder.m_voiceTo = i;
+            voiceSelectionUpdate();
+        }
+        else
+        {
+            std::cout << "ignored selectMultipleVoices(" << i << ")" << std::endl;
+        }
         break;
     case 3:
         /* selectParam */
@@ -417,6 +434,9 @@ void dsp_host::listUpdate(float _dest)
     /* distinguish list ids */
     switch(m_decoder.m_listId)
     {
+    case 0:
+        /* ignore */
+        break;
     case 1:
         /* recall list traversal */
         m_params.setDest(0, m_decoder.traverseRecall(), _dest);
@@ -1148,15 +1168,24 @@ void dsp_host::testNoteOn(uint32_t _pitch, uint32_t _velocity)
 /* test key up */
 void dsp_host::testNoteOff(uint32_t _pitch, uint32_t _velocity)
 {
-    /* get note's voiceId and prepare velocity */
-    uint32_t usedVoiceId = m_test_noteId[_pitch] - 1;       // (subtract one in order to get real id)
-    m_test_noteId[_pitch] = 0;                              // clear voiceId assignment
-    uint32_t noteVel = static_cast<uint32_t>(static_cast<float>(_velocity) * m_test_normalizeMidi * utility_definition[0][0]);
-    /* key event sequence */
-    evalMidi(47, 0, 1);                                     // enable preload (no list mode)
-    evalMidi(0, 0, usedVoiceId);                            // select voice: used voice (by note number)
-    evalMidi(7, noteVel >> 7, noteVel & 127);               // key up: velocity
-    evalMidi(47, 0, 2);                                     // apply preloaded values
+    /* rigorous safety mechanism */
+    int32_t checkVoiceId = m_test_noteId[_pitch] - 1;           // (subtract one in order to get real id)
+    if((checkVoiceId < 0) || (checkVoiceId >= m_voices))
+    {
+        std::cout << "detected Note Off that shouldn't have happened..." << std::endl;
+    }
+    else
+    {
+        uint32_t usedVoiceId = checkVoiceId;                    // copy valid voiceId
+        m_test_noteId[_pitch] = 0;                              // clear voiceId assignment
+        /* prepare velocity */
+        uint32_t noteVel = static_cast<uint32_t>(static_cast<float>(_velocity) * m_test_normalizeMidi * utility_definition[0][0]);
+        /* key event sequence */
+        evalMidi(47, 0, 1);                                     // enable preload (no list mode)
+        evalMidi(0, 0, usedVoiceId);                            // select voice: used voice (by note number)
+        evalMidi(7, noteVel >> 7, noteVel & 127);               // key up: velocity
+        evalMidi(47, 0, 2);                                     // apply preloaded values
+    }
 }
 
 /* set transition time */
