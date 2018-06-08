@@ -68,11 +68,12 @@ void ae_combfilter::init(float _samplerate, uint32_t _vn)
 void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_signal)
 {
     float tmpVar;
+    float currentSample;
 
     //**************************** AB Sample Mix ****************************//
     tmpVar = _signal[0];                /// _signal[CMB_AB]
-    m_sampleComb = _sampleA * (1.f - tmpVar) + _sampleB * tmpVar;
-    m_sampleComb *= m_decayStateVar;
+    currentSample = _sampleA * (1.f - tmpVar) + _sampleB * tmpVar;
+    currentSample *= m_decayStateVar;
 
 
     //****************** AB Ssample Phase Mdulation Mix ********************//
@@ -82,76 +83,76 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
 
     //************************** 1-Pole Highpass ****************************//
-    tmpVar  = m_hpCoeff_b0 * m_sampleComb;
+    tmpVar  = m_hpCoeff_b0 * currentSample;
     tmpVar += m_hpCoeff_b1 * m_hpInStateVar;
     tmpVar += m_hpCoeff_a1 * m_hpOutStateVar;
 
-    m_hpInStateVar  = m_sampleComb + DNC_CONST;
+    m_hpInStateVar  = currentSample + DNC_CONST;
     m_hpOutStateVar = tmpVar + DNC_CONST;
 
 
     //*************************** 1-Pole Lowpass ****************************//
-    m_sampleComb = m_sampleComb * (1.f - m_lpCoeff);
-    m_sampleComb += (m_lpCoeff * m_lpStateVar);
-    m_sampleComb += DNC_CONST;
-    m_lpStateVar = m_sampleComb;
+    currentSample = currentSample * (1.f - m_lpCoeff);
+    currentSample += (m_lpCoeff * m_lpStateVar);
+    currentSample += DNC_CONST;
+    m_lpStateVar = currentSample;
 
 
     //******************************* Allpass *******************************//
-    tmpVar = m_sampleComb;
+    tmpVar = currentSample;
 
-    m_sampleComb  = m_sampleComb * m_apCoeff_2;
-    m_sampleComb += (m_apStateVar_1 * m_apCoeff_1);
-    m_sampleComb += m_apCoeff_2;
+    currentSample  = currentSample * m_apCoeff_2;
+    currentSample += (m_apStateVar_1 * m_apCoeff_1);
+    currentSample += m_apCoeff_2;
 
-    m_sampleComb -= (m_apStateVar_3 * m_apCoeff_1);
-    m_sampleComb -= (m_apStateVar_4 * m_apCoeff_2);
+    currentSample -= (m_apStateVar_3 * m_apCoeff_1);
+    currentSample -= (m_apStateVar_4 * m_apCoeff_2);
 
-    m_sampleComb += DNC_CONST;
+    currentSample += DNC_CONST;
 
     m_apStateVar_2 = m_apStateVar_1;
     m_apStateVar_1 = tmpVar;
 
     m_apStateVar_4 = m_apStateVar_3;
-    m_apStateVar_3 = m_sampleComb;
+    m_apStateVar_3 = currentSample;
 
 
     //****************************** Para D ********************************//
-    if (fabs(m_sampleComb) > 0.501187f)
+    if (fabs(currentSample) > 0.501187f)
     {
-        if (m_sampleComb > 0.f)
+        if (currentSample > 0.f)
         {
-            m_sampleComb -= 0.501187f;
-            tmpVar = m_sampleComb;
+            currentSample -= 0.501187f;
+            tmpVar = currentSample;
 
-            if (m_sampleComb > 2.98815f)
+            if (currentSample > 2.98815f)
             {
-                m_sampleComb = 2.98815f;
+                currentSample = 2.98815f;
             }
 
-            m_sampleComb = m_sampleComb * (1.f - m_sampleComb * 0.167328f);
+            currentSample = currentSample * (1.f - currentSample * 0.167328f);
 
-            m_sampleComb *= 0.7488f;
+            currentSample *= 0.7488f;
             tmpVar *= 0.2512f;
 
-            m_sampleComb = m_sampleComb + tmpVar + 0.501187f;
+            currentSample = currentSample + tmpVar + 0.501187f;
         }
         else
         {
-            m_sampleComb += 0.501187f;
-            tmpVar = m_sampleComb;
+            currentSample += 0.501187f;
+            tmpVar = currentSample;
 
-            if (m_sampleComb < -2.98815f)
+            if (currentSample < -2.98815f)
             {
-                m_sampleComb = -2.98815f;
+                currentSample = -2.98815f;
             }
 
-            m_sampleComb = m_sampleComb * (1.f - fabs(m_sampleComb) * 0.167328f);
+            currentSample = currentSample * (1.f - fabs(currentSample) * 0.167328f);
 
-            m_sampleComb *= 0.7488f;
+            currentSample *= 0.7488f;
             tmpVar *= 0.2512f;
 
-            m_sampleComb = m_sampleComb + tmpVar - 0.501187f;
+            currentSample = currentSample + tmpVar - 0.501187f;
         }
     }
 
@@ -167,11 +168,15 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
 
     //******************************* Delay ********************************//
+    float holdsample = currentSample;            // for Bypass
+
     /// Buffer Flush
-    m_delayBuffer[m_delayBufferInd] = m_sampleComb;
+    m_delayBuffer[m_delayBufferInd] = currentSample;
 
     tmpVar = tmpVar * phaseMod + tmpVar;
     tmpVar -= 1.f;
+
+    /// hier kommt voicestealing hin!!
 
     if (tmpVar > COMB_BUFFER_SIZE_M3)
     {
@@ -200,7 +205,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     ind_tp1 &= COMB_BUFFER_SIZE_M1;
     ind_tp2 &= COMB_BUFFER_SIZE_M1;
 
-    m_sampleComb = NlToolbox::Math::interpolRT(delaySamples_fract,          // Interpolation
+    currentSample = NlToolbox::Math::interpolRT(delaySamples_fract,          // Interpolation
                                                 m_delayBuffer[ind_tm1],
                                                 m_delayBuffer[ind_t0],
                                                 m_delayBuffer[ind_tp1],
@@ -208,10 +213,13 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
     /// m_sampleComb *= m_FlushFade;
 
-    /// Envelope for voicestealing
+    /// Envelope for voicestealingtmpVar
 
 
     m_delayBufferInd = (m_delayBufferInd + 1) & COMB_BUFFER_SIZE_M1;      // increase index and check boundaries
+
+    tmpVar = _signal[CMB_BYP];                                            // Bypass
+    m_sampleComb = tmpVar * currentSample + (tmpVar - 1) * holdsample;
 
     //****************************** Decay ********************************//
     m_decayStateVar = m_sampleComb * m_decayGain;
@@ -386,3 +394,151 @@ void ae_combfilter::setDecayGain(float _frequency, float _decaytime)
 
     m_decayGain = _frequency;
 }
+
+
+/******************************************************************************/
+/** @brief
+*******************************************************************************/
+
+void ae_combfilter::setCombfilter(float *_signal)
+{
+    //********************** Highpass Coefficients *************************//
+    float frequency = _signal[CMB_F] * m_warpConst_PI;
+    frequency = NlToolbox::Math::tan(frequency);
+
+    m_hpCoeff_a1 = (1.f - frequency) / (1.f + frequency);
+    m_hpCoeff_b0 = 1.f / (1.f + frequency);
+    m_hpCoeff_b1 = m_hpCoeff_b0 * -1.f;
+
+
+    //*********************** Lowpass Coefficient **************************//
+    frequency = _signal[CMB_LPF] * m_warpConst_PI;
+
+    frequency *= 0.159155f;                                        // 2Pi wrap
+    frequency -= NlToolbox::Conversion::float2int(frequency);
+    frequency *= 6.28319f;
+
+    frequency = NlToolbox::Math::sin(frequency) / NlToolbox::Math::cos(frequency);     // tan -pi..pi
+
+    m_lpCoeff = (1.f - frequency) / (1.f + frequency);
+
+
+    //********************** Allpass Coefficients **************************//
+    frequency = _signal[CMB_APF] * m_warpConst_2PI;
+    float resonance = NlToolbox::Math::sin(frequency) * (1.f - _signal[CMB_APRES]);
+
+    float tmpVar = 1.f / (1.f + resonance);
+
+    m_apCoeff_1 = (-2.f * NlToolbox::Math::cos(frequency)) * tmpVar;
+    m_apCoeff_2 = (1.f - resonance) * tmpVar;
+
+
+    //*************************** Delaytime ********************************//
+    frequency = _signal[CMB_F];
+
+    if (frequency < m_delayFreqClip)
+    {
+        m_delaySamples = m_samplerate / m_delayFreqClip;
+    }
+    else
+    {
+        m_delaySamples = m_samplerate / frequency;
+    }
+
+    frequency *= m_sampleInterval;
+
+
+    //************************ Lowpass Influence ***************************//
+    float stateVar_r = NlToolbox::Math::sinP3_warp(frequency);
+    float stateVar_i = NlToolbox::Math::sinP3_warp(frequency + 0.25f);
+
+    stateVar_r = stateVar_r * m_lpCoeff;
+    stateVar_i = stateVar_i * -m_lpCoeff + 1.f;
+
+    tmpVar = NlToolbox::Math::arctan(stateVar_r / stateVar_i) * (1.f / -6.28318f);
+
+    m_delaySamples = m_delaySamples * tmpVar + m_delaySamples;
+
+
+    //************************ Allpass Influence ***************************//
+    stateVar_i = NlToolbox::Math::sinP3_warp(frequency) * -1.f * m_apCoeff_1;
+    float stateVar2_i = NlToolbox::Math::sinP3_warp(frequency + frequency);
+
+    stateVar_r = NlToolbox::Math::sinP3_warp(frequency + 0.25f) * m_apCoeff_1;
+    float stateVar2_r = NlToolbox::Math::sinP3_warp(frequency + frequency + 0.25f);
+
+
+    float var1_i = stateVar_i - stateVar2_i;
+    float var2_i = (stateVar_i - (m_apCoeff_2 * stateVar2_i)) * -1.f;
+    float var1_r = stateVar_r + stateVar2_r + m_apCoeff_2;
+    float var2_r = stateVar_r + (stateVar2_r * m_apCoeff_2) + 1.f;
+
+    stateVar_i = (var1_r * var2_r) - (var1_i * var2_i);        // kmplx mul
+    stateVar_r = (var1_r * var2_i) + (var2_r * var1_i);
+
+    if (stateVar_i > 0.f)                                            // safe
+    {
+        stateVar_i += 1e-12;
+    }
+    else
+    {
+        stateVar_i -= 1e-12;
+    }
+
+    tmpVar = NlToolbox::Math::arctan(stateVar_r / stateVar_i);        // arctan
+
+    if (stateVar_i < 0.f)
+    {
+        if (stateVar_r > 0.f)
+        {
+            tmpVar += 3.14159f;
+        }
+        else
+        {
+            tmpVar -= 3.14159f;
+        }
+    }
+
+    if (tmpVar > 0.f)                                       // forced unwrap > 0
+    {
+        tmpVar -= 6.28318f;
+    }
+
+    tmpVar *= 0.159155f;
+
+    m_delaySamples = m_delaySamples * tmpVar + m_delaySamples;
+
+
+    //**************************** Decay Gain ******************************//
+    tmpVar = _signal[CMB_DT];
+    frequency = _signal[CMB_F] * fabs(tmpVar);
+
+    if (frequency < DNC_CONST)         // Min-Clip
+    {
+        frequency = DNC_CONST;
+    }
+
+    frequency = (1.f / frequency) * -6.28318f;;
+
+    if (frequency > 0)                 // Exp Clipped
+    {
+        frequency = 1.f;
+    }
+    else if (-27.631f > frequency)
+    {
+        frequency = 0.f;
+    }
+    else
+    {
+        frequency = pow(2.71828f, frequency);
+    }
+
+    if (tmpVar < 0.f)
+    {
+        frequency *= -1.f;
+    }
+
+    m_decayGain = frequency;
+}
+
+

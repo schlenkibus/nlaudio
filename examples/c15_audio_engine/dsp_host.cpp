@@ -1482,11 +1482,9 @@ inline void dsp_host::setPolyFilterCoeffs(float *_signal, uint32_t _voiceID)
     m_soundgenerator[_voiceID].m_chirpFilter_A.setCoeffs(_signal[OSC_A_CHI]);
     m_soundgenerator[_voiceID].m_chirpFilter_B.setCoeffs(_signal[OSC_B_CHI]);
 
-//    ae_soundgenerator *ptr = &m_soundgenerator[_voiceID];
-//    ptr->m_chirpFilter_A.setCoeffs(_signal[OSC_A_CHI]);
-//    ptr->m_chirpFilter_B.setCoeffs(_signal[OSC_B_CHI]);
-
     //****************************** Comb Filter *****************************//
+    m_combfilter[_voiceID].setCombfilter(_signal);
+
 //    ae_combfilter *ptr = &m_combfilter[_voiceID];
 //    ptr.setHighpassCoeffs(_signal[CMB_F]);
 //    ptr.setLowpassCoeffs(_signal[CMB_LPF]);

@@ -32,6 +32,7 @@ struct ae_combfilter
 
     void init(float _samplerate, uint32_t _vn);
     void applyCombfilter(float _sampleA, float _sampleB, float *_signal);
+    void setCombfilter(float *_signal);
 
     //**************************** Highpass Filter ****************************//
     void setHighpassCoeffs(float _frequency);

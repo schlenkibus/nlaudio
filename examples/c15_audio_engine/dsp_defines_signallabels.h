@@ -69,4 +69,11 @@
 
 #define MST_VOL         38
 
+#define CMB_F           1000
+#define CMB_LPF         1001
+#define CMB_APF         1002
+#define CMB_APRES       1003
+#define CMB_DT          1004
+#define CMB_BYP         1005
+
 #endif

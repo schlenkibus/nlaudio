@@ -282,6 +282,21 @@ inline float interpolRT(float fract, float sample_tm1, float sample_t0, float sa
     return sample_t0 + fract * a + fract_cube * (a + b + 2.f * c) - fract_square * (2.f * a + b + 3.f * c);
 }
 
+
+
+/*****************************************************************************/
+/** @brief    bell function with y = 0 at x = 0 & 1 and y = 1 at x = 0.5,
+ *            expontential  when x < 0 | x > 1
+ *  @param    x
+ *  @return	  y
+******************************************************************************/
+inline float bell(float _x)
+{
+    _x = fabs(_x - 0.5f) * 4.f - 1.f;
+    return (2.f - fabs(_x)) * _x * -0.5f + 0.5f;
+}
+
+
 } // namespace Math
 
 
