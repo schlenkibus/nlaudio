@@ -193,6 +193,10 @@ const float param_definition[sig_number_of_params][10] = {
 
 };
 
+#elif DSP_TEST_MODE==3
+
+
+
 #endif
 
 // utility parameters

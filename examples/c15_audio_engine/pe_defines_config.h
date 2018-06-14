@@ -33,6 +33,8 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define sig_number_of_params 26             // 13 ENV_A params, 6 OSC params, 2 MASTER params, 5 POLY params (no EnvC Rate)
 #define sig_number_of_param_items 121       // (13 + 6 + 2) MONO params = 21 param itmems; (5 x 20) POLY params = 100 param items; total: 21 + 100 = 121 items
 #define sig_number_of_signal_items 10       // small test project requires 10 shared signals
+#define lst_recall_length 21                // declare number of paramIds for recall list (MONO - currently)
+#define lst_keyEvent_length 5               // declare number of paramIds for key event list (POLY - currently)
 
 #elif DSP_TEST_MODE==2
 
@@ -40,6 +42,17 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define sig_number_of_params 95             // 3 * (13 ENV params) + 2 * (14 OSC + 8 SHP params) + (4 OUT params) + (2 MASTER params) + (6 KEY params)
 #define sig_number_of_param_items 209       // (39 + 44 + 4 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
 #define sig_number_of_signal_items 39       // 39 shared signals
+#define lst_recall_length 88                // 88 preset-relevant parameters
+#define lst_keyEvent_length 6               // 6 key event parameters
+
+#elif DSP_TEST_MODE==3
+
+// configuration for test 3                 -> see Linux Engine - Test 3
+#define sig_number_of_params 113            // 3 * (13 ENV params) + 2 * (14 OSC + 8 SHP params) + (16 CMB params) + (6 OUT params) + (2 MASTER params) + (6 KEY params)
+#define sig_number_of_param_items 227       // (39 + 44 + 16 + 6 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
+#define sig_number_of_signal_items 51       // 51 shared signals
+#define lst_recall_length 106               // 106 preset-relevant parameters
+#define lst_keyEvent_length 6               // 6 key event parameters
 
 #endif
 
@@ -72,18 +85,6 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 /* tcd list handling - !!! change for test 2 */
 
 #define lst_number_of_lists 2               // predefined paramId lists (simplifying recal and key event update TCD sequences)
-
-#if DSP_TEST_MODE==1
-
-#define lst_recall_length 21                // declare number of paramIds for recall list (MONO - currently)
-#define lst_keyEvent_length 5               // declare number of paramIds for key event list (POLY - currently)
-
-#elif DSP_TEST_MODE==2
-
-#define lst_recall_length 89                // 89 preset-relevant parameters
-#define lst_keyEvent_length 6               // 6 key event parameters
-
-#endif
 
 /* internal ids of crucial TCD parameters - remove later, when pe_defines_labels is established */
 #define par_envelopeA 0                     // item pointer to (consecutive) envelope parameters A (internal ids)

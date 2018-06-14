@@ -5,11 +5,11 @@
 #include <stdint.h>
 #include "dsp_defines_session.h"
 
+#if DSP_TEST_MODE==1
+
 /* needed are control id mappings (maybe for two different devices) and (two ore more) predefined presets */
 
 #define testMidiDevice 1
-
-#if DSP_TEST_MODE==1
 
 #define testRecallSequenceLength 21
 /* valid triggers */
@@ -411,5 +411,9 @@ const uint32_t testParamRouting[25][24] = {
         0,     0,     0,     0
     },
 };
+
+#elif DSP_TEST_MODE==3
+
+
 
 #endif
