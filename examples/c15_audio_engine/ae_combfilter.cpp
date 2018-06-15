@@ -77,9 +77,9 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
 
     //****************** AB Ssample Phase Mdulation Mix ********************//
-    tmpVar = _signal[0];                /// _signal[CMB_PH_AB]
+    tmpVar = _signal[0];                /// _signal[CMB_PMAB]
     float phaseMod = _sampleA * (1.f - tmpVar) + _sampleB * tmpVar;
-    phaseMod *= _signal[0];             /// _signal[CMB_PH]
+    phaseMod *= _signal[0];             /// _signal[CMB_PM]
 
 
     //************************** 1-Pole Highpass ****************************//
@@ -164,7 +164,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
     m_delayStateVar = tmpVar;
 
-    tmpVar *= 1.f;                          ///_signal[CMB_PEEC]
+    tmpVar *= 1.f;                          ///_signal[CMB_FEC]
 
 
     //******************************* Delay ********************************//
@@ -403,7 +403,7 @@ void ae_combfilter::setDecayGain(float _frequency, float _decaytime)
 void ae_combfilter::setCombfilter(float *_signal)
 {
     //********************** Highpass Coefficients *************************//
-    float frequency = _signal[CMB_F] * m_warpConst_PI;
+    float frequency = _signal[CMB_FRQ] * m_warpConst_PI;
     frequency = NlToolbox::Math::tan(frequency);
 
     m_hpCoeff_a1 = (1.f - frequency) / (1.f + frequency);
@@ -425,7 +425,7 @@ void ae_combfilter::setCombfilter(float *_signal)
 
     //********************** Allpass Coefficients **************************//
     frequency = _signal[CMB_APF] * m_warpConst_2PI;
-    float resonance = NlToolbox::Math::sin(frequency) * (1.f - _signal[CMB_APRES]);
+    float resonance = NlToolbox::Math::sin(frequency) * (1.f - _signal[CMB_APR]);
 
     float tmpVar = 1.f / (1.f + resonance);
 
@@ -434,7 +434,7 @@ void ae_combfilter::setCombfilter(float *_signal)
 
 
     //*************************** Delaytime ********************************//
-    frequency = _signal[CMB_F];
+    frequency = _signal[CMB_FRQ];
 
     if (frequency < m_delayFreqClip)
     {
@@ -510,8 +510,8 @@ void ae_combfilter::setCombfilter(float *_signal)
 
 
     //**************************** Decay Gain ******************************//
-    tmpVar = _signal[CMB_DT];
-    frequency = _signal[CMB_F] * fabs(tmpVar);
+    tmpVar = _signal[CMB_DEC];
+    frequency = _signal[CMB_FRQ] * fabs(tmpVar);
 
     if (frequency < DNC_CONST)         // Min-Clip
     {

@@ -118,6 +118,89 @@
 
 #elif DSP_TEST_MODE==3
 
+#define P_EA_GAIN   6
+#define P_EB_GAIN   19
 
+#define P_OA_P      39
+#define P_OA_PKT    40
+#define P_OA_PEC    41
+#define P_OA_F      42
+#define P_OA_FEC    43
+#define P_OA_PMS    44
+#define P_OA_PMSEA  45
+#define P_OA_PMSSH  46
+#define P_OA_PMB    47
+#define P_OA_PMBEB  48
+#define P_OA_PMBSH  49
+#define P_OA_PMF    50
+#define P_OA_PMFEC  51
+#define P_OA_CHI    52
+
+#define P_SA_D      53
+#define P_SA_DEA    54
+#define P_SA_F      55
+#define P_SA_A      56
+#define P_SA_M      57
+#define P_SA_FBM    58
+#define P_SA_FBEC   59
+#define P_SA_RM     60
+
+#define P_OB_P      61
+#define P_OB_PKT    62
+#define P_OB_PEC    63
+#define P_OB_F      64
+#define P_OB_FEC    65
+#define P_OB_PMS    66
+#define P_OB_PMSEB  67
+#define P_OB_PMSSH  68
+#define P_OB_PMA    69
+#define P_OB_PMAEA  70
+#define P_OB_PMASH  71
+#define P_OB_PMF    72
+#define P_OB_PMFEC  73
+#define P_OB_CHI    74
+
+#define P_SB_D      75
+#define P_SB_DEB    76
+#define P_SB_F      77
+#define P_SB_A      78
+#define P_SB_M      79
+#define P_SB_FBM    80
+#define P_SB_FBEC   81
+#define P_SB_RM     82
+
+#define P_CMB_AB    83
+#define P_CMB_P     84
+#define P_CMB_PKT   85
+#define P_CMB_PEC   86
+#define P_CMB_D     87
+#define P_CMB_DKT   88
+#define P_CMB_DG    89
+#define P_CMB_APT   90
+#define P_CMB_APKT  91
+#define P_CMB_APEC  92
+#define P_CMB_APR   93
+#define P_CMB_LP    94
+#define P_CMB_LPKT  95
+#define P_CMB_LPEC  96
+#define P_CMB_PM    97
+#define P_CMB_PMAB  98
+
+#define P_OM_AL     99
+#define P_OM_AP     100
+#define P_OM_BL     101
+#define P_OM_BP     102
+#define P_OM_CL     103
+#define P_OM_CP     104
+
+#define P_MA_V      105
+#define P_MA_T      106
+
+#define P_KEY_PA    107
+#define P_KEY_PB    108
+#define P_KEY_NP    109
+#define P_KEY_VP    110
+#define P_KEY_EC    111
+#define P_KEY_VS    112
 
 #endif

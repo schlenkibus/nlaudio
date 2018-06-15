@@ -107,8 +107,8 @@ float paramengine::scale(const uint32_t _scaleId, const float _scaleArg, float _
         break;
     case 6:
         /* inverted, s-curve scaling (argument is offset) */
-        _value = (2 * (_scaleArg - _value)) - 1;
-        result = ((_value * _value * _value) - 0.25) + (0.75 * _value) + 0.5;
+        _value = (2.f * (_scaleArg - _value)) - 1.f;
+        result = (_value * _value * _value * -0.25) + (0.75 * _value) + 0.5;
         break;
     case 7:
         /* exponential, gain scaling (argument is offset) */
@@ -279,6 +279,9 @@ void paramengine::keyApply(const uint32_t _voiceId)
 #if DSP_TEST_MODE==2
         envUpdateStop(_voiceId, 1, pitch, velocity);    // Envelope B
         envUpdateStop(_voiceId, 2, pitch, velocity);    // Envelope C
+#elif DSP_TEST_MODE==3
+        envUpdateStop(_voiceId, 1, pitch, velocity);    // Envelope B
+        envUpdateStop(_voiceId, 2, pitch, velocity);    // Envelope C
 #endif
         // Envelopes B, C currently missing
         m_envelopes.stopEnvelope(_voiceId, 3);          // Gate
@@ -288,6 +291,9 @@ void paramengine::keyApply(const uint32_t _voiceId)
         /* key down */
         envUpdateStart(_voiceId, 0, pitch, velocity);   // Envelope A
 #if DSP_TEST_MODE==2
+        envUpdateStart(_voiceId, 1, pitch, velocity);   // Envelope B
+        envUpdateStart(_voiceId, 2, pitch, velocity);   // Envelope C
+#elif DSP_TEST_MODE==3
         envUpdateStart(_voiceId, 1, pitch, velocity);   // Envelope B
         envUpdateStart(_voiceId, 2, pitch, velocity);   // Envelope C
 #endif
@@ -482,6 +488,58 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     _signal[OSC_B_FLUEC] = m_body[m_head[P_OB_F].m_index].m_signal * NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], envMod);
     /* - Oscillator B Chirp Frequency in Hz */
     _signal[OSC_B_CHI] = evalNyquist(m_body[m_head[P_OB_CHI].m_index].m_signal * 440.f);
+#elif DSP_TEST_MODE==3
+    /* update envelope times */
+    envUpdateTimes(_voiceId, 0);    // Envelope A
+    envUpdateTimes(_voiceId, 1);    // Envelope B
+    envUpdateTimes(_voiceId, 2);    // Envelope C
+    /* later: Envelope C trigger at slow clock? */
+    /* Pitch Updates */
+    float basePitch = m_body[m_head[P_KEY_NP].m_index + _voiceId].m_signal + m_body[m_head[P_MA_T].m_index].m_signal;
+    float keyTracking, unitPitch, envMod;
+    /* Oscillator A */
+    /* - Oscillator A Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch, Envelope C) */
+    keyTracking = m_body[m_head[P_OA_PKT].m_index].m_signal;
+    unitPitch = m_body[m_head[P_OA_P].m_index].m_signal;
+    envMod = _signal[ENV_C_SIG] * m_body[m_head[P_OA_PEC].m_index].m_signal;
+    _signal[OSC_A_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    /* - Oscillator A Fluctuation (Envelope C) */
+    envMod = m_body[m_head[P_OA_FEC].m_index].m_signal;
+    _signal[OSC_A_FLUEC] = m_body[m_head[P_OA_F].m_index].m_signal * NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], envMod);
+    /* - Oscillator A Chirp Frequency in Hz */
+    _signal[OSC_A_CHI] = evalNyquist(m_body[m_head[P_OA_CHI].m_index].m_signal * 440.f);
+    /* Oscillator B */
+    /* - Oscillator B Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch, Envelope C) */
+    keyTracking = m_body[m_head[P_OB_PKT].m_index].m_signal;
+    unitPitch = m_body[m_head[P_OB_P].m_index].m_signal;
+    envMod = _signal[ENV_C_SIG] * m_body[m_head[P_OB_PEC].m_index].m_signal;
+    _signal[OSC_B_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    /* - Oscillator B Fluctuation (Envelope C) */
+    envMod = m_body[m_head[P_OB_FEC].m_index].m_signal;
+    _signal[OSC_B_FLUEC] = m_body[m_head[P_OB_F].m_index].m_signal * NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], envMod);
+    /* - Oscillator B Chirp Frequency in Hz */
+    _signal[OSC_B_CHI] = evalNyquist(m_body[m_head[P_OB_CHI].m_index].m_signal * 440.f);
+    /* Comb Filter */
+    /* - Comb Filter Pitch as Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Comb Pitch) */
+    keyTracking = m_body[m_head[P_CMB_PKT].m_index].m_signal;
+    unitPitch = 440.f * m_body[m_head[P_CMB_P].m_index].m_signal; // as a tonal component, the reference freq (m_pitch_reference) could be applied instead of const 440 Hz
+    _signal[CMB_FRQ] = evalNyquist(unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking)));
+    /* - Comb Filter Bypass (according to Pitch parameter - without key tracking) */
+    _signal[CMB_BYP] = unitPitch > 8367.31 ? 1.f : 0.f; // check for bypassing comb filter, 8367.31 Hz correspond to Pitch of 119.99
+    /* - Comb Filter Decay Time (Base Pitch, Master Tune, Gate Env, Dec Time, Key Tracking, Gate Amount) */
+
+    // TODO!! - see Reaktor Renderer Decay Macro for more details //
+
+    /* - Comb Filter Allpass Frequency (Base Pitch, Master Tune, Key Tracking, AP Tune, Env C) */
+    keyTracking = m_body[m_head[P_CMB_APKT].m_index].m_signal;
+    unitPitch = m_body[m_head[P_CMB_APT].m_index].m_signal;
+    envMod = _signal[ENV_C_SIG] * m_body[m_head[P_CMB_APEC].m_index].m_signal;
+    _signal[CMB_APF] = evalNyquist(440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    /* - Comb Filter Lowpass ('Hi Cut') Frequency (Base Pitch, Master Tune, Key Tracking, Hi Cut, Env C) */
+    keyTracking = m_body[m_head[P_CMB_LPKT].m_index].m_signal;
+    unitPitch = m_body[m_head[P_CMB_LP].m_index].m_signal;
+    envMod = _signal[ENV_C_SIG] * m_body[m_head[P_CMB_LPEC].m_index].m_signal;
+    _signal[CMB_LPF] = evalNyquist(440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
 #endif
 }
 
@@ -533,6 +591,29 @@ void paramengine::postProcess_fast(float *_signal, const uint32_t _voiceId)
     tmp_pan = NlToolbox::Clipping::uniNorm(m_body[m_head[P_OM_BP].m_index].m_signal + 0.f);
     _signal[OUT_B_L] = tmp_lvl * (1.f - tmp_pan);
     _signal[OUT_B_R] = tmp_lvl * tmp_pan;
+#elif DSP_TEST_MODE==3
+    /* update envelope levels */
+    envUpdateLevels(_voiceId, 0);   // Envelope A
+    envUpdateLevels(_voiceId, 1);   // Envelope B
+    envUpdateLevels(_voiceId, 2);   // Envelope C
+    /* update output mixer levels and pannings */
+    float tmp_key = m_body[m_head[P_KEY_VP].m_index + _voiceId].m_signal; // currently shifting panning?
+    float tmp_lvl, tmp_pan;
+    /* - Branch A */
+    tmp_lvl = m_body[m_head[P_OM_AL].m_index].m_signal;
+    tmp_pan = NlToolbox::Clipping::uniNorm(m_body[m_head[P_OM_AP].m_index].m_signal + 0.f);
+    _signal[OUT_A_L] = tmp_lvl * (1.f - tmp_pan);
+    _signal[OUT_A_R] = tmp_lvl * tmp_pan;
+    /* - Branch B */
+    tmp_lvl = m_body[m_head[P_OM_BL].m_index].m_signal;
+    tmp_pan = NlToolbox::Clipping::uniNorm(m_body[m_head[P_OM_BP].m_index].m_signal + 0.f);
+    _signal[OUT_B_L] = tmp_lvl * (1.f - tmp_pan);
+    _signal[OUT_B_R] = tmp_lvl * tmp_pan;
+    /* - Comb Filter */
+    tmp_lvl = m_body[m_head[P_OM_CL].m_index].m_signal;
+    tmp_pan = NlToolbox::Clipping::uniNorm(m_body[m_head[P_OM_CP].m_index].m_signal + 0.f);
+    _signal[OUT_CMB_L] = tmp_lvl * (1.f - tmp_pan);
+    _signal[OUT_CMB_R] = tmp_lvl * tmp_pan;
 #endif
 }
 
@@ -626,5 +707,59 @@ void paramengine::postProcess_audio(float *_signal, const uint32_t _voiceId)
     /* - Shaper B Feedback Mix (Envelope C) */
     tmp_env = m_body[m_head[P_SB_FBEC].m_index].m_signal;
     _signal[SHP_B_FBEC] = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], tmp_env);
+#elif DSP_TEST_MODE==3
+    /* poly envelope distribution */
+    _signal[ENV_A_SIG] = m_envelopes.m_body[m_envelopes.m_head[0].m_index + _voiceId].m_signal * m_body[m_head[P_EA_GAIN].m_index].m_signal;     // Envelope A post Gain
+    _signal[ENV_B_SIG] = m_envelopes.m_body[m_envelopes.m_head[1].m_index + _voiceId].m_signal * m_body[m_head[P_EB_GAIN].m_index].m_signal;     // Envelope B post Gain
+    _signal[ENV_C_SIG] = m_envelopes.m_body[m_envelopes.m_head[2].m_index + _voiceId].m_signal;     // Envelope C
+    _signal[ENV_G_SIG] = m_envelopes.m_body[m_envelopes.m_head[3].m_index + _voiceId].m_signal;     // Gate
+    /* Oscillator parameter post processing */
+    float tmp_amt, tmp_env;
+    /* Oscillator A */
+    /* - Oscillator A - PM Self */
+    tmp_amt = m_body[m_head[P_OA_PMS].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OA_PMSEA].m_index].m_signal;
+    _signal[OSC_A_PMSEA] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_A_SIG], tmp_env) * tmp_amt;  // Osc A PM Self (Env A)
+    /* - Oscillator A - PM B */
+    tmp_amt = m_body[m_head[P_OA_PMB].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OA_PMBEB].m_index].m_signal;
+    _signal[OSC_A_PMBEB] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_B_SIG], tmp_env) * tmp_amt;  // Osc A PM B (Env B)
+    /* - Oscillator A - PM FB */
+    tmp_amt = m_body[m_head[P_OA_PMF].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OA_PMFEC].m_index].m_signal;
+    _signal[OSC_A_PMFEC] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], tmp_env) * tmp_amt;  // Osc A PM FB (Env C)
+    /* Shaper A */
+    /* - Shaper A Drive (Envelope A) */
+    tmp_amt = m_body[m_head[P_SA_D].m_index].m_signal;
+    tmp_env = m_body[m_head[P_SA_DEA].m_index].m_signal;
+    _signal[SHP_A_DRVEA] = (NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_A_SIG], tmp_env) * tmp_amt) + 0.18f;
+    /* - Shaper A Feedback Mix (Envelope C) */
+    tmp_env = m_body[m_head[P_SA_FBEC].m_index].m_signal;
+    _signal[SHP_A_FBEC] = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], tmp_env);
+    /* Oscillator B */
+    /* - Oscillator B - PM Self */
+    tmp_amt = m_body[m_head[P_OB_PMS].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OB_PMSEB].m_index].m_signal;
+    _signal[OSC_B_PMSEB] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_B_SIG], tmp_env) * tmp_amt;  // Osc B PM Self (Env B)
+    /* - Oscillator B - PM A */
+    tmp_amt = m_body[m_head[P_OB_PMA].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OB_PMAEA].m_index].m_signal;
+    _signal[OSC_B_PMAEA] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_A_SIG], tmp_env) * tmp_amt;  // Osc B PM A (Env A)
+    /* - Oscillator B - PM FB */
+    tmp_amt = m_body[m_head[P_OB_PMF].m_index].m_signal;
+    tmp_env = m_body[m_head[P_OB_PMFEC].m_index].m_signal;
+    _signal[OSC_B_PMFEC] = NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], tmp_env) * tmp_amt;  // Osc B PM FB (Env C)
+    /* Shaper B */
+    /* - Shaper B Drive (Envelope B) */
+    tmp_amt = m_body[m_head[P_SB_D].m_index].m_signal;
+    tmp_env = m_body[m_head[P_SB_DEB].m_index].m_signal;
+    _signal[SHP_B_DRVEB] = (NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_B_SIG], tmp_env) * tmp_amt) + 0.18f;
+    /* - Shaper B Feedback Mix (Envelope C) */
+    tmp_env = m_body[m_head[P_SB_FBEC].m_index].m_signal;
+    _signal[SHP_B_FBEC] = NlToolbox::Crossfades::unipolarCrossFade(_signal[ENV_G_SIG], _signal[ENV_C_SIG], tmp_env);
+    /* Comb Filter */
+    /* - Comb Filter Pitch Envelope C, converted into Frequency Factor */
+    tmp_amt = m_body[m_head[P_CMB_PEC].m_index].m_signal;
+    _signal[CMB_FEC] = m_convert.eval_lin_pitch(69.f - (tmp_amt * _signal[ENV_C_SIG]));
 #endif
 }

@@ -14,4 +14,4 @@
  * test mode 2 (all env, all osc+shp, out, master) is in the making...
  */
 
-#define DSP_TEST_MODE 2
+#define DSP_TEST_MODE 3
