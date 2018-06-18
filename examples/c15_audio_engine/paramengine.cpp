@@ -24,6 +24,7 @@ void paramengine::init(uint32_t _sampleRate, uint32_t _voices)
     m_clockIds.reset();
     m_postIds.reset();
     m_convert.init();
+    m_combDecayCurve.setCurve(0.f, 0.25, 1.f);                                  // control shaper for the comb decay parameter
     /* provide indices for further definitions */
     uint32_t i, p;
     /* initialize envelope events */
@@ -496,7 +497,7 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     /* later: Envelope C trigger at slow clock? */
     /* Pitch Updates */
     float basePitch = m_body[m_head[P_KEY_NP].m_index + _voiceId].m_signal + m_body[m_head[P_MA_T].m_index].m_signal;
-    float keyTracking, unitPitch, envMod;
+    float keyTracking, unitPitch, envMod, unitSign;
     /* Oscillator A */
     /* - Oscillator A Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch, Envelope C) */
     keyTracking = m_body[m_head[P_OA_PKT].m_index].m_signal;
@@ -522,14 +523,17 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     /* Comb Filter */
     /* - Comb Filter Pitch as Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Comb Pitch) */
     keyTracking = m_body[m_head[P_CMB_PKT].m_index].m_signal;
-    unitPitch = 440.f * m_body[m_head[P_CMB_P].m_index].m_signal; // as a tonal component, the reference freq (m_pitch_reference) could be applied instead of const 440 Hz
-    _signal[CMB_FRQ] = evalNyquist(unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking)));
-    /* - Comb Filter Bypass (according to Pitch parameter - without key tracking) */
-    _signal[CMB_BYP] = unitPitch > 8367.31 ? 1.f : 0.f; // check for bypassing comb filter, 8367.31 Hz correspond to Pitch of 119.99
+    unitPitch = m_body[m_head[P_CMB_P].m_index].m_signal;
+    // as a tonal component, the reference tone frequency is applied (instead of const 440 Hz)
+    _signal[CMB_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking)));
+    /* - Comb Filter Bypass (according to Pitch parameter - without key tracking or reference freq) */
+    _signal[CMB_BYP] = unitPitch > dsp_comb_max_freqFactor ? 1.f : 0.f; // check for bypassing comb filter, max_freqFactor corresponds to Pitch of 119.99 ST
     /* - Comb Filter Decay Time (Base Pitch, Master Tune, Gate Env, Dec Time, Key Tracking, Gate Amount) */
-
-    // TODO!! - see Reaktor Renderer Decay Macro for more details //
-
+    keyTracking = m_body[m_head[P_CMB_DKT].m_index].m_signal;
+    envMod = 1.f - ((1.f - _signal[ENV_G_SIG]) * m_combDecayCurve.applyLinearCurve(m_body[m_head[P_CMB_DG].m_index].m_signal));
+    unitPitch = (-0.5 * basePitch * keyTracking) + (fabs(m_body[m_head[P_CMB_D].m_index].m_signal) * envMod);
+    unitSign = m_body[m_head[P_CMB_D].m_index].m_signal < 0 ? -1.f : 1.f;
+    _signal[CMB_DEC] = 0.001 * m_convert.eval_level(unitPitch) * unitSign;
     /* - Comb Filter Allpass Frequency (Base Pitch, Master Tune, Key Tracking, AP Tune, Env C) */
     keyTracking = m_body[m_head[P_CMB_APKT].m_index].m_signal;
     unitPitch = m_body[m_head[P_CMB_APT].m_index].m_signal;

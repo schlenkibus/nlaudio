@@ -91,8 +91,8 @@ void env_engine::init_gate(const uint32_t _envId, const float _gateRelease)
     for(uint32_t s = 0; s < sig_number_of_env_segments; s++)
     {
         /* segment definition */
-        obj->m_state[s + 1] = envelope_types[sig_env_type_adbdsr][s][0];
-        obj->m_next[s + 1] = envelope_types[sig_env_type_adbdsr][s][1];
+        obj->m_state[s + 1] = envelope_types[sig_env_type_gate][s][0];
+        obj->m_next[s + 1] = envelope_types[sig_env_type_gate][s][1];
         /* get (rendering) item index */
         index = obj->m_index;
         /* inner loop - initialize (rendering) items */
@@ -103,13 +103,13 @@ void env_engine::init_gate(const uint32_t _envId, const float _gateRelease)
             /* item segment definition - distinct release case */
             if(s < 1) {
                 /* attack segment */
-                item->m_segment[s + 1].m_dx = static_cast<float>(envelope_types[sig_env_type_adbdsr][s][2]);
+                item->m_segment[s + 1].m_dx = static_cast<float>(envelope_types[sig_env_type_gate][s][2]);
             }
             else {
                 /* release segment */
                 item->m_segment[s + 1].m_dx = _gateRelease;
             }
-            item->m_segment[s + 1].m_dest = static_cast<float>(envelope_types[sig_env_type_adbdsr][s][3]);
+            item->m_segment[s + 1].m_dest = static_cast<float>(envelope_types[sig_env_type_gate][s][3]);
             /* update item index */
             index++;
         }
@@ -132,8 +132,8 @@ void env_engine::init_decay(const uint32_t _envId)
     for(uint32_t s = 0; s < sig_number_of_env_segments; s++)
     {
         /* segment definition */
-        obj->m_state[s + 1] = envelope_types[sig_env_type_adbdsr][s][0];
-        obj->m_next[s + 1] = envelope_types[sig_env_type_adbdsr][s][1];
+        obj->m_state[s + 1] = envelope_types[sig_env_type_decay][s][0];
+        obj->m_next[s + 1] = envelope_types[sig_env_type_decay][s][1];
         /* get (rendering) item index */
         index = obj->m_index;
         /* inner loop - initialize (rendering) items */
@@ -142,8 +142,8 @@ void env_engine::init_decay(const uint32_t _envId)
             /* provide item reference */
             env_body* item = &m_body[index];
             /* item segment definition */
-            item->m_segment[s + 1].m_dx = static_cast<float>(envelope_types[sig_env_type_adbdsr][s][2]);
-            item->m_segment[s + 1].m_dest = static_cast<float>(envelope_types[sig_env_type_adbdsr][s][3]);
+            item->m_segment[s + 1].m_dx = static_cast<float>(envelope_types[sig_env_type_decay][s][2]);
+            item->m_segment[s + 1].m_dest = static_cast<float>(envelope_types[sig_env_type_decay][s][3]);
             /* update item index */
             index++;
         }

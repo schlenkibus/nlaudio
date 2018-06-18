@@ -56,29 +56,32 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 
 #endif
 
-#define sig_number_of_utilities 2
-#define sig_number_of_envelopes 5
+/* Utility Parameters and Envelope Definition */
+
+#define sig_number_of_utilities 2           // two Utility Parameters: Velocity, Reference Tone
+#define sig_number_of_envelopes 5           // five Envelope Units: A, B, C, Gate, Flanger
 #define sig_number_of_env_items 81          // 4 POLY Envelopes (A..Gate) = 4 * 20 = 80 items, 1 MONO (Flanger Decay), total: 81 items
-#define sig_number_of_env_segments 4
-#define sig_number_of_env_types 3
-#define sig_number_of_env_events 3
+#define sig_number_of_env_segments 4        // four segments for ADBDSR-type Envelopes (A, B, C): Attack, Decay 1, Decay 2, Release
+#define sig_number_of_env_types 3           // three Envelope types: ADBDSR (A, B, C), Gate (Gate), Decay (Flanger)
+#define sig_number_of_env_events 3          // three Envelope Event objects for Envelopes A, B, C (managing Velocity and KeyPos responses)
 
 /* dsp helper values */
 
-#define dsp_samples_to_ms 1e-3
-#define dsp_init_pitch_reference 440.f
-#define dsp_expon_osc_pitch_from -20
-#define dsp_expon_osc_pitch_range 150
-#define dsp_expon_lin_pitch_from -150
-#define dsp_expon_lin_pitch_range 300
-#define dsp_expon_level_from -300
-#define dsp_expon_level_range 400
-#define dsp_expon_time_from -20
-#define dsp_expon_time_range 110
+#define dsp_samples_to_ms 1e-3              // 1000 ms = 1 s
+#define dsp_init_pitch_reference 440.f      // standard Frequency of A3 Note
+#define dsp_expon_osc_pitch_from -20        // lowest logarithmic Pitch value for Oscillator unit
+#define dsp_expon_osc_pitch_range 150       // range of logarithmic Pitch value for Oscillator unit ([-20 ... 130] ST = 150 ST)
+#define dsp_expon_lin_pitch_from -150       // lowest logarithmic Pitch value for linear conversion
+#define dsp_expon_lin_pitch_range 300       // range of logarithmic Pitch value for linear conversion ([-150 ... 150] ST = 300 ST)
+#define dsp_expon_level_from -300           // lowest logarithmic Level value for gain conversion (-300 dB)
+#define dsp_expon_level_range 400           // range of logarithmic Level value for gain conversion ([-300 ... 100] dB = 400 dB)
+#define dsp_expon_time_from -20             // lowest logarithmic Time value for time conversion (-20 dB)
+#define dsp_expon_time_range 110            // range of logarithmic Time value for time conversion ([-20 ... 90] dB = 110 dB)
 #define dsp_expon_time_factor 104.0781      // measured value to produce exactly time of 16000 (equals highest time)
+#define dsp_comb_max_freqFactor 19.0166     // measured value of highest frequency factor for the Comb Filter to run without bypass (corresponding to Pitch of 119.99 ST)
 
 #define env_norm_peak 0.023766461           // equals 1 / 42.0761 (taken from prototype)
-#define env_clip_peak 1.412537545           // equals +3 dB (candidate levelKT clipping)
+#define env_clip_peak 1.412537545           // measured value for LevelKT Clipping, equals +3 dB (candidate)
 #define env_init_gateRelease 1              // release time of gate envelopes (in milliseconds)
 #define env_highest_finite_time 16000.f     // highest allowed finite time
 
