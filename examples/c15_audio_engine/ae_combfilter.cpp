@@ -220,8 +220,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     m_delayBufferInd = (m_delayBufferInd + 1) & COMB_BUFFER_SIZE_M1;      // increase index and check boundaries
 
     tmpVar = _signal[CMB_BYP];                                            // Bypass
-    m_sampleComb = tmpVar * currentSample + (tmpVar - 1) * holdsample;    // currentSample is NAN... + crossfade: (1 - tmpVar)
-    // m_sampleComb = (tmpVar * currentSample) + ((1.f - tmpVar) * holdSample);
+    m_sampleComb = tmpVar * holdsample + (1.f - tmpVar) * currentSample;    // currentSample is NAN... + crossfade: (1 - tmpVar)
 
     //****************************** Decay ********************************//
     m_decayStateVar = m_sampleComb * m_decayGain;

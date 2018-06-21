@@ -1805,6 +1805,7 @@ void dsp_host::initAudioEngine(float _samplerate, uint32_t _polyphony)
     for (uint32_t p = 0; p < _polyphony; p++)
     {
         m_soundgenerator[p].init(_samplerate, p);
+        m_combfilter[p].init(_samplerate, p);
     }
 
     m_outputmixer.init(_samplerate, _polyphony);
