@@ -29,6 +29,9 @@ struct ae_combfilter
     float m_sampleInterval;
     float m_warpConst_PI;
     float m_warpConst_2PI;
+    float m_freqClip_2;
+    float m_freqClip_4;
+    float m_freqClip_24576;
 
     void init(float _samplerate, uint32_t _vn);
     void applyCombfilter(float _sampleA, float _sampleB, float *_signal);

@@ -35,6 +35,8 @@ void ae_combfilter::init(float _samplerate, uint32_t _vn)
     m_sampleInterval = 1.f / _samplerate;
     m_warpConst_PI  = 3.14159f / _samplerate;
     m_warpConst_2PI = 6.28319f / _samplerate;
+    m_freqClip_24576 = _samplerate / 24576.f;
+    m_freqClip_2 =  _samplerate / 2.125f;
 
     //***************************** Highpass *********************************//
     m_hpInStateVar  = 0.f;
@@ -103,7 +105,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
     currentSample  = currentSample * m_apCoeff_2;
     currentSample += (m_apStateVar_1 * m_apCoeff_1);
-    currentSample += m_apCoeff_2;
+    currentSample += m_apStateVar_2;
 
     currentSample -= (m_apStateVar_3 * m_apCoeff_1);
     currentSample -= (m_apStateVar_4 * m_apCoeff_2);
@@ -293,10 +295,10 @@ void ae_combfilter::setDelayTime(float _frequency)
         m_delaySamples = m_samplerate / _frequency;
     }
 
-    _frequency *= m_sampleInterval;
-
 
     //************************ Lowpass Influence ***************************//
+    _frequency *= m_sampleInterval;
+
     float stateVar_r = NlToolbox::Math::sinP3_warp(_frequency);
     float stateVar_i = NlToolbox::Math::sinP3_warp(_frequency + 0.25f);
 
@@ -404,7 +406,19 @@ void ae_combfilter::setDecayGain(float _frequency, float _decaytime)
 void ae_combfilter::setCombfilter(float *_signal)
 {
     //********************** Highpass Coefficients *************************//
-    float frequency = _signal[CMB_FRQ] * m_warpConst_PI;
+    float frequency = _signal[CMB_FRQ];
+    frequency *= 0.125f;
+
+    if (frequency < m_freqClip_24576)
+    {
+        frequency = m_freqClip_24576;
+    }
+    if (frequency > m_freqClip_2)
+    {
+        frequency = m_freqClip_2;
+    }
+
+    frequency *= m_warpConst_PI;
     frequency = NlToolbox::Math::tan(frequency);
 
     m_hpCoeff_a1 = (1.f - frequency) / (1.f + frequency);
@@ -413,7 +427,18 @@ void ae_combfilter::setCombfilter(float *_signal)
 
 
     //*********************** Lowpass Coefficient **************************//
-    frequency = _signal[CMB_LPF] * m_warpConst_PI;
+    frequency = _signal[CMB_LPF];
+
+    if (frequency < m_freqClip_24576)
+    {
+        frequency = m_freqClip_24576;
+    }
+    if (frequency > m_freqClip_4)
+    {
+        frequency = m_freqClip_4;
+    }
+
+    frequency *= m_warpConst_PI;
 
     frequency *= 0.159155f;                                        // 2Pi wrap
     frequency -= NlToolbox::Conversion::float2int(frequency);
@@ -425,8 +450,21 @@ void ae_combfilter::setCombfilter(float *_signal)
 
 
     //********************** Allpass Coefficients **************************//
-    frequency = _signal[CMB_APF] * m_warpConst_2PI;
-    float resonance = NlToolbox::Math::sin(frequency) * (1.f - _signal[CMB_APR]);
+    frequency = _signal[CMB_APF];
+
+    if (frequency < m_freqClip_24576)
+    {
+        frequency = m_freqClip_24576;
+    }
+    if (frequency > m_freqClip_2)
+    {
+        frequency = m_freqClip_2;
+    }
+
+    frequency *= m_warpConst_2PI;
+
+    float resonance = _signal[CMB_APR] * 1.99f -1.f;
+    resonance = NlToolbox::Math::sin(frequency) * (1.f - resonance);
 
     float tmpVar = 1.f / (1.f + resonance);
 
@@ -446,27 +484,27 @@ void ae_combfilter::setCombfilter(float *_signal)
         m_delaySamples = m_samplerate / frequency;
     }
 
-    frequency *= m_sampleInterval;
-
 
     //************************ Lowpass Influence ***************************//
+    frequency *= m_sampleInterval;
+
     float stateVar_r = NlToolbox::Math::sinP3_warp(frequency);
     float stateVar_i = NlToolbox::Math::sinP3_warp(frequency + 0.25f);
 
     stateVar_r = stateVar_r * m_lpCoeff;
     stateVar_i = stateVar_i * -m_lpCoeff + 1.f;
 
-    tmpVar = NlToolbox::Math::arctan(stateVar_r / stateVar_i) * (1.f / -6.28318f);
+    tmpVar = NlToolbox::Math::arctan(stateVar_r / stateVar_i) * -0.159155f;       // (1.f / -6.28318f)
 
     m_delaySamples = m_delaySamples * tmpVar + m_delaySamples;
 
 
     //************************ Allpass Influence ***************************//
-    stateVar_i = NlToolbox::Math::sinP3_warp(frequency) * -1.f * m_apCoeff_1;
-    float stateVar2_i = NlToolbox::Math::sinP3_warp(frequency + frequency);
+    stateVar_i = NlToolbox::Math::sinP3_warp(frequency - 0.25f) * -1.f * m_apCoeff_1;
+    stateVar_r = NlToolbox::Math::sinP3_warp(frequency) * m_apCoeff_1;
 
-    stateVar_r = NlToolbox::Math::sinP3_warp(frequency + 0.25f) * m_apCoeff_1;
-    float stateVar2_r = NlToolbox::Math::sinP3_warp(frequency + frequency + 0.25f);
+    float stateVar2_i = NlToolbox::Math::sinP3_warp(frequency + frequency - 0.25f);
+    float stateVar2_r = NlToolbox::Math::sinP3_warp(frequency + frequency);
 
 
     float var1_i = stateVar_i - stateVar2_i;
@@ -474,23 +512,25 @@ void ae_combfilter::setCombfilter(float *_signal)
     float var1_r = stateVar_r + stateVar2_r + m_apCoeff_2;
     float var2_r = stateVar_r + (stateVar2_r * m_apCoeff_2) + 1.f;
 
-    stateVar_i = (var1_r * var2_r) - (var1_i * var2_i);        // kmplx mul
-    stateVar_r = (var1_r * var2_i) + (var2_r * var1_i);
+//    stateVar_i = (var1_r * var2_r) - (var1_i * var2_i);        // kmplx mul
+//    stateVar_r = (var1_r * var2_i) + (var2_r * var1_i);
+    stateVar_i = (var1_r * var2_i) + (var2_r * var1_i);
+    stateVar_r = (var1_r * var2_r) - (var1_i * var2_i);
 
-    if (stateVar_i > 0.f)                                            // safe
+    if (stateVar_r > 0.f)                                            // safe
     {
-        stateVar_i += 1e-12;
+        stateVar_r += 1e-12;
     }
     else
     {
-        stateVar_i -= 1e-12;
+        stateVar_r -= 1e-12;
     }
 
-    tmpVar = NlToolbox::Math::arctan(stateVar_r / stateVar_i);        // arctan
+    tmpVar = NlToolbox::Math::arctan(stateVar_i / stateVar_r);        // arctan
 
-    if (stateVar_i < 0.f)
+    if (stateVar_r < 0.f)
     {
-        if (stateVar_r > 0.f)
+        if (stateVar_i > 0.f)
         {
             tmpVar += 3.14159f;
         }
@@ -519,7 +559,7 @@ void ae_combfilter::setCombfilter(float *_signal)
         frequency = DNC_CONST;
     }
 
-    frequency = (1.f / frequency) * -6.28318f;;
+    frequency = (1.f / frequency) * -6.28318f;
 
     if (frequency > 0)                 // Exp Clipped
     {
