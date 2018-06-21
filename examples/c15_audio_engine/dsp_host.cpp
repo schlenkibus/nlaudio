@@ -33,7 +33,7 @@ void dsp_host::init(uint32_t _samplerate, uint32_t _polyphony)
     initAudioEngine(static_cast<float>(_samplerate), _polyphony);
 
     /* load initial Preset - causing NaN problem in Comb Filter? */
-    testInit();
+    //testInit();
 }
 
 /* */

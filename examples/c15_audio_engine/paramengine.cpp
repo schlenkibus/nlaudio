@@ -70,9 +70,9 @@ void paramengine::init(uint32_t _sampleRate, uint32_t _voices)
 }
 
 /* helper - nyquist clip */
-float paramengine::evalNyquist(float freq)
+float paramengine::evalNyquist(float _freq)
 {
-    return fmin(m_nyquist_frequency, freq);
+    return fmin(m_nyquist_frequency, _freq);
 }
 
 /* TCD mechanism - scaling */
@@ -276,30 +276,29 @@ void paramengine::keyApply(const uint32_t _voiceId)
     if(m_event.m_poly[_voiceId].m_type == 0)
     {
         /* key up */
-        envUpdateStop(_voiceId, 0, pitch, velocity);    // Envelope A
+        envUpdateStop(_voiceId, 0, pitch, velocity);            // Envelope A
 #if DSP_TEST_MODE==2
-        envUpdateStop(_voiceId, 1, pitch, velocity);    // Envelope B
-        envUpdateStop(_voiceId, 2, pitch, velocity);    // Envelope C
+        envUpdateStop(_voiceId, 1, pitch, velocity);            // Envelope B
+        envUpdateStop(_voiceId, 2, pitch, velocity);            // Envelope C
 #elif DSP_TEST_MODE==3
-        envUpdateStop(_voiceId, 1, pitch, velocity);    // Envelope B
-        envUpdateStop(_voiceId, 2, pitch, velocity);    // Envelope C
+        envUpdateStop(_voiceId, 1, pitch, velocity);            // Envelope B
+        envUpdateStop(_voiceId, 2, pitch, velocity);            // Envelope C
 #endif
         // Envelopes B, C currently missing
-        m_envelopes.stopEnvelope(_voiceId, 3);          // Gate
+        m_envelopes.stopEnvelope(_voiceId, 3);                  // Gate
     }
     else
     {
-        /* key down */
-        envUpdateStart(_voiceId, 0, pitch, velocity);   // Envelope A
+        /* key down - now with retrigger hardness (currently const 0) */
+        envUpdateStart(_voiceId, 0, pitch, velocity, 0.f);      // Envelope A
 #if DSP_TEST_MODE==2
-        envUpdateStart(_voiceId, 1, pitch, velocity);   // Envelope B
-        envUpdateStart(_voiceId, 2, pitch, velocity);   // Envelope C
+        envUpdateStart(_voiceId, 1, pitch, velocity, 0.f);      // Envelope B
+        envUpdateStart(_voiceId, 2, pitch, velocity, 0.f);      // Envelope C
 #elif DSP_TEST_MODE==3
-        envUpdateStart(_voiceId, 1, pitch, velocity);   // Envelope B
-        envUpdateStart(_voiceId, 2, pitch, velocity);   // Envelope C
+        envUpdateStart(_voiceId, 1, pitch, velocity, 0.f);      // Envelope B
+        envUpdateStart(_voiceId, 2, pitch, velocity, 0.f);      // Envelope C (should get retrigger hardness parameter later)
 #endif
-        // Envelopes B, C currently missing
-        m_envelopes.startEnvelope(_voiceId, 3, 0);      // Gate
+        m_envelopes.startEnvelope(_voiceId, 3, 0.f, 0.f);       // Gate
     }
 }
 
@@ -310,12 +309,12 @@ void paramengine::keyApplyMono()
     if(m_event.m_mono.m_type == 1)
     {
         m_envelopes.setSegmentDest(0, 4, 1, m_event.m_mono.m_velocity);
-        m_envelopes.startEnvelope(0, 4, 0);
+        m_envelopes.startEnvelope(0, 4, 0.f, 0.f);
     }
 }
 
 /* envelope updates - start procedure */
-void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity)
+void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity, const float _retriggerHardness)
 {
     /* provide envelope index (for parameter access) and segment parameters (time, dest) */
     const uint32_t envIndex = m_envIds[_envId];
@@ -347,7 +346,7 @@ void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId,
     dest = peak * m_body[m_head[envIndex + E_SUS].m_index].m_signal;
     m_envelopes.setSegmentDest(_voiceId, _envId, 3, dest);
     /* trigger envelope start (passing envelope curvature) */
-    m_envelopes.startEnvelope(_voiceId, _envId, m_body[m_head[envIndex + E_AC].m_index].m_signal);
+    m_envelopes.startEnvelope(_voiceId, _envId, m_body[m_head[envIndex + E_AC].m_index].m_signal, _retriggerHardness);
 }
 
 /* envelope updates - stop procedure */
