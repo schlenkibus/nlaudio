@@ -538,12 +538,14 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     keyTracking = m_body[m_head[P_CMB_APKT].m_index].m_signal;
     unitPitch = m_body[m_head[P_CMB_APT].m_index].m_signal;
     envMod = _signal[ENV_C_SIG] * m_body[m_head[P_CMB_APEC].m_index].m_signal;
-    _signal[CMB_APF] = evalNyquist(440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    //_signal[CMB_APF] = evalNyquist(440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));      // not sure if APF needs Nyquist Clipping?
+    _signal[CMB_APF] = 440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod);                   // currently APF without Nyquist Clipping
     /* - Comb Filter Lowpass ('Hi Cut') Frequency (Base Pitch, Master Tune, Key Tracking, Hi Cut, Env C) */
     keyTracking = m_body[m_head[P_CMB_LPKT].m_index].m_signal;
     unitPitch = m_body[m_head[P_CMB_LP].m_index].m_signal;
     envMod = _signal[ENV_C_SIG] * m_body[m_head[P_CMB_LPEC].m_index].m_signal;
-    _signal[CMB_LPF] = evalNyquist(440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    //_signal[CMB_LPF] = evalNyquist(440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));          // not sure if LPF needs Nyquist Clipping?
+    _signal[CMB_LPF] = 440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod);                   // currently LPF without Nyquist Clipping
 #endif
 }
 

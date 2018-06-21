@@ -31,6 +31,9 @@ void dsp_host::init(uint32_t _samplerate, uint32_t _polyphony)
 
     /* Audio Engine */
     initAudioEngine(static_cast<float>(_samplerate), _polyphony);
+
+    /* load initial Preset - causing NaN problem in Comb Filter? */
+    //testInit();
 }
 
 /* */
@@ -1773,7 +1776,7 @@ void dsp_host::testInit()
     std::cout << "\nINIT SEQUENCE" << std::endl;
     evalMidi(0, 127, 127);      // select all voices
     evalMidi(1, 127, 127);      // select all parameters
-    evalMidi(2, 0, 0);          // set time to zero
+    evalMidi(2, 0, 0);          // set time to one
     testLoadPreset(1);          // load default preset
 }
 
