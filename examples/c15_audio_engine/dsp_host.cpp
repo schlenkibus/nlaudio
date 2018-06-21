@@ -57,7 +57,7 @@ void dsp_host::tickMain()
             }
             m_params.postProcess_slow(m_paramsignaldata[v], v);
 
-            /* polyphon Trigger for Filter Coefficients */
+            /* polyphonic Trigger for Filter Coefficients */
             setPolyFilterCoeffs(m_paramsignaldata[v], v);
         }
 
@@ -1822,8 +1822,12 @@ void dsp_host::makePolySound(float *_signal, uint32_t _voiceID)
     //************************* Oscillators n Shapers ************************//
     m_soundgenerator[_voiceID].generateSound(0.f, _signal);             /// _feedbackSample
 
+
+    //****************************** Comb Filter *****************************//
+    m_combfilter[_voiceID].applyCombfilter(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, _signal);
+
     //****************************** Outputmixer *****************************//
-    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, 0.f, 0.f, _signal, _voiceID);
+    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, m_combfilter[_voiceID].m_sampleComb, 0.f, _signal, _voiceID);
 }
 
 
@@ -1913,7 +1917,7 @@ inline void dsp_host::setPolyFilterCoeffs(float *_signal, uint32_t _voiceID)
     m_soundgenerator[_voiceID].m_chirpFilter_B.setCoeffs(_signal[OSC_B_CHI]);
 
     //****************************** Comb Filter *****************************//
-    m_combfilter[_voiceID].setCombfilter(_signal);
+    m_combfilter[_voiceID].setCombfilter(_signal); // producing NAN???
 
 //    ae_combfilter *ptr = &m_combfilter[_voiceID];
 //    ptr.setHighpassCoeffs(_signal[CMB_FRQ]);

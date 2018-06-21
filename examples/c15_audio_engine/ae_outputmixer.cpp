@@ -48,10 +48,10 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
 {
     //******************************* Left Mix *******************************//
     float mainSample = _signal[OUT_A_L] * _sampleA + _signal[OUT_B_L] * _sampleB +      /// _signal[OUT_A_L] and _signal[OUT_B_L]
-                        1.f * _sampleComb + 1.f * _sampleSVFilter;                      /// _signal[OUT_COMB_L] and _signal[OUT_SVF_L]
+                        _signal[OUT_CMB_L] * _sampleComb + 1.f * _sampleSVFilter;       /// _signal[OUT_CMB_L] and _signal[OUT_SVF_L]
 
     //************************* Left Sample Shaper ***************************//
-    mainSample *= 0.25f;                                                                /// _signal[OUT_DRVE]
+    mainSample *= 0.25f;                                                                /// _signal[OUT_DRV]
     float tmpVar = mainSample;
 
     mainSample = NlToolbox::Math::sinP3_warp(mainSample);
@@ -67,10 +67,10 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
 
     //****************************** Right Mix *******************************//
     mainSample = _signal[OUT_A_R] * _sampleA + _signal[OUT_B_R] * _sampleB +            /// _signal[OUT_A_R] and _signal[OUT_B_R]
-            1.f * _sampleComb + 1.f * _sampleSVFilter;                                  /// _signal[OUT_COMB_R] and _signal[OUT_SVF_R]
+            _signal[OUT_CMB_R] * _sampleComb + 1.f * _sampleSVFilter;                   /// _signal[OUT_CMB_R] and _signal[OUT_SVF_R]
 
     //************************ Right Sample Shaper ***************************//
-    mainSample *= 0.25f;                                                                /// _signal[OUT_DRVE]
+    mainSample *= 0.25f;                                                                /// _signal[OUT_DRV]
     tmpVar = mainSample;
 
     mainSample = NlToolbox::Math::sinP3_warp(mainSample);

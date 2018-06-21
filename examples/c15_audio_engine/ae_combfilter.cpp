@@ -71,15 +71,15 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     float currentSample;
 
     //**************************** AB Sample Mix ****************************//
-    tmpVar = _signal[0];                /// _signal[CMB_AB]
+    tmpVar = _signal[CMB_AB];
     currentSample = _sampleA * (1.f - tmpVar) + _sampleB * tmpVar;
     currentSample *= m_decayStateVar;
 
 
     //****************** AB Ssample Phase Mdulation Mix ********************//
-    tmpVar = _signal[0];                /// _signal[CMB_PMAB]
+    tmpVar = _signal[CMB_PMAB];
     float phaseMod = _sampleA * (1.f - tmpVar) + _sampleB * tmpVar;
-    phaseMod *= _signal[0];             /// _signal[CMB_PM]
+    phaseMod *= _signal[CMB_PM];
 
 
     //************************** 1-Pole Highpass ****************************//
@@ -158,13 +158,14 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
 
     //***************************** SmoothB ********************************//
-    tmpVar  = m_delaySamples - m_delayStateVar;
+
+    tmpVar  = m_delaySamples - m_delayStateVar;       // (m_delaySamples is NAN, errors somewhere in setDelayTime or setCombFilter??)
     tmpVar *= m_delayConst;
     tmpVar += m_delayStateVar;
 
     m_delayStateVar = tmpVar;
 
-    tmpVar *= 1.f;                          ///_signal[CMB_FEC]
+    tmpVar *= _signal[CMB_FEC];
 
 
     //******************************* Delay ********************************//
@@ -173,7 +174,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     /// Buffer Flush
     m_delayBuffer[m_delayBufferInd] = currentSample;
 
-    tmpVar = tmpVar * phaseMod + tmpVar;
+    tmpVar = tmpVar * phaseMod + tmpVar;       // (tmpVar is NAN)
     tmpVar -= 1.f;
 
     /// hier kommt voicestealing hin!!
@@ -188,7 +189,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     }
 
     float delaySamples_int = NlToolbox::Conversion::float2int(tmpVar - 0.5f);               // integer and fraction speration
-    float delaySamples_fract = tmpVar - delaySamples_int;
+    float delaySamples_fract = tmpVar - delaySamples_int;                                   // (tmpVar is NAN)
 
     int32_t ind_tm1 = delaySamples_int - 1;
     int32_t ind_t0  = delaySamples_int;
@@ -205,7 +206,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     ind_tp1 &= COMB_BUFFER_SIZE_M1;
     ind_tp2 &= COMB_BUFFER_SIZE_M1;
 
-    currentSample = NlToolbox::Math::interpolRT(delaySamples_fract,          // Interpolation
+    currentSample = NlToolbox::Math::interpolRT(delaySamples_fract,          // Interpolation (delaySamples_fract is NAN)
                                                 m_delayBuffer[ind_tm1],
                                                 m_delayBuffer[ind_t0],
                                                 m_delayBuffer[ind_tp1],
@@ -219,7 +220,8 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     m_delayBufferInd = (m_delayBufferInd + 1) & COMB_BUFFER_SIZE_M1;      // increase index and check boundaries
 
     tmpVar = _signal[CMB_BYP];                                            // Bypass
-    m_sampleComb = tmpVar * currentSample + (tmpVar - 1) * holdsample;
+    m_sampleComb = tmpVar * currentSample + (tmpVar - 1) * holdsample;    // currentSample is NAN... + crossfade: (1 - tmpVar)
+    // m_sampleComb = (tmpVar * currentSample) + ((1.f - tmpVar) * holdSample);
 
     //****************************** Decay ********************************//
     m_decayStateVar = m_sampleComb * m_decayGain;
