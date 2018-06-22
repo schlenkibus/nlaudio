@@ -71,8 +71,8 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     float tmpVar;
 
     //**************************** AB Sample Mix ****************************//
-    tmpVar = _signal[CMB_AB];
-    m_sampleComb  = _sampleA * (1.f - tmpVar) + _sampleB * tmpVar;
+    tmpVar = _signal[CMB_AB];   // AB Mix is inverted, so crossfade mix is as well (currently)
+    m_sampleComb  = _sampleB * (1.f - tmpVar) + _sampleA * tmpVar;
     m_sampleComb += m_decayStateVar;
 
 
