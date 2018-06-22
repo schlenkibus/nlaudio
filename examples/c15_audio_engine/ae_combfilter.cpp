@@ -37,6 +37,7 @@ void ae_combfilter::init(float _samplerate, uint32_t _vn)
     m_warpConst_2PI = 6.28319f / _samplerate;
     m_freqClip_24576 = _samplerate / 24576.f;
     m_freqClip_2 =  _samplerate / 2.125f;
+    m_freqClip_4 = _samplerate / 4.f;
 
     //***************************** Highpass *********************************//
     m_hpInStateVar  = 0.f;
@@ -70,12 +71,12 @@ void ae_combfilter::init(float _samplerate, uint32_t _vn)
 void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_signal)
 {
     float tmpVar;
-    float currentSample;
+//    float currentSample;
 
     //**************************** AB Sample Mix ****************************//
     tmpVar = _signal[CMB_AB];
-    currentSample = _sampleA * (1.f - tmpVar) + _sampleB * tmpVar;
-    currentSample *= m_decayStateVar;
+    m_sampleComb  = _sampleA * (1.f - tmpVar) + _sampleB * tmpVar;
+    m_sampleComb += m_decayStateVar;
 
 
     //****************** AB Ssample Phase Mdulation Mix ********************//
@@ -85,82 +86,82 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
 
     //************************** 1-Pole Highpass ****************************//
-    tmpVar  = m_hpCoeff_b0 * currentSample;
-    tmpVar += m_hpCoeff_b1 * m_hpInStateVar;
-    tmpVar += m_hpCoeff_a1 * m_hpOutStateVar;
+    tmpVar  = m_hpCoeff_b0 * m_sampleComb;
+    tmpVar += (m_hpCoeff_b1 * m_hpInStateVar);
+    tmpVar += (m_hpCoeff_a1 * m_hpOutStateVar);
 
-    m_hpInStateVar  = currentSample + DNC_CONST;
+    m_hpInStateVar  = m_sampleComb + DNC_CONST;
     m_hpOutStateVar = tmpVar + DNC_CONST;
 
+    m_sampleComb = tmpVar;
 
     //*************************** 1-Pole Lowpass ****************************//
-    currentSample = currentSample * (1.f - m_lpCoeff);
-    currentSample += (m_lpCoeff * m_lpStateVar);
-    currentSample += DNC_CONST;
-    m_lpStateVar = currentSample;
+    m_sampleComb = m_sampleComb * (1.f - m_lpCoeff);
+    m_sampleComb += (m_lpCoeff * m_lpStateVar);
+    m_sampleComb += DNC_CONST;
+    m_lpStateVar = m_sampleComb;
 
 
     //******************************* Allpass *******************************//
-    tmpVar = currentSample;
+    tmpVar = m_sampleComb;
 
-    currentSample  = currentSample * m_apCoeff_2;
-    currentSample += (m_apStateVar_1 * m_apCoeff_1);
-    currentSample += m_apStateVar_2;
+    m_sampleComb  = m_sampleComb * m_apCoeff_2;
+    m_sampleComb += (m_apStateVar_1 * m_apCoeff_1);
+    m_sampleComb += m_apStateVar_2;
 
-    currentSample -= (m_apStateVar_3 * m_apCoeff_1);
-    currentSample -= (m_apStateVar_4 * m_apCoeff_2);
+    m_sampleComb -= (m_apStateVar_3 * m_apCoeff_1);
+    m_sampleComb -= (m_apStateVar_4 * m_apCoeff_2);
 
-    currentSample += DNC_CONST;
+    m_sampleComb += DNC_CONST;
 
     m_apStateVar_2 = m_apStateVar_1;
     m_apStateVar_1 = tmpVar;
 
     m_apStateVar_4 = m_apStateVar_3;
-    m_apStateVar_3 = currentSample;
+    m_apStateVar_3 = m_sampleComb;
 
 
     //****************************** Para D ********************************//
-    if (fabs(currentSample) > 0.501187f)
+    if (fabs(m_sampleComb) > 0.501187f)
     {
-        if (currentSample > 0.f)
+        if (m_sampleComb > 0.f)
         {
-            currentSample -= 0.501187f;
-            tmpVar = currentSample;
+            m_sampleComb -= 0.501187f;
+            tmpVar = m_sampleComb;
 
-            if (currentSample > 2.98815f)
+            if (m_sampleComb > 2.98815f)
             {
-                currentSample = 2.98815f;
+                m_sampleComb = 2.98815f;
             }
 
-            currentSample = currentSample * (1.f - currentSample * 0.167328f);
+            m_sampleComb *= (1.f - m_sampleComb * 0.167328f);
 
-            currentSample *= 0.7488f;
+            m_sampleComb *= 0.7488f;
             tmpVar *= 0.2512f;
 
-            currentSample = currentSample + tmpVar + 0.501187f;
+            m_sampleComb += (tmpVar + 0.501187f);
         }
         else
         {
-            currentSample += 0.501187f;
-            tmpVar = currentSample;
+            m_sampleComb += 0.501187f;
+            tmpVar = m_sampleComb;
 
-            if (currentSample < -2.98815f)
+            if (m_sampleComb < -2.98815f)
             {
-                currentSample = -2.98815f;
+                m_sampleComb = -2.98815f;
             }
 
-            currentSample = currentSample * (1.f - fabs(currentSample) * 0.167328f);
+            m_sampleComb *= (1.f - fabs(m_sampleComb) * 0.167328f);
 
-            currentSample *= 0.7488f;
+            m_sampleComb *= 0.7488f;
             tmpVar *= 0.2512f;
 
-            currentSample = currentSample + tmpVar - 0.501187f;
+            m_sampleComb += (tmpVar - 0.501187f);
         }
     }
 
 
     //***************************** SmoothB ********************************//
-
     tmpVar  = m_delaySamples - m_delayStateVar;       // (m_delaySamples is NAN, errors somewhere in setDelayTime or setCombFilter??)
     tmpVar *= m_delayConst;
     tmpVar += m_delayStateVar;
@@ -171,12 +172,12 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
 
 
     //******************************* Delay ********************************//
-    float holdsample = currentSample;            // for Bypass
+    float holdsample = m_sampleComb;            // for Bypass
 
     /// Buffer Flush
-    m_delayBuffer[m_delayBufferInd] = currentSample;
+    m_delayBuffer[m_delayBufferInd] = m_sampleComb;
 
-    tmpVar = tmpVar * phaseMod + tmpVar;       // (tmpVar is NAN)
+    tmpVar *= (phaseMod + tmpVar);       // (tmpVar is NAN)
     tmpVar -= 1.f;
 
     /// hier kommt voicestealing hin!!
@@ -208,7 +209,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     ind_tp1 &= COMB_BUFFER_SIZE_M1;
     ind_tp2 &= COMB_BUFFER_SIZE_M1;
 
-    currentSample = NlToolbox::Math::interpolRT(delaySamples_fract,          // Interpolation (delaySamples_fract is NAN)
+    m_sampleComb = NlToolbox::Math::interpolRT(delaySamples_fract,          // Interpolation (delaySamples_fract is NAN)
                                                 m_delayBuffer[ind_tm1],
                                                 m_delayBuffer[ind_t0],
                                                 m_delayBuffer[ind_tp1],
@@ -222,7 +223,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     m_delayBufferInd = (m_delayBufferInd + 1) & COMB_BUFFER_SIZE_M1;      // increase index and check boundaries
 
     tmpVar = _signal[CMB_BYP];                                            // Bypass
-    m_sampleComb = tmpVar * holdsample + (1.f - tmpVar) * currentSample;    // currentSample is NAN... + crossfade: (1 - tmpVar)
+    m_sampleComb = tmpVar * holdsample + (1.f - tmpVar) * m_sampleComb;    // currentSample is NAN... + crossfade: (1 - tmpVar)
 
     //****************************** Decay ********************************//
     m_decayStateVar = m_sampleComb * m_decayGain;
