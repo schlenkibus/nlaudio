@@ -25,6 +25,8 @@ namespace DSP_HOST_HANDLE {
     */
     void dspHostCallback(uint8_t *out, const SampleSpecs &sampleSpecs __attribute__ ((unused)), SharedUserPtr ptr)
     {
+
+
         StopBlockTime(sw, "dsp_host");
         auto midiBuffer = getBufferForName("MidiBuffer");
 

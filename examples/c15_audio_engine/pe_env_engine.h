@@ -29,14 +29,14 @@ struct env_head
     uint32_t m_state[sig_number_of_env_segments + 1];
     uint32_t m_next[sig_number_of_env_segments + 1];
     /* monophonic attack curve parameter implementation */
-    float m_attackCurve = 0;
+    float m_attackCurve = 0.f;
 };
 
 /* each envelope segment (or phase/stage) requires two (dynamic) parameters: slope (dx) and destination (dest) */
 struct env_segment
 {
-    float m_dx = 0;
-    float m_dest = 0;
+    float m_dx = 0.f;
+    float m_dest = 0.f;
 };
 
 /* body objects perform actual rendering and are instanciated for each envelope according to its polyphony (one body per voice) */
@@ -49,10 +49,10 @@ struct env_body
     uint32_t m_next = 0;
     uint32_t m_index = 0;
     /* actual rendering of a segment requires the following additional variables */
-    float m_x = 0;
-    float m_y = 0;
-    float m_start = 0;
-    float m_signal = 0;
+    float m_x = 0.f;
+    float m_y = 0.f;
+    float m_start = 0.f;
+    float m_signal = 0.f;
 };
 
 /* main envelope rendering object, holding all required data */
@@ -82,6 +82,6 @@ struct env_engine
     /* helper function in order to produce polynomial transitions */
     float squaredCurvature(float _value, float _curvature);
     /* main envelope triggers (relating to keyUp, keyDown) */
-    void startEnvelope(const uint32_t _voiceId, const uint32_t _envId, float _attackCurve);
+    void startEnvelope(const uint32_t _voiceId, const uint32_t _envId, const float _attackCurve, const float _retriggerHardness);
     void stopEnvelope(const uint32_t _voiceId, const uint32_t _envId);
 };

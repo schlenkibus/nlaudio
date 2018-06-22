@@ -214,7 +214,7 @@ void env_engine::tickItem(const uint32_t _voiceId, const uint32_t _envId)
         }
         break;
     case 2:
-        /* exponential rendering */
+        /* exponential rendering - decay2 mode */
         if(item->m_y > dsp_render_min)
         {
             /* update signal and y */
@@ -222,11 +222,8 @@ void env_engine::tickItem(const uint32_t _voiceId, const uint32_t _envId)
             item->m_y *= 1 - item->m_segment[pos].m_dx;
         }
         else {
-            /* null y and update signal (could be further simplified, signal = dest) */
-            item->m_y = 0;
+            /* keep forming the signal - excluding transition function - sustain can be changed in edit time */
             item->m_signal = item->m_start + diff;
-            /* trigger next segment */
-            nextSegment(_voiceId, _envId);
         }
         break;
     case 3:
@@ -250,6 +247,21 @@ void env_engine::tickItem(const uint32_t _voiceId, const uint32_t _envId)
             nextSegment(_voiceId, _envId);
         }
         break;
+    case 4:
+        /* exponential rendering - release mode */
+        if(item->m_y > dsp_render_min)
+        {
+            /* update signal and y */
+            item->m_signal = item->m_start + (diff * (1 - item->m_y));
+            item->m_y *= 1 - item->m_segment[pos].m_dx;
+        }
+        else {
+            /* null y, update signal */
+            item->m_y = 0;
+            item->m_signal = item->m_start + diff;
+            /* next segment */
+            nextSegment(_voiceId, _envId);
+        }
     }
 }
 
@@ -277,7 +289,7 @@ float env_engine::squaredCurvature(float _value, float _curvature)
 }
 
 /* envelope triggers */
-void env_engine::startEnvelope(const uint32_t _voiceId, const uint32_t _envId, float _attackCurve)
+void env_engine::startEnvelope(const uint32_t _voiceId, const uint32_t _envId, const float _attackCurve, const float _retriggerHardness)
 {
     /* provide object and item references */
     env_head* obj = &m_head[_envId];
@@ -287,7 +299,7 @@ void env_engine::startEnvelope(const uint32_t _voiceId, const uint32_t _envId, f
     /* update rendering variables */
     item->m_x = item->m_segment[item->m_next].m_dx;
     item->m_y = 1 - item->m_segment[item->m_next].m_dx;
-    item->m_start = item->m_signal;
+    item->m_start = (1.f - _retriggerHardness) * item->m_signal;
     /* update segment/state variables */
     item->m_state = obj->m_state[obj->m_startIndex];
     item->m_index = obj->m_startIndex;

@@ -87,7 +87,7 @@ struct paramengine
     /* proper init */
     void init(uint32_t _sampleRate, uint32_t _voices);
     /* helper */
-    float evalNyquist(float freq);
+    float evalNyquist(float _freq);
     /* TCD mechanism */
     float scale(const uint32_t _scaleId, const float _scaleArg, float _value);              // provided tcd scale functions
     void setDx(const uint32_t _voiceId, const uint32_t _paramId, float _value);             // param dx update
@@ -103,7 +103,7 @@ struct paramengine
     void keyApply(const uint32_t _voiceId);                                                 // key events: apply key event
     void keyApplyMono();                                                                    // key events: apply mono event
     /* envelope updates */
-    void envUpdateStart(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity);
+    void envUpdateStart(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity, const float _retriggerHardness);
     void envUpdateStop(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity);
     void envUpdateTimes(const uint32_t _voiceId, const uint32_t _envId);
     void envUpdateLevels(const uint32_t _voiceId, const uint32_t _envId);
