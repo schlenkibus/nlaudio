@@ -21,10 +21,9 @@ struct ae_combfilter
 {
     ae_combfilter();        // Default Contructor
 
-    float m_samplerate;
-
     float m_sampleComb;     // Generated Sample
-    float m_decayStateVar;
+    float m_decayStateVar;    
+    float m_flushFadePoint;
 
     float m_sampleInterval;
     float m_warpConst_PI;
@@ -35,23 +34,17 @@ struct ae_combfilter
 
     void init(float _samplerate, uint32_t _vn);
     void applyCombfilter(float _sampleA, float _sampleB, float *_signal);
-    void setCombfilter(float *_signal);
+    void setCombfilter(float *_signal, float _samplerate);
 
     //**************************** Highpass Filter ****************************//
-    void setHighpassCoeffs(float _frequency);
-
     float m_hpCoeff_b0, m_hpCoeff_b1, m_hpCoeff_a1;
     float m_hpInStateVar, m_hpOutStateVar;
 
     //***************************** Lowpass Filter ****************************//
-    void setLowpassCoeffs(float _frequency);
-
     float m_lpCoeff;
     float m_lpStateVar;
 
     //***************************** Allpass Filter ****************************//
-    void setAllpassCoeffs(float _frequency, float _resonance);
-
     float m_apCoeff_1, m_apCoeff_2;
     float m_apStateVar_1;        // Allpass State Variables
     float m_apStateVar_2;
@@ -59,8 +52,6 @@ struct ae_combfilter
     float m_apStateVar_4;
 
     //****************************** Delay/ Decay *****************************//
-    void setDelayTime(float _frequency);
-
     uint32_t m_delayBufferInd;
     std::array<float, COMB_BUFFER_SIZE> m_delayBuffer;
 
@@ -68,8 +59,6 @@ struct ae_combfilter
     float m_delayFreqClip;
     float m_delayConst;
     float m_delayStateVar;
-
-    void setDecayGain(float _frequency, float _decaytime);
 
     float m_decayGain;
 };

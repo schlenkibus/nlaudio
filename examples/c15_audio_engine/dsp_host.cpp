@@ -102,7 +102,7 @@ void dsp_host::tickMain()
 //    m_mainOut_R = 0.f;
 
     /*set the current fadepoint*/
-    float currFadeVal = m_raised_cos_table[m_tableCounter];
+    float flushFadePoint = m_raised_cos_table[m_tableCounter];
 
     for(v = 0; v < m_voices; v++)
     {
@@ -117,6 +117,7 @@ void dsp_host::tickMain()
         m_params.postProcess_audio(m_paramsignaldata[v], v);
 
         /* AUDIO_ENGINE: poly dsp phase */
+        m_combfilter[v].m_flushFadePoint = flushFadePoint;
         makePolySound(m_paramsignaldata[v], v);
     }
 
@@ -1792,6 +1793,8 @@ void dsp_host::initAudioEngine(float _samplerate, uint32_t _polyphony)
     m_flushnow = false;
     m_tableCounter = 0;
 
+
+    //******************************** Flushing ******************************//
     float fade_time = 0.003f;
     float sample_interval = 1.f / _samplerate;
     m_fadeSamples = fade_time * _samplerate * 2 + 1;
@@ -1848,6 +1851,10 @@ void dsp_host::makeMonoSound(float *_signal)
         if (m_tableCounter == m_flushIndex)
         {
             printf("flushing all buffers ... \n");
+            for (uint32_t voiceNumber = 0; voiceNumber < dsp_number_of_voices; voiceNumber++)
+            {
+                m_combfilter[voiceNumber].m_delayBuffer.fill(0.f);
+            }
         }
 
         if (m_tableCounter > m_fadeSamples)
@@ -1921,14 +1928,7 @@ inline void dsp_host::setPolyFilterCoeffs(float *_signal, uint32_t _voiceID)
     m_soundgenerator[_voiceID].m_chirpFilter_B.setCoeffs(_signal[OSC_B_CHI]);
 
     //****************************** Comb Filter *****************************//
-    m_combfilter[_voiceID].setCombfilter(_signal); // producing NAN???
-
-//    ae_combfilter *ptr = &m_combfilter[_voiceID];
-//    ptr.setHighpassCoeffs(_signal[CMB_FRQ]);
-//    ptr.setLowpassCoeffs(_signal[CMB_LPF]);
-//    ptr.setAllpassCoeffs(_signal[CMB_APF], _signal[CMB_APR]);
-//    ptr.setDelayTime(_signal[CMB_FRQ]);
-//    ptr.setDecayGain(_signal[CMB_FRQ], _signal[CMB_DEC]);
+    m_combfilter[_voiceID].setCombfilter(_signal, m_samplerate);
 }
 
 
