@@ -29,13 +29,13 @@ const uint32_t envelope_types[sig_number_of_env_types][sig_number_of_env_segment
     },
     {   // gate type
         {       1,      0,      1,      1       },                      // 1 linear attack phase to 100% in no time (next: 0)
-        {       2,      0,      0,      0       },                      // 2 exponential release phase to 0% (next: 0 - idle)
+        {       4,      0,      0,      0       },                      // 2 exponential release phase to 0% (next: 0 - idle)
         {       0,      0,      0,      0       },                      // (remaining unused)
         {       0,      0,      0,      0       }
     },
     {   // decay type
         {       1,      2,      1,      1       },                      // 1 linear attack phase to 100% in no time (next: 2)
-        {       2,      0,      0,      0       },                      // 2 exponential release phase to 0% (next: 0 - idle)
+        {       4,      0,      0,      0       },                      // 2 exponential release phase to 0% (next: 0 - idle)
         {       0,      0,      0,      0       },                      // (remaining unused)
         {       0,      0,      0,      0       }
     }
