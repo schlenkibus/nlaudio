@@ -42,7 +42,8 @@ public:
     decoder m_decoder;                                                  // TCD command evaluation
     paramengine m_params;                                               // parameter and envelope rendering
     /* proper init (samplerate & polyphony) */
-    void init(uint32_t _samplerate, uint32_t _polyphony);
+    void init(uint32_t _samplerate, uint32_t _polyphony);               // proper initialization
+    void loadInitialPreset();                                           // load initial preset for valid values in signal array (before rendering begins)
     /* the two main interaction methods */
     void tickMain();                                                    // main trigger for sample clock operations
     void evalMidi(uint32_t _status, uint32_t _data0, uint32_t _data1);  // main trigger for MIDI input (TCD)

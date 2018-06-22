@@ -28,8 +28,12 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define sig_number_of_params 113            // 3 * (13 ENV params) + 2 * (14 OSC + 8 SHP params) + (16 CMB params) + (6 OUT params) + (2 MASTER params) + (6 KEY params)
 #define sig_number_of_param_items 227       // (39 + 44 + 16 + 6 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
 #define sig_number_of_signal_items 51       // 51 shared signals
+
+/* TCD List Handling */
+
 #define lst_recall_length 106               // 106 preset-relevant parameters
 #define lst_keyEvent_length 6               // 6 key event parameters
+#define lst_number_of_lists 2               // predefined paramId lists (simplifying recal and key event update TCD sequences)
 
 /* Utility Parameters and Envelope Definition */
 
@@ -60,10 +64,6 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define env_clip_peak 1.412537545           // measured value for LevelKT Clipping, equals +3 dB (candidate)
 #define env_init_gateRelease 1              // release time of gate envelopes (in milliseconds)
 #define env_highest_finite_time 16000.f     // highest allowed finite time
-
-/* TCD List Handling */
-
-#define lst_number_of_lists 2               // predefined paramId lists (simplifying recal and key event update TCD sequences)
 
 /* Internal IDs of crucial TCD parameters */
 

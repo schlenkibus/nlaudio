@@ -32,8 +32,27 @@ void dsp_host::init(uint32_t _samplerate, uint32_t _polyphony)
     /* Audio Engine */
     initAudioEngine(static_cast<float>(_samplerate), _polyphony);
 
-    /* load initial Preset - causing NaN problem in Comb Filter? */
-    //testInit();
+    /* Load Initial Preset (TCD zero for every Parameter) */
+    loadInitialPreset();
+}
+
+/* */
+void dsp_host::loadInitialPreset()
+{
+    /* passing TCD zeros to every parameter in every voice */
+    evalMidi(0, 127, 127);      // select all voices
+    evalMidi(1, 127, 127);      // select all parameters
+    evalMidi(2, 0, 0);          // set time to zero
+    evalMidi(47, 1, 1);         // enable preload (recall list mode)
+    /* traverse parameters, each one receiving zero value */
+    for(uint32_t i = 0; i < lst_recall_length; i++)
+    {
+        evalMidi(5, 0, 0);      // send destination 0
+    }
+    evalMidi(47, 0, 2);         // apply preloaded values
+    /* clear Selection */
+    evalMidi(0, 0, 0);          // select voice 0
+    evalMidi(1, 0, 0);          // select parameter 0
 }
 
 /* */
@@ -952,7 +971,7 @@ void dsp_host::testInit()
     std::cout << "\nINIT SEQUENCE" << std::endl;
     evalMidi(0, 127, 127);      // select all voices
     evalMidi(1, 127, 127);      // select all parameters
-    evalMidi(2, 0, 0);          // set time to one
+    evalMidi(2, 0, 0);          // set time to zero
     testLoadPreset(1);          // load default preset
 }
 
