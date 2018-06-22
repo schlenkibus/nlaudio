@@ -490,7 +490,7 @@ void dsp_host::keyDown(uint32_t _voiceId, float _velocity)
     {
         /* preload key event (increase preload counters) */
         m_params.m_event.m_mono.m_preload++;
-        m_params.m_event.m_poly[_voiceId].m_preload++;
+        m_params.m_event.m_poly[_voiceId].m_preload++;    
     }
 }
 
@@ -500,6 +500,9 @@ void dsp_host::keyApply(uint32_t _voiceId)
     /* keyDown events cause triggers to the AUDIO_ENGINE */
     if(m_params.m_event.m_poly[_voiceId].m_type == 1)
     {
+        /*Audio DSP trigger */
+        m_combfilter[_voiceId].setDelaySmoother();
+
         /* determine note steal */
         if(m_params.m_body[m_params.m_head[P_KEY_VS].m_index].m_signal == 1)
         {
