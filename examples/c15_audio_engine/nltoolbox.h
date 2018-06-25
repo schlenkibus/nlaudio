@@ -641,11 +641,12 @@ struct Shaper_1_BP
 {
     float m_Factor1, m_Factor2;
     float m_Startpoint, m_Breakpoint, m_Endpoint;
+    float m_Split = 1.f / 2.f;
 
     void setCurve(float _startpoint, float _breakpoint, float _endpoint)
     {
-        m_Factor1 = (_breakpoint - _startpoint) / (0.5f - 0.f);
-        m_Factor2 = (_endpoint - _breakpoint) / (1.f - 0.5f);
+        m_Factor1 = (_breakpoint - _startpoint) / (m_Split - 0.f);
+        m_Factor2 = (_endpoint - _breakpoint) / (1.f - m_Split);
 
         m_Startpoint = _startpoint;
         m_Breakpoint = _breakpoint;
@@ -656,13 +657,13 @@ struct Shaper_1_BP
     {
         float out;
 
-        if (_in <= 0.5f)
+        if (_in <= m_Split)
         {
             out = (_in * m_Factor1) + m_Startpoint;
         }
-        else if (_in > 0.5f)
+        else
         {
-            out = ((_in - 0.5f) * m_Factor2) + m_Breakpoint;
+            out = ((_in - m_Split) * m_Factor2) + m_Breakpoint;
         }
 
         return out;
@@ -684,9 +685,9 @@ struct Shaper_2_BP
 
     void setCurve(float _startpoint, float _breakpoint1, float _breakpoint2, float _endpoint)
     {
-        m_Factor1 = (_breakpoint1 - _startpoint) / m_Split1;
-        m_Factor2 = (_breakpoint2 - _breakpoint1) / m_Split1;
-        m_Factor3 = (_endpoint - _breakpoint2) / m_Split1;
+        m_Factor1 = (_breakpoint1 - _startpoint) / (m_Split1 - 0.f);
+        m_Factor2 = (_breakpoint2 - _breakpoint1) / (m_Split2 - m_Split1);
+        m_Factor3 = (_endpoint - _breakpoint2) / (1.f - m_Split2);
 
         m_Startpoint = _startpoint;
         m_Breakpoint1 = _breakpoint1;

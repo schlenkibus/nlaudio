@@ -15,6 +15,7 @@
 #include "pe_defines_params.h"
 #include "pe_exponentiator.h"
 #include "pe_env_engine.h"
+#include "pe_env_engine2.h"
 #include "pe_key_event.h"
 #include "pe_utilities.h"
 #include "pe_defines_labels.h"

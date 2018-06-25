@@ -151,13 +151,13 @@ void env_engine::init_decay(const uint32_t _envId)
 }
 
 /* envelope segment manipulation */
-void env_engine::setSegmentDx(uint32_t _voiceId, uint32_t _envId, uint32_t _segmentId, float _value)
+void env_engine::setSegmentDx(const uint32_t _voiceId, const uint32_t _envId, const uint32_t _segmentId, const float _value)
 {
     /* update particular segment dx of selected envelope at specific voice (no reference for one-liner) */
     m_body[m_head[_envId].m_index + _voiceId].m_segment[_segmentId].m_dx = _value;
 }
 
-void env_engine::setSegmentDest(uint32_t _voiceId, uint32_t _envId, uint32_t _segmentId, float _value)
+void env_engine::setSegmentDest(const uint32_t _voiceId, const uint32_t _envId, const uint32_t _segmentId, const float _value)
 {
     /* update particular segment destination of selected envelope at specific voice (no reference for one-liner) */
     m_body[m_head[_envId].m_index + _voiceId].m_segment[_segmentId].m_dest = _value;
@@ -262,6 +262,7 @@ void env_engine::tickItem(const uint32_t _voiceId, const uint32_t _envId)
             /* next segment */
             nextSegment(_voiceId, _envId);
         }
+        break;
     }
 }
 
@@ -282,7 +283,7 @@ void env_engine::nextSegment(const uint32_t _voiceId, const uint32_t _envId)
 }
 
 /* polynomial segment rendering */
-float env_engine::squaredCurvature(float _value, float _curvature)
+float env_engine::squaredCurvature(const float _value, const float _curvature)
 {
     /* depending on the curvature [-1 ... 1], values [-1 ... 1] are transformed into a 2nd order polynomial (sign sensitive) */
     return(_value * (1 + (_curvature * (fabs(_value) - 1))));

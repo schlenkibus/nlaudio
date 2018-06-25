@@ -70,8 +70,8 @@ struct env_engine
     void init_gate(const uint32_t _envId, const float _gateRelease);
     void init_decay(const uint32_t _envId);
     /* segment manipulation */
-    void setSegmentDx(uint32_t _voiceId, uint32_t _envId, uint32_t _segmentId, float _value);
-    void setSegmentDest(uint32_t _voiceId, uint32_t _envId, uint32_t _segmentId, float _value);
+    void setSegmentDx(const uint32_t _voiceId, const uint32_t _envId, const uint32_t _segmentId, const float _value);
+    void setSegmentDest(const uint32_t _voiceId, const uint32_t _envId, const uint32_t _segmentId, const float _value);
     /* main tick functions for rendering (envelopes will render at audio rate) */
     void tickMono();
     void tickPoly(const uint32_t _voiceId);
@@ -80,7 +80,7 @@ struct env_engine
     /* segment traversal (going to subsequent segment after completing the current one) */
     void nextSegment(const uint32_t _voiceId, const uint32_t _envId);
     /* helper function in order to produce polynomial transitions */
-    float squaredCurvature(float _value, float _curvature);
+    float squaredCurvature(const float _value, const float _curvature);
     /* main envelope triggers (relating to keyUp, keyDown) */
     void startEnvelope(const uint32_t _voiceId, const uint32_t _envId, const float _attackCurve, const float _retriggerHardness);
     void stopEnvelope(const uint32_t _voiceId, const uint32_t _envId);

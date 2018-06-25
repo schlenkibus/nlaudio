@@ -315,7 +315,7 @@ void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId,
     float levelVel = -m_body[m_head[envIndex + E_LV].m_index].m_signal;
     float attackVel = -m_body[m_head[envIndex + E_AV].m_index].m_signal * _velocity;
     float levelKT = m_body[m_head[envIndex + E_LKT].m_index].m_signal * _pitch;
-    /* determine envelope peak level */
+    /* determine envelope peak level - clipped to max. +3dB (candidate) */
     float peak = fmin(m_convert.eval_level(((1 - _velocity) * levelVel) + levelKT), env_clip_peak);
     /* envelope event updates */
     m_event.m_env[_envId].m_levelFactor[_voiceId] = peak;

@@ -43,7 +43,7 @@ const uint32_t envelope_types[sig_number_of_env_types][sig_number_of_env_segment
 
 /* actual envelope definition (env type, poly type) */
 
-const int envelope_definition[sig_number_of_envelopes][2] = {
+const uint32_t envelope_definition[sig_number_of_envelopes][2] = {
     {0, 1},                                                             // poly adbdsr envelope ENV_A
     {0, 1},                                                             // poly adbdsr envelope ENV_B
     {0, 1},                                                             // poly adbdsr envelope ENV_C
