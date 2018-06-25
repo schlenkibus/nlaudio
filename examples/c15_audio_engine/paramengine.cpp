@@ -24,7 +24,9 @@ void paramengine::init(uint32_t _sampleRate, uint32_t _voices)
     m_clockIds.reset();
     m_postIds.reset();
     m_convert.init();
-    m_combDecayCurve.setCurve(0.f, 0.25, 1.f);                                  // control shaper for the comb decay parameter
+    /* initialize control shapers */
+    m_combDecayCurve.setCurve(0.f, 0.25, 1.f);                                  // initialize control shaper for the comb decay parameter
+    m_svfResonanceCurve.setCurve(0.f, 0.49f, 0.79f, 0.94f);                     // initialize control shaper for the svf resonance parameter (later, test4)
     /* provide indices for further definitions */
     uint32_t i, p;
     /* initialize envelope events */
@@ -473,7 +475,7 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     _signal[CMB_BYP] = unitPitch > dsp_comb_max_freqFactor ? 1.f : 0.f; // check for bypassing comb filter, max_freqFactor corresponds to Pitch of 119.99 ST
     /* - Comb Filter Decay Time (Base Pitch, Master Tune, Gate Env, Dec Time, Key Tracking, Gate Amount) */
     keyTracking = m_body[m_head[P_CMB_DKT].m_index].m_signal;
-    envMod = 1.f - ((1.f - _signal[ENV_G_SIG]) * m_combDecayCurve.applyLinearCurve(m_body[m_head[P_CMB_DG].m_index].m_signal));
+    envMod = 1.f - ((1.f - _signal[ENV_G_SIG]) * m_combDecayCurve.applyCurve(m_body[m_head[P_CMB_DG].m_index].m_signal));
     unitPitch = (-0.5 * basePitch * keyTracking) + (fabs(m_body[m_head[P_CMB_D].m_index].m_signal) * envMod);
     unitSign = m_body[m_head[P_CMB_D].m_index].m_signal < 0 ? -1.f : 1.f;
     _signal[CMB_DEC] = 0.001 * m_convert.eval_level(unitPitch) * unitSign;

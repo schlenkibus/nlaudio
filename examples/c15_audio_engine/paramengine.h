@@ -83,7 +83,8 @@ struct paramengine
     param_utility m_utilities[sig_number_of_utilities];
     env_engine m_envelopes;
     poly_key_event m_event;
-    NlToolbox::Curves::LinearCurve m_combDecayCurve;
+    NlToolbox::Curves::Shaper_1_BP m_combDecayCurve;
+    NlToolbox::Curves::Shaper_2_BP m_svfResonanceCurve;
     /* proper init */
     void init(uint32_t _sampleRate, uint32_t _voices);
     /* helper */

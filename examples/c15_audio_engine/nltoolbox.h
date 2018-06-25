@@ -634,36 +634,81 @@ inline float applySineCurve(float _in)
 /** @brief    Shaper for control signals. One breakpoint.
  *            [0], [50] and [100] adjust the levels for [in] = 0,
  *            [in] = 0.5(breakpoint) and [in] = 1.
+ *            Matthias: renamed object, fixed bug for values (0.5 ... 1.0)
 ******************************************************************************/
 
-struct LinearCurve
+struct Shaper_1_BP
 {
-    float mFactor1;
-    float mFactor2;
-
-    float mStartpoint, mBreakpoint, mEndpoint;
+    float m_Factor1, m_Factor2;
+    float m_Startpoint, m_Breakpoint, m_Endpoint;
 
     void setCurve(float _startpoint, float _breakpoint, float _endpoint)
     {
-        mFactor1 = (_breakpoint - _startpoint) / (0.5f - 0.f);
-        mFactor2 = (_endpoint - _breakpoint) / (1.f - 0.5f);
+        m_Factor1 = (_breakpoint - _startpoint) / (0.5f - 0.f);
+        m_Factor2 = (_endpoint - _breakpoint) / (1.f - 0.5f);
 
-        mStartpoint = _startpoint;
-        mBreakpoint = _breakpoint;
-        mEndpoint   = _endpoint;
+        m_Startpoint = _startpoint;
+        m_Breakpoint = _breakpoint;
+        m_Endpoint   = _endpoint;
     }
 
-    float applyLinearCurve(float _in)
+    float applyCurve(float _in)
     {
         float out;
 
-        if (_in < 0.5f)
+        if (_in <= 0.5f)
         {
-            out = _in * mFactor1 + mStartpoint;
+            out = (_in * m_Factor1) + m_Startpoint;
         }
-        else if (_in > 0.5)
+        else if (_in > 0.5f)
         {
-            out = _in * mFactor2 + mBreakpoint;
+            out = ((_in - 0.5f) * m_Factor2) + m_Breakpoint;
+        }
+
+        return out;
+    }
+};
+
+/*****************************************************************************/
+/** @brief    Shaper for control signals. Two breakpoints.
+ *            [0], [33.3], [66.6] and [100]
+ *            (intended for SVF Resonance Post Processing)
+******************************************************************************/
+
+struct Shaper_2_BP
+{
+    float m_Factor1, m_Factor2, m_Factor3;
+    float m_Startpoint, m_Breakpoint1, m_Breakpoint2, m_Endpoint;
+    float m_Split1 = 1.f / 3.f;
+    float m_Split2 = 2.f / 3.f;
+
+    void setCurve(float _startpoint, float _breakpoint1, float _breakpoint2, float _endpoint)
+    {
+        m_Factor1 = (_breakpoint1 - _startpoint) / m_Split1;
+        m_Factor2 = (_breakpoint2 - _breakpoint1) / m_Split1;
+        m_Factor3 = (_endpoint - _breakpoint2) / m_Split1;
+
+        m_Startpoint = _startpoint;
+        m_Breakpoint1 = _breakpoint1;
+        m_Breakpoint2 = _breakpoint2;
+        m_Endpoint = _endpoint;
+    }
+
+    float applyCurve(float _in)
+    {
+        float out;
+
+        if(_in <= m_Split1)
+        {
+            out = (_in * m_Factor1) + m_Startpoint;
+        }
+        else if(_in <= m_Split2)
+        {
+            out = ((_in - m_Split1) * m_Factor2) + m_Breakpoint1;
+        }
+        else
+        {
+            out = ((_in - m_Split2) * m_Factor3) + m_Breakpoint2;
         }
 
         return out;
