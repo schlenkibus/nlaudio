@@ -83,6 +83,7 @@ struct paramengine
     exponentiator m_convert;
     param_utility m_utilities[sig_number_of_utilities];
     env_engine m_envelopes;
+    env_engine2 m_new_envelopes;
     poly_key_event m_event;
     NlToolbox::Curves::Shaper_1_BP m_combDecayCurve;
     NlToolbox::Curves::Shaper_2_BP m_svfResonanceCurve;

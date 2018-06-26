@@ -716,6 +716,25 @@ struct Shaper_2_BP
     }
 };
 
+/*****************************************************************************/
+/** @brief      Squared Curvature Evaluation
+ *              (usable for polynomial transitions of TCD renderers)
+ *  @param      value (representing transition progress) [0 ... 1]
+ *              (can also be bipolar [-1 ... 1])
+ *  @param      curvature (affecting the transition slope) [-1 ... 1]
+ *  @return     resulting value
+ *              (depending on the curvature argument, the transformation
+ *              shapes incoming values to be within the following ranges:
+ *              (1 - (1 - value)^2),    (curvature = -1, decreasing slope)
+ *              (value),                (curvature = 0, constant slope)
+ *              (value^2),              (curvature = 1, increasing slope)
+******************************************************************************/
+
+inline float SquaredCurvature(const float _value, const float _curvature)
+{
+    return(_value * (1.f + (_curvature * (fabs(_value) - 1.f))));
+}
+
 } // Namespace Curves
 
 } // Namespace NlToolbox

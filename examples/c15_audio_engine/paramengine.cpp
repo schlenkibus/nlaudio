@@ -69,6 +69,14 @@ void paramengine::init(uint32_t _sampleRate, uint32_t _voices)
     }
     /* initialize envelopes */
     m_envelopes.init(_voices, 1 / ((env_init_gateRelease * m_millisecond) + 1));
+    /* initializing and testing new envelopes here... */
+    m_new_envelopes.init(_voices);
+    float gateRelease = 1.f / ((env_init_gateRelease * m_millisecond) + 1.f);
+    for(i = 0; i < _voices; i++)
+    {
+        m_new_envelopes.m_env_g.setSegmentDx(i, 2, gateRelease);
+    }
+    /* */
 }
 
 /* helper - nyquist clip */
