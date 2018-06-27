@@ -1,8 +1,8 @@
 /******************************************************************************/
 /** @file		nltoolbox.h
-    @date		2017-03-16
+    @date		2018-06-27
     @version	0.1
-    @author		Anton Schmied[2017-03-16]
+    @authors    Anton Schmied[2017-03-16], Matthias Seeber[2018-06-27]
     @brief		A collection of frequently used function for crossfading,
                 conversion, etc.
 *******************************************************************************/
