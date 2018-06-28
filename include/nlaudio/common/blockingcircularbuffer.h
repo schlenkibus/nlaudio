@@ -86,7 +86,7 @@ public:
 
         m_bytesRead = 0;
         m_bytesWritten = 0;
-        m_readIndex = 0;
+        m_readIndex = m_size;
         m_writeIndex = 0;
 
         m_condition.notify_one();
