@@ -81,7 +81,6 @@ struct env_segment_single_mono
 
     float m_dx[1] = {};                                     // transition times as incremental values [0 ... 1] (infinite ... zero)
     float m_dest_magnitude[1] = {};                         // transition destinations for the magnitude signal
-    float m_curve = 0.f;                                    // curvature (of the attack segment)
 };
 
 /* Split Segment Object (handling magnitude and timbre signals) */
@@ -136,6 +135,7 @@ struct env_object_adbdsr_split
 
     /* split handling variables */
 
+    float m_peakLevels[dsp_number_of_voices] = {};          // holding current peak levels
     float m_splitValues[2] = {};                            // holding crossfade values [0 ... 1] for magnitude and timbre
 
     /* local data structures: rendering body, segment array */
@@ -152,6 +152,8 @@ struct env_object_adbdsr_split
     void setSegmentDx(const uint32_t _voiceId, const uint32_t _segmentId, const float _value);
     void setSegmentDest(const uint32_t _voiceId, const uint32_t _segmentId, const bool _splitMode, const float _value);
     void setSplitValue(const float _value);
+    void setAttackCurve(const float _value);
+    void setPeakLevel(const uint32_t _voiceId, const float _value);
 };
 
 /* ADBDSR Retrigger Envelope Object (currently intended for Env C) */
@@ -180,6 +182,8 @@ struct env_object_adbdsr_retrig
     void nextSegment(const uint32_t _voiceId);
     void setSegmentDx(const uint32_t _voiceId, const uint32_t _segmentId, const float _value);
     void setSegmentDest(const uint32_t _voiceId, const uint32_t _segmentId, const float _value);
+    void setAttackCurve(const float _value);
+    void setRetriggerHardness(const float _value);
 };
 
 /* Gate Envelope Object (currently intended for Gate) */
@@ -236,18 +240,18 @@ struct env_engine2
 {
     /* local data structures: each individual envelope */
 
-    env_object_adbdsr_split m_env_a;                        // Envelope A
-    env_object_adbdsr_split m_env_b;                        // Envelope B
-    env_object_adbdsr_retrig m_env_c;                       // Envelope C
-    env_object_gate m_env_g;                                // Envelope G (Gate)
-    env_object_decay m_env_f;                               // Envelope F (Flanger)
+    env_object_adbdsr_split m_env_a;                                // Envelope A
+    env_object_adbdsr_split m_env_b;                                // Envelope B
+    env_object_adbdsr_retrig m_env_c;                               // Envelope C
+    env_object_gate m_env_g;                                        // Envelope G (Gate)
+    env_object_decay m_env_f;                                       // Envelope F (Flanger)
 
     /* object functionality (init) */
 
-    void init(const uint32_t _voices);                      // proper initialization
+    void init(const uint32_t _voices, const float _gateRelease);    // proper initialization
 
     /* object functionality (rendering) */
 
-    void tickMono();                                        // rendering function for monophonic Envelopes
-    void tickPoly(const uint32_t _voiceId);                 // rendering function for polyphonic Envelopes
+    void tickMono();                                                // rendering function for monophonic Envelopes
+    void tickPoly(const uint32_t _voiceId);                         // rendering function for polyphonic Envelopes
 };

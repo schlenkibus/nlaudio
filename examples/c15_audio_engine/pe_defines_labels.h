@@ -27,6 +27,8 @@
 #define E_LKT       10
 #define E_TKT       11
 #define E_AC        12
+#define E_RH        13
+#define E_SP        14
 
 /* 'normal' Parameter Labels - access parameter with m_head[ID] - maybe, the rendering index would be much more efficient? */
 

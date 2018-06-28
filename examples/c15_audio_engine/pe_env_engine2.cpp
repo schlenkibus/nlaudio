@@ -27,16 +27,16 @@ void env_object_adbdsr_split::start(const uint32_t _voiceId)
 
     /* prepare rendering variables for the imminent transition */
 
-    body->m_x = m_segment[m_startIndex].m_dx[_voiceId];                 // x represents the transition progress [0 ... 1] for linear and polynomial transitions
-    body->m_y = 1.f - m_segment[m_startIndex].m_dx[_voiceId];           // y represents the transition progress [1 ... 0] for exponential transitions
-    body->m_start_magnitude = body->m_signal_magnitude;                 // the signal startpoint is updated for the magnitude signal
-    body->m_start_timbre = body->m_signal_timbre;                       // the signal startpoint is updated for the timbre signal
+    body->m_x = m_segment[m_startIndex].m_dx[_voiceId];                 // x represents the transition progress [0 ... 1] for linear and polynomial transitions (x = dx)
+    body->m_y = 1.f - m_segment[m_startIndex].m_dx[_voiceId];           // y represents the transition progress [1 ... 0] for exponential transitions (y = 1 - dx)
+    body->m_start_magnitude = body->m_signal_magnitude;                 // the signal startpoint is updated for the magnitude signal (startpoint = signal)
+    body->m_start_timbre = body->m_signal_timbre;                       // the signal startpoint is updated for the timbre signal (startpoint = signal)
 
     /* prepare state variables for the imminent transition */
 
-    body->m_state = m_segment[m_startIndex].m_state;                    // the rendering state is updated according to the first segment
-    body->m_index = m_startIndex;                                       // the segment index is updated to the first segment
-    body->m_next = m_segment[m_startIndex].m_next;                      // the subsequent segment index is updated according to the first segment
+    body->m_state = m_segment[m_startIndex].m_state;                    // the rendering state is updated according to the first segment (state = polynomial)
+    body->m_index = m_startIndex;                                       // the segment index is updated to the first segment (index = 1)
+    body->m_next = m_segment[m_startIndex].m_next;                      // the subsequent segment index is updated according to the first segment (next = linear)
 }
 
 /*****************************************************************************/
@@ -55,16 +55,16 @@ void env_object_adbdsr_split::stop(const uint32_t _voiceId)
 
     /* prepare rendering variables for the imminent transition */
 
-    body->m_x = m_segment[m_startIndex].m_dx[_voiceId];                 // x represents the transition progress [0 ... 1] for linear and polynomial transitions
-    body->m_y = 1.f - m_segment[m_startIndex].m_dx[_voiceId];           // y represents the transition progress [1 ... 0] for exponential transitions
-    body->m_start_magnitude = body->m_signal_magnitude;                 // the signal startpoint is updated for the magnitude signal
-    body->m_start_timbre = body->m_signal_timbre;                       // the signal startpoint is updated for the timbre signal
+    body->m_x = m_segment[m_startIndex].m_dx[_voiceId];                 // x represents the transition progress [0 ... 1] for linear and polynomial transitions (x = dx)
+    body->m_y = 1.f - m_segment[m_startIndex].m_dx[_voiceId];           // y represents the transition progress [1 ... 0] for exponential transitions (y = 1 - dx)
+    body->m_start_magnitude = body->m_signal_magnitude;                 // the signal startpoint is updated for the magnitude signal (startpoint = signal)
+    body->m_start_timbre = body->m_signal_timbre;                       // the signal startpoint is updated for the timbre signal (startpoint = signal)
 
     /* prepare state variables for the imminent transition */
 
-    body->m_state = m_segment[m_stopIndex].m_state;                     // the rendering state is updated according to the first segment
-    body->m_index = m_stopIndex;                                        // the segment index is updated to the first segment
-    body->m_next = m_segment[m_stopIndex].m_next;                       // the subsequent segment index is updated according to the first segment
+    body->m_state = m_segment[m_stopIndex].m_state;                     // the rendering state is updated according to the final segment (state = exponential)
+    body->m_index = m_stopIndex;                                        // the segment index is updated to the final segment (index = 4)
+    body->m_next = m_segment[m_stopIndex].m_next;                       // the subsequent segment index is updated according to the final segment (next = idle)
 }
 
 /*****************************************************************************/
@@ -86,18 +86,18 @@ void env_object_adbdsr_split::tick(const uint32_t _voiceId)
 
     const float diff_magnitude = m_segment[segment].m_dest_magnitude[_voiceId] - body->m_start_magnitude;   // current transition difference for the magnitude signal
     const float diff_timbre = m_segment[segment].m_dest_timbre[_voiceId] - body->m_start_timbre;            // current transition difference for the timbre signal
+                                                                                                            // (difference = destination - startpoint) (magnitude, timbre)
 
     /* render according to the current state */
 
     switch(body->m_state)                                                                                   // (basic rendering instructions)
     {
 
-    case 0:
-        /* idle - no rendering */
+    case 0:     /* idle - no rendering */
+
         break;
 
-    case 1:
-        /* linear rendering (decay1 phase) - until transition is finished */
+    case 1:     /* linear rendering (decay1 phase) - until transition is finished */
 
         if(body->m_x < 1.f)                                                                                 // (if(x < 1))
         {
@@ -123,8 +123,7 @@ void env_object_adbdsr_split::tick(const uint32_t _voiceId)
         }
         break;
 
-    case 2:
-        /* exponential, quasi-infinite rendering (decay2 phase) - until transition is finished */
+    case 2:     /* exponential, quasi-infinite rendering (decay2 phase) - until transition is finished */
 
         if(body->m_y > dsp_render_min)                                                                      // (if(y > 1e-9))
         {
@@ -148,8 +147,7 @@ void env_object_adbdsr_split::tick(const uint32_t _voiceId)
         }
         break;
 
-    case 3:
-        /* exponential, quasi-finite rendering (release phase) - until transition is finished */
+    case 3:     /* exponential, quasi-finite rendering (release phase) - until transition is finished */
 
         if(body->m_y > dsp_render_min)                                                                      // (if(y > 1e-9))
         {
@@ -174,8 +172,8 @@ void env_object_adbdsr_split::tick(const uint32_t _voiceId)
             nextSegment(_voiceId);
         }
         break;
-    case 4:
-        /* polynomial rendering (attack phase) - until transition is finished */
+
+    case 4:     /* polynomial rendering (attack phase) - until transition is finished */
 
         if(body->m_x < 1.f)                                                                                 // (if(x < 1))
         {
@@ -188,8 +186,8 @@ void env_object_adbdsr_split::tick(const uint32_t _voiceId)
 
             /* the signals are formed by the current transition progress (more precise: the polynomial formed by the progress) */
 
-            body->m_signal_magnitude = body->m_start_magnitude + (diff_magnitude * body->m_x);              // (signal = startpoint + (difference * x)) (magnitude)
-            body->m_signal_timbre = body->m_start_timbre + (diff_timbre * body->m_x);                       // (signal = startpoint + (difference * x)) (timbre)
+            body->m_signal_magnitude = body->m_start_magnitude + (diff_magnitude * x);                      // (signal = startpoint + (difference * f(x))) (magnitude)
+            body->m_signal_timbre = body->m_start_timbre + (diff_timbre * x);                               // (signal = startpoint + (difference * f(x))) (timbre)
 
             /* update the transition progress for the next clock tick */
 
@@ -275,8 +273,8 @@ void env_object_adbdsr_split::setSegmentDest(const uint32_t _voiceId, const uint
     {
         /* splitMode update: destinations are determined according to split setting (by crossfades) - intended for breakpoint and sustain updates */
 
-        m_segment[_segmentId].m_dest_magnitude[_voiceId] = NlToolbox::Crossfades::unipolarCrossFade(_value, 1.f, m_splitValues[0]);
-        m_segment[_segmentId].m_dest_timbre[_voiceId] = NlToolbox::Crossfades::unipolarCrossFade(_value, 1.f, m_splitValues[1]);
+        m_segment[_segmentId].m_dest_magnitude[_voiceId] = NlToolbox::Crossfades::unipolarCrossFade(_value, m_peakLevels[_voiceId], m_splitValues[0]);
+        m_segment[_segmentId].m_dest_timbre[_voiceId] = NlToolbox::Crossfades::unipolarCrossFade(_value, m_peakLevels[_voiceId], m_splitValues[1]);
     }
     else
     {
@@ -287,7 +285,6 @@ void env_object_adbdsr_split::setSegmentDest(const uint32_t _voiceId, const uint
     }
 }
 
-/* Setter Function for setting the Split Behavior (causing either magnitude or timbre signal to be gate-like) */
 /*****************************************************************************/
 /** @brief      setter function for the split behavior
  *
@@ -302,6 +299,38 @@ void env_object_adbdsr_split::setSplitValue(const float _value)
 
     m_splitValues[0] = fmax(0.f, _value);                               // magnitude xfade (param, 1)
     m_splitValues[1] = fmax(0.f, -_value);                              // timbre xfade (param, 1)
+}
+
+/*****************************************************************************/
+/** @brief      setter function for the attack curvature
+ *
+ * determines the change in slope depending on the curvature argument:
+ *      curvature < 0 : decreasing slope
+ *      curvature = 0 : constant slope
+ *      curvature > 0 : increasing slope
+ *
+ *  @param      value, specifying the curvature [-1 ... 1]
+******************************************************************************/
+
+void env_object_adbdsr_split::setAttackCurve(const float _value)
+{
+    /* update the curvature of the attack segment */
+    m_segment[1].m_curve = _value;
+}
+
+/*****************************************************************************/
+/** @brief      setter function for the current peak level
+ *
+ * the peak level is the maximum of an envelope curve, determined by level
+ * velocity
+ *
+ *  @param      value, specifying the peak level [0 ... 1]
+******************************************************************************/
+
+void env_object_adbdsr_split::setPeakLevel(const uint32_t _voiceId, const float _value)
+{
+    /* update the peak level according to voiceId */
+    m_peakLevels[_voiceId] = _value;
 }
 
 /********************************************** Retrigger Envelope Object Functionality **********************************************/
@@ -346,11 +375,13 @@ void env_object_adbdsr_retrig::tick(const uint32_t _voiceId)
     /* */
     switch(body->m_state)
     {
-    case 0:
-        /* idle */
+
+    case 0:     /* idle */
+
         break;
-    case 1:
-        /* linear rendering (decay1 phase) */
+
+    case 1:     /* linear rendering (decay1 phase) */
+
         if(body->m_x < 1.f)
         {
             /* */
@@ -366,8 +397,9 @@ void env_object_adbdsr_retrig::tick(const uint32_t _voiceId)
             nextSegment(_voiceId);
         }
         break;
-    case 2:
-        /* exponential, quasi-infinite rendering (decay2 phase) */
+
+    case 2:     /* exponential, quasi-infinite rendering (decay2 phase) */
+
         if(body->m_y > dsp_render_min)
         {
             /* */
@@ -381,8 +413,9 @@ void env_object_adbdsr_retrig::tick(const uint32_t _voiceId)
             body->m_signal_magnitude = body->m_start_magnitude + diff_magnitude;
         }
         break;
-    case 3:
-        /* exponential, quasi-finite rendering (release phase) */
+
+    case 3:     /* exponential, quasi-finite rendering (release phase) */
+
         if(body->m_y > dsp_render_min)
         {
             /* */
@@ -398,8 +431,9 @@ void env_object_adbdsr_retrig::tick(const uint32_t _voiceId)
             nextSegment(_voiceId);
         }
         break;
-    case 4:
-        /* polynomial rendering (attack phase) */
+
+    case 4:     /* polynomial rendering (attack phase) */
+
         if(body->m_x < 1.f)
         {
             /* */
@@ -408,7 +442,7 @@ void env_object_adbdsr_retrig::tick(const uint32_t _voiceId)
             x = NlToolbox::Curves::SquaredCurvature(x, m_segment[segment].m_curve);
             x = NlToolbox::Curves::SquaredCurvature(x, m_segment[segment].m_curve);
             /* */
-            body->m_signal_magnitude = body->m_start_magnitude + (diff_magnitude * body->m_x);
+            body->m_signal_magnitude = body->m_start_magnitude + (diff_magnitude * x);
             /* */
             body->m_x *= 1.f - m_segment[segment].m_dx[_voiceId];
         }
@@ -450,6 +484,19 @@ void env_object_adbdsr_retrig::setSegmentDest(const uint32_t _voiceId, const uin
 {
     /* */
     m_segment[_segmentId].m_dest_magnitude[_voiceId] = _value;
+}
+
+/* */
+void env_object_adbdsr_retrig::setAttackCurve(const float _value)
+{
+    /* update the curvature of the attack segment */
+    m_segment[1].m_curve = _value;
+}
+
+/* */
+void env_object_adbdsr_retrig::setRetriggerHardness(const float _value)
+{
+    m_retriggerHardness = _value;
 }
 
 /********************************************** Gate Envelope Object Functionality **********************************************/
@@ -494,11 +541,13 @@ void env_object_gate::tick(const uint32_t _voiceId)
     /* */
     switch(body->m_state)
     {
-    case 0:
-        /* idle */
+
+    case 0:     /* idle */
+
         break;
-    case 1:
-        /* linear rendering (attack phase) */
+
+    case 1:     /* linear rendering (attack phase) */
+
         if(body->m_x < 1.f)
         {
             /* */
@@ -514,8 +563,9 @@ void env_object_gate::tick(const uint32_t _voiceId)
             nextSegment(_voiceId);
         }
         break;
-    case 2:
-        /* exponential, quasi-finite rendering (release phase) */
+
+    case 2:     /* exponential, quasi-finite rendering (release phase) */
+
         if(body->m_y > dsp_render_min)
         {
             /* */
@@ -590,11 +640,13 @@ void env_object_decay::tick(const uint32_t _voiceId)
     /* */
     switch(body->m_state)
     {
-    case 0:
-        /* idle */
+
+    case 0:     /* idle */
+
         break;
-    case 1:
-        /* linear rendering (attack phase) */
+
+    case 1:     /* linear rendering (attack phase) */
+
         if(body->m_x < 1.f)
         {
             /* */
@@ -610,8 +662,9 @@ void env_object_decay::tick(const uint32_t _voiceId)
             nextSegment(_voiceId);
         }
         break;
-    case 2:
-        /* exponential, quasi-finite rendering (release phase) */
+
+    case 2:     /* exponential, quasi-finite rendering (release phase) */
+
         if(body->m_y > dsp_render_min)
         {
             /* */
@@ -662,12 +715,12 @@ void env_object_decay::setSegmentDest(const uint32_t _voiceId, const uint32_t _s
 /********************************************** Envelope Engine Object Functionality **********************************************/
 
 /* */
-void env_engine2::init(const uint32_t _voices)
+void env_engine2::init(const uint32_t _voices, const float _gateRelease)
 {
     /* */
-    uint32_t segment;
+    uint32_t segment, s, v;
     /* */
-    for(uint32_t s = 1; s <= sig_number_of_env_segments; s++)
+    for(s = 1; s <= sig_number_of_env_segments; s++)
     {
         /* */
         segment = s - 1;
@@ -689,7 +742,7 @@ void env_engine2::init(const uint32_t _voices)
         m_env_f.setSegmentDx(0, s, static_cast<float>(envelope2_definition[2][segment][2]));
         m_env_f.setSegmentDest(0, s, static_cast<float>(envelope2_definition[2][segment][3]));
         /* */
-        for(uint32_t v = 0; v < _voices; v++)
+        for(v = 0; v < _voices; v++)
         {
             /* */
             m_env_a.setSegmentDx(v, s, static_cast<float>(envelope2_definition[0][segment][2]));
@@ -704,6 +757,12 @@ void env_engine2::init(const uint32_t _voices)
             m_env_g.setSegmentDx(v, s, static_cast<float>(envelope2_definition[1][segment][2]));
             m_env_g.setSegmentDest(v, s, static_cast<float>(envelope2_definition[1][segment][3]));
         }
+    }
+    /* */
+    for(v = 0; v < _voices; v++)
+    {
+        /* */
+        m_env_g.setSegmentDx(v, 2, _gateRelease);
     }
 }
 

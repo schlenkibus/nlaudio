@@ -105,11 +105,16 @@ struct paramengine
     void keyUp(const uint32_t _voiceId, float _velocity);                                   // key events: key up (note off) mechanism
     void keyApply(const uint32_t _voiceId);                                                 // key events: apply key event
     void keyApplyMono();                                                                    // key events: apply mono event
-    /* envelope updates */
+    /* OLD envelope updates */
     void envUpdateStart(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity, const float _retriggerHardness);
     void envUpdateStop(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity);
     void envUpdateTimes(const uint32_t _voiceId, const uint32_t _envId);
     void envUpdateLevels(const uint32_t _voiceId, const uint32_t _envId);
+    /* NEW envelopes updates */
+    void newEnvUpdateStart(const uint32_t _voiceId, const float _pitch, const float _velocity);
+    void newEnvUpdateStop(const uint32_t _voiceId, const float _pitch, const float _velocity);
+    void newEnvUpdateTimes(const uint32_t _voiceId);
+    void newEnvUpdateLevels(const uint32_t _voiceId);
     /* simplified post processing approach (one function per clock) */
     void postProcess_slow(float *_signal, const uint32_t _voiceId);                         // slow post processing (distribution, copy, env c event signal!)
     void postProcess_fast(float *_signal, const uint32_t _voiceId);                         // fast post processing (distribution, copy)
