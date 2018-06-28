@@ -12,8 +12,7 @@ option(BUILD_EXAMPLES "Build Examples" ON)
 include(FindPkgConfig)
 
 set(LIBS alsa jack)
-find_package(Threads) # pthread
-
+find_package (Threads)
 ####################
 
 function(addLib name)
@@ -49,6 +48,8 @@ endforeach(lib)
 foreach(lib ${LIBS})
   linkLib(${lib} nlaudio)
 endforeach(lib)
+
+target_link_libraries (nlaudio ${CMAKE_THREAD_LIBS_INIT})
 
 add_compile_options(-Wall)
 add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=gnu++17>)
