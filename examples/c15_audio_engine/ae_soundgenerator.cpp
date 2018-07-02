@@ -88,7 +88,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     m_oscA_phase += m_oscA_phaseInc;
     m_oscA_phase -= NlToolbox::Conversion::float2int(m_oscA_phase);
 
-    float oscSampleA = NlToolbox::Math::sinP3_noWarp(tmpVar);
+    float oscSampleA = NlToolbox::Math::sinP3_noWrap(tmpVar);
 
 
     //**************************** Modulation B ******************************//
@@ -118,14 +118,14 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     m_oscB_phase += m_oscB_phaseInc;
     m_oscB_phase -=  NlToolbox::Conversion::float2int(m_oscB_phase);
 
-    float oscSampleB = NlToolbox::Math::sinP3_noWarp(tmpVar);
+    float oscSampleB = NlToolbox::Math::sinP3_noWrap(tmpVar);
 
 
     //******************************* Shaper A *******************************//
     float shaperSampleA = oscSampleA * _signal[SHP_A_DRVEA];
     tmpVar = shaperSampleA;
 
-    shaperSampleA = NlToolbox::Math::sinP3_warp(shaperSampleA);
+    shaperSampleA = NlToolbox::Math::sinP3_wrap(shaperSampleA);
     shaperSampleA = NlToolbox::Others::threeRanges(shaperSampleA, tmpVar, _signal[SHP_A_FLD]);
 
     tmpVar = shaperSampleA * shaperSampleA + (-0.5f);
@@ -137,7 +137,7 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     float shaperSampleB = oscSampleB * _signal[SHP_B_DRVEB];
     tmpVar = shaperSampleB;
 
-    shaperSampleB = NlToolbox::Math::sinP3_warp(shaperSampleB);
+    shaperSampleB = NlToolbox::Math::sinP3_wrap(shaperSampleB);
     shaperSampleB = NlToolbox::Others::threeRanges(shaperSampleB, tmpVar, _signal[SHP_B_FLD]);
 
     tmpVar = shaperSampleB * shaperSampleB + (-0.5f);

@@ -250,7 +250,7 @@ void Cabinet::applyCab(float _rawSample)
     processedSample *= mSaturationConst;
     float ctrlSample = processedSample;
 
-    processedSample = NlToolbox::Math::sinP3_warp(processedSample);
+    processedSample = NlToolbox::Math::sinP3_wrap(processedSample);
     processedSample = NlToolbox::Others::threeRanges(processedSample, ctrlSample, mFold);
 
     float processedSample_square = pHighpass30Hz->applyFilter(processedSample * processedSample);

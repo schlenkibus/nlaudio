@@ -84,7 +84,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     //**************************** AB Sample Mix ****************************//
     tmpVar = _signal[CMB_AB];                                                       // AB Mix is inverted, so crossfade mix is as well (currently)
     m_sampleComb  = _sampleB * (1.f - tmpVar) + _sampleA * tmpVar;
-    m_sampleComb += m_decayStateVar;
+//    m_sampleComb += m_decayStateVar;
 
 
     //****************** AB Ssample Phase Mdulation Mix ********************//
@@ -102,9 +102,10 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     m_hpOutStateVar = tmpVar + DNC_CONST;
 
     m_sampleComb = tmpVar;
+    m_sampleComb += m_decayStateVar;
 
     //*************************** 1-Pole Lowpass ****************************//
-    m_sampleComb = m_sampleComb * (1.f - m_lpCoeff);
+    m_sampleComb *= (1.f - m_lpCoeff);
     m_sampleComb += (m_lpCoeff * m_lpStateVar);
     m_sampleComb += DNC_CONST;
     m_lpStateVar = m_sampleComb;
@@ -113,7 +114,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     //******************************* Allpass *******************************//
     tmpVar = m_sampleComb;
 
-    m_sampleComb  = m_sampleComb * m_apCoeff_2;
+    m_sampleComb *= m_apCoeff_2;
     m_sampleComb += (m_apStateVar_1 * m_apCoeff_1);
     m_sampleComb += m_apStateVar_2;
 
@@ -177,6 +178,7 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     m_delayStateVar = tmpVar;
 
     tmpVar *= _signal[CMB_FEC];
+    tmpVar += (phaseMod * tmpVar);
 
 
     //******************************* Delay ********************************//
@@ -185,11 +187,9 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     m_sampleComb *= m_flushFadePoint;
     m_delayBuffer[m_delayBufferInd] = m_sampleComb;
 
-    tmpVar *= (phaseMod + tmpVar);
-    tmpVar -= 1.f;
-
     /// hier kommt voicestealing hin!!
 
+    tmpVar -= 1.f;
     if (tmpVar > COMB_BUFFER_SIZE_M3)
     {
         tmpVar = COMB_BUFFER_SIZE_M3;
@@ -218,10 +218,10 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     ind_tp2 &= COMB_BUFFER_SIZE_M1;
 
     m_sampleComb = NlToolbox::Math::interpolRT(delaySamples_fract,          // Interpolation
-                                                m_delayBuffer[ind_tm1],
-                                                m_delayBuffer[ind_t0],
-                                                m_delayBuffer[ind_tp1],
-                                                m_delayBuffer[ind_tp2]);
+                                               m_delayBuffer[ind_tm1],
+                                               m_delayBuffer[ind_t0],
+                                               m_delayBuffer[ind_tp1],
+                                               m_delayBuffer[ind_tp2]);
 
     m_sampleComb *= m_flushFadePoint;
 
@@ -303,7 +303,7 @@ void ae_combfilter::setCombfilter(float *_signal, float _samplerate)
 
     frequency *= m_warpConst_2PI;
 
-    float resonance = _signal[CMB_APR] * 1.99f -1.f;
+    float resonance = _signal[CMB_APR] * 1.99f - 1.f;
     resonance = NlToolbox::Math::sin(frequency) * (1.f - resonance);
 
     float tmpVar = 1.f / (1.f + resonance);
@@ -328,8 +328,8 @@ void ae_combfilter::setCombfilter(float *_signal, float _samplerate)
     //************************ Lowpass Influence ***************************//
     frequency *= m_sampleInterval;
 
-    float stateVar_r = NlToolbox::Math::sinP3_warp(frequency);
-    float stateVar_i = NlToolbox::Math::sinP3_warp(frequency + 0.25f);
+    float stateVar_r = NlToolbox::Math::sinP3_wrap(frequency);
+    float stateVar_i = NlToolbox::Math::sinP3_wrap(frequency + 0.25f);
 
     stateVar_r = stateVar_r * m_lpCoeff;
     stateVar_i = stateVar_i * -m_lpCoeff + 1.f;
@@ -340,11 +340,11 @@ void ae_combfilter::setCombfilter(float *_signal, float _samplerate)
 
 
     //************************ Allpass Influence ***************************//
-    stateVar_i = NlToolbox::Math::sinP3_warp(frequency - 0.25f) * -1.f * m_apCoeff_1;
-    stateVar_r = NlToolbox::Math::sinP3_warp(frequency) * m_apCoeff_1;
+    stateVar_i = NlToolbox::Math::sinP3_wrap(frequency) * -1.f * m_apCoeff_1;
+    stateVar_r = NlToolbox::Math::sinP3_wrap(frequency + 0.25f) * m_apCoeff_1;
 
-    float stateVar2_i = NlToolbox::Math::sinP3_warp(frequency + frequency - 0.25f);
-    float stateVar2_r = NlToolbox::Math::sinP3_warp(frequency + frequency);
+    float stateVar2_i = NlToolbox::Math::sinP3_wrap(frequency + frequency);
+    float stateVar2_r = NlToolbox::Math::sinP3_wrap(frequency + frequency + 0.25f);
 
 
     float var1_i = stateVar_i - stateVar2_i;

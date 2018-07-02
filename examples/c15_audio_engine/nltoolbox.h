@@ -155,7 +155,7 @@ inline float cos(float x)
 
 inline float tan(float x)
 {
-    x = 0.133333 * pow(x, 5.f) + 0.333333 * pow(x, 3.f) + x;
+    x = 0.133333f * pow(x, 5.f) + 0.333333f * pow(x, 3.f) + x;
 
     return x;
 }
@@ -217,7 +217,7 @@ inline float arctan(float x)
  *  @return   sine value
 ******************************************************************************/
 
-inline float sinP3_warp(float _x)
+inline float sinP3_wrap(float _x)
 {
     _x += -0.25f;
 
@@ -249,7 +249,7 @@ inline float sinP3_warp(float _x)
  *  @return   sine value
 ******************************************************************************/
 
-inline float sinP3_noWarp(float _x)
+inline float sinP3_noWrap(float _x)
 {
     _x += _x;
     _x = fabs(_x);

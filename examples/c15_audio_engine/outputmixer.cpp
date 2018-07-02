@@ -210,7 +210,7 @@ void Outputmixer::applyOutputMixer(uint32_t _voiceNumber, float _sampleA, float 
     mainSample = mDrive * mainSample;
     float holdSample = mainSample;
 
-    mainSample = NlToolbox::Math::sinP3_warp(mainSample);
+    mainSample = NlToolbox::Math::sinP3_wrap(mainSample);
     mainSample = NlToolbox::Others::threeRanges(mainSample, holdSample, mFold);
 
     holdSample = mainSample * mainSample;
@@ -230,7 +230,7 @@ void Outputmixer::applyOutputMixer(uint32_t _voiceNumber, float _sampleA, float 
     mainSample = mDrive * mainSample;
     holdSample = mainSample;
 
-    mainSample = NlToolbox::Math::sinP3_warp(mainSample);
+    mainSample = NlToolbox::Math::sinP3_wrap(mainSample);
     mainSample = NlToolbox::Others::threeRanges(mainSample, holdSample, mFold);
 
     holdSample = mainSample * mainSample;

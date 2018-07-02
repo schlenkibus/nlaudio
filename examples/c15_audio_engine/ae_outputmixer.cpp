@@ -54,7 +54,7 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
     mainSample *= 0.25f;                                                                /// _signal[OUT_DRV]
     float tmpVar = mainSample;
 
-    mainSample = NlToolbox::Math::sinP3_warp(mainSample);
+    mainSample = NlToolbox::Math::sinP3_wrap(mainSample);
     mainSample = NlToolbox::Others::threeRanges(mainSample, tmpVar, 0.5f);              /// _signal[OUT_FLD]
 
     tmpVar = mainSample * mainSample;
@@ -73,7 +73,7 @@ void ae_outputmixer::mixAndShape(float _sampleA, float _sampleB, float _sampleCo
     mainSample *= 0.25f;                                                                /// _signal[OUT_DRV]
     tmpVar = mainSample;
 
-    mainSample = NlToolbox::Math::sinP3_warp(mainSample);
+    mainSample = NlToolbox::Math::sinP3_wrap(mainSample);
     mainSample = NlToolbox::Others::threeRanges(mainSample, tmpVar, 0.5f);              /// _signal[OUT_FLD]
 
     tmpVar = mainSample * mainSample;
