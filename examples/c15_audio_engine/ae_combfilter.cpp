@@ -1,5 +1,5 @@
 /******************************************************************************/
-/** @file           ae_combfilter.h
+/** @file           ae_combfilter.cpp
     @date           2018-05-10
     @version        1.0
     @author         Anton Schmied
@@ -84,8 +84,6 @@ void ae_combfilter::applyCombfilter(float _sampleA, float _sampleB, float *_sign
     //**************************** AB Sample Mix ****************************//
     tmpVar = _signal[CMB_AB];                                                       // AB Mix is inverted, so crossfade mix is as well (currently)
     m_sampleComb  = _sampleB * (1.f - tmpVar) + _sampleA * tmpVar;
-//    m_sampleComb += m_decayStateVar;
-
 
     //****************** AB Ssample Phase Mdulation Mix ********************//
     tmpVar = _signal[CMB_PMAB];

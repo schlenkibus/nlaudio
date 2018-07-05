@@ -60,11 +60,28 @@
 #define CMB_PM          42
 #define CMB_PMAB        43
 
+#define SVF_F1_CUT      44000
+#define SVF_F2_CUT      45000
+#define SVF_F1_FM       46000
+#define SVF_F2_FM       47000
+#define SVF_RES         48000
+#define SVF_CMIX        49000
+#define SVF_AB          50000
+#define SVF_FMAB        51000
+#define SVF_LBH_1       52000
+#define SVF_LBH_2       53000
+#define SVF_PAR_1       54000
+#define SVF_PAR_2       55000
+#define SVF_PAR_3       56000
+#define SVF_PAR_4       57000
+
 #define OUT_A_L         44
 #define OUT_A_R         45
 #define OUT_B_L         46
 #define OUT_B_R         47
 #define OUT_CMB_L       48
 #define OUT_CMB_R       49
+#define OUT_SVF_L       5000
+#define OUT_SVF_R       5100
 
 #define MST_VOL         50
