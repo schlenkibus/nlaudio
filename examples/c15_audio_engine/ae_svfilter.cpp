@@ -34,6 +34,8 @@ void ae_svfilter::init(float _samplerate, uint32_t _vn)
     m_first_attenuation = 0.f;
     m_second_attenuation = 0.f;
 
+    m_first_fir_stateVar = 0.f;
+    m_second_fir_stateVar = 0.f;
     m_first_int1_stateVar = 0.f;
     m_first_int2_stateVar = 0.f;
     m_second_int1_stateVar = 0.f;
@@ -43,7 +45,6 @@ void ae_svfilter::init(float _samplerate, uint32_t _vn)
     m_first_sat_stateVar = 0.f;
     m_second_sat_stateVar = 0.f;
 
-    /// ist alles initialisiert???
 }
 
 
@@ -62,7 +63,9 @@ void ae_svfilter::applySVFilter(float _sampleA, float _sampleB, float _sampleCom
 
     float secondSample = firstSample * _signal[SVF_PAR_4];
     secondSample += (m_first_sv_sample * _signal[SVF_PAR_3]);
-    secondSample += (m_second_sat_stateVar * 0.01f);
+    secondSample += (m_second_sat_stateVar * 0.1f);
+
+    firstSample += (m_first_sat_stateVar * 0.1f);
 
 
     //************************** Frequency Modulation ************************//
@@ -85,16 +88,16 @@ void ae_svfilter::applySVFilter(float _sampleA, float _sampleB, float _sampleCom
     float int1Out = m_first_sv_sample * omega + m_first_int1_stateVar;
     float int2Out = int1Out * omega + m_first_int2_stateVar;
 
-    float lowpassOutput = int2Out + m_first_int2_stateVar;
+    float lowpassOutput  = int2Out + m_first_int2_stateVar;
     float bandpassOutput = int1Out + int1Out;
     float highpassOutput = firstSample - (int1Out * m_first_attenuation + lowpassOutput);
 
     m_first_int1_stateVar = int1Out + DNC_CONST;
     m_first_int2_stateVar = int2Out + DNC_CONST;
 
-    m_first_sv_sample  = lowpassOutput;                 /// LBH missing
-    m_first_sv_sample += (bandpassOutput);
-    m_first_sv_sample += (highpassOutput);
+    m_first_sv_sample  =  lowpassOutput  * fmax(-(_signal[SVF_LBH_1]), 0);
+    m_first_sv_sample += (bandpassOutput * (1.f - fabs(_signal[SVF_LBH_1])));
+    m_first_sv_sample += (highpassOutput * fmax(_signal[SVF_LBH_1], 0));
 
 
     //************************** 1st Stage Parabol Sat ***********************//
@@ -102,7 +105,7 @@ void ae_svfilter::applySVFilter(float _sampleA, float _sampleB, float _sampleCom
     {
         m_first_sat_stateVar = 2.f;
     }
-    else if (bandpassOutput > -2.f)
+    else if (bandpassOutput < -2.f)
     {
         m_first_sat_stateVar = -2.f;
     }
@@ -137,9 +140,9 @@ void ae_svfilter::applySVFilter(float _sampleA, float _sampleB, float _sampleCom
     m_second_int1_stateVar = int1Out + DNC_CONST;
     m_second_int2_stateVar = int2Out + DNC_CONST;
 
-    tmpVar  = lowpassOutput;                        /// LBH missing
-    tmpVar += (bandpassOutput);
-    tmpVar += (highpassOutput);
+    tmpVar  =  lowpassOutput  * fmax(-_signal[SVF_LBH_2], 0);
+    tmpVar += (bandpassOutput * (1.f - fabs(_signal[SVF_LBH_2])));
+    tmpVar += (highpassOutput * fmax(_signal[SVF_LBH_2], 0));
 
 
     //************************* 2nd Stage Parabol Sat ************************//
@@ -182,27 +185,25 @@ void ae_svfilter::setSVFilter(float *_signal, float _samplerate)
     }
 
     //****************************** 1st Stage ******************************//
-    float frequency = _signal[SVF_F1_CUT] * m_warpConst_2PI;
+    float omega = _signal[SVF_F1_CUT] * m_warpConst_2PI;
 
-    if (frequency > 1.9f)
+    if (omega > 1.9f)
     {
-        frequency = 1.9;
+        omega = 1.9;
     }
 
-    m_first_attenuation = ((2.f + frequency) * (2.f - frequency) * resonance)
-                            / (((resonance * frequency) + (2.f - frequency)) * 2.f);
+    m_first_attenuation = ((2.f + omega) * (2.f - omega) * resonance)
+                        / (((resonance * omega) + (2.f - omega)) * 2.f);
 
 
-    //****************************** 1st Stage ******************************//
-    frequency = _signal[SVF_F1_CUT] * m_warpConst_2PI;
+    //****************************** 2nd Stage ******************************//
+    omega = _signal[SVF_F2_CUT] * m_warpConst_2PI;
 
-    if (frequency > 1.9f)
+    if (omega > 1.9f)
     {
-        frequency = 1.9;
+        omega = 1.9;
     }
 
-    m_second_attenuation = ((2.f + frequency) * (2.f - frequency) * resonance)
-                            / (((resonance * frequency) + (2.f - frequency)) * 2.f);
-
-
+    m_second_attenuation = ((2.f + omega) * (2.f - omega) * resonance)
+                         / (((resonance * omega) + (2.f - omega)) * 2.f);
 }

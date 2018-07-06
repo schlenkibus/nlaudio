@@ -975,6 +975,8 @@ void dsp_host::testInit()
     testLoadPreset(1);          // load default preset
 }
 
+
+
 /******************************************************************************/
 /**
 *******************************************************************************/
@@ -1004,6 +1006,7 @@ void dsp_host::initAudioEngine(float _samplerate, uint32_t _polyphony)
     {
         m_soundgenerator[p].init(_samplerate, p);
         m_combfilter[p].init(_samplerate, p);
+        m_svfilter[p].init(_samplerate, p);
     }
 
     m_outputmixer.init(_samplerate, _polyphony);
@@ -1023,10 +1026,28 @@ void dsp_host::makePolySound(float *_signal, uint32_t _voiceID)
 
 
     //****************************** Comb Filter *****************************//
-    m_combfilter[_voiceID].applyCombfilter(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, _signal);
+    m_combfilter[_voiceID].applyCombfilter(m_soundgenerator[_voiceID].m_sampleA,
+                                           m_soundgenerator[_voiceID].m_sampleB,
+                                           _signal);
+
+    //************************* State Variable Filter ************************//
+    m_svfilter[_voiceID].applySVFilter(m_soundgenerator[_voiceID].m_sampleA,
+                                       m_soundgenerator[_voiceID].m_sampleB,
+                                       m_combfilter[_voiceID].m_sampleComb,
+                                       _signal);
 
     //****************************** Outputmixer *****************************//
-    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA, m_soundgenerator[_voiceID].m_sampleB, m_combfilter[_voiceID].m_sampleComb, 0.f, _signal, _voiceID);
+    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA,
+                              m_soundgenerator[_voiceID].m_sampleB,
+                              m_combfilter[_voiceID].m_sampleComb,
+                              0.f,
+                              _signal, _voiceID);
+
+//    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA,
+//                              m_soundgenerator[_voiceID].m_sampleB,
+//                              m_combfilter[_voiceID].m_sampleComb,
+//                              m_svfilter[_voiceID].m_sampleSVF,
+//                              _signal, _voiceID);
 }
 
 
@@ -1121,6 +1142,9 @@ inline void dsp_host::setPolyFilterCoeffs(float *_signal, uint32_t _voiceID)
 
     //****************************** Comb Filter *****************************//
     m_combfilter[_voiceID].setCombfilter(_signal, m_samplerate);
+
+    //************************* State Variable Filter ************************//
+    m_svfilter[_voiceID].setSVFilter(_signal, m_samplerate);
 }
 
 

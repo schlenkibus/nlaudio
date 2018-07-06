@@ -21,6 +21,7 @@
 /* Audio Engine */
 #include "ae_soundgenerator.h"
 #include "ae_combfilter.h"
+#include "ae_svfilter.h"
 #include "ae_outputmixer.h"
 
 /* dsp_host: main dsp object, holding TCD Decoder, Parameter Engine, Audio Engine, shared Signal Array, main signal (L, R) */
@@ -84,6 +85,7 @@ public:
     /* Audio Engine */
     ae_soundgenerator m_soundgenerator[dsp_number_of_voices];
     ae_combfilter m_combfilter[dsp_number_of_voices];
+    ae_svfilter m_svfilter[dsp_number_of_voices];
     ae_outputmixer m_outputmixer;
 
     void initAudioEngine(float _samplerate, uint32_t _polyphony);
