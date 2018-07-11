@@ -55,7 +55,7 @@ int32_t decoder::apply28lower(const uint32_t _data0, const uint32_t _data1)
 
 /* handle TCD selection by event-based evaluation (check ID against FROM, TO) */
 
-uint32_t decoder::selectionEvent(const uint32_t _from, const uint32_t _to, const uint32_t _id)
+uint32_t decoder::selectionEvent(const uint32_t _from, const uint32_t _to, const int32_t _id)
 {
     m_event[1] = _id - _from;
     m_event[2] = _to - _id;

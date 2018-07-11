@@ -17,6 +17,7 @@
 #define dsp_poly_types 2                    // two polyphony types (mono, poly) - (later, a dual type needs to be implemented)
 #define dsp_clock_types 4                   // four different parameter types (sync, audio, fast, slow)
 #define dsp_number_of_voices 20             // maximum allowed number of voices
+#define dsp_take_envelope 0                 // specify which env engine should be used: old (0) or new (1)
 
 const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in rates (Hz) now
     9600,                                   // fast rate is 9600 Hz
@@ -25,13 +26,13 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 
 /* Main Parameter Definition                -> see Linux Engine - Test 3 */
 
-#define sig_number_of_params 113            // 3 * (13 ENV params) + 2 * (14 OSC + 8 SHP params) + (16 CMB params) + (6 OUT params) + (2 MASTER params) + (6 KEY params)
-#define sig_number_of_param_items 227       // (39 + 44 + 16 + 6 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
+#define sig_number_of_params 119            // 3 * (15 ENV params) + 2 * (14 OSC + 8 SHP params) + (16 CMB params) + (6 OUT params) + (2 MASTER params) + (6 KEY params)
+#define sig_number_of_param_items 233       // (45 + 44 + 16 + 6 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
 #define sig_number_of_signal_items 51       // 51 shared signals
 
 /* TCD List Handling */
 
-#define lst_recall_length 106               // 106 preset-relevant parameters
+#define lst_recall_length 109               // 109 preset-relevant parameters
 #define lst_keyEvent_length 6               // 6 key event parameters
 #define lst_number_of_lists 2               // predefined paramId lists (simplifying recal and key event update TCD sequences)
 
@@ -68,5 +69,5 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 /* Internal IDs of crucial TCD parameters */
 
 #define par_envelopeA 0                     // item pointer to (consecutive) envelope parameters A (internal ids)
-#define par_envelopeB 13                    // item pointer to (consecutive) envelope parameters B (internal ids)
-#define par_envelopeC 26                    // item pointer to (consecutive) envelope parameters C (internal ids)
+#define par_envelopeB 15                    // item pointer to (consecutive) envelope parameters B (internal ids)
+#define par_envelopeC 30                    // item pointer to (consecutive) envelope parameters C (internal ids)

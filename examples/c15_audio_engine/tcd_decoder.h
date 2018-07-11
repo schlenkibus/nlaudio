@@ -44,7 +44,7 @@ struct decoder
     void signed28upper(const uint32_t _data0, const uint32_t _data1);
     int32_t apply28lower(const uint32_t _data0, const uint32_t _data1);
     /* tcd voice and parameter selection event evaluation */
-    uint32_t selectionEvent(const uint32_t _from, const uint32_t _to, const uint32_t _id);
+    uint32_t selectionEvent(const uint32_t _from, const uint32_t _to, const int32_t _id);
     /* tcd list traversal */
     uint32_t traverseRecall();
     uint32_t traverseKeyEvent();

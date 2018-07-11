@@ -55,8 +55,8 @@ void env_object_adbdsr_split::stop(const uint32_t _voiceId)
 
     /* prepare rendering variables for the imminent transition */
 
-    body->m_x = m_segment[m_startIndex].m_dx[_voiceId];                 // x represents the transition progress [0 ... 1] for linear and polynomial transitions (x = dx)
-    body->m_y = 1.f - m_segment[m_startIndex].m_dx[_voiceId];           // y represents the transition progress [1 ... 0] for exponential transitions (y = 1 - dx)
+    body->m_x = m_segment[m_stopIndex].m_dx[_voiceId];                  // x represents the transition progress [0 ... 1] for linear and polynomial transitions (x = dx)
+    body->m_y = 1.f - m_segment[m_stopIndex].m_dx[_voiceId];            // y represents the transition progress [1 ... 0] for exponential transitions (y = 1 - dx)
     body->m_start_magnitude = body->m_signal_magnitude;                 // the signal startpoint is updated for the magnitude signal (startpoint = signal)
     body->m_start_timbre = body->m_signal_timbre;                       // the signal startpoint is updated for the timbre signal (startpoint = signal)
 
@@ -225,8 +225,8 @@ void env_object_adbdsr_split::nextSegment(const uint32_t _voiceId)
 
     /* prepare rendering variables for the imminent transition */
 
-    body->m_x = m_segment[body->m_index].m_dx[_voiceId];                // x represents the transition progress [0 ... 1] for linear and polynomial transitions
-    body->m_y = 1.f - m_segment[body->m_index].m_dx[_voiceId];          // y represents the transition progress [1 ... 0] for exponential transitions
+    body->m_x = m_segment[body->m_next].m_dx[_voiceId];                 // x represents the transition progress [0 ... 1] for linear and polynomial transitions
+    body->m_y = 1.f - m_segment[body->m_next].m_dx[_voiceId];           // y represents the transition progress [1 ... 0] for exponential transitions
     body->m_start_magnitude = body->m_signal_magnitude;                 // the signal startpoint is updated for the magnitude signal
     body->m_start_timbre = body->m_signal_timbre;                       // the signal startpoint is updated for the timbre signal
 
@@ -356,8 +356,8 @@ void env_object_adbdsr_retrig::stop(const uint32_t _voiceId)
     /* */
     env_body_single* body = &m_body[_voiceId];
     /* */
-    body->m_x = m_segment[m_startIndex].m_dx[_voiceId];
-    body->m_y = 1.f - m_segment[m_startIndex].m_dx[_voiceId];
+    body->m_x = m_segment[m_stopIndex].m_dx[_voiceId];
+    body->m_y = 1.f - m_segment[m_stopIndex].m_dx[_voiceId];
     body->m_start_magnitude = body->m_signal_magnitude;
     /* */
     body->m_state = m_segment[m_stopIndex].m_state;
@@ -463,8 +463,8 @@ void env_object_adbdsr_retrig::nextSegment(const uint32_t _voiceId)
     /* */
     env_body_single* body = &m_body[_voiceId];
     /* */
-    body->m_x = m_segment[body->m_index].m_dx[_voiceId];
-    body->m_y = 1.f - m_segment[body->m_index].m_dx[_voiceId];
+    body->m_x = m_segment[body->m_next].m_dx[_voiceId];
+    body->m_y = 1.f - m_segment[body->m_next].m_dx[_voiceId];
     body->m_start_magnitude = body->m_signal_magnitude;
     /* */
     body->m_state = m_segment[body->m_next].m_state;
@@ -522,8 +522,8 @@ void env_object_gate::stop(const uint32_t _voiceId)
     /* */
     env_body_single* body = &m_body[_voiceId];
     /* */
-    body->m_x = m_segment[m_startIndex].m_dx[_voiceId];
-    body->m_y = 1.f - m_segment[m_startIndex].m_dx[_voiceId];
+    body->m_x = m_segment[m_stopIndex].m_dx[_voiceId];
+    body->m_y = 1.f - m_segment[m_stopIndex].m_dx[_voiceId];
     body->m_start_magnitude = body->m_signal_magnitude;
     /* */
     body->m_state = m_segment[m_stopIndex].m_state;
@@ -590,8 +590,8 @@ void env_object_gate::nextSegment(const uint32_t _voiceId)
     /* */
     env_body_single* body = &m_body[_voiceId];
     /* */
-    body->m_x = m_segment[body->m_index].m_dx[_voiceId];
-    body->m_y = 1.f - m_segment[body->m_index].m_dx[_voiceId];
+    body->m_x = m_segment[body->m_next].m_dx[_voiceId];
+    body->m_y = 1.f - m_segment[body->m_next].m_dx[_voiceId];
     body->m_start_magnitude = body->m_signal_magnitude;
     /* */
     body->m_state = m_segment[body->m_next].m_state;
@@ -689,8 +689,8 @@ void env_object_decay::nextSegment(const uint32_t _voiceId)
     /* */
     env_body_single* body = &m_body[_voiceId];
     /* */
-    body->m_x = m_segment[body->m_index].m_dx[_voiceId];
-    body->m_y = 1.f - m_segment[body->m_index].m_dx[_voiceId];
+    body->m_x = m_segment[body->m_next].m_dx[_voiceId];
+    body->m_y = 1.f - m_segment[body->m_next].m_dx[_voiceId];
     body->m_start_magnitude = body->m_signal_magnitude;
     /* */
     body->m_state = m_segment[body->m_next].m_state;

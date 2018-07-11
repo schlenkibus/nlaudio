@@ -14,8 +14,13 @@
 #include <stdint.h>
 #include "pe_defines_params.h"
 #include "pe_exponentiator.h"
+
+#if dsp_take_envelope == 0
 #include "pe_env_engine.h"
+#elif dsp_take_envelope == 1
 #include "pe_env_engine2.h"
+#endif
+
 #include "pe_key_event.h"
 #include "pe_utilities.h"
 #include "pe_defines_labels.h"
@@ -26,7 +31,7 @@
 struct param_head
 {
     /* */
-    uint32_t m_id;
+    int32_t m_id;
     uint32_t m_index;
     uint32_t m_size;
     uint32_t m_clockType;
@@ -82,8 +87,11 @@ struct paramengine
     param_body m_body[sig_number_of_param_items];
     exponentiator m_convert;
     param_utility m_utilities[sig_number_of_utilities];
+#if dsp_take_envelope == 0
     env_engine m_envelopes;
+#elif dsp_take_envelope == 1
     env_engine2 m_new_envelopes;
+#endif
     poly_key_event m_event;
     NlToolbox::Curves::Shaper_1_BP m_combDecayCurve;
     NlToolbox::Curves::Shaper_2_BP m_svfResonanceCurve;
@@ -105,16 +113,19 @@ struct paramengine
     void keyUp(const uint32_t _voiceId, float _velocity);                                   // key events: key up (note off) mechanism
     void keyApply(const uint32_t _voiceId);                                                 // key events: apply key event
     void keyApplyMono();                                                                    // key events: apply mono event
+#if dsp_take_envelope == 0
     /* OLD envelope updates */
     void envUpdateStart(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity, const float _retriggerHardness);
     void envUpdateStop(const uint32_t _voiceId, const uint32_t _envId, const float _pitch, const float _velocity);
     void envUpdateTimes(const uint32_t _voiceId, const uint32_t _envId);
     void envUpdateLevels(const uint32_t _voiceId, const uint32_t _envId);
+#elif dsp_take_envelope == 1
     /* NEW envelopes updates */
     void newEnvUpdateStart(const uint32_t _voiceId, const float _pitch, const float _velocity);
     void newEnvUpdateStop(const uint32_t _voiceId, const float _pitch, const float _velocity);
     void newEnvUpdateTimes(const uint32_t _voiceId);
     void newEnvUpdateLevels(const uint32_t _voiceId);
+#endif
     /* simplified post processing approach (one function per clock) */
     void postProcess_slow(float *_signal, const uint32_t _voiceId);                         // slow post processing (distribution, copy, env c event signal!)
     void postProcess_fast(float *_signal, const uint32_t _voiceId);                         // fast post processing (distribution, copy)

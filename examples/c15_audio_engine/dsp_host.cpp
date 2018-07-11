@@ -329,8 +329,12 @@ void dsp_host::paramSelectionUpdate()
     uint32_t s;
     for(uint32_t p = 0; p < sig_number_of_params; p++)
     {
-        s = m_decoder.selectionEvent(m_decoder.m_paramFrom, m_decoder.m_paramTo, m_params.m_head[p].m_id);
-        m_decoder.m_selectedParams.add(m_params.m_head[p].m_polyType, s, p);
+        /* only TRUE TCD IDs (> -1) */
+        if(m_params.m_head[p].m_id > -1)
+        {
+            s = m_decoder.selectionEvent(m_decoder.m_paramFrom, m_decoder.m_paramTo, m_params.m_head[p].m_id);
+            m_decoder.m_selectedParams.add(m_params.m_head[p].m_polyType, s, p);
+        }
     }
 }
 
