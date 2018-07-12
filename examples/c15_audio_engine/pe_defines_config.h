@@ -63,7 +63,7 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 
 #define env_norm_peak 0.023766461           // equals 1 / 42.0761 (taken from prototype)
 #define env_clip_peak 1.412537545           // measured value for LevelKT Clipping, equals +3 dB (candidate)
-#define env_init_gateRelease 1              // release time of gate envelopes (in milliseconds)
+#define env_init_gateRelease 10             // release time of gate envelopes (in milliseconds) -- 1ms problematic (key up noise), 10ms okay (like prototype)
 #define env_highest_finite_time 16000.f     // highest allowed finite time
 
 /* Internal IDs of crucial TCD parameters */

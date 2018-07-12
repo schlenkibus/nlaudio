@@ -77,6 +77,8 @@ void paramengine::init(uint32_t _sampleRate, uint32_t _voices)
     /* initializing and testing new envelopes here... */
     m_new_envelopes.init(_voices, gateRelease);
     /* debugging */
+    float test_pitch = 69.f;
+    std::cout << "test pitch(" << test_pitch << "): linear: " << m_convert.eval_lin_pitch(test_pitch) << ", osc:" << m_convert.eval_osc_pitch(test_pitch) << std::endl;
     // print segment definitions: (state, next, dx, dest)
 #endif
     /* */
@@ -624,12 +626,12 @@ void paramengine::newEnvUpdateStop(const uint32_t _voiceId, const float _pitch, 
     {
         /* finite release time */
         time = m_body[m_head[envIndex + E_REL].m_index].m_signal * m_event.m_env[envId].m_timeFactor[_voiceId][3];      //      determine release segment time according to time factor and parameter
-        m_new_envelopes.m_env_a.setSegmentDx(_voiceId, 4, 1.f / (time + 1.f));                                          //      update release segment time
+        m_new_envelopes.m_env_b.setSegmentDx(_voiceId, 4, 1.f / (time + 1.f));                                          //      update release segment time
     }
     else                                                                                                                // if the release time is meant to be infinite (tcd: [16001 ... 16160]):
     {
         /* infinite release time */
-        m_new_envelopes.m_env_a.setSegmentDx(_voiceId, 4, 0.f);                                                         //      update release segment time (set it to infinity)
+        m_new_envelopes.m_env_b.setSegmentDx(_voiceId, 4, 0.f);                                                         //      update release segment time (set it to infinity)
     }
 
     /* envelope c update */
@@ -646,12 +648,12 @@ void paramengine::newEnvUpdateStop(const uint32_t _voiceId, const float _pitch, 
     {
         /* finite release time */
         time = m_body[m_head[envIndex + E_REL].m_index].m_signal * m_event.m_env[envId].m_timeFactor[_voiceId][3];      //      determine release segment time according to time factor and parameter
-        m_new_envelopes.m_env_a.setSegmentDx(_voiceId, 4, 1.f / (time + 1.f));                                          //      update release segment time
+        m_new_envelopes.m_env_c.setSegmentDx(_voiceId, 4, 1.f / (time + 1.f));                                          //      update release segment time
     }
     else                                                                                                                // if the release time is meant to be infinite (tcd: [16001 ... 16160]):
     {
         /* infinite release time */
-        m_new_envelopes.m_env_a.setSegmentDx(_voiceId, 4, 0.f);                                                         //      update release segment time (set it to infinity)
+        m_new_envelopes.m_env_c.setSegmentDx(_voiceId, 4, 0.f);                                                         //      update release segment time (set it to infinity)
     }
 
     /* stop envelopes */
@@ -845,7 +847,7 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     keyTracking = m_body[m_head[P_OA_PKT].m_index].m_signal;
     unitPitch = m_body[m_head[P_OA_P].m_index].m_signal;
     envMod = _signal[ENV_C_SIG] * m_body[m_head[P_OA_PEC].m_index].m_signal;
-    _signal[OSC_A_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    _signal[OSC_A_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69.f + (basePitch * keyTracking) + envMod));
     /* - Oscillator A Fluctuation (Envelope C) */
     envMod = m_body[m_head[P_OA_FEC].m_index].m_signal;
     _signal[OSC_A_FLUEC] = m_body[m_head[P_OA_F].m_index].m_signal * NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], envMod);
@@ -856,7 +858,7 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     keyTracking = m_body[m_head[P_OB_PKT].m_index].m_signal;
     unitPitch = m_body[m_head[P_OB_P].m_index].m_signal;
     envMod = _signal[ENV_C_SIG] * m_body[m_head[P_OB_PEC].m_index].m_signal;
-    _signal[OSC_B_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));
+    _signal[OSC_B_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69.f + (basePitch * keyTracking) + envMod));
     /* - Oscillator B Fluctuation (Envelope C) */
     envMod = m_body[m_head[P_OB_FEC].m_index].m_signal;
     _signal[OSC_B_FLUEC] = m_body[m_head[P_OB_F].m_index].m_signal * NlToolbox::Crossfades::unipolarCrossFade(1.f, _signal[ENV_C_SIG], envMod);
@@ -867,7 +869,7 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     keyTracking = m_body[m_head[P_CMB_PKT].m_index].m_signal;
     unitPitch = m_body[m_head[P_CMB_P].m_index].m_signal;
     // as a tonal component, the reference tone frequency is applied (instead of const 440 Hz)
-    _signal[CMB_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking)));
+    _signal[CMB_FRQ] = evalNyquist(m_pitch_reference * unitPitch * m_convert.eval_lin_pitch(69.f + (basePitch * keyTracking)));
     /* - Comb Filter Bypass (according to Pitch parameter - without key tracking or reference freq) */
     _signal[CMB_BYP] = unitPitch > dsp_comb_max_freqFactor ? 1.f : 0.f; // check for bypassing comb filter, max_freqFactor corresponds to Pitch of 119.99 ST
     /* - Comb Filter Decay Time (Base Pitch, Master Tune, Gate Env, Dec Time, Key Tracking, Gate Amount) */
@@ -881,13 +883,13 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     unitPitch = m_body[m_head[P_CMB_APT].m_index].m_signal;
     envMod = _signal[ENV_C_SIG] * m_body[m_head[P_CMB_APEC].m_index].m_signal;
     //_signal[CMB_APF] = evalNyquist(440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));      // not sure if APF needs Nyquist Clipping?
-    _signal[CMB_APF] = 440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod);                   // currently APF without Nyquist Clipping
+    _signal[CMB_APF] = 440.f * unitPitch * m_convert.eval_lin_pitch(69.f + (basePitch * keyTracking) + envMod);                   // currently APF without Nyquist Clipping
     /* - Comb Filter Lowpass ('Hi Cut') Frequency (Base Pitch, Master Tune, Key Tracking, Hi Cut, Env C) */
     keyTracking = m_body[m_head[P_CMB_LPKT].m_index].m_signal;
     unitPitch = m_body[m_head[P_CMB_LP].m_index].m_signal;
     envMod = _signal[ENV_C_SIG] * m_body[m_head[P_CMB_LPEC].m_index].m_signal;
     //_signal[CMB_LPF] = evalNyquist(440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod));          // not sure if LPF needs Nyquist Clipping?
-    _signal[CMB_LPF] = 440.f * unitPitch * m_convert.eval_lin_pitch(69 + (basePitch * keyTracking) + envMod);                   // currently LPF without Nyquist Clipping
+    _signal[CMB_LPF] = 440.f * unitPitch * m_convert.eval_lin_pitch(69.f + (basePitch * keyTracking) + envMod);                   // currently LPF without Nyquist Clipping
 }
 
 /* Post Processing - fast parameters */
