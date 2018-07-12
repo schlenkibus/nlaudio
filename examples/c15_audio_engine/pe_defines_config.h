@@ -26,13 +26,13 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 
 /* Main Parameter Definition                -> see Linux Engine - Test 3 */
 
-#define sig_number_of_params 119            // 3 * (15 ENV params) + 2 * (14 OSC + 8 SHP params) + (16 CMB params) + (6 OUT params) + (2 MASTER params) + (6 KEY params)
-#define sig_number_of_param_items 233       // (45 + 44 + 16 + 6 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
-#define sig_number_of_signal_items 51       // 51 shared signals
+#define sig_number_of_params 138            // 3 * (15 ENV params) + 2 * (14 OSC + 8 SHP params) + (16 CMB params) + (13 SVF params) + (12 OUT params) + (2 MASTER params) + (6 KEY params)
+#define sig_number_of_param_items 252       // (45 + 44 + 16 + 13 + 12 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
+#define sig_number_of_signal_items 72       // 72 shared signals
 
 /* TCD List Handling */
 
-#define lst_recall_length 109               // 109 preset-relevant parameters
+#define lst_recall_length 128               // 128 preset-relevant parameters
 #define lst_keyEvent_length 6               // 6 key event parameters
 #define lst_number_of_lists 2               // predefined paramId lists (simplifying recal and key event update TCD sequences)
 

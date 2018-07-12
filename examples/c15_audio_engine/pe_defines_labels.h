@@ -100,19 +100,39 @@
 #define P_CMB_PM    103
 #define P_CMB_PMAB  104
 
-#define P_OM_AL     105
-#define P_OM_AP     106
-#define P_OM_BL     107
-#define P_OM_BP     108
-#define P_OM_CL     109
-#define P_OM_CP     110
+#define P_SVF_AB    105
+#define P_SVF_CMB   106
+#define P_SVF_CUT   107
+#define P_SVF_CKT   108
+#define P_SVF_CEC   109
+#define P_SVF_SPR   110
+#define P_SVF_FM    111
+#define P_SVF_RES   112
+#define P_SVF_RKT   113
+#define P_SVF_REC   114
+#define P_SVF_LBH   115
+#define P_SVF_PAR   116
+#define P_SVF_FMAB  117
 
-#define P_MA_V      111
-#define P_MA_T      112
+#define P_OM_AL     118
+#define P_OM_AP     119
+#define P_OM_BL     120
+#define P_OM_BP     121
+#define P_OM_CL     122
+#define P_OM_CP     123
+#define P_OM_SL     124
+#define P_OM_SR     125
+#define P_OM_DRV    126
+#define P_OM_FLD    127
+#define P_OM_ASM    128
+#define P_OM_LVL    129
 
-#define P_KEY_PA    113
-#define P_KEY_PB    114
-#define P_KEY_NP    115
-#define P_KEY_VP    116
-#define P_KEY_EC    117
-#define P_KEY_VS    118
+#define P_MA_V      130
+#define P_MA_T      131
+
+#define P_KEY_PA    132
+#define P_KEY_PB    133
+#define P_KEY_NP    134
+#define P_KEY_VP    135
+#define P_KEY_EC    136
+#define P_KEY_VS    137

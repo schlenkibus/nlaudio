@@ -25,7 +25,8 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         8000,  10000, 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     8000,                // Osc B
         2000,  0,     8000,  0,     0,     0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     5280,  0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
-        0,     0,     0,     0,     0,     0,                                                                           // Out Mix
+        0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
         8000,  0                                                                                                        // Master
     },
     /* preset 1 - default tone */
@@ -38,7 +39,8 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         8000,  10000, 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     8000,                // Osc B
         2000,  0,     8000,  0,     0,     0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     5280,  0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
-        2000,  0,     0,     0,     0,     0,                                                                           // Out Mix
+        0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+        2000,  0,     0,     0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
         8000,  0                                                                                                        // Master
     },
     /* preset 2 - testing comb filter */
@@ -51,7 +53,8 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         9200,  10000, 0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     8000,                // Osc B
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     0,     0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
-        0,     0,     0,     0,     2000,  0,                                                                           // Out Mix
+        0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+        0,     0,     0,     0,     2000,  0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
         8000,  0                                                                                                        // Master
     },
     /* preset 3 - null */
@@ -64,7 +67,8 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                   // Osc B
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     // Comb
-        0,     0,     0,     0,     0,     0,                                                                           // Out Mix
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                          // SVF
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                                 // Out Mix
         0,     0                                                                                                        // Master
     },
     /* preset 4 - null */
@@ -77,7 +81,8 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                   // Osc B
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     // Comb
-        0,     0,     0,     0,     0,     0,                                                                           // Out Mix
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                          // SVF
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                                 // Out Mix
         0,     0                                                                                                        // Master
     },
     /* preset 5 - null */
@@ -90,7 +95,8 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                   // Osc B
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     // Comb
-        0,     0,     0,     0,     0,     0,                                                                           // Out Mix
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                          // SVF
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                                 // Out Mix
         0,     0                                                                                                        // Master
     },
     /* preset 6 - null */
@@ -103,7 +109,8 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                   // Osc B
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     // Comb
-        0,     0,     0,     0,     0,     0,                                                                           // Out Mix
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                          // SVF
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                                 // Out Mix
         0,     0                                                                                                        // Master
     },
     /* preset 7 - null */
@@ -116,7 +123,8 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                   // Osc B
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     // Comb
-        0,     0,     0,     0,     0,     0,                                                                           // Out Mix
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                          // SVF
+        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                                 // Out Mix
         0,     0                                                                                                        // Master
     },
 };
