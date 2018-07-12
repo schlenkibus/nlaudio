@@ -17,7 +17,7 @@
 #define dsp_poly_types 2                    // two polyphony types (mono, poly) - (later, a dual type needs to be implemented)
 #define dsp_clock_types 4                   // four different parameter types (sync, audio, fast, slow)
 #define dsp_number_of_voices 20             // maximum allowed number of voices
-#define dsp_take_envelope 0                 // specify which env engine should be used: old (0) or new (1)
+#define dsp_take_envelope 1                 // specify which env engine should be used: old (0) or new (1)
 
 const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in rates (Hz) now
     9600,                                   // fast rate is 9600 Hz

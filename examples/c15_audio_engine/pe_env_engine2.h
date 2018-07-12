@@ -35,7 +35,7 @@ const uint32_t envelope2_definition[sig_number_of_env_types][sig_number_of_env_s
     {   // GATE Types:
         //  State   Next    Dx      Dest                        Description
         {   1,      0,      1,      1       },              //  linear attack phase
-        {   3,      0,      0,      0       },              //  quasi-finite exponential release phase
+        {   2,      0,      0,      0       },              //  quasi-finite exponential release phase
         {   0,      0,      0,      0       },              //  n/a
         {   0,      0,      0,      0       }               //  n/a
     },
@@ -43,7 +43,7 @@ const uint32_t envelope2_definition[sig_number_of_env_types][sig_number_of_env_s
     {   // DECAY Types:
         //  State   Next    Dx      Dest                        Description
         {   1,      2,      1,      1       },              //  linear attack phase
-        {   3,      0,      0,      0       },              //  quasi-finite exponential release phase
+        {   2,      0,      0,      0       },              //  quasi-finite exponential release phase
         {   0,      0,      0,      0       },              //  n/a
         {   0,      0,      0,      0       }               //  n/a
     }
