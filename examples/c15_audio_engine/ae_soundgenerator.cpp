@@ -155,9 +155,9 @@ void ae_soundgenerator::generateSound(float _feedbackSample, float *_signal)
     m_sampleB = NlToolbox::Crossfades::bipolarCrossFade(oscSampleB, shaperSampleB, _signal[SHP_B_MIX]);
 
 
-    //************************** Envelope Influence **************************//
-    m_sampleA *= _signal[ENV_A_SIG];
-    m_sampleB *= _signal[ENV_B_SIG];
+    //******************* Envelope Influence (Magnitudes) ********************//
+    m_sampleA *= _signal[ENV_A_MAG];
+    m_sampleB *= _signal[ENV_B_MAG];
 
 
     //**************************** Feedback Mix ******************************//

@@ -65,6 +65,7 @@ public:
     const float m_test_normalizeMidi = (1.f / 127.f);                   // normalize midi values
     uint32_t m_test_selectedGroup = 0;                                  // a group selector
     uint32_t m_test_midiMode = 1;                                       // a mode selector (init to GLOBAL MODE)
+    int32_t m_test_selectedParam = 0;                                   // a param selector
     void testMidi(uint32_t _status, uint32_t _data0, uint32_t _data1);  // testing the engine
     void testRouteControls(uint32_t _id, uint32_t _value);              // control routing
     void testNoteOn(uint32_t _pitch, uint32_t _velocity);               // testing note on messages

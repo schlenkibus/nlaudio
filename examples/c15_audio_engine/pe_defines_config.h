@@ -28,7 +28,7 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 
 #define sig_number_of_params 138            // 3 * (15 ENV params) + 2 * (14 OSC + 8 SHP params) + (16 CMB params) + (13 SVF params) + (12 OUT params) + (2 MASTER params) + (6 KEY params)
 #define sig_number_of_param_items 252       // (45 + 44 + 16 + 13 + 12 + 2 (* 1) MONO params) + (6 (* 20) POLY params)
-#define sig_number_of_signal_items 72       // 72 shared signals
+#define sig_number_of_signal_items 73       // 73 shared signals
 
 /* TCD List Handling */
 
@@ -60,6 +60,7 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define dsp_expon_time_factor 104.0781      // measured value to produce exactly time of 16000 (equals highest time)
 #define dsp_comb_max_freqFactor 19.0166     // measured value of highest frequency factor for the Comb Filter to run without bypass (corresponding to Pitch of 119.99 ST)
 #define dsp_render_min 1e-9                 // minimal rendered value for exponential transitions
+#define dsp_initial_time 10                 // initial smoothing time (in milliseconds)
 
 #define env_norm_peak 0.023766461           // equals 1 / 42.0761 (taken from prototype)
 #define env_clip_peak 1.412537545           // measured value for LevelKT Clipping, equals +3 dB (candidate)

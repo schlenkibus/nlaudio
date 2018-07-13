@@ -121,7 +121,7 @@
 #define P_OM_CL     122
 #define P_OM_CP     123
 #define P_OM_SL     124
-#define P_OM_SR     125
+#define P_OM_SP     125
 #define P_OM_DRV    126
 #define P_OM_FLD    127
 #define P_OM_ASM    128

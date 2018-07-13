@@ -40,19 +40,19 @@ void dsp_host::init(uint32_t _samplerate, uint32_t _polyphony)
 void dsp_host::loadInitialPreset()
 {
     /* passing TCD zeros to every parameter in every voice */
-    evalMidi(0, 127, 127);      // select all voices
-    evalMidi(1, 127, 127);      // select all parameters
-    evalMidi(2, 0, 0);          // set time to zero
-    evalMidi(47, 1, 1);         // enable preload (recall list mode)
+    evalMidi(0, 127, 127);                                                              // select all voices
+    evalMidi(1, 127, 127);                                                              // select all parameters
+    evalMidi(2, 0, 0);                                                                  // set time to zero
+    evalMidi(47, 1, 1);                                                                 // enable preload (recall list mode)
     /* traverse parameters, each one receiving zero value */
     for(uint32_t i = 0; i < lst_recall_length; i++)
     {
-        evalMidi(5, 0, 0);      // send destination 0
+        evalMidi(5, 0, 0);                                                              // send destination 0
     }
-    evalMidi(47, 0, 2);         // apply preloaded values
+    evalMidi(47, 0, 2);                                                                 // apply preloaded values
     /* clear Selection */
-    evalMidi(0, 0, 0);          // select voice 0
-    evalMidi(1, 0, 0);          // select parameter 0
+    evalMidi(0, 0, 0);                                                                  // select voice 0
+    evalMidi(1, 0, 0);                                                                  // select parameter 0
 }
 
 /* */
@@ -434,7 +434,7 @@ void dsp_host::timeUpdate(float _value)
     {
         for(p = 0; p < m_decoder.m_selectedParams.m_data[1].m_data[1].m_length; p++)
         {
-            m_params.setDx(v, m_decoder.m_selectedParams.m_data[1].m_data[1].m_data[p], _value);
+            m_params.setDx(m_decoder.m_selectedVoices.m_data[1].m_data[v], m_decoder.m_selectedParams.m_data[1].m_data[1].m_data[p], _value);
         }
     }
 }
@@ -615,12 +615,30 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
         case 2:
             std::cout << "enabled GLOBAL mode" << std::endl;
             m_test_midiMode = 1;
+            m_test_selectedParam = -1;
             /* Global Mode */
             break;
         case 3:
-            /* Print Head */
-            std::cout << "print parameters: HEAD" << std::endl;
-            testGetParamHeadData();
+            if(m_test_midiMode == 0)
+            {
+                if(m_test_selectedParam > -1)
+                {
+                        /* NULL selected param */
+                        std::cout << "NULL Param (" << m_test_selectedParam << ")" << std::endl;
+
+                        evalMidi(0, 127, 127);                                                  // select all voices
+                        evalMidi(1, m_test_selectedParam >> 7, m_test_selectedParam & 127);     // select corresponding param
+                        evalMidi(5, 0, 0);                                                      // send zero destination
+                        evalMidi(0, 0, 0);                                                      // select voice 0
+                        evalMidi(1, 0, 0);                                                      // select param 0
+                }
+            }
+            else
+            {
+                /* Print Head */
+                std::cout << "print parameters: HEAD" << std::endl;
+                testGetParamHeadData();
+            }
             break;
         case 4:
             /* Print Body */
@@ -752,6 +770,7 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
                 evalMidi(1, tcdId >> 7, tcdId & 127);
                 testParseDestination(static_cast<int32_t>(val));
                 std::cout << "edit PARAM " << tcdId << " (" << val << ")" << std::endl;
+                m_test_selectedParam = tcdId;
             }
         }
         else
@@ -823,7 +842,7 @@ void dsp_host::testNoteOff(uint32_t _pitch, uint32_t _velocity)
 /* set transition time */
 void dsp_host::testSetGlobalTime(uint32_t _value)
 {
-    std::cout << "\nSET_TIME(" << _value << ")" << std::endl;
+    std::cout << "\nSET_TIME(" << _value << " (ms))" << std::endl;
     /* select all voices, params and update time */
     _value *= static_cast<uint32_t>(m_params.m_millisecond);    // convert time accordingly in samples
     evalMidi(0, 127, 127);                                      // select all voices
@@ -841,6 +860,8 @@ void dsp_host::testSetGlobalTime(uint32_t _value)
         evalMidi(34, upper >> 7, upper & 127);                  // set time upper
         evalMidi(50, _value >> 7, _value & 127);                // set time lower
     }
+    evalMidi(0, 0, 0);                                          // select voice 0
+    evalMidi(1, 0, 0);                                          // select param 0
 }
 
 /* set reference frequency */
@@ -975,7 +996,7 @@ void dsp_host::testInit()
     std::cout << "\nINIT SEQUENCE" << std::endl;
     evalMidi(0, 127, 127);      // select all voices
     evalMidi(1, 127, 127);      // select all parameters
-    evalMidi(2, 0, 0);          // set time to zero
+    testSetGlobalTime(dsp_initial_time);
     testLoadPreset(1);          // load default preset
 }
 
