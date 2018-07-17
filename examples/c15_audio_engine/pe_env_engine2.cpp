@@ -444,7 +444,7 @@ void env_object_adbdsr_retrig::tick(const uint32_t _voiceId)
             /* */
             body->m_signal_magnitude = body->m_start_magnitude + (diff_magnitude * x);
             /* */
-            body->m_x *= 1.f - m_segment[segment].m_dx[_voiceId];
+            body->m_x += m_segment[segment].m_dx[_voiceId];
         }
         else
         {

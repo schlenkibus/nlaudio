@@ -743,6 +743,10 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
             /* Comb Filter */
             std::cout << "selected COMB_FILTER" << std::endl;
             break;
+        case 10:
+            /* Comb Filter */
+            std::cout << "selected STATE_VARIABLE_FILTER" << std::endl;
+            break;
         case 17:
             /* Master */
             std::cout << "selected MASTER" << std::endl;
@@ -1065,14 +1069,8 @@ void dsp_host::makePolySound(float *_signal, uint32_t _voiceID)
     m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA,
                               m_soundgenerator[_voiceID].m_sampleB,
                               m_combfilter[_voiceID].m_sampleComb,
-                              0.f,
+                              m_svfilter[_voiceID].m_sampleSVF,
                               _signal, _voiceID);
-
-//    m_outputmixer.mixAndShape(m_soundgenerator[_voiceID].m_sampleA,
-//                              m_soundgenerator[_voiceID].m_sampleB,
-//                              m_combfilter[_voiceID].m_sampleComb,
-//                              m_svfilter[_voiceID].m_sampleSVF,
-//                              _signal, _voiceID);
 }
 
 

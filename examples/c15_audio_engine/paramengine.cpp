@@ -27,8 +27,8 @@ void paramengine::init(uint32_t _sampleRate, uint32_t _voices)
     m_convert.init();
     /* initialize control shapers */
     m_combDecayCurve.setCurve(0.f, 0.25, 1.f);                                  // initialize control shaper for the comb decay parameter
-    m_svfLBH1Curve.setCurve(-1.f, -1.f, 1.f);
-    m_svfLBH2Curve.setCurve(-1.f, 1.f, 1.f);
+    m_svfLBH1Curve.setCurve(-1.f, -1.f, 1.f);                                   // initialize control shaper for the LBH parameter (upper crossmix)
+    m_svfLBH2Curve.setCurve(-1.f, 1.f, 1.f);                                    // initialize control shaper for the LBH parameter (lower crossmix)
     m_svfResonanceCurve.setCurve(0.f, 0.49f, 0.79f, 0.94f);                     // initialize control shaper for the svf resonance parameter (later, test4)
     /* provide indices for further definitions */
     uint32_t i, p;
@@ -843,8 +843,8 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     newEnvUpdateTimes(_voiceId);
 #endif
     /* Pitch Updates */
-    float basePitch = m_body[m_head[P_KEY_NP].m_index + _voiceId].m_signal + m_body[m_head[P_MA_T].m_index].m_signal;
-    float keyTracking, unitPitch, envMod, unitSign;
+    const float basePitch = m_body[m_head[P_KEY_NP].m_index + _voiceId].m_signal + m_body[m_head[P_MA_T].m_index].m_signal;
+    float keyTracking, unitPitch, envMod, unitSign, unitSpread, unitMod;
     /* Oscillator A */
     /* - Oscillator A Frequency in Hz (Base Pitch, Master Tune, Key Tracking, Osc Pitch, Envelope C) */
     keyTracking = m_body[m_head[P_OA_PKT].m_index].m_signal;
@@ -895,6 +895,16 @@ void paramengine::postProcess_slow(float *_signal, const uint32_t _voiceId)
     _signal[CMB_LPF] = 440.f * unitPitch * m_convert.eval_lin_pitch(69.f + (basePitch * keyTracking) + envMod);                   // currently LPF without Nyquist Clipping
     /* State Variable Filter */
     /* - Cutoff Frequencies */
+    keyTracking = m_body[m_head[P_SVF_CKT].m_index].m_signal;                       // get Key Tracking
+    envMod = _signal[ENV_C_SIG] * m_body[m_head[P_SVF_CEC].m_index].m_signal;       // get Envelope C Modulation (amount * envelope_c_signal)
+    unitPitch = m_pitch_reference * m_body[m_head[P_SVF_CUT].m_index].m_signal;     // as a tonal component, the Reference Tone frequency is applied (instead of const 440 Hz)
+    unitSpread = m_body[m_head[P_SVF_SPR].m_index].m_signal;                        // get the Spread parameter (already scaled to 50%)
+    unitMod = m_body[m_head[P_SVF_FM].m_index].m_signal;                            // get the FM parameter
+    // now, calculate the actual filter frequencies and put them in the shared signal array
+    _signal[SVF_F1_CUT] = evalNyquist(unitPitch * m_convert.eval_lin_pitch(69.f + (basePitch * keyTracking) + envMod + unitSpread));    // SVF upper 2PF Cutoff Frequency
+    _signal[SVF_F2_CUT] = evalNyquist(unitPitch * m_convert.eval_lin_pitch(69.f + (basePitch * keyTracking) + envMod - unitSpread));    // SVF lower 2PF Cutoff Frequency
+    _signal[SVF_F1_FM] = _signal[SVF_F1_CUT] * unitMod;                                                                                 // SVF upper 2PF FM Amount (Frequency)
+    _signal[SVF_F2_FM] = _signal[SVF_F2_CUT] * unitMod;                                                                                 // SVF lower 2PF FM Amount (Frequency)
     /* - Resonance */
     keyTracking = m_body[m_head[P_SVF_RKT].m_index].m_signal * m_svfResFactor;
     envMod = _signal[ENV_C_SIG] * m_body[m_head[P_SVF_REC].m_index].m_signal;
@@ -958,7 +968,7 @@ void paramengine::postProcess_fast(float *_signal, const uint32_t _voiceId)
     _signal[SVF_PAR_3] = 1.f - tmp_abs;
     _signal[SVF_PAR_4] = tmp_abs;
     /* Output Mixer */
-    //const float key_pan = m_body[m_head[P_KEY_VP].m_index + _voiceId].m_signal; // causing familiar panning problems at the moment
+    //const float key_pan = m_body[m_head[P_KEY_VP].m_index + _voiceId].m_signal; // causing familiar panning problems at the moment (see param definition)
     const float key_pan = 0.f;
     /* - Branch A */
     tmp_lvl = m_body[m_head[P_OM_AL].m_index].m_signal;
