@@ -26,13 +26,19 @@ const uint32_t paramIds_recall[lst_recall_length] = {
     81,  82,  83,  84,  85,  86,  87,  88,                                              // Shp B (all params)
     89,  90,  91 , 92,  93,  94,  95,  96,  97,  98,  99,  100, 101, 102, 103, 104,     // Comb (all params)
     105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117,                    // SFV (all params)
-    118, 119, 120, 121, 122, 123, 124, 125, 126 ,127, 128, 129,                         // Out Mix (all params)
-    130, 131                                                                            // Master (Vol, Tune)
+                                                                                        // (later: FB Mix)
+    127, 128, 129, 130, 131, 132, 133, 134, 135 ,136, 137, 138,                         // Out Mix (all params)
+    139, 140, 141, 142, 143, 144, 145, 146,                                             // Cabinet (all params)
+                                                                                        // (later: Gap Filter)
+                                                                                        // (later: Flanger)
+                                                                                        // (later: Echo)
+                                                                                        // (later: Reverb)
+    176, 177                                                                            // Master (Vol, Tune)
 };
 
 // consecutive paramIds for POLY key event update (defining tcd order of destinations) - listId = 2
 // NOTE:    - keyEvent param id order by LPC, list mechanism usable -> keep
 
 const uint32_t paramIds_keyEvent[lst_keyEvent_length] = {
-    132, 133, 134, 135, 136, 137
+    178, 179, 180, 181, 182, 183
 };

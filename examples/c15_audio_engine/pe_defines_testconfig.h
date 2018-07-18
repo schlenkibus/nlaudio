@@ -26,7 +26,13 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         2000,  0,     8000,  0,     0,     0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     5280,  0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+                                                                                                                        // (later: FB Mix)
         0,     0,     0,     0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
+        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+                                                                                                                        // (later: Gap Filter)
+                                                                                                                        // (later: Flanger)
+                                                                                                                        // (later: Echo)
+                                                                                                                        // (later: Reverb)
         8000,  0                                                                                                        // Master
     },
     /* preset 1 - default tone */
@@ -40,7 +46,13 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         2000,  0,     8000,  0,     0,     0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     5280,  0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+                                                                                                                        // (later: FB Mix)
         2000,  0,     0,     0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
+        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+                                                                                                                        // (later: Gap Filter)
+                                                                                                                        // (later: Flanger)
+                                                                                                                        // (later: Echo)
+                                                                                                                        // (later: Reverb)
         8000,  0                                                                                                        // Master
     },
     /* preset 2 - testing comb filter */
@@ -54,7 +66,13 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     0,     0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+                                                                                                                        // (later: FB Mix)
         0,     0,     0,     0,     2000,  0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
+        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+                                                                                                                        // (later: Gap Filter)
+                                                                                                                        // (later: Flanger)
+                                                                                                                        // (later: Echo)
+                                                                                                                        // (later: Reverb)
         8000,  0                                                                                                        // Master
     },
     /* preset 3 - testing state variable filter */
@@ -68,7 +86,13 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         4000,  0,     8000,  0,     8000,  0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     5280,  0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+                                                                                                                        // (later: FB Mix)
         0,     0,     0,     0,     0,     0,     2000,  0,     0,     8000,  0,     6080,                              // Out Mix
+        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+                                                                                                                        // (later: Gap Filter)
+                                                                                                                        // (later: Flanger)
+                                                                                                                        // (later: Echo)
+                                                                                                                        // (later: Reverb)
         8000,  0                                                                                                        // Master
     },
     /* preset 4 - testing envelope a/b split */
@@ -82,7 +106,13 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         2000,  0,     8000,  0,     0,     0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     5280,  0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+                                                                                                                        // (later: FB Mix)
         2000,  0,     2000,  0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
+        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+                                                                                                                        // (later: Gap Filter)
+                                                                                                                        // (later: Flanger)
+                                                                                                                        // (later: Echo)
+                                                                                                                        // (later: Reverb)
         8000,  0                                                                                                        // Master
     },
     /* preset 5 - testing envelope c retrigger (use one voice polyphony for testing) */
@@ -96,7 +126,13 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         2000,  0,     8000,  0,     0,     0,     0,     0,                                                             // Shp B
         0,     6000,  10000, 0,     0,     5280,  0,     14000, 16000, 0,     10560, 10000, 16000, 0,     0,     0,     // Comb
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
+                                                                                                                        // (later: FB Mix)
         2000,  0,     0,     0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
+        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+                                                                                                                        // (later: Gap Filter)
+                                                                                                                        // (later: Flanger)
+                                                                                                                        // (later: Echo)
+                                                                                                                        // (later: Reverb)
         8000,  0                                                                                                        // Master
     },
     /* preset 6 - null */
@@ -110,7 +146,13 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     // Comb
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                          // SVF
+                                                                                                                        // (later: FB Mix)
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                                 // Out Mix
+        0,     0,     0,     0,     0,     0,     0,     0,                                                             // Cabinet
+                                                                                                                        // (later: Gap Filter)
+                                                                                                                        // (later: Flanger)
+                                                                                                                        // (later: Echo)
+                                                                                                                        // (later: Reverb)
         0,     0                                                                                                        // Master
     },
     /* preset 7 - null */
@@ -124,7 +166,13 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     0,     0,     0,     0,     0,     0,                                                             // Shp B
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     // Comb
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                          // SVF
+                                                                                                                        // (later: FB Mix)
         0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,                                 // Out Mix
+        0,     0,     0,     0,     0,     0,     0,     0,                                                             // Cabinet
+                                                                                                                        // (later: Gap Filter)
+                                                                                                                        // (later: Flanger)
+                                                                                                                        // (later: Echo)
+                                                                                                                        // (later: Reverb)
         0,     0                                                                                                        // Master
     },
 };
@@ -226,8 +274,8 @@ const uint32_t testParamRouting[25][24] = {
     /* OUT MIX */
     {
     /*  0      1      2      3      4      5      6      7      */
-        119,   121,   123,   125,   130,   127,   128,   129,
-        120,   122,   124,   126,   0,     0,     0,     0,
+        128,   130,   132,   134,   139,   136,   137,   138,
+        129,   131,   133,   135,   0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
     },
     /* COMB FILTER */
@@ -244,21 +292,21 @@ const uint32_t testParamRouting[25][24] = {
         107,   113,   114,   115,   0,     0,     117,   118,
         0,     0,     0,     0,     0,     0,     0,     0,
     },
-    /* (none) */
+    /* CABINET, (later: GAP FILTER) */
+    {
+    /*  0      1      2      3      4      5      6      7      */
+        140,   141,   142,   143,   144,   145,   146,   147,
+        0,     0,     0,     0,     0,     0,     0,     0,
+        0,     0,     0,     0,     0,     0,     0,     0,
+    },
+    /* (later: FLANGER) */
     {
     /*  0      1      2      3      4      5      6      7      */
         0,     0,     0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
     },
-    /* (none) */
-    {
-    /*  0      1      2      3      4      5      6      7      */
-        0,     0,     0,     0,     0,     0,     0,     0,
-        0,     0,     0,     0,     0,     0,     0,     0,
-        0,     0,     0,     0,     0,     0,     0,     0,
-    },
-    /* (none) */
+    /* (later: ECHO, REVERB) */
     {
     /*  0      1      2      3      4      5      6      7      */
         0,     0,     0,     0,     0,     0,     0,     0,
@@ -289,7 +337,7 @@ const uint32_t testParamRouting[25][24] = {
     /* MASTER */
     {
     /*  0      1      2      3      4      5      6      7      */
-        131,   132,   0,     0,     0,     0,     0,     0,
+        177,   178,   0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
         0,     0,     0,     0,     0,     0,     0,     0,
     },

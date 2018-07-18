@@ -744,8 +744,12 @@ void dsp_host::testRouteControls(uint32_t _id, uint32_t _value)
             std::cout << "selected COMB_FILTER" << std::endl;
             break;
         case 10:
-            /* Comb Filter */
+            /* State Variable Filter */
             std::cout << "selected STATE_VARIABLE_FILTER" << std::endl;
+            break;
+        case 11:
+            /* Cabinet & Gap Filter */
+            std::cout << "selected CABINET_&_GAP_FILTER" << std::endl;
             break;
         case 17:
             /* Master */
