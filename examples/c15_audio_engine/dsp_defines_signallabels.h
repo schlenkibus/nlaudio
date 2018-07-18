@@ -90,4 +90,14 @@
 #define OUT_ASM         70
 #define OUT_LVL         71
 
-#define MST_VOL         72
+#define CAB_DRV         72
+#define CAB_FLD         73
+#define CAB_ASM         74
+#define CAB_LPF         75
+#define CAB_HPF         76
+#define CAB_SAT         77
+#define CAB_TILT        78
+#define CAB_DRY         79
+#define CAB_WET         80
+
+#define MST_VOL         81
