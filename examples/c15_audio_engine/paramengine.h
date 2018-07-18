@@ -48,12 +48,12 @@ struct param_body
     /* */
     uint32_t m_state = 0;
     uint32_t m_preload = 0;
-    float m_signal = 0;
-    float m_dx[2] = {0, 0};
-    float m_x = 0;
-    float m_start = 0;
-    float m_diff = 0;
-    float m_dest = 0;
+    float m_signal = 0.f;
+    float m_dx[2] = {0.f, 0.f};
+    float m_x = 0.f;
+    float m_start = 0.f;
+    float m_diff = 0.f;
+    float m_dest = 0.f;
 };
 
 /* */

@@ -807,10 +807,10 @@ void dsp_host::testNoteOn(uint32_t _pitch, uint32_t _velocity)
     /* key event sequence */
     evalMidi(47, 2, 1);                                     // enable preload (key event list mode)
     evalMidi(0, 0, m_test_voiceId);                         // select voice: current
-    evalMidi(5, 0, 0);                                      // phase A: 0
-    evalMidi(5, 0, 0);                                      // phase B: 0
+    testParseDestination(par_key_phaseA);                   // phase a (see pe_defines.config.h)
+    testParseDestination(par_key_phaseB);                   // phase b (see pe_defines.config.h)
     testParseDestination(notePitch);                        // note pitch
-    evalMidi(5, 0, 0);                                      // voice pan: 0
+    testParseDestination(par_key_pan);                      // key pan (see pe_defines.config.h)
     evalMidi(5, 0, 0);                                      // env c rate: 0
     evalMidi(5, 0, 0);                                      // voice steal: 0
     evalMidi(23, noteVel >> 7, noteVel & 127);              // key down: velocity

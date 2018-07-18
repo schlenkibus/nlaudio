@@ -45,6 +45,17 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define sig_number_of_env_types 3           // three Envelope types: ADBDSR (A, B, C), Gate (Gate), Decay (Flanger)
 #define sig_number_of_env_events 3          // three Envelope Event objects for Envelopes A, B, C (managing Velocity and KeyPos responses)
 
+/* Internal IDs of crucial TCD parameters */
+
+#define par_envelopeA 0                     // item pointer to (consecutive) envelope parameters A (internal ids)
+#define par_envelopeB 15                    // item pointer to (consecutive) envelope parameters B (internal ids)
+#define par_envelopeC 30                    // item pointer to (consecutive) envelope parameters C (internal ids)
+
+/* Sender-related Key Event Parameters (raw TCD values, currently constant values) */
+#define par_key_phaseA 0                    // tcd range: [-7200 ... 7200]
+#define par_key_phaseB 0                    // tcd range: [-7200 ... 7200]
+#define par_key_pan 0                       // tcd range: [-8000 ... 8000]
+
 /* DSP Helper Values */
 
 #define dsp_samples_to_ms 1e-3              // 1000 ms = 1 s
@@ -65,10 +76,5 @@ const uint32_t dsp_clock_rates[2] = {       // sub-audio clocks are defined in r
 #define env_norm_peak 0.023766461           // equals 1 / 42.0761 (taken from prototype)
 #define env_clip_peak 1.412537545           // measured value for LevelKT Clipping, equals +3 dB (candidate)
 #define env_init_gateRelease 10             // release time of gate envelopes (in milliseconds) -- 1ms problematic (key up noise), 10ms okay (like prototype)
+                                            // (due to current comb decay gate implementation)
 #define env_highest_finite_time 16000.f     // highest allowed finite time
-
-/* Internal IDs of crucial TCD parameters */
-
-#define par_envelopeA 0                     // item pointer to (consecutive) envelope parameters A (internal ids)
-#define par_envelopeB 15                    // item pointer to (consecutive) envelope parameters B (internal ids)
-#define par_envelopeC 30                    // item pointer to (consecutive) envelope parameters C (internal ids)
