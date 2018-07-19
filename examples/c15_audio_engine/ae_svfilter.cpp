@@ -95,9 +95,9 @@ void ae_svfilter::applySVFilter(float _sampleA, float _sampleB, float _sampleCom
     m_first_int1_stateVar = int1Out + DNC_CONST;
     m_first_int2_stateVar = int2Out + DNC_CONST;
 
-    m_first_sv_sample  =  lowpassOutput  * fmax(-(_signal[SVF_LBH_1]), 0);
+    m_first_sv_sample  =  lowpassOutput  * NlToolbox::Clipping::floatMax(-(_signal[SVF_LBH_1]), 0);
     m_first_sv_sample += (bandpassOutput * (1.f - fabs(_signal[SVF_LBH_1])));
-    m_first_sv_sample += (highpassOutput * fmax(_signal[SVF_LBH_1], 0));
+    m_first_sv_sample += (highpassOutput * NlToolbox::Clipping::floatMax(_signal[SVF_LBH_1], 0));
 
 
     //************************** 1st Stage Parabol Sat ***********************//
@@ -140,9 +140,9 @@ void ae_svfilter::applySVFilter(float _sampleA, float _sampleB, float _sampleCom
     m_second_int1_stateVar = int1Out + DNC_CONST;
     m_second_int2_stateVar = int2Out + DNC_CONST;
 
-    tmpVar  =  lowpassOutput  * fmax(-_signal[SVF_LBH_2], 0);
+    tmpVar  =  lowpassOutput  * NlToolbox::Clipping::floatMax(-_signal[SVF_LBH_2], 0);
     tmpVar += (bandpassOutput * (1.f - fabs(_signal[SVF_LBH_2])));
-    tmpVar += (highpassOutput * fmax(_signal[SVF_LBH_2], 0));
+    tmpVar += (highpassOutput * NlToolbox::Clipping::floatMax(_signal[SVF_LBH_2], 0));
 
 
     //************************* 2nd Stage Parabol Sat ************************//

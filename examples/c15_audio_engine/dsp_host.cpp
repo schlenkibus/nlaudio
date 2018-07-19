@@ -85,7 +85,7 @@ void dsp_host::tickMain()
         }
 
         /* monophonic Trigger for Filter Coefficients */
-        setMonoFilterCoeffs(m_paramsignaldata[v]);
+        setMonoFilterCoeffs(m_paramsignaldata[0]);
     }
     /* second: evaluate fast clock status */
     if(m_clockPosition[2] == 0)

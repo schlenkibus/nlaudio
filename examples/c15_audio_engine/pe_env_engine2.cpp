@@ -297,8 +297,8 @@ void env_object_adbdsr_split::setSplitValue(const float _value)
 {
     /* two separate crossfade values are determined */
 
-    m_splitValues[0] = fmax(0.f, _value);                               // magnitude xfade (param, 1)
-    m_splitValues[1] = fmax(0.f, -_value);                              // timbre xfade (param, 1)
+    m_splitValues[0] = NlToolbox::Clipping::floatMax(0.f, _value);      // magnitude xfade (param, 1)
+    m_splitValues[1] = NlToolbox::Clipping::floatMax(0.f, -_value);     // timbre xfade (param, 1)
 }
 
 /*****************************************************************************/

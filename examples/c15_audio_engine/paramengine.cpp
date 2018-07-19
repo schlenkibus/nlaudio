@@ -90,7 +90,7 @@ void paramengine::init(uint32_t _sampleRate, uint32_t _voices)
 /* helper - nyquist clip */
 float paramengine::evalNyquist(float _freq)
 {
-    return fmin(m_nyquist_frequency, _freq);
+    return NlToolbox::Clipping::floatMin(m_nyquist_frequency, _freq);
 }
 
 /* TCD mechanism - scaling */
@@ -169,7 +169,7 @@ void paramengine::setDx(const uint32_t _voiceId, const uint32_t _paramId, float 
     param_head* obj = &m_head[_paramId];
     const uint32_t index = obj->m_index + _voiceId;
     /* handle by clock type and clip to fit [0 ... 1] range */
-    _value = fmin(_value * m_timeFactors[obj->m_clockType], 1.f);
+    _value = NlToolbox::Clipping::floatMin(_value * m_timeFactors[obj->m_clockType], 1.f);
     /* pass value to (rendering) item */
     m_body[index].m_dx[0] = _value;
 }
@@ -376,7 +376,7 @@ void paramengine::envUpdateStart(const uint32_t _voiceId, const uint32_t _envId,
     float attackVel = -m_body[m_head[envIndex + E_AV].m_index].m_signal * _velocity;
     float levelKT = m_body[m_head[envIndex + E_LKT].m_index].m_signal * _pitch;
     /* determine envelope peak level - clipped to max. +3dB (candidate) */
-    float peak = fmin(m_convert.eval_level(((1 - _velocity) * levelVel) + levelKT), env_clip_peak);
+    float peak = NlToolbox::Clipping::floatMin(m_convert.eval_level(((1 - _velocity) * levelVel) + levelKT), env_clip_peak);
     /* envelope event updates */
     m_event.m_env[_envId].m_levelFactor[_voiceId] = peak;
     m_event.m_env[_envId].m_timeFactor[_voiceId][0] = m_convert.eval_level(timeKT + attackVel) * m_millisecond;
@@ -489,7 +489,7 @@ void paramengine::newEnvUpdateStart(const uint32_t _voiceId, const float _pitch,
     levelVel = -m_body[m_head[envIndex + E_LV].m_index].m_signal;                                                       // get level velocity parameter
     attackVel = -m_body[m_head[envIndex + E_AV].m_index].m_signal * _velocity;                                          // determine attack velocity accorindg to velocity and parameter
     levelKT = m_body[m_head[envIndex + E_LKT].m_index].m_signal * _pitch;                                               // determine level key tracking according to pitch and parameter
-    peak = fmin(m_convert.eval_level(((1.f - _velocity) * levelVel) + levelKT), env_clip_peak);                         // determine peak level according to velocity and level parameters (max +3dB)
+    peak = NlToolbox::Clipping::floatMin(m_convert.eval_level(((1.f - _velocity) * levelVel) + levelKT), env_clip_peak);// determine peak level according to velocity and level parameters (max +3dB)
 
     m_event.m_env[envId].m_levelFactor[_voiceId] = peak;                                                                // remember peak level
     m_event.m_env[envId].m_timeFactor[_voiceId][0] = m_convert.eval_level(timeKT + attackVel) * m_millisecond;          // determine time factor for attack segment (without actual attack time)
@@ -523,7 +523,7 @@ void paramengine::newEnvUpdateStart(const uint32_t _voiceId, const float _pitch,
     levelVel = -m_body[m_head[envIndex + E_LV].m_index].m_signal;                                                       // get level velocity parameter
     attackVel = -m_body[m_head[envIndex + E_AV].m_index].m_signal * _velocity;                                          // determine attack velocity accorindg to velocity and parameter
     levelKT = m_body[m_head[envIndex + E_LKT].m_index].m_signal * _pitch;                                               // determine level key tracking according to pitch and parameter
-    peak = fmin(m_convert.eval_level(((1.f - _velocity) * levelVel) + levelKT), env_clip_peak);                         // determine peak level according to velocity and level parameters (max +3dB)
+    peak = NlToolbox::Clipping::floatMin(m_convert.eval_level(((1.f - _velocity) * levelVel) + levelKT), env_clip_peak);// determine peak level according to velocity and level parameters (max +3dB)
 
     m_event.m_env[envId].m_levelFactor[_voiceId] = peak;                                                                // remember peak level
     m_event.m_env[envId].m_timeFactor[_voiceId][0] = m_convert.eval_level(timeKT + attackVel) * m_millisecond;          // determine time factor for attack segment (without actual attack time)
@@ -557,7 +557,7 @@ void paramengine::newEnvUpdateStart(const uint32_t _voiceId, const float _pitch,
     levelVel = -m_body[m_head[envIndex + E_LV].m_index].m_signal;                                                       // get level velocity parameter
     attackVel = -m_body[m_head[envIndex + E_AV].m_index].m_signal * _velocity;                                          // determine attack velocity accorindg to velocity and parameter
     levelKT = m_body[m_head[envIndex + E_LKT].m_index].m_signal * _pitch;                                               // determine level key tracking according to pitch and parameter
-    peak = fmin(m_convert.eval_level(((1.f - _velocity) * levelVel) + levelKT), env_clip_peak);                         // determine peak level according to velocity and level parameters (max +3dB)
+    peak = NlToolbox::Clipping::floatMin(m_convert.eval_level(((1.f - _velocity) * levelVel) + levelKT), env_clip_peak);// determine peak level according to velocity and level parameters (max +3dB)
 
     m_event.m_env[envId].m_levelFactor[_voiceId] = peak;                                                                // remember peak level
     m_event.m_env[envId].m_timeFactor[_voiceId][0] = m_convert.eval_level(timeKT + attackVel) * m_millisecond;          // determine time factor for attack segment (without actual attack time)
@@ -1140,7 +1140,7 @@ void paramengine::postProcessMono_fast(float *_signal)
     /* Effect Parameter Post Processing */
     /* - Cabinet */
     /*   - Tilt to Saturation Levels (pre, post Shaper) */
-    tmp_val = fmax(2e-20, m_convert.eval_level(0.5f * m_body[m_head[P_CAB_TILT].m_index].m_signal));
+    tmp_val = NlToolbox::Clipping::floatMax(2e-20, m_convert.eval_level(0.5f * m_body[m_head[P_CAB_TILT].m_index].m_signal));
     _signal[CAB_PRESAT] = 0.1588f / tmp_val;
     _signal[CAB_SAT] = tmp_val;
     /*   - Cab Level and Dry/Wet Mix Levels */

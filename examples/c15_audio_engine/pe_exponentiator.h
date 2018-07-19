@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include "pe_defines_config.h"
+#include "nltoolbox.h"
 
 struct exponentiator
 {

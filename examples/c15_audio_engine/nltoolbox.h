@@ -24,14 +24,44 @@ namespace NlToolbox {
 
 namespace Clipping {
 
-inline float uniNorm(float _value)
+/* handle clipping of single floats (fmin, fmax are of type double) */
+
+/* return the biggest of two floats */
+inline float floatMax(float _x, float _y)
 {
-    return (fmax(0.f, fmin(1.f, _value)));
+    if(_x > _y)
+    {
+        return _x;
+    }
+    else
+    {
+        return _y;
+    }
 }
 
+/* return the smallest of two floats */
+inline float floatMin(float _x, float _y)
+{
+    if(_x < _y)
+    {
+        return _x;
+    }
+    else
+    {
+        return _y;
+    }
+}
+
+/* clip a float in the normalized unipolar interval [0 ... 1] */
+inline float uniNorm(float _value)
+{
+    return (floatMax(0.f, floatMin(1.f, _value)));
+}
+
+/* clip a float in the normalized bipolar interval [-1 ... 1] */
 inline float biNorm(float _value)
 {
-    return (fmax(-1.f, fmin(1.f, _value)));
+    return (floatMax(-1.f, floatMin(1.f, _value)));
 }
 
 } // namespace Clipping
