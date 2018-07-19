@@ -93,11 +93,11 @@
 #define CAB_DRV         72
 #define CAB_FLD         73
 #define CAB_ASM         74
-#define CAB_LPF         75
-#define CAB_HPF         76
-#define CAB_PRESAT      77
-#define CAB_SAT         78
-#define CAB_TILT        79
+#define CAB_PRESAT      75
+#define CAB_SAT         76
+#define CAB_TILT        77
+#define CAB_LPF         78
+#define CAB_HPF         79
 #define CAB_DRY         80
 #define CAB_WET         81
 

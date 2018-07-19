@@ -129,8 +129,11 @@ struct paramengine
     void newEnvUpdateTimes(const uint32_t _voiceId);
     void newEnvUpdateLevels(const uint32_t _voiceId);
 #endif
-    /* simplified post processing approach (one function per clock) */
-    void postProcess_slow(float *_signal, const uint32_t _voiceId);                         // slow post processing (distribution, copy, env c event signal!)
-    void postProcess_fast(float *_signal, const uint32_t _voiceId);                         // fast post processing (distribution, copy)
-    void postProcess_audio(float *_signal, const uint32_t _voiceId);                        // audio post processing (distribution, copy, envelopes, param combination)
+    /* simplified polyphonic post processing approach (one function per clock) */
+    void postProcessPoly_slow(float *_signal, const uint32_t _voiceId);                         // poly slow post processing (distribution, copy, env c event signal!)
+    void postProcessPoly_fast(float *_signal, const uint32_t _voiceId);                         // poly fast post processing (distribution, copy)
+    void postProcessPoly_audio(float *_signal, const uint32_t _voiceId);                        // poly audio post processing (distribution, copy, envelopes, param combination)
+    void postProcessMono_slow(float *_signal);                                                  // mono slow post processing
+    void postProcessMono_fast(float *_signal);                                                  // mono fast post processing
+    void postProcessMono_audio(float *_signal);                                                 // mono audio post processing
 };

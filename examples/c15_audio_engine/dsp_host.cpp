@@ -63,12 +63,13 @@ void dsp_host::tickMain()
     /* first: evaluate slow clock status */
     if(m_clockPosition[3] == 0)
     {
-        /* render slow mono parameters */
+        /* render slow mono parameters and perform mono post processing */
         for(p = 0; p < m_params.m_clockIds.m_data[3].m_data[0].m_length; p++)
         {
             i = m_params.m_head[m_params.m_clockIds.m_data[3].m_data[0].m_data[p]].m_index;
             m_params.tickItem(i);
         }
+        m_params.postProcessMono_slow(m_paramsignaldata[0]);
         /* render slow poly parameters and perform poly slow post processing */
         for(v = 0; v < m_voices; v++)
         {
@@ -77,24 +78,25 @@ void dsp_host::tickMain()
                 i = m_params.m_head[m_params.m_clockIds.m_data[3].m_data[1].m_data[p]].m_index + v;
                 m_params.tickItem(i);
             }
-            m_params.postProcess_slow(m_paramsignaldata[v], v);
+            m_params.postProcessPoly_slow(m_paramsignaldata[v], v);
 
             /* polyphonic Trigger for Filter Coefficients */
             setPolyFilterCoeffs(m_paramsignaldata[v], v);
         }
 
-        /* monophon Trigger for Filter Coefficients */
+        /* monophonic Trigger for Filter Coefficients */
         setMonoFilterCoeffs(m_paramsignaldata[v]);
     }
     /* second: evaluate fast clock status */
     if(m_clockPosition[2] == 0)
     {
-        /* render fast mono parameters */
+        /* render fast mono parameters and perform mono post processing */
         for(p = 0; p < m_params.m_clockIds.m_data[2].m_data[0].m_length; p++)
         {
             i = m_params.m_head[m_params.m_clockIds.m_data[2].m_data[0].m_data[p]].m_index;
             m_params.tickItem(i);
         }
+        m_params.postProcessMono_fast(m_paramsignaldata[0]);
         /* render fast poly parameters and perform poly fast post processing */
         for(v = 0; v < m_voices; v++)
         {
@@ -103,16 +105,17 @@ void dsp_host::tickMain()
                 i = m_params.m_head[m_params.m_clockIds.m_data[2].m_data[1].m_data[p]].m_index + v;
                 m_params.tickItem(i);
             }
-            m_params.postProcess_fast(m_paramsignaldata[v], v);
+            m_params.postProcessPoly_fast(m_paramsignaldata[v], v);
         }
     }
-    /* third: evaluate audio clock (always) - mono rendering, poly rendering and post processing */
+    /* third: evaluate audio clock (always) - mono rendering and post processing, poly rendering and post processing */
     for(p = 0; p < m_params.m_clockIds.m_data[1].m_data[0].m_length; p++)
     {
         /* render mono audio parameters */
         i = m_params.m_head[m_params.m_clockIds.m_data[1].m_data[0].m_data[p]].m_index;
         m_params.tickItem(i);
     }
+    m_params.postProcessMono_audio(m_paramsignaldata[0]);
 
     /* Reset Outputmixer Sum Samples */
     m_outputmixer.m_sampleL = 0.f;
@@ -133,7 +136,7 @@ void dsp_host::tickMain()
             m_params.tickItem(i);
         }
         /* post processing and envelope rendering */
-        m_params.postProcess_audio(m_paramsignaldata[v], v);
+        m_params.postProcessPoly_audio(m_paramsignaldata[v], v);
 
         /* AUDIO_ENGINE: poly dsp phase */
         m_combfilter[v].m_flushFadePoint = flushFadePoint;

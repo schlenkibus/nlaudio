@@ -199,8 +199,8 @@ const float param_definition[sig_number_of_params][10] = {
     {        190,    3,      0,      16000,  0,      0,      73,     0,      0,      16000  },         // 140 CABINET_FOLD (later maybe fast type)
     {        191,    3,      0,      16000,  0,      0,      74,     0,      0,      16000  },         // 141 CABINET_ASYMETRY (later maybe fast type)
     {        192,    2,      0,      80,     0,      0,      -1,     0,      1,      8000   },         // 142 CABINET_TILT (implement fast and slow handling)
-    {        194,    3,      0,      200,    9,      60,     78,     0,      0,      16000  },         // 143 CABINET_HI_CUT
-    {        196,    3,      0,      200,    9,      20,     79,     0,      0,      16000  },         // 144 CABINET_LOW_CUT
+    {        194,    3,      0,      200,    9,      60,     -1,     0,      0,      16000  },         // 143 CABINET_HI_CUT
+    {        196,    3,      0,      200,    9,      20,     -1,     0,      0,      16000  },         // 144 CABINET_LOW_CUT
     {        197,    2,      0,      200,    12,     -50,    -1,     0,      0,      10000  },         // 145 CABINET_CAB_LEVEL
     {        199,    2,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 146 CABINET_MIX
 
