@@ -85,7 +85,7 @@ inline float crossFade(float _sample1, float _sample2, float _gain1, float _gain
 
 inline float bipolarCrossFade(float _sample1, float _sample2, float _mix)
 {
-    _sample1 = (1.f - fabs(_mix)) * _sample1;            // kann fabs() anders gerechnet werden?
+    _sample1 = (1.f - std::abs(_mix)) * _sample1;
     _sample2 = _mix * _sample2;
 
     return _sample1 + _sample2;
@@ -132,7 +132,7 @@ inline float sin(float x)
 {
     float x_square = x * x;
 
-    x = (((((x_square * -2.39e-8 + 2.7526e-6)
+    x = (((((x_square * -2.39e-8f + 2.7526e-6f)
             * x_square + (-0.000198409f))
            * x_square + 0.00833333f)
           * x_square + (-0.166667f))
@@ -153,10 +153,10 @@ inline float cos(float x)
 {
     float x_square = x * x;
 
-    x = (((((x_square * -2.605e-7 + 2.47609e-5)
-            * x_square + (-0.00138884))
-           * x_square + 0.0416666)
-          * x_square + (-0.499923))
+    x = (((((x_square * -2.605e-7f + 2.47609e-5f)
+            * x_square + (-0.00138884f))
+           * x_square + 0.0416666f)
+          * x_square + (-0.499923f))
          * x_square) + 1.f;
 
     return x;
@@ -172,8 +172,7 @@ inline float cos(float x)
 
 inline float tan(float x)
 {
-    x = 0.133333f * pow(x, 5.f) + 0.333333f * pow(x, 3.f) + x;
-
+    x = 0.133333f * std::pow<float>(x, 5.f) + 0.333333f * std::pow<float>(x, 3.f) + x;
     return x;
 }
 
@@ -242,7 +241,7 @@ inline float sinP3_wrap(float _x)
 
     if (_x >= 0.f)
     {
-        _x -= static_cast<int>(_x + 0.5f);
+        _x -= static_cast<int>(std::round<float>(_x + 0.5f));
     }
     else
     {
@@ -250,11 +249,11 @@ inline float sinP3_wrap(float _x)
     }
 
     _x += _x;
-    _x = fabs(_x);
+    _x = std::abs(_x);
     _x = 0.5f - _x;
 
     float x_square = _x * _x;
-    return _x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);
+    return _x * ((2.26548f * x_square - 5.13274f) * x_square + 3.14159f);
 }
 
 
@@ -269,11 +268,11 @@ inline float sinP3_wrap(float _x)
 inline float sinP3_noWrap(float _x)
 {
     _x += _x;
-    _x = fabs(_x);
+    _x = std::abs(_x);
     _x = 0.5f - _x;
 
     float x_square = _x * _x;
-    return _x * ((2.26548 * x_square - 5.13274) * x_square + 3.14159);
+    return _x * ((2.26548f * x_square - 5.13274f) * x_square + 3.14159f);
 }
 
 
@@ -309,8 +308,8 @@ inline float interpolRT(float fract, float sample_tm1, float sample_t0, float sa
 ******************************************************************************/
 inline float bell(float _x)
 {
-    _x = fabs(_x - 0.5f) * 4.f - 1.f;
-    return (2.f - fabs(_x)) * _x * -0.5f + 0.5f;
+    _x = std::abs(_x - 0.5f) * 4.f - 1.f;
+    return (2.f - std::abs(_x)) * _x * -0.5f + 0.5f;
 }
 
 
