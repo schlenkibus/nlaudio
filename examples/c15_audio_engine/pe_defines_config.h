@@ -31,7 +31,7 @@ const uint32_t dsp_clock_rates[2] = {               // sub-audio clocks are defi
 #define sig_number_of_params        184             // 3 * (15 ENV params) + 2 * (14 OSC + 8 SHP params) + (16 CMB params) + (13 SVF params) + (9 FB Mix params) + (12 OUT params)
                                                     // + (8 CABINET params) + (6 GAP params) + (12 FLANGER params) (6 ECHO params) + (5 REVERB params) + (2 MASTER params) + (6 KEY params)
 #define sig_number_of_param_items   298             // (45 + 44 + 16 + 13 + 9 + 12 + 8 + 6 + 12 + 6 + 5 + 2 (* 1 Voice) MONO params) + (6 (* 20 Voices) POLY params)
-#define sig_number_of_signal_items  82              // 73 (+ 9 Cabinet signals) shared signals
+#define sig_number_of_signal_items  83              // 73 (+ 10 Cabinet signals) shared signals
 
 /* TCD List Handling */
 

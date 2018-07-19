@@ -150,6 +150,10 @@ float paramengine::scale(const uint32_t _scaleId, const float _scaleArg, float _
         result = m_convert.eval_level(_value) * _scaleArg;                  // mixer shaper drives
         break;
     case 12:
+        /* exponential, drive scaling (argument is offset) */
+        result = m_convert.eval_level(_value + _scaleArg);                  // cabinet drive and cab level
+        break;
+    case 13:
         /* exponential, envelope-time scaling (argument is offset) */
         result = m_convert.eval_time((_value * dsp_expon_time_factor) + _scaleArg);
         break;

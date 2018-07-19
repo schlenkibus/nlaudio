@@ -23,12 +23,12 @@ const float param_definition[sig_number_of_params][10] = {
 
     // - - - ENVELOPE A - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST    SPREAD  POL     FACTOR
-    {        0,      3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 0   ENV_A_ATTACK_TIME
-    {        2,      3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 1   ENV_A_DECAY1_TIME
+    {        0,      3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 0   ENV_A_ATTACK_TIME
+    {        2,      3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 1   ENV_A_DECAY1_TIME
     {        4,      2,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 2   ENV_A_BREAKPOINT_LEVEL
-    {        6,      3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 3   ENV_A_DECAY2_TIME
+    {        6,      3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 3   ENV_A_DECAY2_TIME
     {        8,      2,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 4   ENV_A_SUSTAIN_LEVEL
-    {        10,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16160  },         // 5   ENV_A_RELEASE_TIME
+    {        10,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16160  },         // 5   ENV_A_RELEASE_TIME
     {        12,     2,      0,      300,    7,      0,      -1,     0,      1,      7200   },         // 6   ENV_A_GAIN
     {        14,     0,      0,      256,    0,      0,      -1,     0,      0,      15360  },         // 7   ENV_A_LEVEL_VELOCITY
     {        15,     0,      0,      200,    0,      0,      -1,     0,      0,      12000  },         // 8   ENV_A_ATTACK_VELOCITY
@@ -41,12 +41,12 @@ const float param_definition[sig_number_of_params][10] = {
 
     // - - - ENVELOPE B - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST    SPREAD  POL     FACTOR
-    {        19,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 15  ENV_B_ATTACK_TIME
-    {        21,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 16  ENV_B_DECAY1_TIME
+    {        19,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 15  ENV_B_ATTACK_TIME
+    {        21,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 16  ENV_B_DECAY1_TIME
     {        23,     2,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 17  ENV_B_BREAKPOINT_LEVEL
-    {        25,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 18  ENV_B_DECAY2_TIME
+    {        25,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 18  ENV_B_DECAY2_TIME
     {        27,     2,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 19  ENV_B_SUSTAIN_LEVEL
-    {        29,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16160  },         // 20  ENV_B_RELEASE_TIME
+    {        29,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16160  },         // 20  ENV_B_RELEASE_TIME
     {        31,     2,      0,      300,    7,      0,      -1,     0,      1,      7200   },         // 21  ENV_B_GAIN
     {        33,     0,      0,      256,    0,      0,      -1,     0,      0,      15360  },         // 22  ENV_B_LEVEL_VELOCITY
     {        34,     0,      0,      200,    0,      0,      -1,     0,      0,      12000  },         // 23  ENV_B_ATTACK_VELOCITY
@@ -59,12 +59,12 @@ const float param_definition[sig_number_of_params][10] = {
 
     // - - - ENVELOPE C - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST    SPREAD  POL     FACTOR
-    {        38,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 30  ENV_C_ATTACK_TIME
-    {        40,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 31  ENV_C_DECAY1_TIME
+    {        38,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 30  ENV_C_ATTACK_TIME
+    {        40,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 31  ENV_C_DECAY1_TIME
     {        42,     2,      0,      8000,   0,      0,      -1,     0,      1,      8000   },         // 32  ENV_C_BREAKPOINT_LEVEL
-    {        44,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16000  },         // 33  ENV_C_DECAY2_TIME
+    {        44,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16000  },         // 33  ENV_C_DECAY2_TIME
     {        297,    2,      0,      8000,   0,      0,      -1,     0,      1,      8000   },         // 34  ENV_C_SUSTAIN_LEVEL
-    {        46,     3,      0,      16000,  12,     -20,    -1,     0,      0,      16160  },         // 35  ENV_C_RELEASE_TIME
+    {        46,     3,      0,      16000,  13,     -20,    -1,     0,      0,      16160  },         // 35  ENV_C_RELEASE_TIME
     {        -1,     0,      0,      1,      0,      0,      -1,     0,      0,      0      },         // 36  (GAIN PLACEHOLDER)
     {        48,     0,      0,      256,    0,      0,      -1,     0,      0,      15360  },         // 37  ENV_C_LEVEL_VELOCITY
     {        49,     0,      0,      200,    0,      0,      -1,     0,      0,      12000  },         // 38  ENV_C_ATTACK_VELOCITY
@@ -95,9 +95,9 @@ const float param_definition[sig_number_of_params][10] = {
     // - - - SHAPER A - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST    SPREAD  POL     FACTOR
     {        71,     2,      0,      200,    10,     0.18,   -1,     0,      0,      10000  },         // 59  SHP_A_DRIVE
-    {        73,     3,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 60  SHP_A_DRIVE_ENV_A
-    {        74,     3,      0,      16000,  0,      0,      15,     1,      0,      16000  },         // 61  SHP_A_FOLD
-    {        75,     3,      0,      16000,  0,      0,      16,     1,      0,      16000  },         // 62  SHP_A_ASYMETRY
+    {        73,     3,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 60  SHP_A_DRIVE_ENV_A (later maybe fast type)
+    {        74,     3,      0,      16000,  0,      0,      15,     1,      0,      16000  },         // 61  SHP_A_FOLD (later maybe fast type)
+    {        75,     3,      0,      16000,  0,      0,      16,     1,      0,      16000  },         // 62  SHP_A_ASYMETRY (later maybe fast type)
     {        76,     2,      0,      8000,   0,      0,      17,     1,      1,      8000   },         // 63  SHP_A_MIX
     {        78,     2,      0,      16000,  5,      0,      18,     1,      0,      16000  },         // 64  SHP_A_FEEDBACK_MIX
     {        80,     3,      0,      16000,  0,      0,      -1,     1,      0,      16000  },         // 65  SHP_A_FEEDBACK_ENV_C
@@ -123,9 +123,9 @@ const float param_definition[sig_number_of_params][10] = {
     // - - - SHAPER B - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST    SPREAD  POL     FACTOR
     {        101,    2,      0,      200,    10,     0.18,   -1,     0,      0,      10000  },         // 81  SHP_B_DRIVE
-    {        103,    3,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 82  SHP_B_DRIVE_ENV_B
-    {        104,    3,      0,      16000,  0,      0,      30,     1,      0,      16000  },         // 83  SHP_B_FOLD
-    {        105,    3,      0,      16000,  0,      0,      31,     1,      0,      16000  },         // 84  SHP_B_ASYMETRY
+    {        103,    3,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 82  SHP_B_DRIVE_ENV_B (later maybe fast type)
+    {        104,    3,      0,      16000,  0,      0,      30,     1,      0,      16000  },         // 83  SHP_B_FOLD (later maybe fast type)
+    {        105,    3,      0,      16000,  0,      0,      31,     1,      0,      16000  },         // 84  SHP_B_ASYMETRY (later maybe fast type)
     {        106,    2,      0,      8000,   0,      0,      32,     1,      1,      8000   },         // 85  SHP_B_MIX
     {        108,    2,      0,      16000,  5,      0,      33,     1,      0,      16000  },         // 86  SHP_B_FEEDBACK_MIX
     {        110,    3,      0,      16000,  0,      0,      -1,     1,      0,      16000  },         // 87  SHP_B_FEEDBACK_ENV_C
@@ -189,20 +189,20 @@ const float param_definition[sig_number_of_params][10] = {
     {        178,    2,      0,      4000,   0,      0,      -1,     0,      1,      8000   },         // 133 OUT_SVF_LEVEL
     {        180,    2,      0,      16000,  0,      0.5,    -1,     0,      1,      8000   },         // 134 OUT_SVF_PAN
     {        181,    2,      0,      200,    11,     0.25,   68,     1,      0,      10000  },         // 135 OUT_DRIVE
-    {        183,    3,      0,      16000,  0,      0,      69,     1,      0,      16000  },         // 136 OUT_FOLD
-    {        184,    3,      0,      16000,  0,      0,      70,     1,      0,      16000  },         // 137 OUT_ASYMETRY
+    {        183,    3,      0,      16000,  0,      0,      69,     1,      0,      16000  },         // 136 OUT_FOLD (later maybe fast type)
+    {        184,    3,      0,      16000,  0,      0,      70,     1,      0,      16000  },         // 137 OUT_ASYMETRY (later maybe fast type)
     {        185,    2,      0,      16000,  4,      2.56,   71,     0,      0,      16000  },         // 138 OUT_LEVEL
 
     // - - - CABINET  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST    SPREAD  POL     FACTOR
-    {        188,    2,      0,      200,    0,      0,      72,     0,      0,      10000  },         // 139 (PLACEHOLDER)
-    {        190,    3,      0,      16000,  0,      0,      73,     0,      0,      16000  },         // 140 (PLACEHOLDER)
-    {        191,    3,      0,      16000,  0,      0,      74,     0,      0,      16000  },         // 141 (PLACEHOLDER)
-    {        192,    2,      0,      80,     0,      0,      -1,     0,      1,      8000   },         // 142 (PLACEHOLDER)
-    {        194,    3,      0,      200,    9,      60,     77,     0,      0,      16000  },         // 143 (PLACEHOLDER)
-    {        196,    3,      0,      200,    9,      20,     78,     0,      0,      16000  },         // 144 (PLACEHOLDER)
-    {        197,    2,      0,      200,    0,      -50,    -1,     0,      0,      10000  },         // 145 (PLACEHOLDER)
-    {        199,    2,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 146 (PLACEHOLDER)
+    {        188,    2,      0,      200,    12,     0,      72,     0,      0,      10000  },         // 139 CABINET_DRIVE
+    {        190,    3,      0,      16000,  0,      0,      73,     0,      0,      16000  },         // 140 CABINET_FOLD (later maybe fast type)
+    {        191,    3,      0,      16000,  0,      0,      74,     0,      0,      16000  },         // 141 CABINET_ASYMETRY (later maybe fast type)
+    {        192,    2,      0,      80,     0,      0,      -1,     0,      1,      8000   },         // 142 CABINET_TILT (implement fast and slow handling)
+    {        194,    3,      0,      200,    9,      60,     78,     0,      0,      16000  },         // 143 CABINET_HI_CUT
+    {        196,    3,      0,      200,    9,      20,     79,     0,      0,      16000  },         // 144 CABINET_LOW_CUT
+    {        197,    2,      0,      200,    12,     -50,    -1,     0,      0,      10000  },         // 145 CABINET_CAB_LEVEL
+    {        199,    2,      0,      16000,  0,      0,      -1,     0,      0,      16000  },         // 146 CABINET_MIX
 
     // - - - GAP FILTER - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST    SPREAD  POL     FACTOR
@@ -247,7 +247,7 @@ const float param_definition[sig_number_of_params][10] = {
 
     // - - - MASTER - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //       ID      CLOCK   POLY    RANGE   SCALE   (ARG)   POST    SPREAD  POL     FACTOR
-    {        247,    2,      0,      16000,  4,      4,      81,     0,      0,      16000  },         // 176 MASTER_VOLUME
+    {        247,    2,      0,      16000,  4,      4,      82,     0,      0,      16000  },         // 176 MASTER_VOLUME
     {        248,    3,      0,      100,    0,      0,      -1,     0,      1,      4800   },         // 177 MASTER_TUNE
 
     // - - - POLY KEY EVENT - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

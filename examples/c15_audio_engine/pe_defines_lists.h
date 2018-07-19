@@ -16,6 +16,7 @@
 // consecutive paramIds for MONO recall update (defining tcd order of destinations) - listId = 1
 // NOTE:    - recall param id order by PLAYGROUND, list mechanism fragile/risky in this case -> discard
 
+/* later: define "official" parameter order (playground, ...) in order to transmit preset lists -> also affects testconfig preset data! */
 const uint32_t paramIds_recall[lst_recall_length] = {
     0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  14,                // Env A (all params - #13: retrigger hardness placeholder!)
     15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  29,                // Env B (all params - #28: retrigger hardness placeholder!)

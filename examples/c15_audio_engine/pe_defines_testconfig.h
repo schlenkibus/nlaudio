@@ -28,7 +28,7 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
                                                                                                                         // (later: FB Mix)
         0,     0,     0,     0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
-        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+        4000,  4000,  4000,  -1600, 10000, 2000,  7200,  0,                                                             // Cabinet
                                                                                                                         // (later: Gap Filter)
                                                                                                                         // (later: Flanger)
                                                                                                                         // (later: Echo)
@@ -48,7 +48,7 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
                                                                                                                         // (later: FB Mix)
         2000,  0,     0,     0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
-        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+        4000,  4000,  4000,  -1600, 10000, 2000,  7200,  0,                                                             // Cabinet
                                                                                                                         // (later: Gap Filter)
                                                                                                                         // (later: Flanger)
                                                                                                                         // (later: Echo)
@@ -68,7 +68,7 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
                                                                                                                         // (later: FB Mix)
         0,     0,     0,     0,     2000,  0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
-        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+        4000,  4000,  4000,  -1600, 10000, 2000,  7200,  0,                                                             // Cabinet
                                                                                                                         // (later: Gap Filter)
                                                                                                                         // (later: Flanger)
                                                                                                                         // (later: Echo)
@@ -88,7 +88,7 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
                                                                                                                         // (later: FB Mix)
         0,     0,     0,     0,     0,     0,     2000,  0,     0,     8000,  0,     6080,                              // Out Mix
-        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+        4000,  4000,  4000,  -1600, 10000, 2000,  7200,  0,                                                             // Cabinet
                                                                                                                         // (later: Gap Filter)
                                                                                                                         // (later: Flanger)
                                                                                                                         // (later: Echo)
@@ -108,7 +108,7 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
                                                                                                                         // (later: FB Mix)
         2000,  0,     2000,  0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
-        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+        4000,  4000,  4000,  -1600, 10000, 2000,  7200,  0,                                                             // Cabinet
                                                                                                                         // (later: Gap Filter)
                                                                                                                         // (later: Flanger)
                                                                                                                         // (later: Echo)
@@ -128,7 +128,7 @@ const int32_t testPresetData[testRecallSequences][lst_recall_length] = {
         0,     0,     6000,  16000, 0,     1200,  0,     8000,  0,     0,     0,     0,     0,                          // SVF
                                                                                                                         // (later: FB Mix)
         2000,  0,     0,     0,     0,     0,     0,     0,     0,     8000,  0,     6080,                              // Out Mix
-        4000,  4000,  4000,  8000,  10000, 2000,  7200,  0,                                                             // Cabinet
+        4000,  4000,  4000,  -1600, 10000, 2000,  7200,  0,                                                             // Cabinet
                                                                                                                         // (later: Gap Filter)
                                                                                                                         // (later: Flanger)
                                                                                                                         // (later: Echo)
